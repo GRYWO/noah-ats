@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2 } from "lucide-react";
 import Link from "next/link";
 import {
   uploadBellijst,
@@ -45,6 +46,19 @@ const LABEL_OPTIES = [
 export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: string; bellijsten: Bellijst[] }) {
   const [openLijst, setOpenLijst] = useState<string | null>(bellijsten[0]?.id ?? null);
   const [showUpload, setShowUpload] = useState(bellijsten.length === 0);
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+
+  function onVerwijderBellijst(id: string) {
+    if (!confirm("Weet je zeker dat je deze bellijst wilt verwijderen?")) return;
+    const fd = new FormData();
+    fd.append("id", id);
+    fd.append("kandidaat_id", kandidaatId);
+    startTransition(async () => {
+      await verwijderBellijst(fd);
+      router.refresh();
+    });
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
@@ -109,13 +123,14 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
                     <span className="font-semibold text-sm text-gray-800">{b.naam}</span>
                     <span className="text-xs text-gray-500">{gedaan}/{b.aantal_items} verwerkt</span>
                   </button>
-                  <form action={verwijderBellijst}>
-                    <input type="hidden" name="id" value={b.id} />
-                    <input type="hidden" name="kandidaat_id" value={kandidaatId} />
-                    <button type="submit" title="Bellijst verwijderen" className="text-gray-400 hover:text-red-600 p-1">
-                      <Trash2 size={14} />
-                    </button>
-                  </form>
+                  <button
+                    type="button"
+                    onClick={() => onVerwijderBellijst(b.id)}
+                    title="Bellijst verwijderen"
+                    className="text-gray-400 hover:text-red-600 p-1"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
 
                 {isOpen && (
@@ -137,9 +152,45 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
 }
 
 function BellijstItemRij({ item, kandidaatId }: { item: BellijstItem; kandidaatId: string }) {
-  const labelOptie = LABEL_OPTIES.find(o => o.value === (item.label ?? ""));
+  const [pending, startTransition] = useTransition();
+  const [optimisticLabel, setOptimisticLabel] = useState(item.label ?? "");
+  const router = useRouter();
+  const labelOptie = LABEL_OPTIES.find(o => o.value === optimisticLabel);
+
+  function onLabelChange(value: string) {
+    setOptimisticLabel(value);
+    const fd = new FormData();
+    fd.append("id", item.id);
+    fd.append("kandidaat_id", kandidaatId);
+    fd.append("label", value);
+    startTransition(async () => {
+      await updateBellijstItem(fd);
+      router.refresh();
+    });
+  }
+
+  function onCrm() {
+    const fd = new FormData();
+    fd.append("id", item.id);
+    fd.append("kandidaat_id", kandidaatId);
+    startTransition(async () => {
+      await voegBellijstItemToeAanCrm(fd);
+      router.refresh();
+    });
+  }
+
+  function onDelete() {
+    const fd = new FormData();
+    fd.append("id", item.id);
+    fd.append("kandidaat_id", kandidaatId);
+    startTransition(async () => {
+      await verwijderBellijstItem(fd);
+      router.refresh();
+    });
+  }
+
   return (
-    <div className="px-4 py-3 flex items-center gap-3 hover:bg-gray-50">
+    <div className={`px-4 py-3 flex items-center gap-3 hover:bg-gray-50 ${pending ? "opacity-60" : ""}`}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-sm text-gray-800 truncate">{item.bedrijf || "—"}</span>
@@ -162,34 +213,34 @@ function BellijstItemRij({ item, kandidaatId }: { item: BellijstItem; kandidaatI
           )}
         </div>
       </div>
-      <form action={updateBellijstItem} className="flex items-center gap-1">
-        <input type="hidden" name="id" value={item.id} />
-        <input type="hidden" name="kandidaat_id" value={kandidaatId} />
-        <select
-          name="label"
-          defaultValue={item.label ?? ""}
-          className={`text-xs px-2 py-1 rounded-md border ${labelOptie?.kleur ?? "bg-gray-50 border-gray-200"}`}
-          onChange={(e) => e.target.form?.requestSubmit()}
-        >
-          {LABEL_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </form>
+      <select
+        value={optimisticLabel}
+        disabled={pending}
+        onChange={(e) => onLabelChange(e.target.value)}
+        className={`text-xs px-2 py-1 rounded-md border ${labelOptie?.kleur ?? "bg-gray-50 border-gray-200"}`}
+      >
+        {LABEL_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
       {!item.opdrachtgever_id && item.bedrijf && (
-        <form action={voegBellijstItemToeAanCrm}>
-          <input type="hidden" name="id" value={item.id} />
-          <input type="hidden" name="kandidaat_id" value={kandidaatId} />
-          <button type="submit" title="Toevoegen aan CRM" className="text-xs text-emerald-700 hover:underline font-semibold whitespace-nowrap">
-            → CRM
-          </button>
-        </form>
-      )}
-      <form action={verwijderBellijstItem}>
-        <input type="hidden" name="id" value={item.id} />
-        <input type="hidden" name="kandidaat_id" value={kandidaatId} />
-        <button type="submit" title="Verwijderen" className="text-gray-400 hover:text-red-600 p-1">
-          <Trash2 size={14} />
+        <button
+          type="button"
+          onClick={onCrm}
+          disabled={pending}
+          title="Toevoegen aan CRM"
+          className="text-xs text-emerald-700 hover:underline font-semibold whitespace-nowrap disabled:opacity-50"
+        >
+          → CRM
         </button>
-      </form>
+      )}
+      <button
+        type="button"
+        onClick={onDelete}
+        disabled={pending}
+        title="Verwijderen"
+        className="text-gray-400 hover:text-red-600 p-1 disabled:opacity-50"
+      >
+        {pending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+      </button>
     </div>
   );
 }
