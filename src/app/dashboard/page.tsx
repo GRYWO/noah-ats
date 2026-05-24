@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { SetterPerformance } from "./SetterPerformance";
-import { OnboardingTour } from "@/components/OnboardingTour";
+import { OnboardingTour, TOUR_VERSIE } from "@/components/OnboardingTour";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
 function geldigePeriode(p: string | undefined): Periode {
@@ -56,7 +56,7 @@ export default async function Dashboard({
 
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("voornaam, rol, tenant_id, onboarding_voltooid")
+    .select("voornaam, rol, tenant_id, onboarding_voltooid, onboarding_versie")
     .eq("id", user!.id)
     .single();
 
@@ -98,10 +98,10 @@ export default async function Dashboard({
           beperkTotUserId={isSetter ? user!.id : undefined}
         />
 
-        {/* Onboarding tour — start automatisch bij eerste bezoek */}
+        {/* Onboarding tour — start automatisch bij eerste bezoek of nieuwe versie */}
         <OnboardingTour
           rol={isSuperAdminEmail(user?.email) ? "super_admin" : (myProfile?.rol ?? "setter") as "admin" | "recruiter" | "setter"}
-          autoStart={!myProfile?.onboarding_voltooid}
+          autoStart={(myProfile?.onboarding_versie ?? 0) < TOUR_VERSIE}
         />
       </div>
     </main>

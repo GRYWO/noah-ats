@@ -21,6 +21,14 @@ const Joyride = dynamic(
 
 type Rol = "admin" | "recruiter" | "setter" | "super_admin";
 
+/**
+ * Tour-versie. Bij elke significante UI/feature-wijziging deze ophogen.
+ * Users met onboarding_versie < TOUR_VERSIE krijgen de tour opnieuw.
+ * Voor user-facing "Wat is er nieuw": voeg WAT_IS_NIEUW-stappen toe wanneer
+ * versie verhoogd wordt.
+ */
+export const TOUR_VERSIE = 1;
+
 const STAPPEN_BASIS: Step[] = [
   {
     target: "body",

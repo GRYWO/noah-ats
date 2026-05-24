@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { autoWijsKandidaatToe } from "@/utils/setter-assign";
 
 async function checkAdminOfRecruiter() {
   const supabase = await createClient();
@@ -24,12 +25,20 @@ export async function goedkeurenCv(formData: FormData) {
   const id = formData.get("id") as string;
   const { userId } = await checkAdminOfRecruiter();
   const admin = createAdminClient();
+  // CV goedgekeurd → intake klaar → kandidaat naar setter (of wachtrij)
   await admin.from("kandidaten").update({
     cv_controle_status: "goedgekeurd",
     cv_controle_op: new Date().toISOString(),
     cv_controle_door: userId,
+    kanban_stap: "interne_intake_voltooid",
+    intake_voltooid: true,
   }).eq("id", id);
+
+  // Auto-toewijzen aan vrije setter; geen vrij? → blijft eigenaar_id null = wachtrij
+  await autoWijsKandidaatToe(id);
+
   revalidatePath(`/kandidaten/${id}`);
+  revalidatePath("/kandidaten");
 }
 
 export async function afkeurenCv(formData: FormData) {
