@@ -97,7 +97,16 @@ export function InboxClient({
   const syncEnRefresh = async () => {
     setSyncBezig(true);
     try {
-      await fetch("/api/mail/sync", { method: "POST" });
+      const res = await fetch("/api/mail/sync", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      // Als sync nieuwe mails ophaalde → toast voor laatste
+      if (data?.nieuw && data.nieuw > 0) {
+        const last = await fetch(`/api/mail/laatste?map=${encodeURIComponent("INBOX")}`);
+        const lastData = await last.json().catch(() => null);
+        if (lastData?.naam && lastData?.onderwerp) {
+          toonToast(lastData.naam, lastData.onderwerp);
+        }
+      }
     } catch {
       // ignore
     } finally {
