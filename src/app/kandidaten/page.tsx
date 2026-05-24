@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
-import { nieuweKandidaat } from "./actions";
 
 const STATUS_COLORS: Record<string, string> = {
   nieuw: "bg-blue-100 text-blue-800",
@@ -52,48 +51,14 @@ export default async function KandidatenPage({
           </div>
         )}
 
-        {/* Quick form — alleen recruiters + admins */}
+        {/* Nieuwe kandidaat-knop → wizard */}
         {!isSetter && (
-        <details className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
-          <summary className="cursor-pointer p-4 bg-[#333399] text-white font-semibold">
-            Nieuwe kandidaat toevoegen
-          </summary>
-          <form action={nieuweKandidaat} className="p-6 grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Voornaam *</label>
-              <input name="voornaam" required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Achternaam *</label>
-              <input name="achternaam" required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">E-mail</label>
-              <input name="email" type="email" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Telefoon</label>
-              <input name="telefoon" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Woonplaats</label>
-              <input name="woonplaats" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Leeftijd</label>
-              <input name="leeftijd" type="number" min="16" max="99" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]" />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Open voor functies</label>
-              <input name="open_voor" placeholder="bv Python Engineer, Sales Manager" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]" />
-            </div>
-            <div className="col-span-2 flex justify-end">
-              <button type="submit" className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-6 py-2 rounded-md text-sm">
-                Opslaan
-              </button>
-            </div>
-          </form>
-        </details>
+          <Link
+            href="/kandidaten/nieuw"
+            className="inline-block bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-6 py-3 rounded-xl text-sm mb-6 shadow-sm"
+          >
+            + Nieuwe kandidaat (CV uploaden)
+          </Link>
         )}
 
         {/* List */}
