@@ -22,7 +22,7 @@ function dagenSinds(iso: string): number {
 function kleurVoorDagen(dagen: number): string {
   if (dagen >= 4) return "bg-red-50 border-red-200 text-red-800";
   if (dagen >= 2) return "bg-amber-50 border-amber-200 text-amber-800";
-  return "bg-gray-50 border-gray-200 text-gray-700";
+  return "bg-emerald-50 border-emerald-200 text-emerald-800";
 }
 
 export function WachtendOpCvSectie({ wachtenden }: { wachtenden: Wachtend[] }) {
@@ -102,7 +102,7 @@ export function WachtendOpCvSectie({ wachtenden }: { wachtenden: Wachtend[] }) {
               <Clock size={14} className="text-amber-600" />
               In afwachting van CV ({wachtenden.length})
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">Auto-verwijderd na 7 dagen — oranje na 2, rood na 4.</p>
+            <p className="text-xs text-gray-500 mt-0.5">Auto-verwijderd na 7 dagen — groen 0-1 dag, oranje 2-3 dagen, rood vanaf 4 dagen.</p>
           </div>
           <ul className="divide-y divide-gray-100">
             {wachtenden.map((w) => {
