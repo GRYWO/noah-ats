@@ -46,11 +46,38 @@ export function InboxClient({
   const [syncBezig, setSyncBezig] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Toast tonen + auto-verbergen
+  // Kort chime-geluidje afspelen
+  const playChime = () => {
+    try {
+      const Ctx = (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext);
+      const ctx = new Ctx();
+      const tones = [880, 1100]; // 2 tonen: A5 → C#6
+      tones.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const start = ctx.currentTime + i * 0.12;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.15, start + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.3);
+      });
+      setTimeout(() => ctx.close(), 700);
+    } catch {
+      // Audio context kan geblokkeerd zijn — negeer
+    }
+  };
+
+  // Toast tonen + auto-verbergen + geluidje
   const toonToast = (van: string, onderwerp: string) => {
     const id = Date.now();
     setToasts(t => [...t, { id, van, onderwerp }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 6000);
+    playChime();
     // Browser notification (als toestemming gegeven)
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
       new Notification(`Nieuwe e-mail van ${van}`, { body: onderwerp, icon: "/grywo-logo.png" });
