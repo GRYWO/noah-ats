@@ -38,6 +38,14 @@ summary { list-style: none; }
 summary::-webkit-details-marker { display: none; }
 summary::marker { display: none; }
 
+/* Sidebar-open: schuif main content op zodat sidebar er niet overheen valt */
+main.pl-16 {
+  transition: padding-left 200ms ease;
+}
+html[data-sidebar="open"] main.pl-16 {
+  padding-left: 15rem;
+}
+
 /* Dark mode overrides voor common Tailwind classes */
 .dark .bg-white { background-color: var(--panel) !important; }
 .dark .bg-gray-50, .dark .bg-gray-100 { background-color: var(--panel-2) !important; }

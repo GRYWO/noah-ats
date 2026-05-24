@@ -46,6 +46,7 @@ export function SideBar({ active, userEmail, isSuperAdmin, isSetter, logoutActio
   }, []);
   useEffect(() => {
     localStorage.setItem("noah-sidebar-open", open ? "1" : "0");
+    document.documentElement.setAttribute("data-sidebar", open ? "open" : "closed");
   }, [open]);
 
   const items: Item[] = [
