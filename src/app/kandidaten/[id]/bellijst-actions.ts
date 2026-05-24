@@ -159,7 +159,7 @@ export async function voegBellijstItemToeAanCrm(formData: FormData) {
       laatste_contact: new Date().toISOString(),
     }).eq("id", opdrachtgeverId);
   } else {
-    const { data: nieuw } = await admin.from("opdrachtgevers").insert({
+    const { data: nieuw, error: insErr } = await admin.from("opdrachtgevers").insert({
       tenant_id: profile.tenant_id,
       naam: item.bedrijf,
       plaats: item.plaats,
@@ -170,14 +170,20 @@ export async function voegBellijstItemToeAanCrm(formData: FormData) {
       eigenaar_id: user.id,
       laatste_contact: new Date().toISOString(),
     }).select("id").single();
+    if (insErr) {
+      console.error("[bellijst→CRM] opdrachtgever insert mislukt:", insErr);
+    }
     opdrachtgeverId = nieuw?.id ?? "";
   }
 
   if (opdrachtgeverId) {
-    await admin.from("bellijst_items").update({
+    const { error: upErr } = await admin.from("bellijst_items").update({
       opdrachtgever_id: opdrachtgeverId,
       label: item.label ?? "geinteresseerd",
     }).eq("id", id);
+    if (upErr) {
+      console.error("[bellijst→CRM] item update mislukt:", upErr);
+    }
   }
 
   revalidatePath(`/kandidaten/${kandidaatId}`);
