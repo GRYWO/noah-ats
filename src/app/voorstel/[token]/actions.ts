@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendKandidaatBevestiging, sendKandidaatAfwijzing } from "@/utils/email";
+import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 
 export async function uitnodigen(formData: FormData) {
@@ -145,7 +146,8 @@ export async function uitnodigen(formData: FormData) {
     }
   }
 
-  // Mail naar kandidaat sturen
+  // Mail naar kandidaat sturen — vanaf de setter
+  const setterFrom = await getSetterFrom(voorstel?.setter_id);
   if (voorstel?.kandidaat?.email) {
     try {
       await sendKandidaatBevestiging({
@@ -160,6 +162,7 @@ export async function uitnodigen(formData: FormData) {
         datum_2: datum_2_iso,
         datum_3: datum_3_iso,
         opmerking,
+        from: setterFrom,
       });
       await admin.from("voorstellen")
         .update({ kandidaat_uitnodigen_sent: new Date().toISOString() })
@@ -192,7 +195,7 @@ export async function afwijzen(formData: FormData) {
   // Voorstel + kandidaat ophalen voor log + mail
   const { data: voorstel } = await admin
     .from("voorstellen")
-    .select("id, tenant_id, kandidaat_id, kandidaat:kandidaten(voornaam, email)")
+    .select("id, tenant_id, kandidaat_id, setter_id, kandidaat:kandidaten(voornaam, email)")
     .eq("token", token)
     .single();
 
@@ -209,11 +212,13 @@ export async function afwijzen(formData: FormData) {
   }
 
   const kandidaat = voorstel?.kandidaat as unknown as { voornaam: string; email: string | null } | null;
+  const afwSetterFrom = await getSetterFrom(voorstel?.setter_id);
   if (kandidaat?.email) {
     try {
       await sendKandidaatAfwijzing({
         naar: kandidaat.email,
         kandidaatVoornaam: kandidaat.voornaam,
+        from: afwSetterFrom,
       });
       await admin.from("voorstellen")
         .update({ kandidaat_afwijzing_sent: new Date().toISOString() })

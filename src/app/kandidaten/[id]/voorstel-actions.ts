@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendVoorstelMail, sendKandidaatVoorgesteld } from "@/utils/email";
+import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 
 export async function stuurVoorstel(formData: FormData) {
@@ -52,6 +53,9 @@ export async function stuurVoorstel(formData: FormData) {
     .eq("id", kandidaatId)
     .single();
 
+  // Setter mail-adres ophalen voor From-veld
+  const setterFrom = await getSetterFrom(user.id);
+
   // Mail naar opdrachtgever
   if (kandidaat) {
     try {
@@ -61,6 +65,7 @@ export async function stuurVoorstel(formData: FormData) {
         kandidaat,
         bericht,
         token: nieuw.token,
+        from: setterFrom,
       });
     } catch (e) {
       console.error("Mail naar opdrachtgever mislukt:", e);
@@ -84,6 +89,7 @@ export async function stuurVoorstel(formData: FormData) {
       await sendKandidaatVoorgesteld({
         naar: kandidaat.email,
         kandidaatVoornaam: kandidaat.voornaam,
+        from: setterFrom,
       });
       const admin = createAdminClient();
       await admin.from("voorstellen")

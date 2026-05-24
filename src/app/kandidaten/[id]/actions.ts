@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { autoWijsKandidaatToe } from "@/utils/setter-assign";
 import { sendKandidaatPlaatsing, sendKandidaatStatusAfwijzing } from "@/utils/email";
+import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 
 // Stages waarbij de intake klaar is en de kandidaat naar een setter moet
@@ -14,6 +15,7 @@ const INTAKE_KLAAR_STAGES = ["interne_intake_voltooid", "voorgesteld_opdrachtgev
 export async function updateKandidaat(formData: FormData) {
   const id = formData.get("id") as string;
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const update = {
     voornaam:      (formData.get("voornaam") as string)?.trim(),
@@ -58,6 +60,7 @@ export async function updateKandidaat(formData: FormData) {
 
   // Plaatsing/afwijzing detecteren (alleen bij eerste keer)
   const admin = createAdminClient();
+  const setterFrom = await getSetterFrom(user?.id);
   if (
     huidig?.tenant_id &&
     huidig.email &&
@@ -66,7 +69,7 @@ export async function updateKandidaat(formData: FormData) {
     !huidig.plaatsing_mail_sent
   ) {
     try {
-      await sendKandidaatPlaatsing({ naar: huidig.email, kandidaatVoornaam: huidig.voornaam ?? "" });
+      await sendKandidaatPlaatsing({ naar: huidig.email, kandidaatVoornaam: huidig.voornaam ?? "", from: setterFrom });
       await admin.from("kandidaten").update({ plaatsing_mail_sent: new Date().toISOString() }).eq("id", id);
       await logVoorstelEvent({
         tenantId: huidig.tenant_id,
@@ -88,7 +91,7 @@ export async function updateKandidaat(formData: FormData) {
     !huidig.afwijzing_mail_sent
   ) {
     try {
-      await sendKandidaatStatusAfwijzing({ naar: huidig.email, kandidaatVoornaam: huidig.voornaam ?? "" });
+      await sendKandidaatStatusAfwijzing({ naar: huidig.email, kandidaatVoornaam: huidig.voornaam ?? "", from: setterFrom });
       await admin.from("kandidaten").update({ afwijzing_mail_sent: new Date().toISOString() }).eq("id", id);
       await logVoorstelEvent({
         tenantId: huidig.tenant_id,

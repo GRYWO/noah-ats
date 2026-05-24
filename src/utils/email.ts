@@ -48,12 +48,14 @@ export async function sendVoorstelMail({
   kandidaat,
   bericht,
   token,
+  from,
 }: {
   naar: string;
   opdrachtgeverNaam: string | null;
   kandidaat: Kandidaat;
   bericht: string | null;
   token: string;
+  from?: string;
 }) {
   const naam = `${kandidaat.voornaam} ${kandidaat.tussenvoegsel ?? ""} ${kandidaat.achternaam}`.replace(/\s+/g, " ").trim();
   const voorstelUrl = `${APP_URL}/voorstel/${token}`;
@@ -99,7 +101,7 @@ ${intro}
 `;
 
   return resend.emails.send({
-    from: FROM,
+    from: from ?? FROM,
     to: naar,
     subject: `Kandidaat voorstel — ${naam}`,
     html: brandedLayout({ titel: "Kandidaat voorstel", body }),
@@ -113,6 +115,7 @@ export async function sendReminderMail({
   token,
   reminderNr,
   laatsteDag,
+  from,
 }: {
   naar: string;
   opdrachtgeverNaam: string | null;
@@ -120,6 +123,7 @@ export async function sendReminderMail({
   token: string;
   reminderNr: 1 | 2 | 3 | 4;
   laatsteDag: boolean;
+  from?: string;
 }) {
   const voorstelUrl = `${APP_URL}/voorstel/${token}`;
   const uitnodigenUrl = `${APP_URL}/voorstel/${token}/uitnodigen`;
@@ -155,7 +159,7 @@ ${intro}
 `;
 
   return resend.emails.send({
-    from: FROM,
+    from: from ?? FROM,
     to: naar,
     subject: onderwerp,
     html: brandedLayout({ titel: headline, body }),
@@ -174,6 +178,7 @@ export async function sendKandidaatBevestiging({
   datum_2,
   datum_3,
   opmerking,
+  from,
 }: {
   naar: string;
   kandidaatVoornaam: string;
@@ -186,6 +191,7 @@ export async function sendKandidaatBevestiging({
   datum_2: string | null;
   datum_3: string | null;
   opmerking: string | null;
+  from?: string;
 }) {
   const fmtDatum = (d: string | null) =>
     d ? new Date(d).toLocaleString("nl-NL", { dateStyle: "full", timeStyle: "short" }) : "—";
@@ -219,7 +225,7 @@ ${opmerking ? `<p style="padding:12px;background:#fff8e1;border-left:3px solid #
 `;
 
   return resend.emails.send({
-    from: FROM,
+    from: from ?? FROM,
     to: naar,
     subject: `${bedrijf} wil kennismaken — ${kandidaatVoornaam}`,
     html: brandedLayout({ titel: `${bedrijf} wil kennismaken!`, body }),
@@ -233,13 +239,15 @@ ${opmerking ? `<p style="padding:12px;background:#fff8e1;border-left:3px solid #
 export async function sendKandidaatVoorgesteld({
   naar,
   kandidaatVoornaam,
+  from,
 }: {
   naar: string;
   kandidaatVoornaam: string;
+  from?: string;
 }) {
   const body = await renderMailTemplate("kandidaat_voorgesteld", { voornaam: kandidaatVoornaam });
   return resend.emails.send({
-    from: FROM,
+    from: from ?? FROM,
     to: naar,
     subject: "Je bent voorgesteld — wachten op reactie",
     html: brandedLayout({ titel: "Je bent voorgesteld", body }),
@@ -253,13 +261,15 @@ export async function sendKandidaatVoorgesteld({
 export async function sendKandidaatAfwijzing({
   naar,
   kandidaatVoornaam,
+  from,
 }: {
   naar: string;
   kandidaatVoornaam: string;
+  from?: string;
 }) {
   const body = await renderMailTemplate("kandidaat_afwijzing", { voornaam: kandidaatVoornaam });
   return resend.emails.send({
-    from: FROM,
+    from: from ?? FROM,
     to: naar,
     subject: "Voorstel afgerond — we gaan voor je verder",
     html: brandedLayout({ titel: "Update over je voorstel", body }),
@@ -277,6 +287,7 @@ export async function sendKennismakingReminder({
   contact_telefoon,
   locatie_url,
   kennismaking_op,
+  from,
 }: {
   naar: string;
   kandidaatVoornaam: string;
@@ -285,6 +296,7 @@ export async function sendKennismakingReminder({
   contact_telefoon: string | null;
   locatie_url: string | null;
   kennismaking_op: string;
+  from?: string;
 }) {
   const tijd = new Date(kennismaking_op).toLocaleString("nl-NL", {
     dateStyle: "full",
@@ -304,7 +316,7 @@ ${intro}
 </table>
 <p style="margin:16px 0 0 0;color:#666;">Veel succes — je kunt het!</p>`;
   return resend.emails.send({
-    from: FROM,
+    from: from ?? FROM,
     to: naar,
     subject: `Over 1 uur: kennismaking bij ${bedrijf}`,
     html: brandedLayout({ titel: "Kennismaking over 1 uur", body }),
@@ -317,13 +329,15 @@ ${intro}
 export async function sendKandidaatPlaatsing({
   naar,
   kandidaatVoornaam,
+  from,
 }: {
   naar: string;
   kandidaatVoornaam: string;
+  from?: string;
 }) {
   const body = await renderMailTemplate("kandidaat_plaatsing", { voornaam: kandidaatVoornaam });
   return resend.emails.send({
-    from: FROM,
+    from: from ?? FROM,
     to: naar,
     subject: "Gefeliciteerd met je nieuwe baan!",
     html: brandedLayout({ titel: "Je bent geplaatst!", body }),
@@ -402,13 +416,15 @@ function inlogBlok(email: string, wachtwoord: string) {
 export async function sendKandidaatStatusAfwijzing({
   naar,
   kandidaatVoornaam,
+  from,
 }: {
   naar: string;
   kandidaatVoornaam: string;
+  from?: string;
 }) {
   const body = await renderMailTemplate("kandidaat_status_afwijzing", { voornaam: kandidaatVoornaam });
   return resend.emails.send({
-    from: FROM,
+    from: from ?? FROM,
     to: naar,
     subject: "Update vanuit GRYWO",
     html: brandedLayout({ titel: "Bedankt voor je tijd", body }),

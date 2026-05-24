@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendReminderMail, sendKennismakingReminder } from "@/utils/email";
+import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent, werkdagenSinds, isWerkdag } from "@/utils/voorstel-log";
 
 export async function GET(request: Request) {
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
   const grensTot = new Date(nu.getTime() + 90 * 60 * 1000).toISOString();
   const { data: aanstaand } = await admin
     .from("voorstellen")
-    .select("id, tenant_id, kandidaat_id, kennismaking_op, bedrijf, contactpersoon, contact_telefoon, locatie_url, kandidaat:kandidaten(voornaam, email)")
+    .select("id, tenant_id, kandidaat_id, setter_id, kennismaking_op, bedrijf, contactpersoon, contact_telefoon, locatie_url, kandidaat:kandidaten(voornaam, email)")
     .eq("status", "uitnodigen")
     .is("kennismaking_reminder_sent", null)
     .not("kennismaking_op", "is", null)
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
   for (const v of aanstaand ?? []) {
     const k = v.kandidaat as unknown as { voornaam: string; email: string | null } | null;
     if (!k?.email) continue;
+    const kmFrom = await getSetterFrom(v.setter_id);
     try {
       await sendKennismakingReminder({
         naar: k.email,
@@ -48,6 +50,7 @@ export async function GET(request: Request) {
         contact_telefoon: v.contact_telefoon,
         locatie_url: v.locatie_url,
         kennismaking_op: v.kennismaking_op,
+        from: kmFrom,
       });
       await admin.from("voorstellen")
         .update({ kennismaking_reminder_sent: new Date().toISOString() })
@@ -119,6 +122,7 @@ export async function GET(request: Request) {
 
       if (!veld) continue;
 
+      const remFrom = await getSetterFrom(v.setter_id);
       try {
         await sendReminderMail({
           naar: v.opdrachtgever_email,
@@ -127,6 +131,7 @@ export async function GET(request: Request) {
           token: v.token,
           reminderNr: nr,
           laatsteDag,
+          from: remFrom,
         });
         await admin.from("voorstellen").update({ [veld]: new Date().toISOString() }).eq("id", v.id);
         if (v.tenant_id && v.kandidaat_id) {
