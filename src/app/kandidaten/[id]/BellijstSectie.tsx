@@ -194,12 +194,9 @@ function BellijstItemRij({ item, kandidaatId }: { item: BellijstItem; kandidaatI
           {item.functie && <span>{item.functie}</span>}
           {item.plaats && <span>{item.plaats}</span>}
           {item.telefoon && (
-            <span className="inline-flex items-center gap-1">
-              <a href={telLink(item.telefoon)} className="text-[#333399] hover:underline inline-flex items-center gap-1">
-                <Phone size={11} /> {item.telefoon}
-              </a>
-              <BelKnop nummer={item.telefoon} />
-            </span>
+            <a href={telLink(item.telefoon)} className="text-[#333399] hover:underline inline-flex items-center gap-1">
+              <Phone size={11} /> {item.telefoon}
+            </a>
           )}
           {item.website && (
             <a href={item.website.startsWith("http") ? item.website : `https://${item.website}`} target="_blank" rel="noopener noreferrer" className="text-[#333399] hover:underline inline-flex items-center gap-1">
