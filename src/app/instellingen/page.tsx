@@ -6,6 +6,7 @@ import { updateMailConfig } from "./actions";
 import { nieuwMailAccount, verwijderMailAccount, maakPrimair } from "./mail-actions";
 import { updateMailTemplate, resetMailTemplate } from "./template-actions";
 import { TEMPLATE_META, DEFAULT_BODIES, type TemplateSleutel } from "@/utils/mail-templates";
+import { TourHerstartKnop } from "./TourHerstartKnop";
 
 export default async function InstellingenPage({
   searchParams,
@@ -97,9 +98,12 @@ export default async function InstellingenPage({
             </div>
           )}
 
-          <button type="submit" className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-8 py-2 rounded-md text-sm">
-            Profiel opslaan
-          </button>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <button type="submit" className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-8 py-2 rounded-md text-sm">
+              Profiel opslaan
+            </button>
+            <TourHerstartKnop />
+          </div>
         </form>
 
         {/* Mailboxen */}
