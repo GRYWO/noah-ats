@@ -39,6 +39,34 @@ export default async function OpdrachtgeverDetail({
     .order("primair", { ascending: false })
     .order("achternaam", { ascending: true });
 
+  // Bellijst-items die aan deze relatie zijn gekoppeld (welke kandidaten zijn hier voorgesteld)
+  const { data: bellijstItems } = await supabase
+    .from("bellijst_items")
+    .select(`
+      id, functie, label, updated_at,
+      bellijst:bellijsten(
+        id, naam, created_at,
+        kandidaat:kandidaten(id, voornaam, tussenvoegsel, achternaam)
+      )
+    `)
+    .eq("opdrachtgever_id", id)
+    .order("updated_at", { ascending: false });
+
+  const ITEM_LABEL_KLEUR: Record<string, string> = {
+    gebeld:         "bg-blue-50 text-blue-700",
+    callback:       "bg-amber-50 text-amber-700",
+    geinteresseerd: "bg-emerald-50 text-emerald-700",
+    niet_bellen:    "bg-gray-100 text-gray-600",
+    afgewezen:      "bg-red-50 text-red-700",
+  };
+  const ITEM_LABEL_TEKST: Record<string, string> = {
+    gebeld:         "Gebeld",
+    callback:       "Terugbellen",
+    geinteresseerd: "Geïnteresseerd",
+    niet_bellen:    "Niet bellen",
+    afgewezen:      "Afgewezen",
+  };
+
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="opdrachtgevers" />
@@ -197,6 +225,60 @@ export default async function OpdrachtgeverDetail({
             </table>
           ) : (
             <p className="text-sm text-gray-500">Geen contactpersonen.</p>
+          )}
+        </div>
+
+        {/* Bellijsten: welke kandidaten zijn hier voorgesteld */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
+          <h2 className="font-bold text-gray-800 mb-4 pb-2 border-b">Voorgesteld vanuit bellijst</h2>
+          {bellijstItems && bellijstItems.length > 0 ? (
+            <table className="w-full text-sm">
+              <thead className="text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="text-left py-2">Kandidaat</th>
+                  <th className="text-left py-2">Functie</th>
+                  <th className="text-left py-2">Label</th>
+                  <th className="text-left py-2">Bellijst</th>
+                  <th className="text-left py-2">Gekoppeld</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bellijstItems.map((it) => {
+                  const bl = it.bellijst as unknown as {
+                    id: string;
+                    naam: string;
+                    created_at: string;
+                    kandidaat: { id: string; voornaam: string; tussenvoegsel: string | null; achternaam: string } | null;
+                  } | null;
+                  const k = bl?.kandidaat ?? null;
+                  return (
+                    <tr key={it.id} className="border-t">
+                      <td className="py-3">
+                        {k ? (
+                          <Link href={`/kandidaten/${k.id}`} className="font-semibold text-[#333399] hover:underline">
+                            {k.voornaam} {k.tussenvoegsel ? `${k.tussenvoegsel} ` : ""}{k.achternaam}
+                          </Link>
+                        ) : <span className="text-gray-400">—</span>}
+                      </td>
+                      <td className="py-3 text-gray-600">{it.functie ?? "—"}</td>
+                      <td className="py-3">
+                        {it.label ? (
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ITEM_LABEL_KLEUR[it.label] ?? "bg-gray-100 text-gray-600"}`}>
+                            {ITEM_LABEL_TEKST[it.label] ?? it.label}
+                          </span>
+                        ) : <span className="text-gray-400 text-xs">—</span>}
+                      </td>
+                      <td className="py-3 text-gray-600">{bl?.naam ?? "—"}</td>
+                      <td className="py-3 text-xs text-gray-500">
+                        {new Date(it.updated_at).toLocaleDateString("nl-NL", { day: "2-digit", month: "short", year: "numeric" })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-sm text-gray-500">Nog geen kandidaten voorgesteld via een bellijst.</p>
           )}
         </div>
 
