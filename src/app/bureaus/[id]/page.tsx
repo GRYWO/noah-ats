@@ -41,7 +41,7 @@ export default async function BureauDetail({
     .eq("tenant_id", id);
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="bureaus" />
 
       <div className="p-8 max-w-5xl mx-auto">

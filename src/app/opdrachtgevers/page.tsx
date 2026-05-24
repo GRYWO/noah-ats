@@ -43,7 +43,7 @@ export default async function OpdrachtgeversPage({
   (alle ?? []).forEach(o => { counts[o.status] = (counts[o.status] ?? 0) + 1; });
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="opdrachtgevers" />
 
       <div className="p-8 max-w-7xl mx-auto">

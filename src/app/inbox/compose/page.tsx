@@ -10,7 +10,7 @@ export default async function ComposePage({
   const { reply_to, subject, error } = await searchParams;
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="inbox" />
 
       <div className="p-8 max-w-3xl mx-auto">

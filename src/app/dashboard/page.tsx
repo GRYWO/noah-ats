@@ -53,7 +53,7 @@ export default async function Dashboard() {
   const isSetter = myProfile?.rol === "setter";
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="dashboard" />
 
       <div className="p-8 max-w-7xl mx-auto">

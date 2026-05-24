@@ -35,7 +35,7 @@ export default async function KandidatenPage({
     .order("created_at", { ascending: false });
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="kandidaten" />
 
       <div className="p-8 max-w-7xl mx-auto">

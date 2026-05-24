@@ -107,7 +107,7 @@ export default async function KandidaatDetail({
     k.score >= 50 ? "text-amber-600" : "text-red-500";
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="kandidaten" />
 
       <div className="p-8 max-w-6xl mx-auto">

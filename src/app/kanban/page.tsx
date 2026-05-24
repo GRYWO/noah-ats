@@ -12,7 +12,7 @@ export default async function KanbanPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="kanban" />
 
       <div className="p-6">

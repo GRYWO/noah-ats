@@ -43,7 +43,7 @@ export default async function MailDetailPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="inbox" />
 
       <div className="p-8 max-w-4xl mx-auto">

@@ -27,7 +27,7 @@ export default async function BureausPage({
     .order("created_at", { ascending: false });
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="bureaus" />
 
       <div className="p-8 max-w-6xl mx-auto">

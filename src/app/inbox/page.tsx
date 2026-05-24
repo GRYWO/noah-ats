@@ -25,7 +25,7 @@ export default async function InboxPage({
 
   if (!accounts || accounts.length === 0) {
     return (
-      <main className="min-h-screen bg-[#f4f4f7]">
+      <main className="min-h-screen bg-[#f4f4f7] pl-16">
         <TopBar active="inbox" />
         <div className="p-8 max-w-3xl mx-auto">
           <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg p-4">
@@ -106,7 +106,7 @@ export default async function InboxPage({
   const isLeeg = mappen.length === 0;
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="inbox" />
       <InboxClient
         userId={user!.id}

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Loading() {
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <div className="bg-[#333399] h-16 flex items-center px-6 shadow-md">
         <Link href="/dashboard" className="flex items-baseline">
           <span className="text-white text-3xl font-black tracking-tighter">noah</span>

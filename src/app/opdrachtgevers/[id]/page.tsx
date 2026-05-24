@@ -40,7 +40,7 @@ export default async function OpdrachtgeverDetail({
     .order("achternaam", { ascending: true });
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="opdrachtgevers" />
 
       <div className="p-8 max-w-5xl mx-auto">

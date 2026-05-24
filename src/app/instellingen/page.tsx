@@ -47,7 +47,7 @@ export default async function InstellingenPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#f4f4f7]">
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="instellingen" />
 
       <div className="p-8 max-w-3xl mx-auto">
