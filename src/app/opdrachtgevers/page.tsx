@@ -84,7 +84,7 @@ export default async function OpdrachtgeversPage({
         {/* Nieuw form */}
         <details className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
           <summary className="cursor-pointer p-4 bg-[#333399] text-white font-semibold">
-            + Nieuwe relatie
+            Nieuwe relatie
           </summary>
           <form action={nieuweOpdrachtgever} className="p-6 grid grid-cols-2 gap-4">
             <div>
@@ -168,7 +168,7 @@ export default async function OpdrachtgeversPage({
             </table>
           ) : (
             <div className="p-12 text-center text-gray-500 text-sm">
-              Nog geen relaties. Klap &quot;+ Nieuwe relatie&quot; open om je eerste toe te voegen.
+              Nog geen relaties. Klap &quot;Nieuwe relatie&quot; open om je eerste toe te voegen.
             </div>
           )}
         </div>

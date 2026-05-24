@@ -126,7 +126,7 @@ export default async function OpdrachtgeverDetail({
           <h2 className="font-bold text-gray-800 mb-4 pb-2 border-b">Contactpersonen ({contacten?.length ?? 0})</h2>
 
           <div className="mb-6 bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">+ Nieuwe contactpersoon</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Nieuwe contactpersoon</h3>
             <form action={nieuweContactpersoon} className="grid grid-cols-2 gap-3">
               <input type="hidden" name="opdrachtgever_id" value={o.id} />
               <div>
