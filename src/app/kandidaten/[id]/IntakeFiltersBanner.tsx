@@ -58,8 +58,7 @@ export function IntakeFiltersBanner(props: Props) {
       <div className="px-5 py-4">
         <Form {...props} />
         <p className="text-xs text-amber-700 mt-3 italic">
-          Vul de functies zo breed mogelijk in en gebruik deze zoekfilters + &quot;bemiddelaar op nee&quot; inclusief onbekend
-          zodat de setter snel en goed kan werken.
+          Tip: vul de functies zo breed mogelijk in zodat de setter snel passende bedrijven kan vinden.
         </p>
       </div>
     </div>
