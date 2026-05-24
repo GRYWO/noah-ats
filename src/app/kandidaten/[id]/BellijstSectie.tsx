@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall } from "lucide-react";
+import Link from "next/link";
 import {
   uploadBellijst,
   updateBellijstItem,
@@ -49,13 +50,21 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
     <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
       <div className="flex items-center justify-between mb-4 pb-2 border-b">
         <h2 className="font-bold text-gray-800">Bellijsten (Jobdigger)</h2>
-        <button
-          type="button"
-          onClick={() => setShowUpload(!showUpload)}
-          className="text-xs text-[#333399] hover:underline font-semibold inline-flex items-center gap-1"
-        >
-          <Plus size={14} /> Nieuwe bellijst
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/jobdigger?kandidaat=${kandidaatId}`}
+            className="text-xs text-[#333399] hover:underline font-semibold inline-flex items-center gap-1"
+          >
+            <PhoneCall size={14} /> Jobdigger openen
+          </Link>
+          <button
+            type="button"
+            onClick={() => setShowUpload(!showUpload)}
+            className="text-xs text-[#333399] hover:underline font-semibold inline-flex items-center gap-1"
+          >
+            <Plus size={14} /> Nieuwe bellijst
+          </button>
+        </div>
       </div>
 
       {showUpload && (

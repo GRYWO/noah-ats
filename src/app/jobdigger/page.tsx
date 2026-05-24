@@ -2,13 +2,29 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { ExternalLink } from "lucide-react";
+import { DropZone } from "./DropZone";
 
 const JOBDIGGER_URL = "https://jobdigger.nl/auth/login";
 
-export default async function JobdiggerPage() {
+export default async function JobdiggerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kandidaat?: string }>;
+}) {
+  const { kandidaat: kandidaatId } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  let kandidaatNaam: string | null = null;
+  if (kandidaatId) {
+    const { data: k } = await supabase
+      .from("kandidaten")
+      .select("voornaam, achternaam")
+      .eq("id", kandidaatId)
+      .single();
+    if (k) kandidaatNaam = `${k.voornaam} ${k.achternaam}`;
+  }
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -31,7 +47,11 @@ export default async function JobdiggerPage() {
           </a>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ height: "calc(100vh - 110px)" }}>
+        {kandidaatId && kandidaatNaam && (
+          <DropZone kandidaatId={kandidaatId} kandidaatNaam={kandidaatNaam} />
+        )}
+
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ height: kandidaatId ? "calc(100vh - 200px)" : "calc(100vh - 110px)" }}>
           <iframe
             src={JOBDIGGER_URL}
             className="w-full h-full border-0"
