@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { MapPin, GraduationCap, Briefcase, Languages, Car, Calendar } from "lucide-react";
+import { MapPin, GraduationCap, Briefcase, Languages, Car, Calendar, Wallet, Clock, FileCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,9 @@ export default async function VoorstelprofielPage({
     .select(`
       id, voornaam, tussenvoegsel, achternaam, leeftijd, woonplaats,
       opleiding, open_voor, rijbewijs, eigen_vervoer, score,
-      profielschets, cv_geparseerd, voorstelprofiel_extra, max_reisafstand_km
+      profielschets, cv_geparseerd, voorstelprofiel_extra, max_reisafstand_km,
+      soort_dienstverband, werving_of_uitzend, salaris_indicatie, tarief_ws,
+      bijzonderheden
     `)
     .eq("voorstelprofiel_token", token)
     .single();
@@ -113,6 +115,23 @@ export default async function VoorstelprofielPage({
             <Card icon={<Car size={16} />} titel="Mobiliteit">
               {k.rijbewijs && <div>Rijbewijs: <b>{k.rijbewijs}</b></div>}
               {k.eigen_vervoer && <div>Eigen vervoer</div>}
+            </Card>
+          )}
+          {k.soort_dienstverband && (
+            <Card icon={<Clock size={16} />} titel="Dienstverband">
+              {k.soort_dienstverband}
+              {k.werving_of_uitzend && <div className="text-xs text-gray-500 mt-1">{k.werving_of_uitzend}</div>}
+            </Card>
+          )}
+          {k.salaris_indicatie && (
+            <Card icon={<Wallet size={16} />} titel="Salarisindicatie">
+              {k.salaris_indicatie}
+              {k.tarief_ws && <div className="text-xs text-gray-500 mt-1">Tarief W&amp;S: {k.tarief_ws}</div>}
+            </Card>
+          )}
+          {k.bijzonderheden && (
+            <Card icon={<FileCheck size={16} />} titel="Bijzonderheden">
+              {k.bijzonderheden}
             </Card>
           )}
           {extra && typeof extra === "object" && Object.keys(extra).map((label) => {

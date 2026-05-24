@@ -341,6 +341,7 @@ export default async function KandidaatDetail({
             cvGeparseerd={k.cv_geparseerd ?? null}
             voorstelprofielToken={k.voorstelprofiel_token ?? null}
             profielschets={k.profielschets ?? null}
+            intakeVoltooid={k.intake_voltooid ?? false}
           />
         )}
 

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Sparkles, Check, X, Loader2, ExternalLink, AlertTriangle } from "lucide-react";
 import { goedkeurenCv, afkeurenCv, updateProfielschets } from "./voorstelprofiel-actions";
+import { IntakeQuiz } from "./IntakeQuiz";
 
 type Geparseerd = {
   voornaam?: string;
@@ -29,6 +30,7 @@ type Props = {
   cvGeparseerd: Geparseerd | null;
   voorstelprofielToken: string | null;
   profielschets: string | null;
+  intakeVoltooid: boolean;
 };
 
 const STATUS_KLEUR: Record<string, string> = {
@@ -51,6 +53,7 @@ export function CvControle({
   cvGeparseerd,
   voorstelprofielToken,
   profielschets,
+  intakeVoltooid,
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [fout, setFout] = useState<string | null>(null);
@@ -165,6 +168,16 @@ export function CvControle({
             </div>
           )}
 
+          {cvGeparseerd && (cvGeparseerd.ontbrekend?.length ?? 0) > 0 && (
+            <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <IntakeQuiz
+                kandidaatId={kandidaatId}
+                ontbrekend={cvGeparseerd.ontbrekend ?? []}
+                intakeVoltooid={intakeVoltooid}
+              />
+            </div>
+          )}
+
           {cvGeparseerd && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-gray-50 rounded-lg p-4">
@@ -179,16 +192,6 @@ export function CvControle({
                 </dl>
               </div>
               <div className="space-y-3">
-                {cvGeparseerd.ontbrekend && cvGeparseerd.ontbrekend.length > 0 && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 mb-1">
-                      <AlertTriangle size={12} /> Ontbreekt — vraag bij intake
-                    </div>
-                    <ul className="text-xs text-amber-800 list-disc pl-4">
-                      {cvGeparseerd.ontbrekend.map((v, i) => <li key={i}>{v}</li>)}
-                    </ul>
-                  </div>
-                )}
                 {cvGeparseerd.rode_vlaggen && cvGeparseerd.rode_vlaggen.length > 0 && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-red-900 mb-1">

@@ -29,6 +29,15 @@ export type GeparseerdCV = {
   talen?: string;
   werkervaring?: string;
   vaardigheden?: string;
+  // Intake-velden (zelden in CV, vaak via gesprek)
+  soort_dienstverband?: string;
+  werving_of_uitzend?: string;
+  salaris_indicatie?: string;
+  max_reisafstand_km?: number;
+  blacklist_bedrijven?: string;
+  bijzonderheden?: string;
+  tarief_ws?: string;
+  omrekenfactor_uitzendbasis?: string;
   ontbrekend?: string[];
   rode_vlaggen?: string[];
 };
@@ -56,6 +65,8 @@ export async function parseCV(pdfBuffer: Buffer): Promise<GeparseerdCV> {
             text: `Je bent een Nederlandse recruiter-assistent. Lees dit CV en geef de gegevens terug als JSON.
 
 Velden (allemaal optioneel als ze niet in het CV staan):
+
+Basis (vaak in CV):
 - voornaam, tussenvoegsel, achternaam
 - email, telefoon, geboortedatum (YYYY-MM-DD), woonplaats, postcode, adres
 - nationaliteit
@@ -66,7 +77,21 @@ Velden (allemaal optioneel als ze niet in het CV staan):
 - talen (komma-gescheiden)
 - werkervaring (korte samenvatting van laatste 2-3 jobs)
 - vaardigheden (komma-gescheiden top vaardigheden)
-- ontbrekend: array van belangrijke velden die je MIST in het CV (bv "geboortedatum", "rijbewijs")
+
+Intake (zelden in CV — laat leeg als niet duidelijk):
+- soort_dienstverband (Fulltime / Parttime / Flex / Stage)
+- werving_of_uitzend (Werving en selectie / Uitzendbasis / Beide)
+- salaris_indicatie (bruto maandsalaris bv "3500" of "3500-4000")
+- max_reisafstand_km (getal, geen string)
+- blacklist_bedrijven (bedrijven waar kandidaat niet wil werken, komma-gescheiden)
+- bijzonderheden (medisch, beperkingen, persoonlijk, etc.)
+- tarief_ws (W&S tarief bv "15% bruto jaarsalaris")
+- omrekenfactor_uitzendbasis
+
+Meta:
+- ontbrekend: array van velden die ESSENTIEEL ZIJN voor de intake maar nog NIET ingevuld kunnen worden uit het CV. Kies uit deze lijst:
+  ["soort_dienstverband", "werving_of_uitzend", "salaris_indicatie", "max_reisafstand_km", "eigen_vervoer", "rijbewijs", "blacklist_bedrijven", "bijzonderheden", "tarief_ws"]
+  Vermeld alleen wat ECHT mist en relevant is.
 - rode_vlaggen: array van zorgen (bv "Lange gaten in werkervaring", "Veel korte dienstverbanden")
 
 Geef ALLEEN een geldig JSON-object terug, geen extra tekst, geen markdown-fences.`,

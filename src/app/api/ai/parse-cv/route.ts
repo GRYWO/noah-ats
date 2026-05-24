@@ -90,6 +90,16 @@ export async function POST(request: Request) {
   veld("open_voor", parsed.open_voor);
   veld("rijbewijs", parsed.rijbewijs);
   veld("eigen_vervoer", parsed.eigen_vervoer);
+  veld("soort_dienstverband", parsed.soort_dienstverband);
+  veld("werving_of_uitzend", parsed.werving_of_uitzend);
+  veld("salaris_indicatie", parsed.salaris_indicatie);
+  if (typeof parsed.max_reisafstand_km === "number") {
+    if (!h["max_reisafstand_km"]) update["max_reisafstand_km"] = parsed.max_reisafstand_km;
+  }
+  veld("blacklist_bedrijven", parsed.blacklist_bedrijven);
+  veld("bijzonderheden", parsed.bijzonderheden);
+  veld("tarief_ws", parsed.tarief_ws);
+  veld("omrekenfactor_uitzendbasis", parsed.omrekenfactor_uitzendbasis);
 
   await admin.from("kandidaten").update(update).eq("id", kandidaatId);
 
