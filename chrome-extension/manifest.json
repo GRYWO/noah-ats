@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Noah ATS — Embed Helper",
-  "version": "1.1.0",
-  "description": "Maakt Recruit Robin en Jobdigger bruikbaar binnen Noah ATS.",
+  "version": "1.2.0",
+  "description": "Maakt Robin en Jobdigger bruikbaar binnen Noah ATS en importeert Jobdigger-downloads automatisch naar de actieve kandidaat.",
   "host_permissions": [
     "https://app.recruitrobin.com/*",
     "https://*.recruitrobin.com/*",
@@ -12,8 +12,13 @@
     "https://*.noah-ats.nl/*"
   ],
   "permissions": [
-    "declarativeNetRequest"
+    "declarativeNetRequest",
+    "downloads",
+    "notifications"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "declarative_net_request": {
     "rule_resources": [
       {
