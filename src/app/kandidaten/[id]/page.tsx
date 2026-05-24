@@ -7,6 +7,7 @@ import { stuurVoorstel } from "./voorstel-actions";
 import { DeleteButton } from "./DeleteButton";
 import { CvUpload } from "./CvUpload";
 import { BellijstSectie } from "./BellijstSectie";
+import { IntakeFiltersBanner } from "./IntakeFiltersBanner";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -152,6 +153,19 @@ export default async function KandidaatDetail({
             </div>
           </div>
         </div>
+
+        {/* Intake zoekfilters voor de setter */}
+        {!isRecruiter && (
+          <IntakeFiltersBanner
+            kandidaatId={k.id}
+            voornaam={k.voornaam ?? ""}
+            open_voor={k.open_voor ?? null}
+            woonplaats={k.woonplaats ?? null}
+            max_reisafstand_km={k.max_reisafstand_km ?? null}
+            blacklist_bedrijven={k.blacklist_bedrijven ?? null}
+            voltooid={k.intake_zoekfilters_voltooid ?? false}
+          />
+        )}
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
