@@ -59,7 +59,8 @@ export async function sendVoorstelMail({
   voorstelprofielToken?: string | null;
   from?: string;
 }) {
-  const naam = `${kandidaat.voornaam} ${kandidaat.tussenvoegsel ?? ""} ${kandidaat.achternaam}`.replace(/\s+/g, " ").trim();
+  // Privacy: opdrachtgever ziet alleen voornaam — geen achternaam/email/telefoon.
+  const naam = (kandidaat.voornaam ?? "").trim() || "Kandidaat";
   const voorstelUrl = `${APP_URL}/voorstel/${token}`;
   const uitnodigenUrl = `${APP_URL}/voorstel/${token}/uitnodigen`;
 

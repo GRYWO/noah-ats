@@ -26,8 +26,10 @@ export default async function VoorstelprofielPage({
 
   if (!k) notFound();
 
-  const naam = `${k.voornaam ?? ""} ${k.tussenvoegsel ? k.tussenvoegsel + " " : ""}${k.achternaam ?? ""}`.trim();
-  const initials = `${k.voornaam?.[0] ?? ""}${k.achternaam?.[0] ?? ""}`.toUpperCase();
+  // Belangrijk: opdrachtgever mag de kandidaat niet zelf kunnen benaderen.
+  // Daarom tonen we alléén de voornaam — geen achternaam, geen email, geen telefoon.
+  const naam = (k.voornaam ?? "").trim();
+  const initials = (k.voornaam?.[0] ?? "?").toUpperCase();
   const cv = (k.cv_geparseerd ?? {}) as { talen?: string; werkervaring?: string; vaardigheden?: string };
   const extra = (k.voorstelprofiel_extra ?? {}) as Record<string, unknown>;
 

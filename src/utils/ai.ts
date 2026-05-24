@@ -106,7 +106,8 @@ export async function genereerProfielschets(data: {
   notitie?: string | null;
   max_reisafstand_km?: number | null;
 }): Promise<string> {
-  const naam = `${data.voornaam ?? ""} ${data.achternaam ?? ""}`.trim() || "Deze kandidaat";
+  // Privacy: gebruik ALLEEN voornaam in de schets. Geen achternaam.
+  const voornaam = (data.voornaam ?? "").trim() || "Deze kandidaat";
 
   const res = await client().messages.create({
     model: MODEL,
@@ -116,8 +117,10 @@ export async function genereerProfielschets(data: {
         role: "user",
         content: `Schrijf een professionele profielschets in het Nederlands voor de volgende kandidaat.
 
-Eisen:
-- Schrijf in de DERDE PERSOON (bv "${naam} is...", niet "Ik ben...")
+EISEN (strikt):
+- Schrijf in de DERDE PERSOON (bv "${voornaam} is...", niet "Ik ben...")
+- Gebruik ALLEEN de voornaam, NOOIT de achternaam
+- Vermeld GEEN e-mailadres, telefoonnummer of andere contactgegevens
 - 100 tot 180 woorden
 - Drie alinea's: (1) persoonlijke introductie + woonplaats/opleiding, (2) werkervaring + vaardigheden, (3) ambitie + wat hij/zij zoekt
 - Professioneel maar warm; geen overdreven marketingtaal
@@ -125,8 +128,8 @@ Eisen:
 - Géén kopjes
 - Geef alleen de schets-tekst terug, geen extra uitleg
 
-Kandidaat-gegevens:
-- Naam: ${naam}
+Kandidaat-gegevens (alleen voor jou ter context):
+- Voornaam: ${voornaam}
 ${data.leeftijd ? `- Leeftijd: ${data.leeftijd}` : ""}
 ${data.woonplaats ? `- Woonplaats: ${data.woonplaats}` : ""}
 ${data.opleiding ? `- Opleiding: ${data.opleiding}` : ""}
@@ -134,7 +137,7 @@ ${data.open_voor ? `- Open voor functies: ${data.open_voor}` : ""}
 ${data.werkervaring ? `- Werkervaring: ${data.werkervaring}` : ""}
 ${data.vaardigheden ? `- Vaardigheden: ${data.vaardigheden}` : ""}
 ${data.max_reisafstand_km ? `- Max reisafstand: ${data.max_reisafstand_km} km` : ""}
-${data.notitie ? `- Notitie van setter: ${data.notitie}` : ""}`,
+${data.notitie ? `- Interne notitie: ${data.notitie}` : ""}`,
       },
     ],
   });
