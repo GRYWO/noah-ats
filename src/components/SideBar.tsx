@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronsLeft,
   ChevronsRight,
+  Sparkles,
 } from "lucide-react";
 
 type Item = {
@@ -50,6 +51,7 @@ export function SideBar({ active, userEmail, isSuperAdmin, isSetter, logoutActio
     { key: "kandidaten",   href: "/kandidaten",   label: "Kandidaten",  Icon: Users,           sectie: 2 },
     { key: "kanban",       href: "/kanban",       label: "Kanban",      Icon: KanbanSquare,    sectie: 2 },
     { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",     Icon: Contact,         sectie: 2 },
+    ...(!isSetter ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 2 } as Item] : []),
     { key: "inbox",        href: "/inbox",        label: "E-mail",      Icon: Mail,            sectie: 3 },
     ...(!isSetter ? [{ key: "setters", href: "/setters", label: "Setters", Icon: UserCog, sectie: 4 } as Item] : []),
     { key: "instellingen", href: "/instellingen", label: "Instellingen", Icon: Settings,       sectie: 4 },

@@ -4,7 +4,7 @@ import { logout } from "@/app/login/actions";
 import { SideBar } from "./SideBar";
 
 type Props = {
-  active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "opdrachtgevers" | "inbox" | "setters" | "instellingen";
+  active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "opdrachtgevers" | "robin" | "inbox" | "setters" | "instellingen";
 };
 
 export async function TopBar({ active }: Props) {
