@@ -8,6 +8,7 @@ import { DeleteButton } from "./DeleteButton";
 import { CvUpload } from "./CvUpload";
 import { BellijstSectie } from "./BellijstSectie";
 import { IntakeFiltersBanner } from "./IntakeFiltersBanner";
+import { CvControle } from "./CvControle";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -330,6 +331,18 @@ export default async function KandidaatDetail({
             <p className="text-sm text-gray-500">Nog geen voorstellen verstuurd voor deze kandidaat.</p>
           )}
         </div>
+
+        {/* CV-controle & voorstelprofiel — admin/recruiter only voor edit; setter ziet via voorstelprofiel-link */}
+        {!isSetter && (
+          <CvControle
+            kandidaatId={k.id}
+            cvUrl={k.cv_url ?? null}
+            cvControleStatus={k.cv_controle_status ?? "niet_gecontroleerd"}
+            cvGeparseerd={k.cv_geparseerd ?? null}
+            voorstelprofielToken={k.voorstelprofiel_token ?? null}
+            profielschets={k.profielschets ?? null}
+          />
+        )}
 
         {/* Bellijsten (Jobdigger) */}
         {!isRecruiter && (

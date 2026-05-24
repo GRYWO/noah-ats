@@ -48,6 +48,7 @@ export async function sendVoorstelMail({
   kandidaat,
   bericht,
   token,
+  voorstelprofielToken,
   from,
 }: {
   naar: string;
@@ -55,6 +56,7 @@ export async function sendVoorstelMail({
   kandidaat: Kandidaat;
   bericht: string | null;
   token: string;
+  voorstelprofielToken?: string | null;
   from?: string;
 }) {
   const naam = `${kandidaat.voornaam} ${kandidaat.tussenvoegsel ?? ""} ${kandidaat.achternaam}`.replace(/\s+/g, " ").trim();
@@ -83,6 +85,12 @@ ${intro}
   <tr><td colspan="2" style="padding:0 0 12px 0;border-bottom:1px solid #e5e5ec;"><b style="font-size:18px;">${naam}</b></td></tr>
   ${profielRows}
 </table>
+
+${voorstelprofielToken ? `
+<p style="margin:24px 0 8px 0;text-align:center;">
+  <a href="${APP_URL}/voorstelprofiel/${voorstelprofielToken}" style="display:inline-block;background-color:#fff;color:${GRYWO_KLEUR};border:2px solid ${GRYWO_KLEUR};text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">Bekijk volledig voorstelprofiel</a>
+</p>
+` : ""}
 
 <p style="margin:24px 0 16px 0;font-weight:600;text-align:center;">Wil je deze kandidaat uitnodigen voor een kennismaking?</p>
 

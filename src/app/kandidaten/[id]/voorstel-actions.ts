@@ -49,7 +49,7 @@ export async function stuurVoorstel(formData: FormData) {
   // Kandidaat ophalen voor mail
   const { data: kandidaat } = await supabase
     .from("kandidaten")
-    .select("voornaam, tussenvoegsel, achternaam, leeftijd, woonplaats, opleiding, open_voor, tarief_ws, score, email")
+    .select("voornaam, tussenvoegsel, achternaam, leeftijd, woonplaats, opleiding, open_voor, tarief_ws, score, email, voorstelprofiel_token")
     .eq("id", kandidaatId)
     .single();
 
@@ -65,6 +65,7 @@ export async function stuurVoorstel(formData: FormData) {
         kandidaat,
         bericht,
         token: nieuw.token,
+        voorstelprofielToken: kandidaat.voorstelprofiel_token,
         from: setterFrom,
       });
     } catch (e) {
