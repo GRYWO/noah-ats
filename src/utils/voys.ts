@@ -13,7 +13,7 @@ const VOIPGRID_API = "https://partner.voipgrid.nl/api/clicktodial/";
 function authHeader(): string {
   const token = process.env.VOYS_API_TOKEN;
   if (!token) throw new Error("VOYS_API_TOKEN niet geconfigureerd");
-  return `Token ${token}`;
+  return `Bearer ${token}`;
 }
 
 /**
