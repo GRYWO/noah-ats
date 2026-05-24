@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Noah ATS — Robin Embed",
+  "version": "1.0.0",
+  "description": "Maakt Recruit Robin bruikbaar binnen Noah ATS (noah-ats.nl/robin).",
+  "host_permissions": [
+    "https://app.recruitrobin.com/*",
+    "https://*.recruitrobin.com/*",
+    "https://noah-ats.nl/*",
+    "https://*.noah-ats.nl/*"
+  ],
+  "permissions": [
+    "declarativeNetRequest"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "robin-headers",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}
