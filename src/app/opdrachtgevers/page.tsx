@@ -49,14 +49,14 @@ export default async function OpdrachtgeversPage({
       <div className="p-8 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Opdrachtgevers</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Relaties</h1>
             <p className="text-gray-500 text-sm mt-1">{totaal} {status ? `(${STATUS_LABELS[status]})` : "totaal"}</p>
           </div>
         </div>
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "verwijderd" ? "Opdrachtgever verwijderd" : "Opgeslagen"}
+            {ok === "verwijderd" ? "Relatie verwijderd" : "Opgeslagen"}
           </div>
         )}
         {error && (
@@ -84,7 +84,7 @@ export default async function OpdrachtgeversPage({
         {/* Nieuw form */}
         <details className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
           <summary className="cursor-pointer p-4 bg-[#333399] text-white font-semibold">
-            + Nieuwe opdrachtgever
+            + Nieuwe relatie
           </summary>
           <form action={nieuweOpdrachtgever} className="p-6 grid grid-cols-2 gap-4">
             <div>
@@ -168,7 +168,7 @@ export default async function OpdrachtgeversPage({
             </table>
           ) : (
             <div className="p-12 text-center text-gray-500 text-sm">
-              Nog geen opdrachtgevers. Klap &quot;+ Nieuwe opdrachtgever&quot; open om je eerste toe te voegen.
+              Nog geen relaties. Klap &quot;+ Nieuwe relatie&quot; open om je eerste toe te voegen.
             </div>
           )}
         </div>

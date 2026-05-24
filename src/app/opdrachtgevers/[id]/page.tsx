@@ -45,7 +45,7 @@ export default async function OpdrachtgeverDetail({
 
       <div className="p-8 max-w-5xl mx-auto">
         <Link href="/opdrachtgevers" className="text-sm text-gray-600 hover:text-[#333399] mb-3 inline-block">
-          ← Terug naar opdrachtgevers
+          ← Terug naar relaties
         </Link>
 
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">

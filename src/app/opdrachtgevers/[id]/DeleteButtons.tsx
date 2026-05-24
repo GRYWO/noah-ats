@@ -10,7 +10,7 @@ export function DeleteOpdrachtgeverButton({ id, naam }: { id: string; naam: stri
     >
       <input type="hidden" name="id" value={id} />
       <button type="submit" className="text-red-600 hover:text-red-700 text-sm">
-        Opdrachtgever verwijderen
+        Relatie verwijderen
       </button>
     </form>
   );
