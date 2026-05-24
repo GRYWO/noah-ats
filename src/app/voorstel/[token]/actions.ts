@@ -41,13 +41,83 @@ export async function uitnodigen(formData: FormData) {
     redirect(`/voorstel/${token}?error=${encodeURIComponent(error.message)}`);
   }
 
-  // Mail naar kandidaat sturen
+  // Voorstel ophalen voor tenant_id + kandidaat
   const { data: voorstel } = await admin
     .from("voorstellen")
     .select("*, kandidaat:kandidaten(voornaam, email)")
     .eq("token", token)
     .single();
 
+  // Auto-koppel naar CRM: maak/update relatie + contactpersoon
+  if (voorstel?.tenant_id && bedrijf) {
+    try {
+      // Bestaat de relatie al? (op naam binnen tenant)
+      const { data: bestaand } = await admin
+        .from("opdrachtgevers")
+        .select("id, status")
+        .eq("tenant_id", voorstel.tenant_id)
+        .ilike("naam", bedrijf)
+        .maybeSingle();
+
+      let relatieId: string;
+      if (bestaand) {
+        relatieId = bestaand.id;
+        // Status upgraden: lead → prospect → klant (laat klant en partner met rust)
+        if (bestaand.status === "lead" || bestaand.status === "ex_klant") {
+          await admin.from("opdrachtgevers").update({
+            status: "prospect",
+            laatste_contact: new Date().toISOString(),
+          }).eq("id", relatieId);
+        } else {
+          await admin.from("opdrachtgevers").update({
+            laatste_contact: new Date().toISOString(),
+          }).eq("id", relatieId);
+        }
+      } else {
+        // Nieuwe relatie aanmaken
+        const { data: nieuw } = await admin.from("opdrachtgevers").insert({
+          tenant_id: voorstel.tenant_id,
+          naam: bedrijf,
+          status: "prospect",
+          laatste_contact: new Date().toISOString(),
+          eigenaar_id: voorstel.setter_id,
+        }).select("id").single();
+        if (nieuw) relatieId = nieuw.id;
+        else relatieId = "";
+      }
+
+      // Contactpersoon: check op email + opdrachtgever_id
+      if (relatieId && contactpersoon) {
+        const naamDelen = contactpersoon.split(" ");
+        const voornaam = naamDelen[0];
+        const achternaam = naamDelen.slice(1).join(" ") || "?";
+
+        // Bestaat contact al?
+        const { data: bestaandContact } = await admin
+          .from("contactpersonen")
+          .select("id")
+          .eq("opdrachtgever_id", relatieId)
+          .eq("email", contact_email)
+          .maybeSingle();
+
+        if (!bestaandContact) {
+          await admin.from("contactpersonen").insert({
+            opdrachtgever_id: relatieId,
+            tenant_id: voorstel.tenant_id,
+            voornaam,
+            achternaam,
+            email: contact_email,
+            telefoon: contact_telefoon,
+            primair: true,
+          });
+        }
+      }
+    } catch (e) {
+      console.error("CRM-koppeling mislukt:", e);
+    }
+  }
+
+  // Mail naar kandidaat sturen
   if (voorstel?.kandidaat?.email) {
     try {
       await sendKandidaatBevestiging({
@@ -69,6 +139,7 @@ export async function uitnodigen(formData: FormData) {
   }
 
   revalidatePath(`/voorstel/${token}`);
+  revalidatePath("/opdrachtgevers");
   redirect(`/voorstel/${token}/bedankt`);
 }
 
