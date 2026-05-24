@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
-import { fetchInbox, fetchMappen, fetchMailDetail, type InboxBericht, type MailMap, type MailDetail } from "@/utils/mail";
+import { fetchAllInboxData, type InboxBericht, type MailMap, type MailDetail } from "@/utils/mail";
 import { logout } from "../login/actions";
 import { InboxClient } from "./InboxClient";
 
@@ -41,13 +41,16 @@ export default async function InboxPage({
 
   if (profile?.mail_adres && secret?.mail_wachtwoord) {
     try {
-      [berichten, mappen] = await Promise.all([
-        fetchInbox(profile.mail_adres, secret.mail_wachtwoord, 30, mapPad),
-        fetchMappen(profile.mail_adres, secret.mail_wachtwoord),
-      ]);
-      if (uid) {
-        geopendeMail = await fetchMailDetail(profile.mail_adres, secret.mail_wachtwoord, parseInt(uid), mapPad);
-      }
+      // ÉÉN IMAP-sessie voor mappen + inbox + mail detail (2-3x sneller)
+      const result = await fetchAllInboxData({
+        mailAdres: profile.mail_adres,
+        encryptedPassword: secret.mail_wachtwoord,
+        mapPad,
+        uid: uid ? parseInt(uid) : undefined,
+      });
+      mappen = result.mappen;
+      berichten = result.berichten;
+      geopendeMail = result.mail;
     } catch (e) {
       fetchError = (e as Error).message;
     }
