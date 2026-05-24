@@ -27,6 +27,14 @@ export default async function VoorstellenPage({
   const { status, q } = await searchParams;
   const supabase = await createClient();
 
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("rol")
+    .eq("id", user?.id ?? "")
+    .single();
+  const isSetter = profile?.rol === "setter";
+
   let query = supabase
     .from("voorstellen")
     .select(`
@@ -37,6 +45,11 @@ export default async function VoorstellenPage({
     `)
     .order("verzonden_op", { ascending: false })
     .limit(200);
+
+  // Setter ziet alleen eigen voorstellen
+  if (isSetter && user) {
+    query = query.eq("setter_id", user.id);
+  }
 
   if (status && status !== "alle") {
     query = query.eq("status", status);
@@ -73,9 +86,11 @@ export default async function VoorstellenPage({
   }
 
   // Tellingen (op de totale ongefilterde dataset, zonder de zoekterm)
-  const { data: alleVoor } = await supabase
-    .from("voorstellen")
-    .select("status");
+  let telQuery = supabase.from("voorstellen").select("status");
+  if (isSetter && user) {
+    telQuery = telQuery.eq("setter_id", user.id);
+  }
+  const { data: alleVoor } = await telQuery;
   const aantallen: Record<string, number> = { alle: alleVoor?.length ?? 0 };
   for (const s of ALLE_STATUSSEN) aantallen[s] = 0;
   for (const v of alleVoor ?? []) {
@@ -97,7 +112,12 @@ export default async function VoorstellenPage({
       <TopBar active="voorstellen" />
 
       <div className="p-8 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Voorstellen</h1>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Voorstellen</h1>
+          <p className="text-xs text-gray-500 mt-1">
+            {isSetter ? "Jouw verstuurde voorstellen" : "Alle voorstellen binnen het bureau"}
+          </p>
+        </div>
 
         {/* Stats + filter chips */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
