@@ -33,6 +33,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Verberg de standaard ▶ marker op alle <details><summary> elementen */
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary::marker { display: none; }
+
 /* Dark mode overrides voor common Tailwind classes */
 .dark .bg-white { background-color: var(--panel) !important; }
 .dark .bg-gray-50, .dark .bg-gray-100 { background-color: var(--panel-2) !important; }

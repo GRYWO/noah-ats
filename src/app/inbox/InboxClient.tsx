@@ -348,7 +348,7 @@ export function InboxClient({
                 onClick={() => setNewFolderOpen(true)}
                 className="w-full text-left text-xs text-gray-500 hover:text-[#333399] py-2 px-1"
               >
-                + Nieuwe map
+                Nieuwe map
               </button>
             ) : (
               <form action={maakNieuweMap} className="space-y-2 py-2">

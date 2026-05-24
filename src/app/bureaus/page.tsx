@@ -50,7 +50,7 @@ export default async function BureausPage({
         {/* Wizard form */}
         <details className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
           <summary className="cursor-pointer p-4 bg-[#333399] text-white font-semibold">
-            + Nieuw bureau toevoegen
+            Nieuw bureau toevoegen
           </summary>
 
           <form action={nieuwBureau} className="p-6 space-y-6">

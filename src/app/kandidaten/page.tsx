@@ -56,7 +56,7 @@ export default async function KandidatenPage({
         {!isSetter && (
         <details className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
           <summary className="cursor-pointer p-4 bg-[#333399] text-white font-semibold">
-            + Nieuwe kandidaat toevoegen
+            Nieuwe kandidaat toevoegen
           </summary>
           <form action={nieuweKandidaat} className="p-6 grid grid-cols-2 gap-4">
             <div>
@@ -135,7 +135,7 @@ export default async function KandidatenPage({
             </table>
           ) : (
             <div className="p-12 text-center text-gray-500">
-              <p className="text-sm">Nog geen kandidaten. Klap "+ Nieuwe kandidaat toevoegen" open om je eerste toe te voegen.</p>
+              <p className="text-sm">Nog geen kandidaten. Klap &quot;Nieuwe kandidaat toevoegen&quot; open om je eerste toe te voegen.</p>
             </div>
           )}
         </div>
