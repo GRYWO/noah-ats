@@ -1,9 +1,24 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { UserPlus, X, Loader2, Clock, Mail, Phone } from "lucide-react";
 import { voegToeWachtendOpCv, verwijderWachtend } from "./wachtend-actions";
+
+function SubmitKnop() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-4 py-2 rounded-md text-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+    >
+      {pending && <Loader2 size={12} className="animate-spin" />}
+      {pending ? "Bezig..." : "Toevoegen aan wachtlijst"}
+    </button>
+  );
+}
 
 type Wachtend = {
   id: string;
@@ -87,9 +102,7 @@ export function WachtendOpCvSectie({ wachtenden }: { wachtenden: Wachtend[] }) {
             </div>
           </div>
           <div className="flex justify-end">
-            <button type="submit" className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-4 py-2 rounded-md text-sm">
-              Toevoegen aan wachtlijst
-            </button>
+            <SubmitKnop />
           </div>
         </form>
       )}
