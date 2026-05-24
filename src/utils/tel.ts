@@ -9,7 +9,7 @@
  *   'callto'     → Skype / oude integraties
  *   'sip'        → directe SIP-clients
  */
-const SCHEME = process.env.NEXT_PUBLIC_TEL_SCHEME ?? "bubble";
+const SCHEME = process.env.NEXT_PUBLIC_TEL_SCHEME ?? "tel";
 
 /**
  * Normaliseer een nummer: alleen + en cijfers behouden.
