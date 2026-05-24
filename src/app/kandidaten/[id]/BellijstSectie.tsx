@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2 } from "lucide-react";
+import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2, PhoneOutgoing } from "lucide-react";
 import Link from "next/link";
 import { telLink } from "@/utils/tel";
 import {
@@ -194,9 +194,12 @@ function BellijstItemRij({ item, kandidaatId }: { item: BellijstItem; kandidaatI
           {item.functie && <span>{item.functie}</span>}
           {item.plaats && <span>{item.plaats}</span>}
           {item.telefoon && (
-            <a href={telLink(item.telefoon)} className="text-[#333399] hover:underline inline-flex items-center gap-1">
-              <Phone size={11} /> {item.telefoon}
-            </a>
+            <span className="inline-flex items-center gap-1">
+              <a href={telLink(item.telefoon)} className="text-[#333399] hover:underline inline-flex items-center gap-1">
+                <Phone size={11} /> {item.telefoon}
+              </a>
+              <BelKnop nummer={item.telefoon} />
+            </span>
           )}
           {item.website && (
             <a href={item.website.startsWith("http") ? item.website : `https://${item.website}`} target="_blank" rel="noopener noreferrer" className="text-[#333399] hover:underline inline-flex items-center gap-1">
@@ -339,5 +342,48 @@ function CrmModal({
         </form>
       </div>
     </div>
+  );
+}
+
+function BelKnop({ nummer }: { nummer: string }) {
+  const [pending, setPending] = useState(false);
+  const [resultaat, setResultaat] = useState<string | null>(null);
+
+  async function onClick() {
+    setPending(true);
+    setResultaat(null);
+    try {
+      const r = await fetch("/api/voys/call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ doelNummer: nummer }),
+      });
+      const data = await r.json();
+      if (r.ok) {
+        setResultaat("Bellen via Voys gestart");
+        setTimeout(() => setResultaat(null), 3000);
+      } else {
+        setResultaat(data.error ?? "Bellen mislukt");
+        setTimeout(() => setResultaat(null), 5000);
+      }
+    } catch (e) {
+      setResultaat((e as Error).message);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={pending}
+      title={resultaat ?? "Bel via Voys"}
+      className="text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
+    >
+      {pending
+        ? <Loader2 size={12} className="animate-spin" />
+        : <PhoneOutgoing size={12} />}
+    </button>
   );
 }
