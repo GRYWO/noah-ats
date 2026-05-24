@@ -1,0 +1,187 @@
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
+import { logout } from "../login/actions";
+import { nieuweSetter, verwijderSetter } from "./actions";
+import { DeleteSetterButton } from "./DeleteSetterButton";
+
+const ROL_LABELS: Record<string, string> = {
+  admin: "Admin",
+  recruiter: "Recruiter",
+  setter: "Setter",
+};
+
+const ROL_KLEUREN: Record<string, string> = {
+  admin: "bg-purple-100 text-purple-800",
+  recruiter: "bg-amber-100 text-amber-800",
+  setter: "bg-blue-100 text-blue-800",
+};
+
+export default async function SettersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ok?: string; error?: string }>;
+}) {
+  const { ok, error } = await searchParams;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: setters } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  const { data: myProfile } = await supabase
+    .from("profiles")
+    .select("rol")
+    .eq("id", user!.id)
+    .single();
+
+  const isAdmin = myProfile?.rol === "admin";
+
+  return (
+    <main className="min-h-screen bg-[#f4f4f7]">
+      <div className="bg-[#333399] h-16 flex items-center px-6 shadow-md">
+        <Link href="/dashboard" className="flex items-baseline">
+          <span className="text-white text-3xl font-black tracking-tighter">noah</span>
+          <span className="ml-1.5 w-2.5 h-2.5 rounded-full bg-[#ffd84d] inline-block"></span>
+        </Link>
+        <nav className="ml-8 flex gap-1">
+          <Link href="/dashboard" className="text-white/70 hover:text-white px-3 py-1.5 text-sm rounded-md hover:bg-white/10">Dashboard</Link>
+          <Link href="/kandidaten" className="text-white/70 hover:text-white px-3 py-1.5 text-sm rounded-md hover:bg-white/10">Kandidaten</Link>
+          <Link href="/kanban" className="text-white/70 hover:text-white px-3 py-1.5 text-sm rounded-md hover:bg-white/10">Kanban</Link>
+          <Link href="/setters" className="text-white bg-white/15 px-3 py-1.5 text-sm rounded-md">Setters</Link>
+        </nav>
+        <div className="ml-auto flex items-center gap-4">
+          <span className="text-white/90 text-sm">{user?.email}</span>
+          <form action={logout}>
+            <button className="bg-white/15 hover:bg-white/25 text-white text-sm px-3 py-1.5 rounded-md">Uitloggen</button>
+          </form>
+        </div>
+      </div>
+
+      <div className="p-8 max-w-6xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Setters & users</h1>
+          <p className="text-gray-500 text-sm mt-1">{setters?.length ?? 0} users in dit bureau</p>
+        </div>
+
+        {ok && (
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
+            {ok === "verwijderd" ? "User verwijderd" : "User aangemaakt"}
+          </div>
+        )}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
+            {error}
+          </div>
+        )}
+
+        {/* Nieuwe user form — alleen admins */}
+        {isAdmin && (
+          <details className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
+            <summary className="cursor-pointer p-4 bg-[#333399] text-white font-semibold">
+              Nieuwe user toevoegen
+            </summary>
+            <form action={nieuweSetter} className="p-6 grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Voornaam *</label>
+                <input name="voornaam" required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Achternaam *</label>
+                <input name="achternaam" required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">E-mail *</label>
+                <input name="email" type="email" required placeholder="bart@grywo.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Wachtwoord * (min 8 tekens)</label>
+                <input name="wachtwoord" type="text" required minLength={8} placeholder="setter123..." className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Telefoon</label>
+                <input name="telefoon" placeholder="+31 6 12345678" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Rol *</label>
+                <select name="rol" defaultValue="setter" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                  <option value="setter">Setter</option>
+                  <option value="recruiter">Recruiter</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="col-span-2 pt-3 mt-2 border-t">
+                <h4 className="text-xs uppercase text-gray-500 font-semibold mb-2">Mailbox (Hostnet)</h4>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-adres bedrijf</label>
+                <input name="mail_adres" type="email" placeholder="bart@grywo.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <small className="text-gray-400 text-xs">Laat leeg = zelfde als login-mail</small>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-wachtwoord (Hostnet)</label>
+                <input name="mail_wachtwoord" type="password" placeholder="Voor IMAP/SMTP" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <small className="text-gray-400 text-xs">Versleuteld opgeslagen</small>
+              </div>
+              <div className="col-span-2 flex justify-end">
+                <button type="submit" className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-6 py-2 rounded-md text-sm">
+                  User aanmaken
+                </button>
+              </div>
+            </form>
+          </details>
+        )}
+
+        {/* Lijst */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          {setters && setters.length > 0 ? (
+            <table className="w-full">
+              <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-3 font-semibold">Naam</th>
+                  <th className="text-left px-4 py-3 font-semibold">Rol</th>
+                  <th className="text-left px-4 py-3 font-semibold">Telefoon</th>
+                  <th className="text-left px-4 py-3 font-semibold">Voys</th>
+                  <th className="text-left px-4 py-3 font-semibold">Discord</th>
+                  <th className="text-left px-4 py-3 font-semibold">Aangemaakt</th>
+                  {isAdmin && <th className="text-right px-4 py-3 font-semibold">Acties</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {setters.map((s) => (
+                  <tr key={s.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3 font-semibold text-gray-800">
+                      {s.voornaam} {s.achternaam}
+                      {s.id === user?.id && <span className="ml-2 text-xs text-gray-400">(jij)</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${ROL_KLEUREN[s.rol] ?? "bg-gray-100 text-gray-700"}`}>
+                        {ROL_LABELS[s.rol] ?? s.rol}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{s.telefoon ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{s.voys_nummer ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{s.discord_id ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {s.created_at ? new Date(s.created_at).toLocaleDateString("nl-NL") : "—"}
+                    </td>
+                    {isAdmin && (
+                      <td className="px-4 py-3 text-right">
+                        {s.id !== user?.id && <DeleteSetterButton id={s.id} naam={`${s.voornaam} ${s.achternaam}`} />}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="p-12 text-center text-gray-500">
+              <p className="text-sm">Nog geen users.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </main>
+  );
+}
