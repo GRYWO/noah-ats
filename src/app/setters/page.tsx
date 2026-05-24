@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { nieuweSetter, verwijderSetter } from "./actions";
 import { DeleteSetterButton } from "./DeleteSetterButton";
+import { VoysSyncButton } from "./VoysSyncButton";
 
 const ROL_LABELS: Record<string, string> = {
   admin: "Admin",
@@ -42,9 +43,12 @@ export default async function SettersPage({
       <TopBar active="setters" />
 
       <div className="p-8 max-w-6xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Setters & users</h1>
-          <p className="text-gray-500 text-sm mt-1">{setters?.length ?? 0} users in dit bureau</p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Setters & users</h1>
+            <p className="text-gray-500 text-sm mt-1">{setters?.length ?? 0} users in dit bureau</p>
+          </div>
+          {isAdmin && <VoysSyncButton />}
         </div>
 
         {ok && (
