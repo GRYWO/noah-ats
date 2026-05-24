@@ -23,6 +23,7 @@ type Item = {
   label: string;
   Icon: typeof LayoutDashboard;
   sectie?: number;
+  extern?: boolean;
 };
 
 type Props = {
@@ -51,7 +52,7 @@ export function SideBar({ active, userEmail, isSuperAdmin, isSetter, logoutActio
     { key: "kandidaten",   href: "/kandidaten",   label: "Kandidaten",  Icon: Users,           sectie: 2 },
     { key: "kanban",       href: "/kanban",       label: "Kanban",      Icon: KanbanSquare,    sectie: 2 },
     { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",     Icon: Contact,         sectie: 2 },
-    ...(!isSetter ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 2 } as Item] : []),
+    ...(!isSetter ? [{ key: "robin", href: "https://app.recruitrobin.com", label: "Robin", Icon: Sparkles, sectie: 2, extern: true } as Item] : []),
     { key: "inbox",        href: "/inbox",        label: "E-mail",      Icon: Mail,            sectie: 3 },
     ...(!isSetter ? [{ key: "setters", href: "/setters", label: "Setters", Icon: UserCog, sectie: 4 } as Item] : []),
     { key: "instellingen", href: "/instellingen", label: "Instellingen", Icon: Settings,       sectie: 4 },
@@ -80,23 +81,37 @@ export function SideBar({ active, userEmail, isSuperAdmin, isSetter, logoutActio
           const isActive = active === it.key;
           const separator = it.sectie !== vorigeSectie && vorigeSectie !== 0;
           vorigeSectie = it.sectie ?? vorigeSectie;
+          const className = `flex items-center gap-3 mx-2 my-0.5 rounded-lg transition-colors ${
+            open ? "px-3 py-2" : "p-2 justify-center"
+          } ${
+            isActive
+              ? "bg-[#eef0ff] text-[#333399] font-semibold"
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+          }`;
+          const inner = (
+            <>
+              <it.Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
+              {open && <span className="text-sm">{it.label}</span>}
+            </>
+          );
           return (
             <div key={it.key}>
               {separator && <div className="my-2 mx-3 border-t border-gray-100" />}
-              <Link
-                href={it.href}
-                title={open ? undefined : it.label}
-                className={`flex items-center gap-3 mx-2 my-0.5 rounded-lg transition-colors ${
-                  open ? "px-3 py-2" : "p-2 justify-center"
-                } ${
-                  isActive
-                    ? "bg-[#eef0ff] text-[#333399] font-semibold"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
-                }`}
-              >
-                <it.Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
-                {open && <span className="text-sm">{it.label}</span>}
-              </Link>
+              {it.extern ? (
+                <a
+                  href={it.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={open ? undefined : it.label}
+                  className={className}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <Link href={it.href} title={open ? undefined : it.label} className={className}>
+                  {inner}
+                </Link>
+              )}
             </div>
           );
         })}
