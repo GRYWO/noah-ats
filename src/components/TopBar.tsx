@@ -47,7 +47,7 @@ export async function TopBar({ active }: Props) {
         {isSuperAdmin && item("bureaus", "/bureaus", "Bureaus")}
         {item("kandidaten", "/kandidaten", "Kandidaten")}
         {item("kanban", "/kanban", "Kanban")}
-        {item("opdrachtgevers", "/opdrachtgevers", "Opdrachtgevers")}
+        {item("opdrachtgevers", "/opdrachtgevers", "CRM")}
         {item("inbox", "/inbox", "E-mail")}
         {!isSetter && item("setters", "/setters", "Setters")}
         {item("instellingen", "/instellingen", "Instellingen")}
