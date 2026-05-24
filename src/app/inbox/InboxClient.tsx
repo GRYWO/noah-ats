@@ -93,6 +93,41 @@ export function InboxClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // IMAP IDLE via SSE — sub-second push als nieuwe mail binnenkomt
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
+
+    const connect = () => {
+      if (stopped) return;
+      eventSource = new EventSource("/api/mail/idle");
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          // Bij "new-mail" wordt Supabase al ververst via realtime channel
+          // Geen extra actie nodig hier
+          void data;
+        } catch {}
+      };
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+        // Reconnect na 3 sec
+        if (!stopped) reconnectTimer = setTimeout(connect, 3000);
+      };
+    };
+
+    connect();
+
+    return () => {
+      stopped = true;
+      eventSource?.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, []);
+
   const syncEnRefresh = async () => {
     setSyncBezig(true);
     try {
