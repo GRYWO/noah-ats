@@ -154,8 +154,8 @@ export default async function KandidaatDetail({
           </div>
         </div>
 
-        {/* Intake zoekfilters voor de setter */}
-        {!isRecruiter && (
+        {/* Intake zoekfilters — alleen voor recruiter/admin (setter mag niet aanpassen) */}
+        {!isSetter && (
           <IntakeFiltersBanner
             kandidaatId={k.id}
             voornaam={k.voornaam ?? ""}
