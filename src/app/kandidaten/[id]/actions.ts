@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { autoWijsKandidaatToe } from "@/utils/setter-assign";
+import { sendKandidaatPlaatsing, sendKandidaatStatusAfwijzing } from "@/utils/email";
+import { logVoorstelEvent } from "@/utils/voorstel-log";
 
 // Stages waarbij de intake klaar is en de kandidaat naar een setter moet
 const INTAKE_KLAAR_STAGES = ["interne_intake_voltooid", "voorgesteld_opdrachtgever"];
@@ -32,6 +35,13 @@ export async function updateKandidaat(formData: FormData) {
     notitie:       (formData.get("notitie") as string)?.trim() || null,
   };
 
+  // Huidige status ophalen om wijziging te detecteren
+  const { data: huidig } = await supabase
+    .from("kandidaten")
+    .select("status, tenant_id, plaatsing_mail_sent, afwijzing_mail_sent, email, voornaam")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("kandidaten")
     .update(update)
@@ -44,6 +54,52 @@ export async function updateKandidaat(formData: FormData) {
   // Auto-toewijzen aan setter als intake klaar is en nog geen eigenaar
   if (INTAKE_KLAAR_STAGES.includes(update.kanban_stap)) {
     await autoWijsKandidaatToe(id);
+  }
+
+  // Plaatsing/afwijzing detecteren (alleen bij eerste keer)
+  const admin = createAdminClient();
+  if (
+    huidig?.tenant_id &&
+    huidig.email &&
+    update.status === "geplaatst" &&
+    huidig.status !== "geplaatst" &&
+    !huidig.plaatsing_mail_sent
+  ) {
+    try {
+      await sendKandidaatPlaatsing({ naar: huidig.email, kandidaatVoornaam: huidig.voornaam ?? "" });
+      await admin.from("kandidaten").update({ plaatsing_mail_sent: new Date().toISOString() }).eq("id", id);
+      await logVoorstelEvent({
+        tenantId: huidig.tenant_id,
+        kandidaatId: id,
+        event: "plaatsing",
+        beschrijving: "Kandidaat is geplaatst",
+        zichtbaarVoorKandidaat: true,
+      });
+    } catch (e) {
+      console.error("Plaatsings-mail mislukt:", e);
+    }
+  }
+
+  if (
+    huidig?.tenant_id &&
+    huidig.email &&
+    update.status === "afgewezen" &&
+    huidig.status !== "afgewezen" &&
+    !huidig.afwijzing_mail_sent
+  ) {
+    try {
+      await sendKandidaatStatusAfwijzing({ naar: huidig.email, kandidaatVoornaam: huidig.voornaam ?? "" });
+      await admin.from("kandidaten").update({ afwijzing_mail_sent: new Date().toISOString() }).eq("id", id);
+      await logVoorstelEvent({
+        tenantId: huidig.tenant_id,
+        kandidaatId: id,
+        event: "afwijzing",
+        beschrijving: "Kandidaat is afgewezen",
+        zichtbaarVoorKandidaat: true,
+      });
+    } catch (e) {
+      console.error("Afwijzings-mail mislukt:", e);
+    }
   }
 
   revalidatePath(`/kandidaten/${id}`);

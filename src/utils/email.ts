@@ -217,3 +217,139 @@ ${opmerking ? `<p style="padding:12px;background:#fff8e1;border-left:3px solid #
     html: brandedLayout({ titel: `${bedrijf} wil kennismaken!`, body }),
   });
 }
+
+/**
+ * Bericht aan kandidaat dat hij/zij is voorgesteld.
+ * Bewust géén opdrachtgever-naam erin.
+ */
+export async function sendKandidaatVoorgesteld({
+  naar,
+  kandidaatVoornaam,
+}: {
+  naar: string;
+  kandidaatVoornaam: string;
+}) {
+  const body = `
+<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
+<p style="margin:0 0 12px 0;">We hebben je zojuist voorgesteld bij een potentiële werkgever.</p>
+<p style="margin:0 0 12px 0;">We wachten nu op een reactie. Zodra we groen licht krijgen, brengen we je direct op de hoogte met alle details voor een kennismaking.</p>
+<p style="margin:16px 0 0 0;color:#666;">Hartelijke groet,<br>Team GRYWO</p>`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: "Je bent voorgesteld — wachten op reactie",
+    html: brandedLayout({ titel: "Je bent voorgesteld", body }),
+  });
+}
+
+/**
+ * Bericht aan kandidaat dat het voorstel is afgewezen.
+ * Bewust géén opdrachtgever-naam erin.
+ */
+export async function sendKandidaatAfwijzing({
+  naar,
+  kandidaatVoornaam,
+}: {
+  naar: string;
+  kandidaatVoornaam: string;
+}) {
+  const body = `
+<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
+<p style="margin:0 0 12px 0;">Helaas heeft de werkgever waar we je hadden voorgesteld besloten om niet verder te gaan met je profiel.</p>
+<p style="margin:0 0 12px 0;">Geen zorgen — we gaan voor je aan de slag met andere passende kansen. We houden je op de hoogte.</p>
+<p style="margin:16px 0 0 0;color:#666;">Hartelijke groet,<br>Team GRYWO</p>`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: "Voorstel afgerond — we gaan voor je verder",
+    html: brandedLayout({ titel: "Update over je voorstel", body }),
+  });
+}
+
+/**
+ * 1 uur voor kennismaking — herinnering naar kandidaat.
+ */
+export async function sendKennismakingReminder({
+  naar,
+  kandidaatVoornaam,
+  bedrijf,
+  contactpersoon,
+  contact_telefoon,
+  locatie_url,
+  kennismaking_op,
+}: {
+  naar: string;
+  kandidaatVoornaam: string;
+  bedrijf: string;
+  contactpersoon: string | null;
+  contact_telefoon: string | null;
+  locatie_url: string | null;
+  kennismaking_op: string;
+}) {
+  const tijd = new Date(kennismaking_op).toLocaleString("nl-NL", {
+    dateStyle: "full",
+    timeStyle: "short",
+  });
+  const body = `
+<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
+<p style="margin:0 0 16px 0;">Over een uur heb je je kennismaking met <b>${bedrijf}</b>. Succes!</p>
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
+  <tr><td style="padding:6px 0;color:#666;width:35%;">Tijdstip</td><td style="padding:6px 0;font-weight:600;">${tijd}</td></tr>
+  ${contactpersoon ? `<tr><td style="padding:6px 0;color:#666;">Contactpersoon</td><td style="padding:6px 0;font-weight:600;">${contactpersoon}</td></tr>` : ""}
+  ${contact_telefoon ? `<tr><td style="padding:6px 0;color:#666;">Telefoon</td><td style="padding:6px 0;font-weight:600;">${contact_telefoon}</td></tr>` : ""}
+  ${locatie_url ? `<tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;"><a href="${locatie_url}" style="color:${GRYWO_KLEUR};">Bekijk op Google Maps</a></td></tr>` : ""}
+</table>
+<p style="margin:16px 0 0 0;color:#666;">Veel succes — je kunt het!</p>`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `Over 1 uur: kennismaking bij ${bedrijf}`,
+    html: brandedLayout({ titel: "Kennismaking over 1 uur", body }),
+  });
+}
+
+/**
+ * Plaatsing — gefeliciteerd.
+ */
+export async function sendKandidaatPlaatsing({
+  naar,
+  kandidaatVoornaam,
+}: {
+  naar: string;
+  kandidaatVoornaam: string;
+}) {
+  const body = `
+<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
+<p style="margin:0 0 12px 0;"><b>Gefeliciteerd!</b> Je bent geplaatst. Wij wensen je heel veel succes en plezier op je nieuwe werkplek.</p>
+<p style="margin:0 0 12px 0;">Mocht je vragen hebben of we iets voor je kunnen betekenen, dan horen we het graag.</p>
+<p style="margin:16px 0 0 0;color:#666;">Hartelijke groet,<br>Team GRYWO</p>`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: "Gefeliciteerd met je nieuwe baan!",
+    html: brandedLayout({ titel: "Je bent geplaatst!", body }),
+  });
+}
+
+/**
+ * Algemene afwijzing (status=afgewezen op kandidaat).
+ */
+export async function sendKandidaatStatusAfwijzing({
+  naar,
+  kandidaatVoornaam,
+}: {
+  naar: string;
+  kandidaatVoornaam: string;
+}) {
+  const body = `
+<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
+<p style="margin:0 0 12px 0;">Bedankt voor de moeite die je in dit traject hebt gestoken. Op dit moment hebben we helaas geen passende match voor je.</p>
+<p style="margin:0 0 12px 0;">We bewaren je profiel in onze talentpool en nemen contact op zodra er een geschikte kans voorbij komt.</p>
+<p style="margin:16px 0 0 0;color:#666;">Hartelijke groet,<br>Team GRYWO</p>`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: "Update vanuit GRYWO",
+    html: brandedLayout({ titel: "Bedankt voor je tijd", body }),
+  });
+}

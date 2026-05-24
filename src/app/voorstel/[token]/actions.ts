@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { sendKandidaatBevestiging } from "@/utils/email";
+import { sendKandidaatBevestiging, sendKandidaatAfwijzing } from "@/utils/email";
+import { logVoorstelEvent } from "@/utils/voorstel-log";
 
 export async function uitnodigen(formData: FormData) {
   const token = formData.get("token") as string;
@@ -23,6 +24,9 @@ export async function uitnodigen(formData: FormData) {
   const datum_2_iso = datum_2 ? new Date(datum_2).toISOString() : null;
   const datum_3_iso = datum_3 ? new Date(datum_3).toISOString() : null;
 
+  // Eerste datum = voorlopige kennismakings-datum (setter kan later aanpassen)
+  const kennismakingOp = datum_1_iso ?? datum_2_iso ?? datum_3_iso;
+
   const { error } = await admin.from("voorstellen").update({
     status: "uitnodigen",
     reactie_op: new Date().toISOString(),
@@ -34,6 +38,7 @@ export async function uitnodigen(formData: FormData) {
     datum_1: datum_1_iso,
     datum_2: datum_2_iso,
     datum_3: datum_3_iso,
+    kennismaking_op: kennismakingOp,
     opmerking,
   }).eq("token", token);
 
@@ -117,6 +122,29 @@ export async function uitnodigen(formData: FormData) {
     }
   }
 
+  // Log: groen
+  if (voorstel?.tenant_id && voorstel.kandidaat_id) {
+    await logVoorstelEvent({
+      tenantId: voorstel.tenant_id,
+      voorstelId: voorstel.id,
+      kandidaatId: voorstel.kandidaat_id,
+      event: "voorstel_groen",
+      beschrijving: `Opdrachtgever ${bedrijf} wil kennismaken`,
+      zichtbaarVoorKandidaat: true,
+      metadata: { bedrijf, contactpersoon, datum_1: datum_1_iso, datum_2: datum_2_iso, datum_3: datum_3_iso },
+    });
+    if (kennismakingOp) {
+      await logVoorstelEvent({
+        tenantId: voorstel.tenant_id,
+        voorstelId: voorstel.id,
+        kandidaatId: voorstel.kandidaat_id,
+        event: "kennismaking_gepland",
+        beschrijving: `Kennismaking gepland: ${new Date(kennismakingOp).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })}`,
+        zichtbaarVoorKandidaat: true,
+      });
+    }
+  }
+
   // Mail naar kandidaat sturen
   if (voorstel?.kandidaat?.email) {
     try {
@@ -133,6 +161,9 @@ export async function uitnodigen(formData: FormData) {
         datum_3: datum_3_iso,
         opmerking,
       });
+      await admin.from("voorstellen")
+        .update({ kandidaat_uitnodigen_sent: new Date().toISOString() })
+        .eq("id", voorstel.id);
     } catch (e) {
       console.error("Bevestiging naar kandidaat mislukt:", e);
     }
@@ -156,6 +187,40 @@ export async function afwijzen(formData: FormData) {
 
   if (error) {
     redirect(`/voorstel/${token}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  // Voorstel + kandidaat ophalen voor log + mail
+  const { data: voorstel } = await admin
+    .from("voorstellen")
+    .select("id, tenant_id, kandidaat_id, kandidaat:kandidaten(voornaam, email)")
+    .eq("token", token)
+    .single();
+
+  if (voorstel?.tenant_id && voorstel.kandidaat_id) {
+    await logVoorstelEvent({
+      tenantId: voorstel.tenant_id,
+      voorstelId: voorstel.id,
+      kandidaatId: voorstel.kandidaat_id,
+      event: "voorstel_rood",
+      beschrijving: "Opdrachtgever heeft het voorstel afgewezen",
+      zichtbaarVoorKandidaat: true,
+      metadata: { reden },
+    });
+  }
+
+  const kandidaat = voorstel?.kandidaat as unknown as { voornaam: string; email: string | null } | null;
+  if (kandidaat?.email) {
+    try {
+      await sendKandidaatAfwijzing({
+        naar: kandidaat.email,
+        kandidaatVoornaam: kandidaat.voornaam,
+      });
+      await admin.from("voorstellen")
+        .update({ kandidaat_afwijzing_sent: new Date().toISOString() })
+        .eq("id", voorstel!.id);
+    } catch (e) {
+      console.error("Afwijzingsmail naar kandidaat mislukt:", e);
+    }
   }
 
   revalidatePath(`/voorstel/${token}`);

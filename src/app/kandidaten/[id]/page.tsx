@@ -80,6 +80,26 @@ export default async function KandidaatDetail({
     .eq("kandidaat_id", id)
     .order("created_at", { ascending: false });
 
+  const { data: logs } = await supabase
+    .from("voorstel_logs")
+    .select("id, event_type, beschrijving, created_at, zichtbaar_voor_kandidaat")
+    .eq("kandidaat_id", id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const EVENT_LABELS: Record<string, { label: string; kleur: string }> = {
+    voorstel_verstuurd:    { label: "Voorstel verstuurd",     kleur: "bg-[#333399] text-white" },
+    voorstel_geopend:      { label: "Voorstel geopend",       kleur: "bg-blue-100 text-blue-800" },
+    reminder_verstuurd:    { label: "Reminder verstuurd",     kleur: "bg-amber-100 text-amber-800" },
+    voorstel_groen:        { label: "Groen — wil kennismaken", kleur: "bg-emerald-100 text-emerald-800" },
+    voorstel_rood:         { label: "Rood — afgewezen",       kleur: "bg-red-100 text-red-800" },
+    kennismaking_gepland:  { label: "Kennismaking gepland",   kleur: "bg-emerald-100 text-emerald-800" },
+    kennismaking_reminder: { label: "Reminder kandidaat",     kleur: "bg-amber-100 text-amber-800" },
+    plaatsing:             { label: "Geplaatst",              kleur: "bg-emerald-600 text-white" },
+    afwijzing:             { label: "Afgewezen",              kleur: "bg-red-100 text-red-800" },
+    verlopen:              { label: "Verlopen",               kleur: "bg-gray-100 text-gray-600" },
+  };
+
   const initials = `${k.voornaam?.[0] ?? ""}${k.achternaam?.[0] ?? ""}`.toUpperCase();
   const scoreColor =
     k.score == null ? "text-gray-400" :
@@ -279,6 +299,35 @@ export default async function KandidaatDetail({
             </table>
           ) : (
             <p className="text-sm text-gray-500">Nog geen voorstellen verstuurd voor deze kandidaat.</p>
+          )}
+        </div>
+
+        {/* Voorstel-log */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
+          <h2 className="font-bold text-gray-800 mb-4 pb-2 border-b">Tijdlijn</h2>
+          {logs && logs.length > 0 ? (
+            <ol className="relative border-l-2 border-gray-200 ml-2 space-y-4">
+              {logs.map((l) => {
+                const evt = EVENT_LABELS[l.event_type] ?? { label: l.event_type, kleur: "bg-gray-100 text-gray-700" };
+                return (
+                  <li key={l.id} className="ml-4">
+                    <div className="absolute -left-[7px] w-3 h-3 rounded-full bg-[#333399] mt-1.5"></div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${evt.kleur}`}>{evt.label}</span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(l.created_at).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })}
+                      </span>
+                      {l.zichtbaar_voor_kandidaat && (
+                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">kandidaat gemaild</span>
+                      )}
+                    </div>
+                    {l.beschrijving && <p className="text-sm text-gray-700">{l.beschrijving}</p>}
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <p className="text-sm text-gray-500">Nog geen voorstel-events.</p>
           )}
         </div>
 

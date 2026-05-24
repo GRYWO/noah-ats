@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { sendVoorstelMail } from "@/utils/email";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { sendVoorstelMail, sendKandidaatVoorgesteld } from "@/utils/email";
+import { logVoorstelEvent } from "@/utils/voorstel-log";
 
 export async function stuurVoorstel(formData: FormData) {
   const kandidaatId = formData.get("kandidaat_id") as string;
@@ -37,7 +39,7 @@ export async function stuurVoorstel(formData: FormData) {
     opdrachtgever_email: opdrachtgeverEmail,
     opdrachtgever_naam: opdrachtgeverNaam,
     bericht,
-  }).select("token").single();
+  }).select("id, token").single();
 
   if (error || !nieuw) {
     redirect(`/kandidaten/${kandidaatId}?error=${encodeURIComponent(error?.message ?? "Aanmaken mislukt")}`);
@@ -46,10 +48,11 @@ export async function stuurVoorstel(formData: FormData) {
   // Kandidaat ophalen voor mail
   const { data: kandidaat } = await supabase
     .from("kandidaten")
-    .select("voornaam, tussenvoegsel, achternaam, leeftijd, woonplaats, opleiding, open_voor, tarief_ws, score")
+    .select("voornaam, tussenvoegsel, achternaam, leeftijd, woonplaats, opleiding, open_voor, tarief_ws, score, email")
     .eq("id", kandidaatId)
     .single();
 
+  // Mail naar opdrachtgever
   if (kandidaat) {
     try {
       await sendVoorstelMail({
@@ -60,9 +63,34 @@ export async function stuurVoorstel(formData: FormData) {
         token: nieuw.token,
       });
     } catch (e) {
-      console.error("Mail versturen mislukt:", e);
-      // Voorstel staat al in DB, gebruiker krijgt waarschuwing
+      console.error("Mail naar opdrachtgever mislukt:", e);
       redirect(`/kandidaten/${kandidaatId}?error=${encodeURIComponent("Voorstel opgeslagen maar mail mislukt: " + (e as Error).message)}`);
+    }
+  }
+
+  // Log: voorstel verstuurd
+  await logVoorstelEvent({
+    tenantId: profile.tenant_id,
+    voorstelId: nieuw.id,
+    kandidaatId,
+    event: "voorstel_verstuurd",
+    beschrijving: "Voorstel verstuurd naar opdrachtgever",
+    zichtbaarVoorKandidaat: true,
+  });
+
+  // Mail naar kandidaat — zonder opdrachtgever-naam
+  if (kandidaat?.email) {
+    try {
+      await sendKandidaatVoorgesteld({
+        naar: kandidaat.email,
+        kandidaatVoornaam: kandidaat.voornaam,
+      });
+      const admin = createAdminClient();
+      await admin.from("voorstellen")
+        .update({ kandidaat_voorgesteld_sent: new Date().toISOString() })
+        .eq("id", nieuw.id);
+    } catch (e) {
+      console.error("Kandidaat-mail mislukt:", e);
     }
   }
 

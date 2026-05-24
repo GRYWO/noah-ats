@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { afwijzen } from "./actions";
+import { logVoorstelEvent } from "@/utils/voorstel-log";
 import Link from "next/link";
 
 export default async function VoorstelPage({
@@ -24,6 +25,28 @@ export default async function VoorstelPage({
 
   const k = voorstel.kandidaat;
   const t = voorstel.tenant;
+
+  // Track "geopend" (alleen 1x, alleen als nog verzonden)
+  if (voorstel.status === "verzonden" && !voorstel.geopend_op) {
+    await admin
+      .from("voorstellen")
+      .update({ geopend_op: new Date().toISOString() })
+      .eq("id", voorstel.id);
+    if (voorstel.tenant_id && voorstel.kandidaat_id) {
+      try {
+        await logVoorstelEvent({
+          tenantId: voorstel.tenant_id,
+          voorstelId: voorstel.id,
+          kandidaatId: voorstel.kandidaat_id,
+          event: "voorstel_geopend",
+          beschrijving: "Opdrachtgever heeft het voorstel geopend",
+          zichtbaarVoorKandidaat: true,
+        });
+      } catch (e) {
+        console.error("Log geopend mislukt:", e);
+      }
+    }
+  }
 
   if (voorstel.status !== "verzonden") {
     return (
