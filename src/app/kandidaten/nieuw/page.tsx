@@ -3,13 +3,15 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { Wizard } from "./Wizard";
+import { WachtendOpCvSectie } from "./WachtendOpCv";
+import { ruimOudeWachtenden } from "./wachtend-actions";
 
 export default async function NieuweKandidaatPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, ok } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -23,6 +25,14 @@ export default async function NieuweKandidaatPage({
   if (profile?.rol === "setter") {
     redirect("/kandidaten?error=Setters+kunnen+geen+kandidaten+aanmaken");
   }
+
+  // Auto-cleanup wachtenden ouder dan 7 dagen
+  await ruimOudeWachtenden();
+
+  const { data: wachtenden } = await supabase
+    .from("wachtend_op_cv")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -45,8 +55,17 @@ export default async function NieuweKandidaatPage({
             {error}
           </div>
         )}
+        {ok === "wachtend" && (
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
+            Toegevoegd aan wachtlijst — krijg je het CV later, dan kun je 'm via deze pagina alsnog uploaden.
+          </div>
+        )}
 
         <Wizard />
+
+        <div className="mt-8">
+          <WachtendOpCvSectie wachtenden={wachtenden ?? []} />
+        </div>
       </div>
     </main>
   );
