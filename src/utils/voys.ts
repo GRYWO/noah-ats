@@ -8,12 +8,13 @@
  *   4. Beide kanten verbonden
  */
 
-const VOIPGRID_API = "https://partner.voipgrid.nl/api/clicktodial/";
+const VOYS_API = "https://api.voys.nl/api/v2";
+const VOIPGRID_API = `${VOYS_API}/clicktodial/`;
 
-function authHeader(): string {
+function authHeader(prefix: "Bearer" | "Token" = "Bearer"): string {
   const token = process.env.VOYS_API_TOKEN;
   if (!token) throw new Error("VOYS_API_TOKEN niet geconfigureerd");
-  return `Bearer ${token}`;
+  return `${prefix} ${token}`;
 }
 
 /**
@@ -27,10 +28,8 @@ function normaliseerNummer(nummer: string): string {
   return cijfers;
 }
 
-const VOIPGRID_BASE = "https://partner.voipgrid.nl";
-
 /**
- * Haal alle users op binnen jouw VoIPGRID client.
+ * Haal alle users op binnen jouw Voys client.
  * Geeft email + nummer terug zodat we per setter kunnen matchen.
  */
 export async function voysListUsers(): Promise<{
@@ -38,50 +37,57 @@ export async function voysListUsers(): Promise<{
   status: number;
   users: Array<{ email: string | null; first_name: string | null; last_name: string | null; mobile_nr: string | null; internal_number: string | null; raw: Record<string, unknown> }>;
   raw?: unknown;
+  pogingen?: Array<{ url: string; auth: string; status: number }>;
 }> {
   const clientUuid = process.env.VOYS_CLIENT_UUID;
 
-  // Probeer een paar endpoints — VoIPGRID heeft meerdere paden afhankelijk van rechten.
+  // Probeer meerdere endpoint/auth-combinaties — Voys gebruikt verschillende
+  // varianten afhankelijk van API en token-type.
   const endpoints = [
-    `${VOIPGRID_BASE}/api/v2/clients/${clientUuid}/users/`,
-    `${VOIPGRID_BASE}/api/v2/users/?client__uuid=${clientUuid}`,
-    `${VOIPGRID_BASE}/api/v2/users/`,
-    `${VOIPGRID_BASE}/api/clientuser/`,
+    `${VOYS_API}/users/`,
+    `${VOYS_API}/users/?client__uuid=${clientUuid}`,
+    `${VOYS_API}/clients/${clientUuid}/users/`,
   ];
+  const authTypes: Array<"Bearer" | "Token"> = ["Bearer", "Token"];
+
+  const pogingen: Array<{ url: string; auth: string; status: number }> = [];
 
   for (const url of endpoints) {
-    const res = await fetch(url, {
-      headers: {
-        Authorization: authHeader(),
-        Accept: "application/json",
-      },
-    });
-    if (!res.ok) continue;
-    const tekst = await res.text();
-    let data: unknown;
-    try { data = JSON.parse(tekst); } catch { continue; }
+    for (const auth of authTypes) {
+      const res = await fetch(url, {
+        headers: {
+          Authorization: authHeader(auth),
+          Accept: "application/json",
+        },
+      });
+      pogingen.push({ url, auth, status: res.status });
+      if (!res.ok) continue;
+      const tekst = await res.text();
+      let data: unknown;
+      try { data = JSON.parse(tekst); } catch { continue; }
 
-    // VoIPGRID heeft soms { results: [...] } of direct een array
-    const arr = (data as { results?: unknown[] })?.results
-      ?? (Array.isArray(data) ? data : null);
-    if (!arr) continue;
+      // Voys/VoIPGRID heeft soms { results: [...] } of direct een array
+      const arr = (data as { results?: unknown[] })?.results
+        ?? (Array.isArray(data) ? data : null);
+      if (!arr) continue;
 
-    const users = arr.map((u) => {
-      const obj = u as Record<string, unknown>;
-      return {
-        email: (obj.email as string) ?? null,
-        first_name: (obj.first_name as string) ?? null,
-        last_name: (obj.last_name as string) ?? null,
-        mobile_nr: (obj.mobile_nr as string) ?? (obj.mobile as string) ?? null,
-        internal_number: (obj.internal_number as string) ?? (obj.extension as string) ?? null,
-        raw: obj,
-      };
-    });
+      const users = arr.map((u) => {
+        const obj = u as Record<string, unknown>;
+        return {
+          email: (obj.email as string) ?? null,
+          first_name: (obj.first_name as string) ?? null,
+          last_name: (obj.last_name as string) ?? null,
+          mobile_nr: (obj.mobile_nr as string) ?? (obj.mobile as string) ?? null,
+          internal_number: (obj.internal_number as string) ?? (obj.extension as string) ?? null,
+          raw: obj,
+        };
+      });
 
-    return { ok: true, status: res.status, users, raw: data };
+      return { ok: true, status: res.status, users, raw: data, pogingen };
+    }
   }
 
-  return { ok: false, status: 0, users: [] };
+  return { ok: false, status: 0, users: [], pogingen };
 }
 
 /**

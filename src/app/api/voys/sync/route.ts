@@ -38,6 +38,7 @@ export async function POST() {
   if (!voys.ok) {
     return NextResponse.json({
       error: "Voys API gaf geen geldige user-lijst terug. Mogelijk heeft je API-token onvoldoende rechten.",
+      pogingen: voys.pogingen,
       raw: voys.raw,
     }, { status: 502 });
   }
