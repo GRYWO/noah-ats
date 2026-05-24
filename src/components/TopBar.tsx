@@ -4,7 +4,7 @@ import { isSuperAdminEmail } from "@/utils/auth";
 import { logout } from "@/app/login/actions";
 
 type Props = {
-  active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "inbox" | "setters" | "instellingen";
+  active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "opdrachtgevers" | "inbox" | "setters" | "instellingen";
 };
 
 export async function TopBar({ active }: Props) {
@@ -47,6 +47,7 @@ export async function TopBar({ active }: Props) {
         {isSuperAdmin && item("bureaus", "/bureaus", "Bureaus")}
         {item("kandidaten", "/kandidaten", "Kandidaten")}
         {item("kanban", "/kanban", "Kanban")}
+        {item("opdrachtgevers", "/opdrachtgevers", "Opdrachtgevers")}
         {item("inbox", "/inbox", "E-mail")}
         {!isSetter && item("setters", "/setters", "Setters")}
         {item("instellingen", "/instellingen", "Instellingen")}
