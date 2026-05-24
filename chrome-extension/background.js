@@ -4,10 +4,17 @@
 const NOAH_API = "https://noah-ats.nl/api/bellijst/upload";
 const NOAH_TAB_PATTERN = "https://noah-ats.nl/jobdigger*";
 
-function isExcelLike(item) {
-  const f = item.filename || "";
+function shouldProcess(item) {
   const u = item.url || item.finalUrl || "";
-  return /\.(xlsx|xls|csv)/i.test(f) || /\.(xlsx|xls|csv)(\?|$|#)/i.test(u);
+  const f = item.filename || "";
+  // Match xlsx/csv in filename of URL-pad
+  if (/\.(xlsx|xls|csv)/i.test(f) || /\.(xlsx|xls|csv)(\?|$|#)/i.test(u)) return true;
+  // Of: download van jobdigger.nl (filename komt pas later via onChanged)
+  try {
+    const parsed = new URL(u);
+    if (parsed.hostname.endsWith("jobdigger.nl")) return true;
+  } catch (_) {}
+  return false;
 }
 
 async function vindActieveKandidaat() {
@@ -36,8 +43,8 @@ chrome.downloads.onCreated.addListener(async (item) => {
   try {
     console.log("[Noah] Download created:", { id: item.id, url: item.url, finalUrl: item.finalUrl, filename: item.filename });
 
-    if (!isExcelLike(item)) {
-      console.log("[Noah] Niet xlsx/csv, skip");
+    if (!shouldProcess(item)) {
+      console.log("[Noah] Geen xlsx/csv en geen jobdigger.nl, skip");
       return;
     }
 
