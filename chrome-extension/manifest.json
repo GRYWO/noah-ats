@@ -1,11 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Noah ATS — Robin Embed",
-  "version": "1.0.0",
-  "description": "Maakt Recruit Robin bruikbaar binnen Noah ATS (noah-ats.nl/robin).",
+  "name": "Noah ATS — Embed Helper",
+  "version": "1.1.0",
+  "description": "Maakt Recruit Robin en Jobdigger bruikbaar binnen Noah ATS.",
   "host_permissions": [
     "https://app.recruitrobin.com/*",
     "https://*.recruitrobin.com/*",
+    "https://jobdigger.nl/*",
+    "https://*.jobdigger.nl/*",
     "https://noah-ats.nl/*",
     "https://*.noah-ats.nl/*"
   ],
