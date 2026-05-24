@@ -15,6 +15,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Sparkles,
+  PhoneCall,
 } from "lucide-react";
 
 type Item = {
@@ -53,6 +54,7 @@ export function SideBar({ active, userEmail, isSuperAdmin, isSetter, logoutActio
     { key: "kanban",       href: "/kanban",       label: "Kanban",      Icon: KanbanSquare,    sectie: 2 },
     { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",     Icon: Contact,         sectie: 2 },
     ...(!isSetter ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 2 } as Item] : []),
+    { key: "jobdigger", href: "https://jobdigger.nl/auth/login", label: "Jobdigger", Icon: PhoneCall, sectie: 2, extern: true } as Item,
     { key: "inbox",        href: "/inbox",        label: "E-mail",      Icon: Mail,            sectie: 3 },
     ...(!isSetter ? [{ key: "setters", href: "/setters", label: "Setters", Icon: UserCog, sectie: 4 } as Item] : []),
     { key: "instellingen", href: "/instellingen", label: "Instellingen", Icon: Settings,       sectie: 4 },

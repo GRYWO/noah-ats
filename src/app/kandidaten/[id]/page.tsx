@@ -6,6 +6,7 @@ import { updateKandidaat } from "./actions";
 import { stuurVoorstel } from "./voorstel-actions";
 import { DeleteButton } from "./DeleteButton";
 import { CvUpload } from "./CvUpload";
+import { BellijstSectie } from "./BellijstSectie";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -87,6 +88,20 @@ export default async function KandidaatDetail({
     .order("created_at", { ascending: false })
     .limit(50);
 
+  const { data: bellijstenRaw } = await supabase
+    .from("bellijsten")
+    .select(`
+      id, naam, aantal_items, created_at,
+      items:bellijst_items(id, functie, bedrijf, plaats, telefoon, website, branche, label, status, notitie, opdrachtgever_id, volgorde)
+    `)
+    .eq("kandidaat_id", id)
+    .order("created_at", { ascending: false });
+
+  const bellijsten = (bellijstenRaw ?? []).map(b => ({
+    ...b,
+    items: (b.items ?? []).sort((a: { volgorde: number | null }, b: { volgorde: number | null }) => (a.volgorde ?? 0) - (b.volgorde ?? 0)),
+  }));
+
   const EVENT_LABELS: Record<string, { label: string; kleur: string }> = {
     voorstel_verstuurd:    { label: "Voorstel verstuurd",     kleur: "bg-[#333399] text-white" },
     voorstel_geopend:      { label: "Voorstel geopend",       kleur: "bg-blue-100 text-blue-800" },
@@ -140,7 +155,7 @@ export default async function KandidaatDetail({
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : "Opgeslagen"}
+            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : "Opgeslagen"}
           </div>
         )}
         {error && (
@@ -301,6 +316,11 @@ export default async function KandidaatDetail({
             <p className="text-sm text-gray-500">Nog geen voorstellen verstuurd voor deze kandidaat.</p>
           )}
         </div>
+
+        {/* Bellijsten (Jobdigger) */}
+        {!isRecruiter && (
+          <BellijstSectie kandidaatId={k.id} bellijsten={bellijsten} />
+        )}
 
         {/* Voorstel-log */}
         <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
