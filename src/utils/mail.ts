@@ -153,9 +153,9 @@ export async function fetchInbox(
       const env = msg.envelope;
       const van = env?.from?.[0];
       // internalDate is wanneer mailserver de mail ontving — meest betrouwbaar voor sorteren
-      const datum = msg.internalDate?.toISOString()
-        ?? env?.date?.toISOString()
-        ?? new Date().toISOString();
+      const datum = msg.internalDate
+        ? new Date(msg.internalDate).toISOString()
+        : env?.date?.toISOString() ?? new Date().toISOString();
       berichten.push({
         uid: msg.uid,
         van: van?.address ?? "?",
@@ -187,7 +187,7 @@ export async function fetchMailDetail(
 
   try {
     const msg = await client.fetchOne(String(uid), { source: true, envelope: true }, { uid: true });
-    if (!msg?.source) return null;
+    if (!msg || !msg.source) return null;
 
     const parsed: ParsedMail = await simpleParser(msg.source);
     // Markeer als gelezen
