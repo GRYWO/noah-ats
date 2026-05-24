@@ -29,6 +29,7 @@ export async function nieuweSetter(formData: FormData) {
   const voornaam        = (formData.get("voornaam") as string)?.trim();
   const achternaam      = (formData.get("achternaam") as string)?.trim();
   const telefoon        = (formData.get("telefoon") as string)?.trim() || null;
+  const voysNummer      = (formData.get("voys_nummer") as string)?.trim() || null;
   const rol             = (formData.get("rol") as string)?.trim() || "setter";
   const mailAdres       = (formData.get("mail_adres") as string)?.trim().toLowerCase() || email;
   const mailWachtwoord  = (formData.get("mail_wachtwoord") as string)?.trim() || null;
@@ -66,6 +67,7 @@ ${telefoon ? `${telefoon} · ` : ""}${mailAdres}<br>
     achternaam,
     rol,
     telefoon,
+    voys_nummer: voysNummer,
     mail_adres: mailAdres,
     mail_wachtwoord: mailWachtwoord ? encrypt(mailWachtwoord) : null,
     handtekening_html: handtekening,

@@ -90,6 +90,11 @@ export default async function SettersPage({
                 <input name="telefoon" placeholder="+31 6 12345678" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </div>
               <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Voys-nummer</label>
+                <input name="voys_nummer" placeholder="+31 85 ... (vanuit Voys-portal)" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <small className="text-gray-400 text-xs">Wordt gebruikt voor click-to-call. Bestel een nummer in Voys en plak hier.</small>
+              </div>
+              <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Rol *</label>
                 <select name="rol" defaultValue="setter" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
                   <option value="setter">Setter</option>
