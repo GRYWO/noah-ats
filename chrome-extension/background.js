@@ -18,6 +18,7 @@ function shouldProcess(item) {
 }
 
 async function vindActieveKandidaat() {
+  // 1. Eerst proberen via open Noah-tab met ?kandidaat=
   const tabs = await chrome.tabs.query({ url: NOAH_TAB_PATTERN });
   for (const tab of tabs) {
     try {
@@ -26,8 +27,27 @@ async function vindActieveKandidaat() {
       if (id) return id;
     } catch (_) {}
   }
+  // 2. Fallback: laatst gemelde kandidaat in storage (max 30 min oud)
+  try {
+    const data = await chrome.storage.local.get(["kandidaatId", "kandidaatTs"]);
+    if (data.kandidaatId && data.kandidaatTs) {
+      const leeftijd = Date.now() - data.kandidaatTs;
+      if (leeftijd < 30 * 60 * 1000) {
+        console.log("[Noah] Gebruik onthouden kandidaat:", data.kandidaatId, "leeftijd:", Math.round(leeftijd/1000), "s");
+        return data.kandidaatId;
+      }
+    }
+  } catch (_) {}
   return null;
 }
+
+// Ontvang updates van content script op noah-ats.nl/jobdigger
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg?.type === "noah-set-kandidaat" && msg.kandidaatId) {
+    chrome.storage.local.set({ kandidaatId: msg.kandidaatId, kandidaatTs: Date.now() });
+    console.log("[Noah] Kandidaat onthouden:", msg.kandidaatId);
+  }
+});
 
 async function fetchMetTimeout(url, opts = {}, ms = 15000) {
   const ctrl = new AbortController();
