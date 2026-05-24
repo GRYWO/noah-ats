@@ -12,10 +12,11 @@ type Props = {
   uid: string | undefined;
   berichten: InboxBericht[];
   mappen: MailMap[];
-  geopendeMail: MailDetail | null;
+  geopendeMail: (MailDetail & { body_loaded?: boolean }) | null;
   fetchError: string | null;
   huidigeMap: MailMap | undefined;
   mailAdres: string | null;
+  isLeeg?: boolean;
 };
 
 export function InboxClient({
@@ -27,6 +28,7 @@ export function InboxClient({
   fetchError,
   huidigeMap,
   mailAdres,
+  isLeeg,
 }: Props) {
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [listWidth, setListWidth] = useState(384);
@@ -36,6 +38,23 @@ export function InboxClient({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  const [syncBezig, setSyncBezig] = useState(false);
+
+  const syncEnRefresh = async () => {
+    setSyncBezig(true);
+    try {
+      await fetch("/api/mail/sync", { method: "POST" });
+    } catch {
+      // ignore
+    } finally {
+      setSyncBezig(false);
+      startTransition(() => {
+        router.refresh();
+        setLastRefresh(new Date());
+      });
+    }
+  };
+
   const refresh = () => {
     startTransition(() => {
       router.refresh();
@@ -43,10 +62,27 @@ export function InboxClient({
     });
   };
 
-  // Auto-refresh elke 30 seconden
+  // Bij eerste page load: als helemaal leeg, doe initiele sync
+  useEffect(() => {
+    if (isLeeg) {
+      syncEnRefresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Body lazy laden als mail geopend is maar nog niet
+  useEffect(() => {
+    if (uid && geopendeMail && !geopendeMail.body_loaded) {
+      fetch(`/api/mail/body?map=${encodeURIComponent(mapPad)}&uid=${uid}`, { method: "POST" })
+        .then(() => router.refresh());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, geopendeMail?.body_loaded]);
+
+  // Auto-sync elke 60 seconden (haalt uit IMAP)
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(refresh, 30_000);
+    const interval = setInterval(syncEnRefresh, 60_000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh]);
@@ -221,15 +257,15 @@ export function InboxClient({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={refresh}
-                disabled={isPending}
-                title="Refresh nu"
+                onClick={syncEnRefresh}
+                disabled={isPending || syncBezig}
+                title="Sync nu met server"
                 className="p-1.5 rounded-md hover:bg-gray-100 transition disabled:opacity-50"
               >
                 <svg
                   width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  className={`text-gray-600 ${isPending ? "animate-spin" : ""}`}
+                  className={`text-gray-600 ${(isPending || syncBezig) ? "animate-spin" : ""}`}
                 >
                   <path d="M21 12a9 9 0 1 1-3-6.7L21 8"/>
                   <path d="M21 3v5h-5"/>
