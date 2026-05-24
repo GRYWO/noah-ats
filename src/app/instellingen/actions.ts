@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { encrypt } from "@/utils/crypto";
 import { getGrywoLogoDataUri } from "@/utils/grywo-logo";
 
 export async function updateMailConfig(formData: FormData) {
@@ -12,20 +11,25 @@ export async function updateMailConfig(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const mailAdres      = (formData.get("mail_adres") as string)?.trim().toLowerCase();
-  const mailWachtwoord = (formData.get("mail_wachtwoord") as string)?.trim();
   const voornaam       = (formData.get("voornaam") as string)?.trim();
   const achternaam     = (formData.get("achternaam") as string)?.trim();
   const telefoon       = (formData.get("telefoon") as string)?.trim();
   const functieTitel   = (formData.get("functie_titel") as string)?.trim();
 
-  // Haal rol op voor fallback signature label
+  // Haal rol + primair mail-adres op
   const admin = createAdminClient();
   const { data: huidigeProfile } = await admin
     .from("profiles")
     .select("rol")
     .eq("id", user.id)
     .single();
+  const { data: primair } = await admin
+    .from("mail_accounts")
+    .select("mail_adres")
+    .eq("user_id", user.id)
+    .eq("is_primary", true)
+    .maybeSingle();
+  const mailAdres = primair?.mail_adres ?? user.email ?? "";
   const rol = huidigeProfile?.rol ?? "setter";
   const rolFallback = rol === "admin" ? "Admin" : rol === "recruiter" ? "Recruiter" : "Setter";
   const rolLabel = functieTitel || `${rolFallback} bij GRYWO`;
@@ -59,14 +63,8 @@ export async function updateMailConfig(formData: FormData) {
     achternaam,
     telefoon,
     functie_titel: functieTitel || null,
-    mail_adres: mailAdres,
     handtekening_html: handtekening,
   };
-
-  if (mailWachtwoord) {
-    update.mail_wachtwoord = encrypt(mailWachtwoord);
-    update.mail_status = "actief";
-  }
 
   const { error } = await admin.from("profiles").update(update).eq("id", user.id);
 
@@ -75,6 +73,5 @@ export async function updateMailConfig(formData: FormData) {
   }
 
   revalidatePath("/instellingen");
-  revalidatePath("/inbox");
-  redirect("/inbox");
+  redirect("/instellingen?ok=profiel");
 }

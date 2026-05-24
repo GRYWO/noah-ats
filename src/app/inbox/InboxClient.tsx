@@ -9,9 +9,12 @@ import { mailVerwijderen, mailVerplaatsen, mailFlagToggle, mailOngelezen } from 
 import type { InboxBericht, MailMap, MailDetail } from "@/utils/mail";
 
 type Toast = { id: number; van: string; onderwerp: string };
+type MailAccount = { id: string; mail_adres: string; display_naam: string | null; is_primary: boolean };
 
 type Props = {
   userId: string;
+  accountId: string;
+  accounts: MailAccount[];
   mapPad: string;
   uid: string | undefined;
   berichten: InboxBericht[];
@@ -25,6 +28,8 @@ type Props = {
 
 export function InboxClient({
   userId,
+  accountId,
+  accounts,
   mapPad,
   uid,
   berichten,
@@ -163,7 +168,7 @@ export function InboxClient({
   // Body lazy laden als mail geopend is maar nog niet
   useEffect(() => {
     if (uid && geopendeMail && !geopendeMail.body_loaded) {
-      fetch(`/api/mail/body?map=${encodeURIComponent(mapPad)}&uid=${uid}`, { method: "POST" })
+      fetch(`/api/mail/body?account=${accountId}&map=${encodeURIComponent(mapPad)}&uid=${uid}`, { method: "POST" })
         .then(() => router.refresh());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -269,7 +274,20 @@ export function InboxClient({
         className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0"
         style={{ width: `${sidebarWidth}px` }}
       >
-        <div className="p-3 border-b">
+        <div className="p-3 border-b space-y-2">
+          {accounts.length > 1 && (
+            <select
+              value={accountId}
+              onChange={(e) => router.push(`/inbox?account=${e.target.value}`)}
+              className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs bg-white"
+            >
+              {accounts.map(a => (
+                <option key={a.id} value={a.id}>
+                  {a.mail_adres}{a.is_primary ? " (primair)" : ""}
+                </option>
+              ))}
+            </select>
+          )}
           <Link href="/inbox/compose" className="block bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-4 py-2.5 rounded-md text-sm text-center">
             Nieuwe e-mail
           </Link>

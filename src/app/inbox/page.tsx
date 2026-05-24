@@ -8,28 +8,28 @@ export const revalidate = 0;
 export default async function InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ map?: string; uid?: string; error?: string }>;
+  searchParams: Promise<{ map?: string; uid?: string; error?: string; account?: string }>;
 }) {
-  const { map: mapPad = "INBOX", uid, error } = await searchParams;
+  const { map: mapPad = "INBOX", uid, error, account: accountParam } = await searchParams;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("mail_adres, mail_wachtwoord")
-    .eq("id", user!.id)
-    .single();
+  // Haal alle mail-accounts van user
+  const { data: accounts } = await supabase
+    .from("mail_accounts")
+    .select("*")
+    .eq("user_id", user!.id)
+    .order("is_primary", { ascending: false })
+    .order("created_at", { ascending: true });
 
-  const isConfigured = !!(profile?.mail_adres && profile?.mail_wachtwoord);
-
-  if (!isConfigured) {
+  if (!accounts || accounts.length === 0) {
     return (
       <main className="min-h-screen bg-[#f4f4f7]">
         <TopBar active="inbox" />
         <div className="p-8 max-w-3xl mx-auto">
           <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg p-4">
-            <b>Mailbox nog niet ingesteld.</b><br/>
+            <b>Nog geen mailbox ingesteld.</b><br/>
             Ga naar <Link href="/instellingen" className="text-[#333399] underline">Instellingen</Link>.
           </div>
         </div>
@@ -37,17 +37,20 @@ export default async function InboxPage({
     );
   }
 
-  // Lees uit Supabase — instant
+  // Active account: uit URL of primary
+  const activeAccount = accounts.find(a => a.id === accountParam) ?? accounts[0];
+
+  // Lees uit Supabase voor dit account
   const [mappenRes, berichtenRes] = await Promise.all([
     supabase
       .from("mail_mappen")
       .select("*")
-      .eq("user_id", user!.id)
+      .eq("account_id", activeAccount.id)
       .order("type", { ascending: true }),
     supabase
       .from("mail_berichten")
       .select("id, uid, van, naam, onderwerp, datum, gelezen, gevlagd")
-      .eq("user_id", user!.id)
+      .eq("account_id", activeAccount.id)
       .eq("map_pad", mapPad)
       .order("datum", { ascending: false })
       .limit(50),
@@ -74,13 +77,13 @@ export default async function InboxPage({
     preview: "",
   }));
 
-  // Optioneel: mail detail
+  // Mail detail
   let geopendeMail = null;
   if (uid) {
     const { data: mail } = await supabase
       .from("mail_berichten")
       .select("*")
-      .eq("user_id", user!.id)
+      .eq("account_id", activeAccount.id)
       .eq("map_pad", mapPad)
       .eq("uid", parseInt(uid))
       .single();
@@ -107,6 +110,8 @@ export default async function InboxPage({
       <TopBar active="inbox" />
       <InboxClient
         userId={user!.id}
+        accountId={activeAccount.id}
+        accounts={accounts.map(a => ({ id: a.id, mail_adres: a.mail_adres, display_naam: a.display_naam, is_primary: a.is_primary }))}
         mapPad={mapPad}
         uid={uid}
         berichten={berichten}
@@ -114,7 +119,7 @@ export default async function InboxPage({
         geopendeMail={geopendeMail}
         fetchError={error ?? null}
         huidigeMap={huidigeMap}
-        mailAdres={profile?.mail_adres ?? null}
+        mailAdres={activeAccount.mail_adres ?? null}
         isLeeg={isLeeg}
       />
     </main>

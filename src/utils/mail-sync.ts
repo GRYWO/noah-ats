@@ -34,28 +34,26 @@ function detectMapType(path: string, specialUse?: string): MapType {
 }
 
 /**
- * Sync nieuwe mails uit IMAP naar Supabase voor een specifieke user.
- * Per map: pakt nieuwste mails op tot een limit, slaat alleen onbekende UIDs op.
+ * Sync mails voor één specifiek mail-account.
  */
-export async function syncMailsVoorUser(userId: string, mailLimitPerMap = 50) {
+export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 50) {
   const admin = createAdminClient();
 
-  // Haal mail-config op
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("mail_adres, mail_wachtwoord")
-    .eq("id", userId)
+  const { data: account } = await admin
+    .from("mail_accounts")
+    .select("*")
+    .eq("id", accountId)
     .single();
 
-  if (!profile?.mail_adres || !profile.mail_wachtwoord) {
-    return { error: "Mailbox niet geconfigureerd" };
+  if (!account?.mail_adres || !account.mail_wachtwoord) {
+    return { error: "Account niet geconfigureerd" };
   }
 
   const client = new ImapFlow({
-    host: process.env.HOSTNET_IMAP_HOST ?? "imap.hostnet.nl",
-    port: parseInt(process.env.HOSTNET_IMAP_PORT ?? "993"),
+    host: account.imap_host ?? process.env.HOSTNET_IMAP_HOST ?? "imap.hostnet.nl",
+    port: account.imap_port ?? parseInt(process.env.HOSTNET_IMAP_PORT ?? "993"),
     secure: true,
-    auth: { user: profile.mail_adres, pass: decrypt(profile.mail_wachtwoord) },
+    auth: { user: account.mail_adres, pass: decrypt(account.mail_wachtwoord) },
     logger: false,
   });
 
@@ -71,12 +69,11 @@ export async function syncMailsVoorUser(userId: string, mailLimitPerMap = 50) {
       const type = detectMapType(mapInfo.path, mapInfo.specialUse);
       const label = type === "ander" ? mapInfo.name : MAP_LABELS[type];
 
-      // Status ophalen voor counts
       const status = await client.status(mapInfo.path, { messages: true, unseen: true });
 
-      // Map upserten in Supabase
       await admin.from("mail_mappen").upsert({
-        user_id: userId,
+        user_id: account.user_id,
+        account_id: accountId,
         pad: mapInfo.path,
         label,
         type,
@@ -85,7 +82,6 @@ export async function syncMailsVoorUser(userId: string, mailLimitPerMap = 50) {
         last_sync: new Date().toISOString(),
       }, { onConflict: "user_id,pad" });
 
-      // Open mailbox en haal recente UIDs
       const lock = await client.getMailboxLock(mapInfo.path);
       try {
         const mailbox = client.mailbox as { exists: number };
@@ -95,17 +91,17 @@ export async function syncMailsVoorUser(userId: string, mailLimitPerMap = 50) {
         const start = Math.max(1, totaal - mailLimitPerMap + 1);
         const end = totaal;
 
-        // Haal alle bestaande UIDs voor deze map op
         const { data: bestaand } = await admin
           .from("mail_berichten")
           .select("uid")
-          .eq("user_id", userId)
+          .eq("account_id", accountId)
           .eq("map_pad", mapInfo.path);
 
         const bestaandeUids = new Set((bestaand ?? []).map(b => b.uid));
 
         const nieuweBerichten: Array<{
           user_id: string;
+          account_id: string;
           map_pad: string;
           uid: number;
           van: string | null;
@@ -130,7 +126,8 @@ export async function syncMailsVoorUser(userId: string, mailLimitPerMap = 50) {
             : env?.date?.toISOString() ?? new Date().toISOString();
 
           nieuweBerichten.push({
-            user_id: userId,
+            user_id: account.user_id,
+            account_id: accountId,
             map_pad: mapInfo.path,
             uid: msg.uid,
             van: van?.address ?? null,
@@ -160,17 +157,38 @@ export async function syncMailsVoorUser(userId: string, mailLimitPerMap = 50) {
 }
 
 /**
- * Laad de body van een specifiek mail-bericht uit IMAP, sla op in Supabase.
- * Lazy loading: pas wanneer user de mail opent.
+ * Sync ALL accounts van een user.
  */
-export async function laadMailBody(userId: string, mapPad: string, uid: number) {
+export async function syncMailsVoorUser(userId: string, mailLimitPerMap = 50) {
   const admin = createAdminClient();
 
-  // Eerst checken of body al geladen is
+  const { data: accounts } = await admin
+    .from("mail_accounts")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("mail_status", "actief");
+
+  if (!accounts || accounts.length === 0) return { ok: true, nieuw: 0 };
+
+  let totaal = 0;
+  for (const a of accounts) {
+    const r = await syncMailsVoorAccount(a.id, mailLimitPerMap);
+    if (r.ok) totaal += r.nieuw ?? 0;
+  }
+
+  return { ok: true, nieuw: totaal };
+}
+
+/**
+ * Laad de body van een specifiek mail-bericht uit IMAP, sla op in Supabase.
+ */
+export async function laadMailBody(accountId: string, mapPad: string, uid: number) {
+  const admin = createAdminClient();
+
   const { data: bestaand } = await admin
     .from("mail_berichten")
     .select("body_loaded, html, tekst")
-    .eq("user_id", userId)
+    .eq("account_id", accountId)
     .eq("map_pad", mapPad)
     .eq("uid", uid)
     .single();
@@ -179,22 +197,21 @@ export async function laadMailBody(userId: string, mapPad: string, uid: number) 
     return { html: bestaand.html, tekst: bestaand.tekst };
   }
 
-  // Anders ophalen via IMAP
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("mail_adres, mail_wachtwoord")
-    .eq("id", userId)
+  const { data: account } = await admin
+    .from("mail_accounts")
+    .select("mail_adres, mail_wachtwoord, imap_host, imap_port, user_id")
+    .eq("id", accountId)
     .single();
 
-  if (!profile?.mail_adres || !profile.mail_wachtwoord) {
-    return { error: "Mailbox niet geconfigureerd" };
+  if (!account?.mail_adres || !account.mail_wachtwoord) {
+    return { error: "Account niet geconfigureerd" };
   }
 
   const client = new ImapFlow({
-    host: process.env.HOSTNET_IMAP_HOST ?? "imap.hostnet.nl",
-    port: parseInt(process.env.HOSTNET_IMAP_PORT ?? "993"),
+    host: account.imap_host ?? "imap.hostnet.nl",
+    port: account.imap_port ?? 993,
     secure: true,
-    auth: { user: profile.mail_adres, pass: decrypt(profile.mail_wachtwoord) },
+    auth: { user: account.mail_adres, pass: decrypt(account.mail_wachtwoord) },
     logger: false,
   });
 
@@ -210,7 +227,6 @@ export async function laadMailBody(userId: string, mapPad: string, uid: number) 
         const parsed = await simpleParser(msg.source);
         html = parsed.html || null;
         tekst = parsed.text || null;
-        // Markeer als gelezen
         await client.messageFlagsAdd(String(uid), ["\\Seen"], { uid: true });
       }
     } finally {
@@ -220,7 +236,6 @@ export async function laadMailBody(userId: string, mapPad: string, uid: number) 
     await client.logout().catch(() => {});
   }
 
-  // Sla op in Supabase
   await admin
     .from("mail_berichten")
     .update({
@@ -229,7 +244,7 @@ export async function laadMailBody(userId: string, mapPad: string, uid: number) 
       gelezen: true,
       body_loaded: true,
     })
-    .eq("user_id", userId)
+    .eq("account_id", accountId)
     .eq("map_pad", mapPad)
     .eq("uid", uid);
 

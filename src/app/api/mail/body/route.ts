@@ -13,15 +13,16 @@ export async function POST(request: Request) {
   }
 
   const url = new URL(request.url);
+  const accountId = url.searchParams.get("account");
   const mapPad = url.searchParams.get("map");
   const uidStr = url.searchParams.get("uid");
 
-  if (!mapPad || !uidStr) {
+  if (!accountId || !mapPad || !uidStr) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 });
   }
 
   try {
-    const result = await laadMailBody(user.id, mapPad, parseInt(uidStr));
+    const result = await laadMailBody(accountId, mapPad, parseInt(uidStr));
     return NextResponse.json(result);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
