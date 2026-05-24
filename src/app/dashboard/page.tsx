@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
+import { SetterPerformance } from "./SetterPerformance";
+
+type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
+function geldigePeriode(p: string | undefined): Periode {
+  return (["vandaag", "week", "maand", "jaar", "alles"] as const).includes(p as Periode)
+    ? (p as Periode)
+    : "maand";
+}
 
 const STATUS_KLEUR: Record<string, string> = {
   nieuw: "bg-blue-500",
@@ -34,7 +42,13 @@ const VOORSTEL_STATUS_KLEUR: Record<string, string> = {
   verlopen: "bg-gray-100 text-gray-600",
 };
 
-export default async function Dashboard() {
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams?: Promise<{ periode?: string }>;
+}) {
+  const sp = (await searchParams) ?? {};
+  const periode = geldigePeriode(sp.periode);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -75,6 +89,12 @@ export default async function Dashboard() {
           ? <SetterDashboard userId={user!.id} />
           : <AdminDashboard />
         }
+
+        {/* Performance per setter / leaderboard — voor admin alle setters, voor setter alleen eigen */}
+        <SetterPerformance
+          periode={periode}
+          beperkTotUserId={isSetter ? user!.id : undefined}
+        />
       </div>
     </main>
   );
