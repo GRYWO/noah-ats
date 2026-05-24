@@ -1,7 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
+import { isSuperAdminEmail } from "@/utils/auth";
 import { updateMailConfig } from "./actions";
 import { nieuwMailAccount, verwijderMailAccount, maakPrimair } from "./mail-actions";
+import { updateMailTemplate, resetMailTemplate } from "./template-actions";
+import { TEMPLATE_META, DEFAULT_BODIES, type TemplateSleutel } from "@/utils/mail-templates";
 
 export default async function InstellingenPage({
   searchParams,
@@ -25,11 +29,21 @@ export default async function InstellingenPage({
   const profile = profileRes.data;
   const accounts = accountsRes.data ?? [];
 
+  const isSuperAdmin = isSuperAdminEmail(user?.email);
+  let templates: Record<string, string> = {};
+  if (isSuperAdmin) {
+    const admin = createAdminClient();
+    const { data } = await admin.from("mail_templates").select("sleutel, body_html");
+    templates = Object.fromEntries((data ?? []).map(t => [t.sleutel, t.body_html]));
+  }
+
   const okMessages: Record<string, string> = {
     profiel: "Profiel opgeslagen.",
     account: "Mailbox toegevoegd.",
     verwijderd: "Mailbox verwijderd.",
     primair: "Primaire mailbox gewijzigd.",
+    template: "Template opgeslagen.",
+    template_reset: "Template teruggezet naar standaard.",
   };
 
   return (
@@ -163,6 +177,71 @@ export default async function InstellingenPage({
             </button>
           </form>
         </div>
+
+        {/* Mail-templates (super-admin only) */}
+        {isSuperAdmin && (
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h2 className="font-bold text-gray-800 mb-1 pb-2 border-b">Mail-templates</h2>
+            <p className="text-xs text-gray-500 mt-2 mb-4">
+              Pas de tekst aan van automatische mails. Gebruik <code className="bg-gray-100 px-1 rounded">{`{variabele}`}</code> placeholders.
+              Layout (logo, footer) en eventuele detail-tabellen worden automatisch toegevoegd.
+            </p>
+
+            <div className="space-y-4">
+              {(Object.keys(TEMPLATE_META) as TemplateSleutel[]).map((sleutel) => {
+                const meta = TEMPLATE_META[sleutel];
+                const huidig = templates[sleutel] ?? DEFAULT_BODIES[sleutel];
+                const isOverride = sleutel in templates;
+                return (
+                  <details key={sleutel} className="border border-gray-200 rounded-md">
+                    <summary className="cursor-pointer px-4 py-3 bg-gray-50 rounded-md flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-sm text-gray-800">{meta.naam}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{meta.beschrijving}</div>
+                      </div>
+                      {isOverride && (
+                        <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">Aangepast</span>
+                      )}
+                    </summary>
+                    <div className="p-4 border-t border-gray-200">
+                      <div className="mb-3">
+                        <span className="text-xs font-semibold text-gray-600">Variabelen: </span>
+                        {meta.vars.map((v) => (
+                          <code key={v} className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded mr-1">
+                            {`{${v}}`}
+                          </code>
+                        ))}
+                      </div>
+                      <form action={updateMailTemplate} className="space-y-3">
+                        <input type="hidden" name="sleutel" value={sleutel} />
+                        <textarea
+                          name="body_html"
+                          defaultValue={huidig}
+                          rows={10}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-xs font-mono focus:outline-none focus:border-[#333399]"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button type="submit" className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-4 py-1.5 rounded-md text-xs">
+                            Opslaan
+                          </button>
+                          {isOverride && (
+                            <button
+                              type="submit"
+                              formAction={resetMailTemplate}
+                              className="text-xs text-gray-600 hover:text-red-600 underline"
+                            >
+                              Terug naar standaard
+                            </button>
+                          )}
+                        </div>
+                      </form>
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { renderMailTemplate } from "@/utils/mail-templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
@@ -67,16 +68,19 @@ export async function sendVoorstelMail({
     kandidaat.score != null && `<tr><td style="padding:6px 0;color:#666;">Score</td><td style="padding:6px 0;font-weight:bold;color:${kandidaat.score >= 75 ? "#0a8062" : kandidaat.score >= 50 ? "#a05d00" : "#c44"};">${kandidaat.score}/100</td></tr>`,
   ].filter(Boolean).join("");
 
+  const intro = await renderMailTemplate("voorstel_opdrachtgever", {
+    opdrachtgever_naam: opdrachtgeverNaam ?? "",
+    kandidaat_naam: naam,
+    bericht: bericht ?? "",
+  });
+
   const body = `
-${opdrachtgeverNaam ? `<p style="margin:0 0 12px 0;">Beste ${opdrachtgeverNaam},</p>` : ""}
-<p style="margin:0 0 16px 0;">We hebben een sterke kandidaat voor je openstaande functie:</p>
+${intro}
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
   <tr><td colspan="2" style="padding:0 0 12px 0;border-bottom:1px solid #e5e5ec;"><b style="font-size:18px;">${naam}</b></td></tr>
   ${profielRows}
 </table>
-
-${bericht ? `<p style="padding:12px;background:#eef0ff;border-left:3px solid ${GRYWO_KLEUR};margin:16px 0;font-style:italic;color:#444;">"${bericht}"</p>` : ""}
 
 <p style="margin:24px 0 16px 0;font-weight:600;text-align:center;">Wil je deze kandidaat uitnodigen voor een kennismaking?</p>
 
@@ -128,13 +132,13 @@ export async function sendReminderMail({
     ? "Laatste kans om te reageren"
     : "We wachten nog op je reactie";
 
-  const tekst = laatsteDag
-    ? `Vandaag is de laatste dag om te reageren op het voorstel voor <b>${kandidaatNaam}</b>. Daarna trekken we het voorstel automatisch in.`
-    : `We hebben nog geen reactie ontvangen op het voorstel voor <b>${kandidaatNaam}</b>. Laat je dezelfde kandidaat liever lopen, of wil je 'm uitnodigen?`;
+  const intro = await renderMailTemplate("reminder_opdrachtgever", {
+    opdrachtgever_naam: opdrachtgeverNaam ?? "",
+    kandidaat_naam: kandidaatNaam,
+  });
 
   const body = `
-${opdrachtgeverNaam ? `<p style="margin:0 0 12px 0;">Beste ${opdrachtgeverNaam},</p>` : ""}
-<p style="margin:0 0 16px 0;">${tekst}</p>
+${intro}
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0;border-collapse:separate;border-spacing:8px 0;">
   <tr>
@@ -186,9 +190,13 @@ export async function sendKandidaatBevestiging({
   const fmtDatum = (d: string | null) =>
     d ? new Date(d).toLocaleString("nl-NL", { dateStyle: "full", timeStyle: "short" }) : "—";
 
+  const intro = await renderMailTemplate("kandidaat_bevestiging", {
+    voornaam: kandidaatVoornaam,
+    bedrijf,
+  });
+
   const body = `
-<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
-<p style="margin:0 0 16px 0;">Goed nieuws — <b>${bedrijf}</b> wil graag kennismaken!</p>
+${intro}
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
   <tr><td style="padding:6px 0;color:#666;width:35%;">Bedrijf</td><td style="padding:6px 0;font-weight:600;">${bedrijf}</td></tr>
@@ -229,11 +237,7 @@ export async function sendKandidaatVoorgesteld({
   naar: string;
   kandidaatVoornaam: string;
 }) {
-  const body = `
-<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
-<p style="margin:0 0 12px 0;">We hebben je zojuist voorgesteld bij een potentiële werkgever.</p>
-<p style="margin:0 0 12px 0;">We wachten nu op een reactie. Zodra we groen licht krijgen, brengen we je direct op de hoogte met alle details voor een kennismaking.</p>
-<p style="margin:16px 0 0 0;color:#666;">Hartelijke groet,<br>Team GRYWO</p>`;
+  const body = await renderMailTemplate("kandidaat_voorgesteld", { voornaam: kandidaatVoornaam });
   return resend.emails.send({
     from: FROM,
     to: naar,
@@ -253,11 +257,7 @@ export async function sendKandidaatAfwijzing({
   naar: string;
   kandidaatVoornaam: string;
 }) {
-  const body = `
-<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
-<p style="margin:0 0 12px 0;">Helaas heeft de werkgever waar we je hadden voorgesteld besloten om niet verder te gaan met je profiel.</p>
-<p style="margin:0 0 12px 0;">Geen zorgen — we gaan voor je aan de slag met andere passende kansen. We houden je op de hoogte.</p>
-<p style="margin:16px 0 0 0;color:#666;">Hartelijke groet,<br>Team GRYWO</p>`;
+  const body = await renderMailTemplate("kandidaat_afwijzing", { voornaam: kandidaatVoornaam });
   return resend.emails.send({
     from: FROM,
     to: naar,
@@ -290,9 +290,12 @@ export async function sendKennismakingReminder({
     dateStyle: "full",
     timeStyle: "short",
   });
+  const intro = await renderMailTemplate("kennismaking_reminder", {
+    voornaam: kandidaatVoornaam,
+    bedrijf,
+  });
   const body = `
-<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
-<p style="margin:0 0 16px 0;">Over een uur heb je je kennismaking met <b>${bedrijf}</b>. Succes!</p>
+${intro}
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
   <tr><td style="padding:6px 0;color:#666;width:35%;">Tijdstip</td><td style="padding:6px 0;font-weight:600;">${tijd}</td></tr>
   ${contactpersoon ? `<tr><td style="padding:6px 0;color:#666;">Contactpersoon</td><td style="padding:6px 0;font-weight:600;">${contactpersoon}</td></tr>` : ""}
@@ -318,11 +321,7 @@ export async function sendKandidaatPlaatsing({
   naar: string;
   kandidaatVoornaam: string;
 }) {
-  const body = `
-<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
-<p style="margin:0 0 12px 0;"><b>Gefeliciteerd!</b> Je bent geplaatst. Wij wensen je heel veel succes en plezier op je nieuwe werkplek.</p>
-<p style="margin:0 0 12px 0;">Mocht je vragen hebben of we iets voor je kunnen betekenen, dan horen we het graag.</p>
-<p style="margin:16px 0 0 0;color:#666;">Hartelijke groet,<br>Team GRYWO</p>`;
+  const body = await renderMailTemplate("kandidaat_plaatsing", { voornaam: kandidaatVoornaam });
   return resend.emails.send({
     from: FROM,
     to: naar,
@@ -341,11 +340,7 @@ export async function sendKandidaatStatusAfwijzing({
   naar: string;
   kandidaatVoornaam: string;
 }) {
-  const body = `
-<p style="margin:0 0 12px 0;">Hi ${kandidaatVoornaam},</p>
-<p style="margin:0 0 12px 0;">Bedankt voor de moeite die je in dit traject hebt gestoken. Op dit moment hebben we helaas geen passende match voor je.</p>
-<p style="margin:0 0 12px 0;">We bewaren je profiel in onze talentpool en nemen contact op zodra er een geschikte kans voorbij komt.</p>
-<p style="margin:16px 0 0 0;color:#666;">Hartelijke groet,<br>Team GRYWO</p>`;
+  const body = await renderMailTemplate("kandidaat_status_afwijzing", { voornaam: kandidaatVoornaam });
   return resend.emails.send({
     from: FROM,
     to: naar,
