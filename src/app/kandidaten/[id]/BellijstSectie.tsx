@@ -9,7 +9,7 @@ import {
   updateBellijstItem,
   verwijderBellijstItem,
   verwijderBellijst,
-  voegBellijstItemToeAanCrm,
+  maakRelatieVanBellijstItem,
 } from "./bellijst-actions";
 
 type BellijstItem = {
@@ -154,6 +154,7 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
 function BellijstItemRij({ item, kandidaatId }: { item: BellijstItem; kandidaatId: string }) {
   const [pending, startTransition] = useTransition();
   const [optimisticLabel, setOptimisticLabel] = useState(item.label ?? "");
+  const [showCrmModal, setShowCrmModal] = useState(false);
   const router = useRouter();
   const labelOptie = LABEL_OPTIES.find(o => o.value === optimisticLabel);
 
@@ -165,16 +166,6 @@ function BellijstItemRij({ item, kandidaatId }: { item: BellijstItem; kandidaatI
     fd.append("label", value);
     startTransition(async () => {
       await updateBellijstItem(fd);
-      router.refresh();
-    });
-  }
-
-  function onCrm() {
-    const fd = new FormData();
-    fd.append("id", item.id);
-    fd.append("kandidaat_id", kandidaatId);
-    startTransition(async () => {
-      await voegBellijstItemToeAanCrm(fd);
       router.refresh();
     });
   }
@@ -224,13 +215,20 @@ function BellijstItemRij({ item, kandidaatId }: { item: BellijstItem; kandidaatI
       {!item.opdrachtgever_id && item.bedrijf && (
         <button
           type="button"
-          onClick={onCrm}
+          onClick={() => setShowCrmModal(true)}
           disabled={pending}
-          title="Toevoegen aan CRM"
+          title="Aanmaken als relatie in CRM"
           className="text-xs text-emerald-700 hover:underline font-semibold whitespace-nowrap disabled:opacity-50"
         >
           → CRM
         </button>
+      )}
+      {showCrmModal && (
+        <CrmModal
+          item={item}
+          kandidaatId={kandidaatId}
+          onClose={() => setShowCrmModal(false)}
+        />
       )}
       <button
         type="button"
@@ -241,6 +239,104 @@ function BellijstItemRij({ item, kandidaatId }: { item: BellijstItem; kandidaatI
       >
         {pending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
       </button>
+    </div>
+  );
+}
+
+const STATUS_OPTIES = [
+  { value: "lead", label: "Lead" },
+  { value: "prospect", label: "Prospect" },
+  { value: "klant", label: "Klant" },
+  { value: "partner", label: "Partner" },
+];
+
+function CrmModal({
+  item,
+  kandidaatId,
+  onClose,
+}: {
+  item: BellijstItem;
+  kandidaatId: string;
+  onClose: () => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [fout, setFout] = useState<string | null>(null);
+  const router = useRouter();
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    fd.append("item_id", item.id);
+    fd.append("kandidaat_id", kandidaatId);
+    setFout(null);
+    startTransition(async () => {
+      const res = await maakRelatieVanBellijstItem(fd);
+      if (res?.error) {
+        setFout(res.error);
+      } else {
+        router.refresh();
+        onClose();
+      }
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 py-4 border-b flex items-center justify-between">
+          <h3 className="font-bold text-gray-800">Nieuwe relatie aanmaken</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-1">×</button>
+        </div>
+        <form onSubmit={onSubmit} className="p-5 space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Bedrijfsnaam *</label>
+            <input name="naam" required defaultValue={item.bedrijf ?? ""} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Status</label>
+              <select name="status" defaultValue="lead" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                {STATUS_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Branche</label>
+              <input name="branche" defaultValue={item.branche ?? ""} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Plaats</label>
+              <input name="plaats" defaultValue={item.plaats ?? ""} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Telefoon</label>
+              <input name="telefoon" defaultValue={item.telefoon ?? ""} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Website</label>
+              <input name="website" defaultValue={item.website ?? ""} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Notitie</label>
+              <textarea name="notitie" rows={2} placeholder="Bv. context van het gesprek..." className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+            </div>
+          </div>
+          {fout && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-md p-2">{fout}</div>
+          )}
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button type="button" onClick={onClose} className="text-sm text-gray-600 hover:underline px-3 py-1.5">
+              Annuleren
+            </button>
+            <button type="submit" disabled={pending} className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-5 py-1.5 rounded-md text-sm disabled:opacity-50 inline-flex items-center gap-1.5">
+              {pending && <Loader2 size={14} className="animate-spin" />}
+              Relatie aanmaken
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

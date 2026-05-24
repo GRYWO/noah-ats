@@ -189,3 +189,83 @@ export async function voegBellijstItemToeAanCrm(formData: FormData) {
   revalidatePath(`/kandidaten/${kandidaatId}`);
   revalidatePath("/opdrachtgevers");
 }
+
+/**
+ * Maak opdrachtgever aan met door gebruiker bewerkte velden en koppel aan bellijst_item.
+ */
+export async function maakRelatieVanBellijstItem(formData: FormData) {
+  const itemId = formData.get("item_id") as string;
+  const kandidaatId = formData.get("kandidaat_id") as string;
+
+  const naam = (formData.get("naam") as string)?.trim();
+  const plaats = (formData.get("plaats") as string)?.trim() || null;
+  const telefoon = (formData.get("telefoon") as string)?.trim() || null;
+  const website = (formData.get("website") as string)?.trim() || null;
+  const branche = (formData.get("branche") as string)?.trim() || null;
+  const status = (formData.get("status") as string)?.trim() || "lead";
+  const notitie = (formData.get("notitie") as string)?.trim() || null;
+
+  if (!naam) {
+    return { error: "Naam is verplicht" };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Niet ingelogd" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) return { error: "Geen tenant" };
+
+  const admin = createAdminClient();
+
+  // Bestaat de relatie al?
+  const { data: bestaand } = await admin
+    .from("opdrachtgevers")
+    .select("id")
+    .eq("tenant_id", profile.tenant_id)
+    .ilike("naam", naam)
+    .maybeSingle();
+
+  let opdrachtgeverId: string;
+  if (bestaand) {
+    opdrachtgeverId = bestaand.id;
+    await admin.from("opdrachtgevers").update({
+      laatste_contact: new Date().toISOString(),
+      ...(plaats && { plaats }),
+      ...(telefoon && { telefoon }),
+      ...(website && { website }),
+      ...(branche && { branche }),
+    }).eq("id", opdrachtgeverId);
+  } else {
+    const { data: nieuw, error: insErr } = await admin.from("opdrachtgevers").insert({
+      tenant_id: profile.tenant_id,
+      naam,
+      plaats,
+      telefoon,
+      website,
+      branche,
+      status,
+      notitie,
+      eigenaar_id: user.id,
+      laatste_contact: new Date().toISOString(),
+    }).select("id").single();
+    if (insErr || !nieuw) {
+      return { error: insErr?.message ?? "Aanmaken mislukt" };
+    }
+    opdrachtgeverId = nieuw.id;
+  }
+
+  // Koppel item aan relatie
+  await admin.from("bellijst_items").update({
+    opdrachtgever_id: opdrachtgeverId,
+    label: "geinteresseerd",
+  }).eq("id", itemId);
+
+  revalidatePath(`/kandidaten/${kandidaatId}`);
+  revalidatePath("/opdrachtgevers");
+  return { ok: true, opdrachtgeverId };
+}
