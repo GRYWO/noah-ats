@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { nieuweSetter, verwijderSetter } from "./actions";
 import { DeleteSetterButton } from "./DeleteSetterButton";
-import { VoysSyncButton } from "./VoysSyncButton";
+import { InlineVoysEdit } from "./InlineVoysEdit";
 
 const ROL_LABELS: Record<string, string> = {
   admin: "Admin",
@@ -43,12 +43,9 @@ export default async function SettersPage({
       <TopBar active="setters" />
 
       <div className="p-8 max-w-6xl mx-auto">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Setters & users</h1>
-            <p className="text-gray-500 text-sm mt-1">{setters?.length ?? 0} users in dit bureau</p>
-          </div>
-          {isAdmin && <VoysSyncButton />}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Setters & users</h1>
+          <p className="text-gray-500 text-sm mt-1">{setters?.length ?? 0} users in dit bureau</p>
         </div>
 
         {ok && (
@@ -152,7 +149,9 @@ export default async function SettersPage({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{s.telefoon ?? "—"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{s.voys_nummer ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <InlineVoysEdit setterId={s.id} huidig={s.voys_nummer ?? null} kanBewerken={isAdmin} />
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{s.discord_id ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {s.created_at ? new Date(s.created_at).toLocaleDateString("nl-NL") : "—"}

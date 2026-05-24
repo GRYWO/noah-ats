@@ -110,6 +110,31 @@ ${telefoon ? `${telefoon} · ` : ""}${mailAdres}<br>
   redirect("/setters?ok=1");
 }
 
+export async function updateSetterVoysNummer(formData: FormData) {
+  const id = formData.get("id") as string;
+  const voys_nummer = (formData.get("voys_nummer") as string)?.trim() || null;
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: myProfile } = await supabase
+    .from("profiles")
+    .select("rol, tenant_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!myProfile || myProfile.rol !== "admin") return;
+
+  const admin = createAdminClient();
+  await admin.from("profiles")
+    .update({ voys_nummer })
+    .eq("id", id)
+    .eq("tenant_id", myProfile.tenant_id);
+
+  revalidatePath("/setters");
+}
+
 export async function verwijderSetter(formData: FormData) {
   const id = formData.get("id") as string;
   const supabase = await createClient();
