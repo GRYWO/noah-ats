@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
+import { WachtendOpCvSectie } from "./nieuw/WachtendOpCv";
+import { ruimOudeWachtenden } from "./nieuw/wachtend-actions";
 
 const STATUS_COLORS: Record<string, string> = {
   nieuw: "bg-blue-100 text-blue-800",
@@ -27,6 +29,15 @@ export default async function KandidatenPage({
     .single();
 
   const isSetter = myProfile?.rol === "setter";
+
+  // Wachtlijst (cleanup ouder dan 7 dagen + ophalen)
+  if (!isSetter) {
+    await ruimOudeWachtenden();
+  }
+  const { data: wachtenden } = await supabase
+    .from("wachtend_op_cv")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   const { data: kandidaten } = await supabase
     .from("kandidaten")
@@ -59,6 +70,13 @@ export default async function KandidatenPage({
           >
             + Nieuwe kandidaat (CV uploaden)
           </Link>
+        )}
+
+        {/* Wachtlijst — in afwachting van CV */}
+        {!isSetter && wachtenden && wachtenden.length > 0 && (
+          <div className="mb-6">
+            <WachtendOpCvSectie wachtenden={wachtenden} />
+          </div>
         )}
 
         {/* List */}
