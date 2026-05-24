@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { telLink } from "@/utils/tel";
 import {
   uploadBellijst,
   updateBellijstItem,
@@ -193,7 +194,7 @@ function BellijstItemRij({ item, kandidaatId }: { item: BellijstItem; kandidaatI
           {item.functie && <span>{item.functie}</span>}
           {item.plaats && <span>{item.plaats}</span>}
           {item.telefoon && (
-            <a href={`tel:${item.telefoon}`} className="text-[#333399] hover:underline inline-flex items-center gap-1">
+            <a href={telLink(item.telefoon)} className="text-[#333399] hover:underline inline-flex items-center gap-1">
               <Phone size={11} /> {item.telefoon}
             </a>
           )}
