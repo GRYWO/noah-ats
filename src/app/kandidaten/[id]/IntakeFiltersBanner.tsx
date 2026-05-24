@@ -58,7 +58,7 @@ export function IntakeFiltersBanner(props: Props) {
       <div className="px-5 py-4">
         <Form {...props} />
         <p className="text-xs text-amber-700 mt-3 italic">
-          Tip: vul de functies zo breed mogelijk in zodat de setter snel passende bedrijven kan vinden.
+          Tip: vul de functies zo breed mogelijk in zodat de bellijst groter wordt.
         </p>
       </div>
     </div>
