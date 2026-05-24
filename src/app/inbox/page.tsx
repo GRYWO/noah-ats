@@ -106,6 +106,7 @@ export default async function InboxPage({
     <main className="min-h-screen bg-[#f4f4f7]">
       <TopBar active="inbox" />
       <InboxClient
+        userId={user!.id}
         mapPad={mapPad}
         uid={uid}
         berichten={berichten}

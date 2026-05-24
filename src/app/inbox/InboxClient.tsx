@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 import { maakNieuweMap, verwijderMap } from "./actions";
 import { mailVerwijderen, mailVerplaatsen, mailFlagToggle, mailOngelezen } from "./mail-actions";
 import type { InboxBericht, MailMap, MailDetail } from "@/utils/mail";
 
+type Toast = { id: number; van: string; onderwerp: string };
+
 type Props = {
+  userId: string;
   mapPad: string;
   uid: string | undefined;
   berichten: InboxBericht[];
@@ -20,6 +24,7 @@ type Props = {
 };
 
 export function InboxClient({
+  userId,
   mapPad,
   uid,
   berichten,
@@ -39,6 +44,54 @@ export function InboxClient({
   const router = useRouter();
 
   const [syncBezig, setSyncBezig] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // Toast tonen + auto-verbergen
+  const toonToast = (van: string, onderwerp: string) => {
+    const id = Date.now();
+    setToasts(t => [...t, { id, van, onderwerp }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 6000);
+    // Browser notification (als toestemming gegeven)
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      new Notification(`Nieuwe e-mail van ${van}`, { body: onderwerp, icon: "/grywo-logo.png" });
+    }
+  };
+
+  // Vraag notificatie-permissie 1x
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Supabase Realtime: luister naar nieuwe mails voor deze user
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("mail-inserts")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "mail_berichten",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const nieuw = payload.new as { van: string; naam: string; onderwerp: string; map_pad: string };
+          // Alleen inbox-meldingen tonen (niet voor verzonden mails)
+          if (nieuw.map_pad.toLowerCase().includes("sent") || nieuw.map_pad.toLowerCase().includes("verzonden")) return;
+          toonToast(nieuw.naam ?? nieuw.van ?? "?", nieuw.onderwerp ?? "(geen onderwerp)");
+          router.refresh();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const syncEnRefresh = async () => {
     setSyncBezig(true);
@@ -137,6 +190,27 @@ export function InboxClient({
   }, [sidebarWidth, listWidth]);
 
   return (
+    <>
+    {/* Toast notifications */}
+    <div className="fixed top-20 right-4 z-50 space-y-2 max-w-sm">
+      {toasts.map(t => (
+        <div
+          key={t.id}
+          className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 flex gap-3 animate-in slide-in-from-right cursor-pointer hover:shadow-2xl"
+          onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
+        >
+          <div className="w-10 h-10 rounded-full bg-[#333399] text-white font-bold flex items-center justify-center flex-shrink-0">
+            {t.van.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-gray-500 mb-0.5">Nieuwe e-mail</div>
+            <div className="text-sm font-bold text-gray-800 truncate">{t.van}</div>
+            <div className="text-sm text-gray-600 truncate">{t.onderwerp}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+
     <div className="flex" style={{ height: "calc(100vh - 4rem)" }}>
       {/* Sidebar */}
       <aside
@@ -427,5 +501,6 @@ export function InboxClient({
         )}
       </section>
     </div>
+    </>
   );
 }
