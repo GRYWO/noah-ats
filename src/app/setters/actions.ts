@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { encrypt } from "@/utils/crypto";
+import { herverdeelKandidaten, verwerkWachtrij } from "@/utils/setter-assign";
 
 export async function nieuweSetter(formData: FormData) {
   const supabase = await createClient();
@@ -76,7 +77,13 @@ ${telefoon ? `${telefoon} · ` : ""}${mailAdres}<br>
     redirect(`/setters?error=${encodeURIComponent(profileErr.message)}`);
   }
 
+  // Nieuwe setter? → verwerk wachtrij (kandidaten zonder eigenaar)
+  if (rol === "setter") {
+    await verwerkWachtrij(myProfile.tenant_id);
+  }
+
   revalidatePath("/setters");
+  revalidatePath("/kandidaten");
   redirect("/setters?ok=1");
 }
 
@@ -102,9 +109,23 @@ export async function verwijderSetter(formData: FormData) {
   }
 
   const admin = createAdminClient();
+
+  // Haal tenant van verwijderde user op vóór delete
+  const { data: teVerwijderen } = await admin
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", id)
+    .single();
+
+  // Herverdeel actieve kandidaten naar andere setters of wachtrij
+  if (teVerwijderen?.tenant_id) {
+    await herverdeelKandidaten(id, teVerwijderen.tenant_id);
+  }
+
   await admin.from("profiles").delete().eq("id", id);
   await admin.auth.admin.deleteUser(id);
 
   revalidatePath("/setters");
+  revalidatePath("/kandidaten");
   redirect("/setters?ok=verwijderd");
 }

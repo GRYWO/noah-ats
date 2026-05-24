@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { autoWijsKandidaatToe } from "@/utils/setter-assign";
+
+// Stages waarbij de intake klaar is en de kandidaat naar een setter moet
+const INTAKE_KLAAR_STAGES = ["interne_intake_voltooid", "voorgesteld_opdrachtgever"];
 
 export async function updateKandidaat(formData: FormData) {
   const id = formData.get("id") as string;
@@ -35,6 +39,11 @@ export async function updateKandidaat(formData: FormData) {
 
   if (error) {
     redirect(`/kandidaten/${id}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  // Auto-toewijzen aan setter als intake klaar is en nog geen eigenaar
+  if (INTAKE_KLAAR_STAGES.includes(update.kanban_stap)) {
+    await autoWijsKandidaatToe(id);
   }
 
   revalidatePath(`/kandidaten/${id}`);
