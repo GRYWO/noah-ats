@@ -30,13 +30,18 @@ function matchKolom(header: string): keyof BellijstRow | null {
  * Parse een Excel-buffer naar bellijst-rows.
  * Pakt de eerste sheet, gebruikt eerste rij als headers.
  */
-export function parseJobdiggerExcel(buf: ArrayBuffer): { naam: string; rows: BellijstRow[] } {
+export function parseJobdiggerExcel(buf: ArrayBuffer): {
+  naam: string;
+  rows: BellijstRow[];
+  headers: string[];
+  totaal_rijen: number;
+} {
   const wb = XLSX.read(buf, { type: "array" });
   const sheetName = wb.SheetNames[0];
   const sheet = wb.Sheets[sheetName];
   const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
 
-  if (json.length === 0) return { naam: sheetName || "Bellijst", rows: [] };
+  if (json.length === 0) return { naam: sheetName || "Bellijst", rows: [], headers: [], totaal_rijen: 0 };
 
   // Map kolommen
   const headerKeys = Object.keys(json[0]);
@@ -61,5 +66,5 @@ export function parseJobdiggerExcel(buf: ArrayBuffer): { naam: string; rows: Bel
     return out;
   }).filter((r) => r.bedrijf || r.telefoon); // skip lege rijen
 
-  return { naam: sheetName || "Bellijst", rows };
+  return { naam: sheetName || "Bellijst", rows, headers: headerKeys, totaal_rijen: json.length };
 }

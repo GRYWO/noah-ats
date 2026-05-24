@@ -39,7 +39,11 @@ export async function POST(request: Request) {
   }
 
   if (parsed.rows.length === 0) {
-    return NextResponse.json({ error: "Geen geldige rijen" }, { status: 400 });
+    return NextResponse.json({
+      error: "Geen geldige rijen",
+      detected_headers: parsed.headers,
+      totaal_rijen: parsed.totaal_rijen,
+    }, { status: 400 });
   }
 
   const admin = createAdminClient();
