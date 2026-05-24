@@ -8,7 +8,9 @@ export type TemplateSleutel =
   | "kandidaat_bevestiging"
   | "kennismaking_reminder"
   | "voorstel_opdrachtgever"
-  | "reminder_opdrachtgever";
+  | "reminder_opdrachtgever"
+  | "welkom_user"
+  | "welkom_bureau";
 
 export const TEMPLATE_META: Record<TemplateSleutel, { naam: string; beschrijving: string; vars: string[] }> = {
   kandidaat_voorgesteld: {
@@ -51,6 +53,16 @@ export const TEMPLATE_META: Record<TemplateSleutel, { naam: string; beschrijving
     beschrijving: "Herinnering naar opdrachtgever (werkdag 1, 2, 3a, 3b). Knop wordt automatisch toegevoegd.",
     vars: ["opdrachtgever_naam", "kandidaat_naam"],
   },
+  welkom_user: {
+    naam: "Welkom — nieuwe gebruiker (setter/recruiter/admin)",
+    beschrijving: "Naar nieuw aangemaakte teamleden met hun login-gegevens. Inlog-blok wordt automatisch toegevoegd.",
+    vars: ["voornaam", "rol_label", "bedrijf"],
+  },
+  welkom_bureau: {
+    naam: "Welkom — nieuw bureau",
+    beschrijving: "Naar de contactpersoon van een nieuw aangemeld bureau. Inlog-blok wordt automatisch toegevoegd.",
+    vars: ["voornaam", "bedrijf"],
+  },
 };
 
 /**
@@ -89,6 +101,14 @@ export const DEFAULT_BODIES: Record<TemplateSleutel, string> = {
 
   reminder_opdrachtgever: `<p>Beste {opdrachtgever_naam},</p>
 <p>Een vriendelijke herinnering: we hebben je kandidaat <b>{kandidaat_naam}</b> voorgesteld en wachten nog op je reactie.</p>`,
+
+  welkom_user: `<p>Hi {voornaam},</p>
+<p>Welkom in Noah ATS! Je bent toegevoegd als <b>{rol_label}</b> bij {bedrijf}.</p>
+<p>Hieronder vind je je inloggegevens. Wijzig je wachtwoord direct na de eerste keer inloggen.</p>`,
+
+  welkom_bureau: `<p>Hi {voornaam},</p>
+<p>Welkom bij Noah ATS! Vanaf nu kun je voor <b>{bedrijf}</b> kandidaten beheren, voorstellen sturen en je pijplijn volgen.</p>
+<p>Hieronder vind je je inloggegevens als hoofdgebruiker. Je kunt zelf je teamleden uitnodigen via Instellingen.</p>`,
 };
 
 /**

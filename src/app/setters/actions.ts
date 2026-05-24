@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { encrypt } from "@/utils/crypto";
 import { herverdeelKandidaten, verwerkWachtrij } from "@/utils/setter-assign";
+import { sendWelkomstmailUser } from "@/utils/email";
 
 export async function nieuweSetter(formData: FormData) {
   const supabase = await createClient();
@@ -80,6 +81,26 @@ ${telefoon ? `${telefoon} · ` : ""}${mailAdres}<br>
   // Nieuwe setter? → verwerk wachtrij (kandidaten zonder eigenaar)
   if (rol === "setter") {
     await verwerkWachtrij(myProfile.tenant_id);
+  }
+
+  // Welkomstmail met inloggegevens
+  try {
+    const { data: tenant } = await admin.from("tenants")
+      .select("naam, handelsnaam")
+      .eq("id", myProfile.tenant_id)
+      .single();
+    const bedrijf = tenant?.handelsnaam ?? tenant?.naam ?? "Noah ATS";
+    const rolLabel = rol === "admin" ? "Admin" : rol === "recruiter" ? "Recruiter" : "Setter";
+    await sendWelkomstmailUser({
+      naar: email,
+      voornaam,
+      email,
+      wachtwoord,
+      rolLabel,
+      bedrijf,
+    });
+  } catch (e) {
+    console.error("Welkomstmail mislukt:", e);
   }
 
   revalidatePath("/setters");

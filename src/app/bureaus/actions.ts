@@ -5,6 +5,14 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { sendWelkomstmailBureau } from "@/utils/email";
+
+function genereerWachtwoord(lengte = 12) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let pw = "";
+  for (let i = 0; i < lengte; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+  return pw;
+}
 
 export async function nieuwBureau(formData: FormData) {
   const supabase = await createClient();
@@ -40,7 +48,7 @@ export async function nieuwBureau(formData: FormData) {
   }
 
   const admin = createAdminClient();
-  const { error } = await admin.from("tenants").insert({
+  const { data: nieuwTenant, error } = await admin.from("tenants").insert({
     naam,
     handelsnaam,
     kvk,
@@ -64,10 +72,48 @@ export async function nieuwBureau(formData: FormData) {
     ubo_naam,
     ubo_geboortedatum: ubo_geboortedatum || null,
     status: "setup",
-  });
+  }).select("id").single();
 
-  if (error) {
-    redirect(`/bureaus?error=${encodeURIComponent(error.message)}`);
+  if (error || !nieuwTenant) {
+    redirect(`/bureaus?error=${encodeURIComponent(error?.message ?? "Aanmaken mislukt")}`);
+  }
+
+  // Maak automatisch een admin-user voor de contactpersoon + stuur welkomstmail
+  if (contact_email && contact_naam) {
+    const wachtwoord = genereerWachtwoord(12);
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email: contact_email,
+      password: wachtwoord,
+      email_confirm: true,
+    });
+    if (!createErr && created.user) {
+      // Splits naam
+      const naamDelen = contact_naam.split(" ");
+      const cnVoornaam = naamDelen[0];
+      const cnAchternaam = naamDelen.slice(1).join(" ") || "—";
+      await admin.from("profiles").insert({
+        id: created.user.id,
+        tenant_id: nieuwTenant.id,
+        voornaam: cnVoornaam,
+        achternaam: cnAchternaam,
+        rol: "admin",
+        telefoon: contact_tel,
+        mail_status: "niet_geconfigureerd",
+      });
+      try {
+        await sendWelkomstmailBureau({
+          naar: contact_email,
+          voornaam: cnVoornaam,
+          email: contact_email,
+          wachtwoord,
+          bedrijf: handelsnaam ?? naam,
+        });
+      } catch (e) {
+        console.error("Welkomstmail bureau mislukt:", e);
+      }
+    } else if (createErr) {
+      console.error("Bureau-admin user aanmaken mislukt:", createErr);
+    }
   }
 
   revalidatePath("/bureaus");

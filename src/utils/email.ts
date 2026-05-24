@@ -333,6 +333,72 @@ export async function sendKandidaatPlaatsing({
 /**
  * Algemene afwijzing (status=afgewezen op kandidaat).
  */
+/**
+ * Welkomstmail voor nieuwe interne user (setter / recruiter / admin).
+ */
+export async function sendWelkomstmailUser({
+  naar,
+  voornaam,
+  email,
+  wachtwoord,
+  rolLabel,
+  bedrijf,
+}: {
+  naar: string;
+  voornaam: string;
+  email: string;
+  wachtwoord: string;
+  rolLabel: string;
+  bedrijf: string;
+}) {
+  const intro = await renderMailTemplate("welkom_user", { voornaam, rol_label: rolLabel, bedrijf });
+  const loginBlok = inlogBlok(email, wachtwoord);
+  const body = `${intro}\n${loginBlok}`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `Welkom bij Noah ATS — ${bedrijf}`,
+    html: brandedLayout({ titel: "Welkom bij Noah ATS", body }),
+  });
+}
+
+/**
+ * Welkomstmail voor contactpersoon van nieuw aangemeld bureau (hoofd-admin).
+ */
+export async function sendWelkomstmailBureau({
+  naar,
+  voornaam,
+  email,
+  wachtwoord,
+  bedrijf,
+}: {
+  naar: string;
+  voornaam: string;
+  email: string;
+  wachtwoord: string;
+  bedrijf: string;
+}) {
+  const intro = await renderMailTemplate("welkom_bureau", { voornaam, bedrijf });
+  const loginBlok = inlogBlok(email, wachtwoord);
+  const body = `${intro}\n${loginBlok}`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `Welkom bij Noah ATS — ${bedrijf}`,
+    html: brandedLayout({ titel: "Welkom bij Noah ATS", body }),
+  });
+}
+
+function inlogBlok(email: string, wachtwoord: string) {
+  return `
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
+  <tr><td style="padding:6px 0;color:#666;width:30%;">E-mail</td><td style="padding:6px 0;font-weight:600;">${email}</td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Wachtwoord</td><td style="padding:6px 0;font-family:monospace;font-weight:600;">${wachtwoord}</td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Inloggen</td><td style="padding:6px 0;"><a href="${APP_URL}/login" style="color:${GRYWO_KLEUR};font-weight:600;">${APP_URL}/login</a></td></tr>
+</table>
+<p style="font-size:12px;color:#888;margin:8px 0 0 0;">Tip: wijzig je wachtwoord na de eerste keer inloggen via Instellingen.</p>`;
+}
+
 export async function sendKandidaatStatusAfwijzing({
   naar,
   kandidaatVoornaam,
