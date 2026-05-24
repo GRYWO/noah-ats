@@ -93,40 +93,6 @@ export function InboxClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  // IMAP IDLE via SSE — sub-second push als nieuwe mail binnenkomt
-  useEffect(() => {
-    let eventSource: EventSource | null = null;
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let stopped = false;
-
-    const connect = () => {
-      if (stopped) return;
-      eventSource = new EventSource("/api/mail/idle");
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          // Bij "new-mail" wordt Supabase al ververst via realtime channel
-          // Geen extra actie nodig hier
-          void data;
-        } catch {}
-      };
-
-      eventSource.onerror = () => {
-        eventSource?.close();
-        // Reconnect na 3 sec
-        if (!stopped) reconnectTimer = setTimeout(connect, 3000);
-      };
-    };
-
-    connect();
-
-    return () => {
-      stopped = true;
-      eventSource?.close();
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-    };
-  }, []);
 
   const syncEnRefresh = async () => {
     setSyncBezig(true);
@@ -167,13 +133,28 @@ export function InboxClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, geopendeMail?.body_loaded]);
 
-  // Auto-sync elke 60 seconden (haalt uit IMAP)
+  // Auto-sync elke 15 seconden (haalt uit IMAP)
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(syncEnRefresh, 60_000);
+    const interval = setInterval(syncEnRefresh, 15_000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh]);
+
+  // Sync direct als tab weer focus krijgt (= je komt terug op Noah)
+  useEffect(() => {
+    const onFocus = () => syncEnRefresh();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") syncEnRefresh();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Resize sidebar
   const startSidebarResize = (e: React.MouseEvent) => {
