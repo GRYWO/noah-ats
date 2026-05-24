@@ -39,7 +39,17 @@ export type GeparseerdCV = {
   tarief_ws?: string;
   omrekenfactor_uitzendbasis?: string;
   ontbrekend?: string[];
-  rode_vlaggen?: string[];
+  rode_vlaggen?: RodeVlag[];
+  ai_score?: number;
+  ai_advies?: "goedkeuren" | "twijfel" | "afkeuren";
+};
+
+export type RodeVlag = {
+  code: string;
+  beschrijving: string;
+  punten: number;            // negatieve waarde, bv -20
+  vraag_aan_recruiter?: string;  // bv "Lange periode zonder werk — wat is de reden?"
+  toelichting?: string;       // door recruiter ingevuld
 };
 
 /**
@@ -92,7 +102,25 @@ Meta:
 - ontbrekend: array van velden die ESSENTIEEL ZIJN voor de intake maar nog NIET ingevuld kunnen worden uit het CV. Kies uit deze lijst:
   ["soort_dienstverband", "werving_of_uitzend", "salaris_indicatie", "max_reisafstand_km", "eigen_vervoer", "rijbewijs", "blacklist_bedrijven", "bijzonderheden", "tarief_ws"]
   Vermeld alleen wat ECHT mist en relevant is.
-- rode_vlaggen: array van zorgen (bv "Lange gaten in werkervaring", "Veel korte dienstverbanden")
+
+- rode_vlaggen: array van OBJECTEN met zorgen. Per object: { code, beschrijving, punten, vraag_aan_recruiter }
+  Wees STRENG. Geef per zorg negatieve punten (-5 tot -30 afhankelijk van impact).
+  Mogelijke codes (gebruik deze waar passend):
+  * "geen_rijbewijs" (-20): geen rijbewijs of niet vermeld
+  * "geen_auto" (-15): geen eigen vervoer / auto
+  * "jobhopper" (-25): 3+ banen in laatste 5 jaar bij verschillende werkgevers
+  * "korte_periodes" (-20): meerdere banen korter dan 1 jaar
+  * "lang_geen_werk" (-15): gat van meer dan 6 maanden zonder uitleg
+  * "weinig_ervaring" (-10): minder dan 2 jaar relevante werkervaring
+  * "geen_opleiding" (-10): geen relevante opleiding afgerond
+  * "frequente_woonplaatswissel" (-10): woonplaats meerdere keren gewijzigd
+  * "overig" (-5 tot -15): andere zorgen
+
+  Vraag_aan_recruiter mag een vraag bevatten om de zorg te verifiëren of context te krijgen
+  (bv "Wat is de reden van de lange werkloze periode?" of "Heeft de kandidaat plannen om een auto aan te schaffen?")
+
+- ai_score: getal 0-100. Start bij 100 en trek per rode vlag de punten af. Minimum 0.
+- ai_advies: "goedkeuren" (score ≥ 70), "twijfel" (40-69), "afkeuren" (< 40)
 
 Geef ALLEEN een geldig JSON-object terug, geen extra tekst, geen markdown-fences.`,
           },

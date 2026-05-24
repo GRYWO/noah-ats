@@ -55,6 +55,35 @@ export async function updateProfielschets(formData: FormData) {
   revalidatePath(`/kandidaten/${id}/voorstelprofiel`);
 }
 
+export async function updateRodeVlagToelichting(formData: FormData) {
+  const id = formData.get("id") as string;
+  const code = formData.get("code") as string;
+  const toelichting = (formData.get("toelichting") as string)?.trim() || "";
+  await checkAdminOfRecruiter();
+
+  const admin = createAdminClient();
+  const { data: k } = await admin
+    .from("kandidaten")
+    .select("cv_geparseerd")
+    .eq("id", id)
+    .single();
+
+  const cv = (k?.cv_geparseerd ?? {}) as { rode_vlaggen?: Array<Record<string, unknown>> };
+  const vlaggen = Array.isArray(cv.rode_vlaggen) ? cv.rode_vlaggen : [];
+  const nieuw = vlaggen.map(v => {
+    if (typeof v === "object" && v && v.code === code) {
+      return { ...v, toelichting };
+    }
+    return v;
+  });
+
+  await admin.from("kandidaten")
+    .update({ cv_geparseerd: { ...cv, rode_vlaggen: nieuw } })
+    .eq("id", id);
+
+  revalidatePath(`/kandidaten/${id}`);
+}
+
 export async function updateVoorstelprofielExtra(formData: FormData) {
   const id = formData.get("id") as string;
   const json = (formData.get("voorstelprofiel_extra") as string)?.trim();

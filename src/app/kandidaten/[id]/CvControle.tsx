@@ -3,8 +3,16 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Sparkles, Check, X, Loader2, ExternalLink, AlertTriangle } from "lucide-react";
-import { goedkeurenCv, afkeurenCv, updateProfielschets } from "./voorstelprofiel-actions";
+import { goedkeurenCv, afkeurenCv, updateProfielschets, updateRodeVlagToelichting } from "./voorstelprofiel-actions";
 import { IntakeQuiz } from "./IntakeQuiz";
+
+type RodeVlag = {
+  code: string;
+  beschrijving: string;
+  punten: number;
+  vraag_aan_recruiter?: string;
+  toelichting?: string;
+};
 
 type Geparseerd = {
   voornaam?: string;
@@ -20,7 +28,9 @@ type Geparseerd = {
   eigen_vervoer?: boolean;
   talen?: string;
   ontbrekend?: string[];
-  rode_vlaggen?: string[];
+  rode_vlaggen?: RodeVlag[] | string[];
+  ai_score?: number;
+  ai_advies?: "goedkeuren" | "twijfel" | "afkeuren";
 };
 
 type Props = {
@@ -191,18 +201,7 @@ export function CvControle({
                   {cvGeparseerd.vaardigheden && <Rij k="Vaardigheden" v={cvGeparseerd.vaardigheden} />}
                 </dl>
               </div>
-              <div className="space-y-3">
-                {cvGeparseerd.rode_vlaggen && cvGeparseerd.rode_vlaggen.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-red-900 mb-1">
-                      <AlertTriangle size={12} /> Rode vlaggen
-                    </div>
-                    <ul className="text-xs text-red-800 list-disc pl-4">
-                      {cvGeparseerd.rode_vlaggen.map((v, i) => <li key={i}>{v}</li>)}
-                    </ul>
-                  </div>
-                )}
-              </div>
+              <RodeVlaggenSectie kandidaatId={kandidaatId} vlaggen={cvGeparseerd.rode_vlaggen} score={cvGeparseerd.ai_score} advies={cvGeparseerd.ai_advies} />
             </div>
           )}
 
@@ -239,6 +238,111 @@ function Rij({ k, v }: { k: string; v: string }) {
     <div className="flex">
       <dt className="w-28 text-gray-500 shrink-0">{k}</dt>
       <dd className="font-medium text-gray-800 flex-1">{v}</dd>
+    </div>
+  );
+}
+
+function RodeVlaggenSectie({
+  kandidaatId,
+  vlaggen,
+  score,
+  advies,
+}: {
+  kandidaatId: string;
+  vlaggen?: RodeVlag[] | string[];
+  score?: number;
+  advies?: "goedkeuren" | "twijfel" | "afkeuren";
+}) {
+  if (!vlaggen || vlaggen.length === 0) return null;
+
+  // Backwards compat: oude string-array vorm
+  const lijst: RodeVlag[] = vlaggen.map((v) => {
+    if (typeof v === "string") return { code: "overig", beschrijving: v, punten: -5 };
+    return v;
+  });
+
+  const scoreKleur = score == null
+    ? "bg-gray-100 text-gray-700"
+    : score >= 70 ? "bg-emerald-100 text-emerald-800"
+    : score >= 40 ? "bg-amber-100 text-amber-800"
+    : "bg-red-100 text-red-800";
+  const adviesLabel = advies === "goedkeuren" ? "Goedkeuren" : advies === "twijfel" ? "Twijfel" : advies === "afkeuren" ? "Afkeuren" : null;
+
+  return (
+    <div className="space-y-3">
+      {score != null && (
+        <div className={`rounded-lg p-3 ${scoreKleur}`}>
+          <div className="text-xs font-bold uppercase opacity-70">AI-score</div>
+          <div className="text-2xl font-bold">{score}/100</div>
+          {adviesLabel && <div className="text-xs mt-1">Advies: <b>{adviesLabel}</b></div>}
+        </div>
+      )}
+      <div className="space-y-2">
+        {lijst.map((v) => <VlagItem key={v.code} kandidaatId={kandidaatId} vlag={v} />)}
+      </div>
+    </div>
+  );
+}
+
+function VlagItem({ kandidaatId, vlag }: { kandidaatId: string; vlag: RodeVlag }) {
+  const [toelichting, setToelichting] = useState(vlag.toelichting ?? "");
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+
+  function opslaan() {
+    const fd = new FormData();
+    fd.append("id", kandidaatId);
+    fd.append("code", vlag.code);
+    fd.append("toelichting", toelichting);
+    startTransition(async () => {
+      await updateRodeVlagToelichting(fd);
+      router.refresh();
+    });
+  }
+
+  const veranderd = (toelichting ?? "") !== (vlag.toelichting ?? "");
+
+  return (
+    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2">
+          <AlertTriangle size={14} className="text-red-700 mt-0.5 shrink-0" />
+          <div className="text-xs">
+            <div className="font-bold text-red-900">{vlag.beschrijving}</div>
+            {vlag.vraag_aan_recruiter && (
+              <div className="text-red-800 mt-0.5 italic">Vraag: {vlag.vraag_aan_recruiter}</div>
+            )}
+          </div>
+        </div>
+        <span className="text-xs font-bold text-red-800 bg-white border border-red-200 rounded-full px-2 py-0.5 shrink-0">
+          {vlag.punten}
+        </span>
+      </div>
+      <div className="mt-2">
+        <textarea
+          value={toelichting}
+          onChange={(e) => setToelichting(e.target.value)}
+          rows={2}
+          placeholder={vlag.vraag_aan_recruiter ? "Antwoord van recruiter..." : "Optionele toelichting van recruiter..."}
+          className="w-full px-2 py-1.5 border border-red-200 rounded-md text-xs bg-white"
+        />
+        {veranderd && (
+          <button
+            type="button"
+            onClick={opslaan}
+            disabled={pending}
+            className="mt-1 text-xs text-[#333399] hover:underline font-semibold inline-flex items-center gap-1"
+          >
+            {pending && <Loader2 size={10} className="animate-spin" />}
+            Toelichting opslaan
+          </button>
+        )}
+        {vlag.toelichting && !veranderd && (
+          <div className="mt-1 text-xs text-emerald-700 inline-flex items-center gap-1">
+            <Check size={10} /> Opgeslagen
+          </div>
+        )}
+      </div>
     </div>
   );
 }
