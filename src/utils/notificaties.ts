@@ -9,6 +9,8 @@ export type NotificatieType =
   | "contact_recruiter"
   | "contact_setter"
   | "cv_goedgekeurd"
+  | "help_vraag"
+  | "help_probleem"
   | "info";
 
 export async function maakNotificatie(opts: {

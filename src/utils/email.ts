@@ -494,6 +494,54 @@ export async function sendPlaatsingAfgekeurdNaarBackoffice({
 }
 
 /**
+ * Help-vraag of probleem-melding naar super-admin (Yorith).
+ */
+export async function sendHelpVraagNaarYorith({
+  type,
+  bericht,
+  afzender,
+  tenantNaam,
+  naar,
+}: {
+  type: "vraag" | "probleem";
+  bericht: string;
+  afzender: { naam: string; email: string; rol: string };
+  tenantNaam: string;
+  naar: string;
+}) {
+  const typeLabel = type === "vraag" ? "Vraag" : "Probleem";
+  const accentKleur = type === "probleem" ? "#b91c1c" : GRYWO_KLEUR;
+
+  const body = `
+<p><b>Er is een ${typeLabel.toLowerCase()} binnengekomen via Noah ATS.</b></p>
+
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:16px;">
+  <tr><td style="padding:6px 0;color:#666;width:35%;">Van</td><td style="padding:6px 0;font-weight:600;">${afzender.naam} (${afzender.rol})</td></tr>
+  <tr><td style="padding:6px 0;color:#666;">E-mail</td><td style="padding:6px 0;"><a href="mailto:${afzender.email}" style="color:${GRYWO_KLEUR};">${afzender.email}</a></td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Bureau</td><td style="padding:6px 0;font-weight:600;">${tenantNaam}</td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Type</td><td style="padding:6px 0;font-weight:600;color:${accentKleur};">${typeLabel}</td></tr>
+</table>
+
+<h3 style="color:${accentKleur};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${accentKleur};padding-bottom:4px;">Bericht</h3>
+<p style="white-space:pre-wrap;background-color:#f9f9fb;border-left:3px solid ${accentKleur};padding:12px;margin:0;">${bericht}</p>
+
+<p style="margin-top:24px;color:#666;font-size:12px;">Reply naar deze mail of reageer via de notificatie in Noah.</p>
+`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: naar,
+    replyTo: afzender.email || undefined,
+    subject: `[${typeLabel}] ${afzender.naam} — ${tenantNaam}`,
+    html: brandedLayout({ titel: `${typeLabel} via Noah ATS`, body, merk: "noah" }),
+  });
+  if (result.error) {
+    throw new Error(`Resend afgewezen: ${result.error.message}`);
+  }
+  return result;
+}
+
+/**
  * Plaatsing — gefeliciteerd.
  */
 export async function sendKandidaatPlaatsing({

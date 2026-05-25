@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { NotificatieBel } from "./NotificatieBel";
+import { HelpKnop } from "./HelpKnop";
 import {
   LayoutDashboard,
   Building2,
@@ -129,6 +130,10 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, log
         {/* Notificatie-bel */}
         <div className={open ? "px-1 mb-1" : "flex justify-center mb-1"}>
           <NotificatieBel userId={userId} />
+        </div>
+        {/* Help-knop */}
+        <div className={open ? "px-1 mb-1" : "flex justify-center mb-1"}>
+          <HelpKnop />
         </div>
         {open && (
           <div className="px-2 py-1.5 text-xs text-gray-500 truncate" title={userEmail}>
