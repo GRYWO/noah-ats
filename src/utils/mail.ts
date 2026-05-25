@@ -227,6 +227,7 @@ export type MailDetail = {
   datum: string;
   html: string | null;
   tekst: string | null;
+  gevlagd?: boolean;
 };
 
 function getImapClient(mailAdres: string, encryptedPassword: string) {

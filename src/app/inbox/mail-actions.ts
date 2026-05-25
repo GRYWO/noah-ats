@@ -121,6 +121,16 @@ export async function mailFlagToggle(formData: FormData) {
     await client.logout().catch(() => {});
   }
 
+  // Update Supabase zodat de UI direct de nieuwe status laat zien
+  const { createAdminClient } = await import("@/utils/supabase/admin");
+  const admin = createAdminClient();
+  await admin
+    .from("mail_berichten")
+    .update({ gevlagd: !huidigeFlag })
+    .eq("user_id", user.id)
+    .eq("map_pad", mapPad)
+    .eq("uid", uid);
+
   revalidatePath("/inbox");
   redirect(`/inbox?map=${encodeURIComponent(mapPad)}&uid=${uid}`);
 }

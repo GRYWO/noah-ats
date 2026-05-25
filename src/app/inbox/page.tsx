@@ -98,6 +98,7 @@ export default async function InboxPage({
         html: mail.html as string | null,
         tekst: mail.tekst as string | null,
         body_loaded: mail.body_loaded ?? false,
+        gevlagd: mail.gevlagd ?? false,
       };
     }
   }
