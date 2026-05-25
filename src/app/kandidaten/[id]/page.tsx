@@ -16,6 +16,7 @@ import { TweedeGesprekEdit } from "./TweedeGesprekEdit";
 import { PlaatsingTrigger } from "./PlaatsingTrigger";
 import { KANBAN_OPTIES } from "@/utils/kanban";
 import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
+import { IntakeFormulier } from "./IntakeFormulier";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -45,10 +46,10 @@ export default async function KandidaatDetail({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; error?: string; plaatsing?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string; plaatsing?: string; intake_stap?: string }>;
 }) {
   const { id } = await params;
-  const { ok, error, plaatsing: plaatsingQuery } = await searchParams;
+  const { ok, error, plaatsing: plaatsingQuery, intake_stap: intakeStapQuery } = await searchParams;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -88,7 +89,8 @@ export default async function KandidaatDetail({
   const isAdmin = myProfile?.rol === "admin";
   const isRecruiterOrAdmin = isAdmin || isRecruiter;
   const showPlaatsingTrigger = !isSetter && (k.status === "geplaatst" || k.kanban_stap === "geplaatst");
-  const toonIntakeAfrondKnop = isRecruiterOrAdmin && k.kanban_stap === "interne_intake";
+  const toonIntakeFormulier = isRecruiterOrAdmin && k.kanban_stap === "interne_intake";
+  const intakeFase: "vragenlijst" | "schets" = intakeStapQuery === "schets" ? "schets" : "vragenlijst";
 
   const { data: logs } = await supabase
     .from("voorstel_logs")
@@ -175,9 +177,6 @@ export default async function KandidaatDetail({
           />
         )}
 
-        {toonIntakeAfrondKnop && (
-          <IntakeAfrondKnop kandidaatId={k.id} heeftCv={!!k.cv_url} />
-        )}
 
         {showPlaatsingTrigger && (
           <div className={`rounded-xl shadow-sm p-5 mb-6 flex items-center justify-between gap-4 flex-wrap ${
@@ -217,7 +216,7 @@ export default async function KandidaatDetail({
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@grywo.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : ok === "intake_afgerond" ? "Interne intake afgerond — kandidaat heeft mail ontvangen" : "Opgeslagen"}
+            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@grywo.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : ok === "intake_afgerond" ? "Interne intake afgerond — kandidaat heeft mail ontvangen" : ok === "intake_opgeslagen" ? "Intake opgeslagen — controleer de profielschets" : ok === "tweede_gesprek" ? "2e gesprek-datum opgeslagen" : "Opgeslagen"}
           </div>
         )}
         {error && (
@@ -245,8 +244,33 @@ export default async function KandidaatDetail({
           }} />
         )}
 
-        {/* EDIT FORM — alleen recruiter/admin */}
-        {!isSetter && (
+        {/* Intake-formulier tijdens interne_intake stap (recruiter/admin) */}
+        {toonIntakeFormulier && (
+          <IntakeFormulier
+            fase={intakeFase}
+            k={{
+              id: k.id,
+              voornaam: k.voornaam, tussenvoegsel: k.tussenvoegsel, achternaam: k.achternaam,
+              email: k.email, telefoon: k.telefoon, geslacht: k.geslacht, leeftijd: k.leeftijd,
+              woonplaats: k.woonplaats, opleiding: k.opleiding, open_voor: k.open_voor,
+              rijbewijs: k.rijbewijs, eigen_vervoer: k.eigen_vervoer,
+              max_reisafstand_km: k.max_reisafstand_km,
+              soort_dienstverband: k.soort_dienstverband,
+              werving_of_uitzend: k.werving_of_uitzend,
+              salaris_indicatie: k.salaris_indicatie,
+              tarief_ws: k.tarief_ws,
+              bijzonderheden: k.bijzonderheden,
+              blacklist_bedrijven: k.blacklist_bedrijven,
+              notitie: k.notitie,
+              profielschets: k.profielschets,
+              cv_geparseerd: k.cv_geparseerd,
+              cv_url: k.cv_url,
+            }}
+          />
+        )}
+
+        {/* EDIT FORM — alleen recruiter/admin, niet tijdens interne_intake */}
+        {!isSetter && !toonIntakeFormulier && (
         <form action={updateKandidaat} className="space-y-6">
           <input type="hidden" name="id" value={k.id} />
 
