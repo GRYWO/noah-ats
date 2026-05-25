@@ -3,6 +3,7 @@ import { TopBar } from "@/components/TopBar";
 import { nieuweSetter, verwijderSetter } from "./actions";
 import { DeleteSetterButton } from "./DeleteSetterButton";
 import { InlineVoysEdit } from "./InlineVoysEdit";
+import { CoachToggle } from "./CoachToggle";
 
 const ROL_LABELS: Record<string, string> = {
   admin: "Admin",
@@ -132,6 +133,7 @@ export default async function SettersPage({
                   <th className="text-left px-4 py-3 font-semibold">Telefoon</th>
                   <th className="text-left px-4 py-3 font-semibold">Voys</th>
                   <th className="text-left px-4 py-3 font-semibold">Discord</th>
+                  <th className="text-left px-4 py-3 font-semibold">Coach</th>
                   <th className="text-left px-4 py-3 font-semibold">Aangemaakt</th>
                   {isAdmin && <th className="text-right px-4 py-3 font-semibold">Acties</th>}
                 </tr>
@@ -153,6 +155,9 @@ export default async function SettersPage({
                       <InlineVoysEdit setterId={s.id} huidig={s.voys_nummer ?? null} kanBewerken={isAdmin} />
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{s.discord_id ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <CoachToggle userId={s.id} isCoach={!!s.is_coach} disabled={!isAdmin} />
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {s.created_at ? new Date(s.created_at).toLocaleDateString("nl-NL") : "—"}
                     </td>
