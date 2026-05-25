@@ -376,6 +376,7 @@ export async function sendPlaatsingNaarBackoffice({
     basis: "uitzend" | "werving_selectie";
     tarief_factor?: number | null;
     tarief_pct?: number | null;
+    tarief_bedrag?: number | null;
     betaling: "1x_7d" | "50_50_7d_30d";
     startdatum?: string | null;
     opmerking?: string | null;
@@ -423,6 +424,7 @@ export async function sendPlaatsingNaarBackoffice({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
   ${rij("Basis", basisLabel)}
   ${rij("Tarief", tariefLabel)}
+  ${rij("Fee-bedrag", deal.tarief_bedrag != null ? `€ ${deal.tarief_bedrag.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : null)}
   ${rij("Startdatum", startdatumLabel)}
   ${rij("Betaling", betalingLabel)}
   ${rij("Opmerking", deal.opmerking)}
@@ -437,6 +439,53 @@ export async function sendPlaatsingNaarBackoffice({
     cc: aangemeldDoor.email ? [aangemeldDoor.email] : undefined,
     subject: `Nieuwe plaatsing: ${fullnaam} bij ${klant.bedrijf}`,
     html: brandedLayout({ titel: `Plaatsing: ${fullnaam}`, body, merk: "noah" }),
+  });
+  if (result.error) {
+    throw new Error(`Resend afgewezen: ${result.error.message}`);
+  }
+  return result;
+}
+
+/**
+ * Plaatsing afgekeurd door admin — meld dit ook aan backoffice.
+ */
+export async function sendPlaatsingAfgekeurdNaarBackoffice({
+  kandidaatNaam,
+  bedrijf,
+  reden,
+  afgekeurdDoor,
+  oorspronkelijkeAanmelder,
+  from,
+}: {
+  kandidaatNaam: string;
+  bedrijf: string;
+  reden: string;
+  afgekeurdDoor: { voornaam: string; achternaam: string; email: string };
+  oorspronkelijkeAanmelder?: { voornaam: string; achternaam: string } | null;
+  from?: string;
+}) {
+  const body = `
+<p><b style="color:#b91c1c;">Een eerder aangemelde plaatsing is afgekeurd door een admin.</b></p>
+
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:16px;">
+  <tr><td style="padding:6px 0;color:#666;width:35%;">Kandidaat</td><td style="padding:6px 0;font-weight:600;">${kandidaatNaam}</td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Klant</td><td style="padding:6px 0;font-weight:600;">${bedrijf}</td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Afgekeurd door</td><td style="padding:6px 0;font-weight:600;">${afgekeurdDoor.voornaam} ${afgekeurdDoor.achternaam} (${afgekeurdDoor.email})</td></tr>
+  ${oorspronkelijkeAanmelder ? `<tr><td style="padding:6px 0;color:#666;">Oorspronkelijk aangemeld door</td><td style="padding:6px 0;">${oorspronkelijkeAanmelder.voornaam} ${oorspronkelijkeAanmelder.achternaam}</td></tr>` : ""}
+</table>
+
+<h3 style="color:#b91c1c;margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid #b91c1c;padding-bottom:4px;">Reden</h3>
+<p style="white-space:pre-wrap;background-color:#fef2f2;border-left:3px solid #b91c1c;padding:12px;margin:0;">${reden}</p>
+
+<p style="margin-top:24px;color:#666;font-size:12px;">De financiële afhandeling van deze plaatsing kan worden gestopt.</p>
+`;
+
+  const result = await resend.emails.send({
+    from: from ?? FROM,
+    to: "backoffice@grywo.nl",
+    cc: afgekeurdDoor.email ? [afgekeurdDoor.email] : undefined,
+    subject: `Plaatsing afgekeurd: ${kandidaatNaam} bij ${bedrijf}`,
+    html: brandedLayout({ titel: `Plaatsing afgekeurd`, body, merk: "noah" }),
   });
   if (result.error) {
     throw new Error(`Resend afgewezen: ${result.error.message}`);

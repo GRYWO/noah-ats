@@ -91,6 +91,7 @@ export default async function KandidaatDetail({
     .from("plaatsingen")
     .select("id, created_at")
     .eq("kandidaat_id", id)
+    .is("afgekeurd_op", null)
     .order("created_at", { ascending: false })
     .limit(1);
   const alAangemeld = (plaatsingen?.length ?? 0) > 0;

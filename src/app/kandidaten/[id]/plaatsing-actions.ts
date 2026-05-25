@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { sendPlaatsingNaarBackoffice } from "@/utils/email";
+import { sendPlaatsingNaarBackoffice, sendPlaatsingAfgekeurdNaarBackoffice } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 import { notifyTeam } from "@/utils/notificaties";
@@ -25,6 +25,8 @@ export async function meldPlaatsing(formData: FormData) {
   const contact_telefoon= (formData.get("contact_telefoon") as string)?.trim() || null;
   const opmerking       = (formData.get("opmerking") as string)?.trim() || null;
   const startdatum      = (formData.get("startdatum") as string)?.trim() || null;
+  const tariefBedragRaw = (formData.get("tarief_bedrag") as string)?.trim();
+  const tarief_bedrag   = tariefBedragRaw ? parseFloat(tariefBedragRaw) : null;
 
   if (!kandidaatId) redirect("/kandidaten");
   if (!startdatum) {
@@ -52,6 +54,9 @@ export async function meldPlaatsing(formData: FormData) {
       redirect(`/kandidaten/${kandidaatId}?error=Ongeldig+percentage`);
     }
     tarief_pct = parseFloat(tariefRaw);
+    if (tarief_bedrag == null || isNaN(tarief_bedrag) || tarief_bedrag <= 0) {
+      redirect(`/kandidaten/${kandidaatId}?error=Fee-bedrag+verplicht`);
+    }
   }
 
   const supabase = await createClient();
@@ -83,6 +88,7 @@ export async function meldPlaatsing(formData: FormData) {
       basis,
       tarief_factor,
       tarief_pct,
+      tarief_bedrag,
       betaling,
       bedrijf,
       contactpersoon,
@@ -111,7 +117,7 @@ export async function meldPlaatsing(formData: FormData) {
     await sendPlaatsingNaarBackoffice({
       kandidaat,
       klant: { bedrijf, contactpersoon, contact_email, contact_telefoon },
-      deal: { basis: basis as "uitzend" | "werving_selectie", tarief_factor, tarief_pct, betaling: betaling as "1x_7d" | "50_50_7d_30d", startdatum, opmerking },
+      deal: { basis: basis as "uitzend" | "werving_selectie", tarief_factor, tarief_pct, tarief_bedrag, betaling: betaling as "1x_7d" | "50_50_7d_30d", startdatum, opmerking },
       aangemeldDoor: {
         voornaam: profile.voornaam ?? "",
         achternaam: profile.achternaam ?? "",
@@ -161,10 +167,14 @@ export async function meldPlaatsing(formData: FormData) {
   );
 }
 
-export async function verwijderPlaatsing(formData: FormData) {
+export async function keurAfPlaatsing(formData: FormData) {
   const plaatsingId = formData.get("plaatsing_id") as string;
   const kandidaatId = formData.get("kandidaat_id") as string;
+  const reden = (formData.get("reden") as string)?.trim();
   if (!plaatsingId || !kandidaatId) redirect("/kandidaten");
+  if (!reden) {
+    redirect(`/kandidaten/${kandidaatId}?error=Reden+voor+afkeur+verplicht`);
+  }
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -172,44 +182,112 @@ export async function verwijderPlaatsing(formData: FormData) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("tenant_id, rol")
+    .select("tenant_id, rol, voornaam, achternaam")
     .eq("id", user.id)
     .single();
   if (!profile?.tenant_id) redirect(`/kandidaten/${kandidaatId}?error=Geen+tenant`);
   if (profile.rol !== "admin") {
-    redirect(`/kandidaten/${kandidaatId}?error=Alleen+admin+mag+plaatsing+ongedaan+maken`);
+    redirect(`/kandidaten/${kandidaatId}?error=Alleen+admin+mag+plaatsing+afkeuren`);
   }
 
   const admin = createAdminClient();
 
-  // Check tenant-grens
+  // Check + ophalen voor mail
   const { data: bestaand } = await admin
     .from("plaatsingen")
-    .select("tenant_id")
+    .select("tenant_id, bedrijf, aangemeld_door")
     .eq("id", plaatsingId)
     .single();
   if (!bestaand || bestaand.tenant_id !== profile.tenant_id) {
     redirect(`/kandidaten/${kandidaatId}?error=Plaatsing+niet+gevonden`);
   }
 
-  await admin.from("plaatsingen").delete().eq("id", plaatsingId);
+  // Markeer als afgekeurd (geen delete — behoud audit-trail)
+  await admin.from("plaatsingen").update({
+    afgekeurd_op:   new Date().toISOString(),
+    afgekeurd_door: user.id,
+    afkeur_reden:   reden,
+  }).eq("id", plaatsingId);
 
-  // Reset kandidaat-status zodat hij niet vastzit op "geplaatst" zonder onderliggende deal
+  // Reset kandidaat-status
   await admin.from("kandidaten").update({
     status: "in_proces",
     kanban_stap: "kennismaking_ingepland",
     plaatsing_mail_sent: null,
   }).eq("id", kandidaatId);
 
+  // Kandidaat ophalen voor naam
+  const { data: kandidaat } = await admin
+    .from("kandidaten")
+    .select("voornaam, tussenvoegsel, achternaam")
+    .eq("id", kandidaatId)
+    .single();
+  const kandidaatNaam = `${kandidaat?.voornaam ?? ""} ${kandidaat?.tussenvoegsel ? kandidaat.tussenvoegsel + " " : ""}${kandidaat?.achternaam ?? ""}`.trim();
+
+  // Oorspronkelijke aanmelder voor extra context in mail
+  let oorspronkelijkeAanmelder: { voornaam: string; achternaam: string } | null = null;
+  if (bestaand.aangemeld_door) {
+    const { data: aanmelder } = await admin
+      .from("profiles")
+      .select("voornaam, achternaam")
+      .eq("id", bestaand.aangemeld_door)
+      .single();
+    if (aanmelder) {
+      oorspronkelijkeAanmelder = {
+        voornaam: aanmelder.voornaam ?? "",
+        achternaam: aanmelder.achternaam ?? "",
+      };
+    }
+  }
+
+  const setterFrom = await getSetterFrom(user.id);
+  let mailFout: string | null = null;
+  try {
+    await sendPlaatsingAfgekeurdNaarBackoffice({
+      kandidaatNaam,
+      bedrijf: bestaand.bedrijf ?? "—",
+      reden,
+      afgekeurdDoor: {
+        voornaam: profile.voornaam ?? "",
+        achternaam: profile.achternaam ?? "",
+        email: user.email ?? "",
+      },
+      oorspronkelijkeAanmelder,
+      from: setterFrom,
+    });
+  } catch (e) {
+    console.error("Mail plaatsing-afkeur mislukt:", e);
+    mailFout = (e as Error).message;
+  }
+
+  // Backup: notificatie naar team
+  try {
+    await notifyTeam({
+      tenantId: profile.tenant_id,
+      vanUserId: user.id,
+      type: "plaatsing",
+      titel: `Plaatsing afgekeurd: ${kandidaatNaam}`,
+      bericht: `Reden: ${reden}${mailFout ? `\n\nLet op: backoffice-mail mislukte (${mailFout})` : ""}`,
+      linkUrl: `/kandidaten/${kandidaatId}`,
+      kandidaatId,
+    });
+  } catch (e) {
+    console.error("Afkeur-notificatie mislukt:", e);
+  }
+
   await logVoorstelEvent({
     tenantId: profile.tenant_id,
     kandidaatId,
     event: "plaatsing_ongedaan",
-    beschrijving: "Plaatsing ongedaan gemaakt door admin",
+    beschrijving: `Plaatsing afgekeurd door ${profile.voornaam ?? ""} ${profile.achternaam ?? ""}: ${reden}`,
     zichtbaarVoorKandidaat: false,
   });
 
   revalidatePath(`/kandidaten/${kandidaatId}`);
   revalidatePath("/kandidaten");
-  redirect(`/kandidaten/${kandidaatId}?ok=plaatsing_ongedaan`);
+  redirect(
+    mailFout
+      ? `/kandidaten/${kandidaatId}?ok=plaatsing_ongedaan&error=${encodeURIComponent("Afgekeurd, maar backoffice-mail mislukte: " + mailFout)}`
+      : `/kandidaten/${kandidaatId}?ok=plaatsing_ongedaan`
+  );
 }
