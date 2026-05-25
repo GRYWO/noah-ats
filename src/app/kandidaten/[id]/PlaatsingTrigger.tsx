@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { PartyPopper } from "lucide-react";
+import { PartyPopper, Undo2 } from "lucide-react";
 import { PlaatsingDialog } from "./PlaatsingDialog";
+import { verwijderPlaatsing } from "./plaatsing-actions";
 
 type VoorstelOpt = React.ComponentProps<typeof PlaatsingDialog>["voorstellen"][number];
 
@@ -12,20 +13,45 @@ export function PlaatsingTrigger({
   voorstellen,
   autoOpen = false,
   alAangemeld = false,
+  plaatsingId = null,
+  isAdmin = false,
 }: {
   kandidaatId: string;
   kandidaatNaam: string;
   voorstellen: VoorstelOpt[];
   autoOpen?: boolean;
   alAangemeld?: boolean;
+  plaatsingId?: string | null;
+  isAdmin?: boolean;
 }) {
   const [open, setOpen] = useState(autoOpen);
 
   if (alAangemeld) {
     return (
-      <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg p-3 inline-flex items-center gap-2">
-        <PartyPopper size={14} />
-        Plaatsing is aangemeld bij backoffice.
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg p-3 inline-flex items-center gap-2">
+          <PartyPopper size={14} />
+          Plaatsing is aangemeld bij backoffice.
+        </div>
+        {isAdmin && plaatsingId && (
+          <form
+            action={verwijderPlaatsing}
+            onSubmit={(e) => {
+              if (!confirm("Plaatsing ongedaan maken? Status keert terug naar 'in proces'.")) {
+                e.preventDefault();
+              }
+            }}
+          >
+            <input type="hidden" name="plaatsing_id" value={plaatsingId} />
+            <input type="hidden" name="kandidaat_id" value={kandidaatId} />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 bg-white hover:bg-red-50 border border-red-300 text-red-700 font-semibold px-3 py-2 rounded-md text-sm"
+            >
+              <Undo2 size={13} /> Ongedaan maken
+            </button>
+          </form>
+        )}
       </div>
     );
   }

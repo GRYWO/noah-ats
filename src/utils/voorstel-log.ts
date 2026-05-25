@@ -9,6 +9,7 @@ export type VoorstelEvent =
   | "kennismaking_gepland"
   | "kennismaking_reminder"
   | "plaatsing"
+  | "plaatsing_ongedaan"
   | "afwijzing"
   | "verlopen";
 

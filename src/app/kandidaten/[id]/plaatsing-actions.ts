@@ -155,3 +155,56 @@ export async function meldPlaatsing(formData: FormData) {
       : `/kandidaten/${kandidaatId}?ok=plaatsing`
   );
 }
+
+export async function verwijderPlaatsing(formData: FormData) {
+  const plaatsingId = formData.get("plaatsing_id") as string;
+  const kandidaatId = formData.get("kandidaat_id") as string;
+  if (!plaatsingId || !kandidaatId) redirect("/kandidaten");
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id, rol")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) redirect(`/kandidaten/${kandidaatId}?error=Geen+tenant`);
+  if (profile.rol !== "admin") {
+    redirect(`/kandidaten/${kandidaatId}?error=Alleen+admin+mag+plaatsing+ongedaan+maken`);
+  }
+
+  const admin = createAdminClient();
+
+  // Check tenant-grens
+  const { data: bestaand } = await admin
+    .from("plaatsingen")
+    .select("tenant_id")
+    .eq("id", plaatsingId)
+    .single();
+  if (!bestaand || bestaand.tenant_id !== profile.tenant_id) {
+    redirect(`/kandidaten/${kandidaatId}?error=Plaatsing+niet+gevonden`);
+  }
+
+  await admin.from("plaatsingen").delete().eq("id", plaatsingId);
+
+  // Reset kandidaat-status zodat hij niet vastzit op "geplaatst" zonder onderliggende deal
+  await admin.from("kandidaten").update({
+    status: "in_proces",
+    kanban_stap: "kennismaking_ingepland",
+    plaatsing_mail_sent: null,
+  }).eq("id", kandidaatId);
+
+  await logVoorstelEvent({
+    tenantId: profile.tenant_id,
+    kandidaatId,
+    event: "plaatsing_ongedaan",
+    beschrijving: "Plaatsing ongedaan gemaakt door admin",
+    zichtbaarVoorKandidaat: false,
+  });
+
+  revalidatePath(`/kandidaten/${kandidaatId}`);
+  revalidatePath("/kandidaten");
+  redirect(`/kandidaten/${kandidaatId}?ok=plaatsing_ongedaan`);
+}

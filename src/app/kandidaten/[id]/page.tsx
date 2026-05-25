@@ -94,6 +94,8 @@ export default async function KandidaatDetail({
     .order("created_at", { ascending: false })
     .limit(1);
   const alAangemeld = (plaatsingen?.length ?? 0) > 0;
+  const huidigePlaatsingId = plaatsingen?.[0]?.id ?? null;
+  const isAdmin = myProfile?.rol === "admin";
   const showPlaatsingTrigger = !isSetter && (k.status === "geplaatst" || k.kanban_stap === "geplaatst");
 
   const { data: logs } = await supabase
@@ -211,13 +213,15 @@ export default async function KandidaatDetail({
                 }))}
               autoOpen={plaatsingQuery === "open" && !alAangemeld}
               alAangemeld={alAangemeld}
+              plaatsingId={huidigePlaatsingId}
+              isAdmin={isAdmin}
             />
           </div>
         )}
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@grywo.nl" : "Opgeslagen"}
+            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@grywo.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : "Opgeslagen"}
           </div>
         )}
         {error && (
