@@ -1,0 +1,415 @@
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { TopBar } from "@/components/TopBar";
+import { CheckCircle2, XCircle, Trophy, AlertTriangle, Phone, CalendarCheck, Briefcase, Coins, Sparkles, Battery, ListTodo } from "lucide-react";
+import { EodForm } from "./EodForm";
+import { CoachingKnop } from "./CoachingKnop";
+import { CoachingAanvraagItem } from "./CoachingAanvraagItem";
+
+function vandaagAmsterdam(): string {
+  const nu = new Date();
+  const tz = new Intl.DateTimeFormat("nl-NL", { timeZone: "Europe/Amsterdam", year: "numeric", month: "2-digit", day: "2-digit" });
+  const parts = tz.formatToParts(nu).reduce<Record<string, string>>((acc, p) => { if (p.type !== "literal") acc[p.type] = p.value; return acc; }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function startVanWeekISO(): string {
+  const nu = new Date();
+  const dag = nu.getDay() === 0 ? 6 : nu.getDay() - 1; // ma = 0
+  const ma = new Date(nu);
+  ma.setDate(nu.getDate() - dag);
+  ma.setHours(0, 0, 0, 0);
+  return ma.toISOString().slice(0, 10);
+}
+
+function startVanMaandISO(): string {
+  const nu = new Date();
+  return `${nu.getFullYear()}-${String(nu.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+function startVanJaarISO(): string {
+  return `${new Date().getFullYear()}-01-01`;
+}
+
+type SetterStats = {
+  id: string;
+  naam: string;
+  calls: number;
+  voicemails: number;
+  voorgesteld: number;
+  afspraken: number;
+  plaatsingen: number;
+  bedrag: number;
+};
+
+type EodLight = {
+  rapport_datum: string;
+  doel_vandaag: string | null;
+  doel_morgen: string | null;
+  doel_behaald: boolean | null;
+  aantal_calls: number | null;
+  aantal_voicemails: number | null;
+  aantal_voorgesteld: number | null;
+  aantal_afspraken: number | null;
+  aantal_plaatsingen: number | null;
+  obstakel: string | null;
+  afwijzings_reden: string | null;
+  energie_focus: number | null;
+  morgen_anders: string | null;
+  setter?: { voornaam: string | null; achternaam: string | null } | null;
+};
+
+export default async function CoachingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ periode?: string; ok?: string; error?: string }>;
+}) {
+  const { periode = "week", ok, error } = await searchParams;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id, rol, is_coach, voornaam, achternaam")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) return null;
+
+  const isAdmin = profile.rol === "admin";
+  const isCoach = profile.is_coach;
+  const isSetter = profile.rol === "setter";
+  const tenantId = profile.tenant_id;
+
+  const admin = createAdminClient();
+  const vandaag = vandaagAmsterdam();
+  const startWeek = startVanWeekISO();
+  const startMaand = startVanMaandISO();
+  const startJaar = startVanJaarISO();
+  const periodeStart = periode === "maand" ? startMaand : periode === "jaar" ? startJaar : startWeek;
+
+  // Setter: eigen EOD vandaag + laatste 14 dagen
+  let eigenEodVandaag: EodLight | null = null;
+  let eigenEodGeschiedenis: EodLight[] = [];
+  if (isSetter) {
+    const { data: vd } = await admin
+      .from("eod_rapporten")
+      .select("*")
+      .eq("setter_id", user.id)
+      .eq("rapport_datum", vandaag)
+      .maybeSingle();
+    eigenEodVandaag = vd as EodLight | null;
+
+    const grens = new Date(); grens.setDate(grens.getDate() - 14);
+    const { data: gesch } = await admin
+      .from("eod_rapporten")
+      .select("*")
+      .eq("setter_id", user.id)
+      .gte("rapport_datum", grens.toISOString().slice(0, 10))
+      .order("rapport_datum", { ascending: false });
+    eigenEodGeschiedenis = (gesch ?? []) as EodLight[];
+  }
+
+  // Setters in tenant
+  const { data: setters } = await admin
+    .from("profiles")
+    .select("id, voornaam, achternaam, rol, is_active")
+    .eq("tenant_id", tenantId)
+    .eq("rol", "setter");
+
+  // Aggregeer eod-stats over periode
+  const { data: eodRows } = await admin
+    .from("eod_rapporten")
+    .select("setter_id, aantal_calls, aantal_voicemails, aantal_voorgesteld, aantal_afspraken, aantal_plaatsingen")
+    .eq("tenant_id", tenantId)
+    .gte("rapport_datum", periodeStart);
+
+  // Aggregeer plaatsingen over periode (telt voor leaderboard-bedragen)
+  const { data: plaatsingsRows } = await admin
+    .from("plaatsingen")
+    .select("aangemeld_door, tarief_bedrag")
+    .eq("tenant_id", tenantId)
+    .is("afgekeurd_op", null)
+    .gte("created_at", new Date(periodeStart).toISOString());
+
+  const stats: Record<string, SetterStats> = {};
+  for (const s of setters ?? []) {
+    stats[s.id] = {
+      id: s.id,
+      naam: `${s.voornaam ?? ""} ${s.achternaam ?? ""}`.trim() || "Onbekend",
+      calls: 0, voicemails: 0, voorgesteld: 0, afspraken: 0, plaatsingen: 0, bedrag: 0,
+    };
+  }
+  for (const r of eodRows ?? []) {
+    const s = stats[r.setter_id];
+    if (!s) continue;
+    s.calls       += r.aantal_calls       ?? 0;
+    s.voicemails  += r.aantal_voicemails  ?? 0;
+    s.voorgesteld += r.aantal_voorgesteld ?? 0;
+    s.afspraken   += r.aantal_afspraken   ?? 0;
+  }
+  for (const p of plaatsingsRows ?? []) {
+    const s = stats[p.aangemeld_door ?? ""];
+    if (!s) continue;
+    s.plaatsingen += 1;
+    s.bedrag += Number(p.tarief_bedrag ?? 0);
+  }
+  const leaderboard = Object.values(stats)
+    .sort((a, b) => b.plaatsingen - a.plaatsingen || b.bedrag - a.bedrag)
+    .slice(0, 10);
+
+  // Niet-behaalde doelen vandaag (voor admin/coach banner)
+  let nietBehaaldVandaag: EodLight[] = [];
+  if (isAdmin || isCoach) {
+    const { data } = await admin
+      .from("eod_rapporten")
+      .select("setter_id, doel_vandaag, doel_behaald, obstakel, setter:profiles!eod_rapporten_setter_id_fkey(voornaam, achternaam)")
+      .eq("tenant_id", tenantId)
+      .eq("rapport_datum", vandaag)
+      .eq("doel_behaald", false);
+    nietBehaaldVandaag = (data ?? []) as unknown as EodLight[];
+  }
+
+  // Coaching-aanvragen
+  let openAanvragen: Array<{ id: string; setter_id: string; bericht: string | null; created_at: string; status: string; setter?: { voornaam: string | null; achternaam: string | null } | null }> = [];
+  if (isAdmin || isCoach) {
+    const { data } = await admin
+      .from("coaching_aanvragen")
+      .select("id, setter_id, bericht, created_at, status, setter:profiles!coaching_aanvragen_setter_id_fkey(voornaam, achternaam)")
+      .eq("tenant_id", tenantId)
+      .in("status", ["aangevraagd", "gepland"])
+      .order("created_at", { ascending: false });
+    openAanvragen = (data ?? []) as unknown as typeof openAanvragen;
+  }
+
+  const periodeLabel = periode === "maand" ? "Deze maand" : periode === "jaar" ? "Dit jaar" : "Deze week";
+
+  return (
+    <main className="min-h-screen bg-[#f4f4f7] pl-16">
+      <TopBar active="coaching" />
+
+      <div className="p-8 max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 inline-flex items-center gap-2">
+              <Sparkles size={20} /> Coaching
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {isSetter ? "Jouw EOD-rapporten, doelen en stats" : isCoach ? "Coach-dashboard" : "Coaching-overzicht"}
+            </p>
+          </div>
+          {isSetter && <CoachingKnop />}
+        </div>
+
+        {ok && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
+          {ok === "eod" ? "EOD-rapport opgeslagen." : ok === "coaching_aanvraag" ? "Aanvraag verzonden naar Pepijn." : ok === "coaching_reactie" ? "Reactie verzonden." : "Opgeslagen."}
+        </div>}
+        {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">{error}</div>}
+
+        {/* Niet-behaalde doelen vandaag — admin/coach */}
+        {(isAdmin || isCoach) && nietBehaaldVandaag.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-5 mb-6">
+            <h2 className="font-bold text-red-900 inline-flex items-center gap-2 mb-2">
+              <AlertTriangle size={16} /> {nietBehaaldVandaag.length} setter(s) haalden hun doel vandaag niet
+            </h2>
+            <ul className="text-sm text-red-800 space-y-1">
+              {nietBehaaldVandaag.map((r, i) => {
+                const s = Array.isArray(r.setter) ? r.setter[0] : r.setter;
+                const naam = `${s?.voornaam ?? ""} ${s?.achternaam ?? ""}`.trim() || "Onbekend";
+                return (
+                  <li key={i} className="flex items-start gap-2">
+                    <XCircle size={12} className="mt-1 shrink-0" />
+                    <span><b>{naam}</b>{r.obstakel ? ` — ${r.obstakel}` : ""}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {/* Setter: eigen EOD-form */}
+        {isSetter && (
+          <section className="mb-8">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-3 inline-flex items-center gap-2">
+              <ListTodo size={14} /> EOD-rapport vandaag {eigenEodVandaag && <span className="text-emerald-600 normal-case">— al ingevuld, je kunt bijwerken</span>}
+            </h2>
+            <EodForm bestaand={eigenEodVandaag} />
+          </section>
+        )}
+
+        {/* Leaderboard */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 inline-flex items-center gap-2">
+              <Trophy size={14} /> Top 10 setters — {periodeLabel}
+            </h2>
+            <div className="inline-flex bg-gray-100 rounded-md p-1 text-xs">
+              {(["week", "maand", "jaar"] as const).map(p => (
+                <Link
+                  key={p}
+                  href={`/coaching?periode=${p}`}
+                  className={`px-3 py-1.5 rounded font-semibold ${periode === p ? "bg-white text-[#333399] shadow-sm" : "text-gray-600 hover:text-gray-800"}`}
+                >
+                  {p === "week" ? "Week" : p === "maand" ? "Maand" : "Jaar"}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            {leaderboard.length === 0 ? (
+              <div className="p-8 text-center text-sm text-gray-500">Geen activiteit in deze periode.</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                  <tr>
+                    <th className="text-left px-4 py-2 font-semibold w-10">#</th>
+                    <th className="text-left px-4 py-2 font-semibold">Setter</th>
+                    <th className="text-right px-3 py-2 font-semibold"><Phone size={11} className="inline" /> Calls</th>
+                    <th className="text-right px-3 py-2 font-semibold"><CalendarCheck size={11} className="inline" /> Afspraken</th>
+                    <th className="text-right px-3 py-2 font-semibold"><Briefcase size={11} className="inline" /> Plaatsingen</th>
+                    <th className="text-right px-3 py-2 font-semibold"><Coins size={11} className="inline" /> Omzet</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.map((s, idx) => {
+                    const isEigen = isSetter && s.id === user.id;
+                    return (
+                      <tr key={s.id} className={`border-t ${isEigen ? "bg-amber-50/40" : "hover:bg-gray-50"}`}>
+                        <td className="px-4 py-2 font-bold text-gray-700">
+                          {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx + 1}
+                        </td>
+                        <td className="px-4 py-2 font-semibold text-gray-800">{s.naam}{isEigen && <span className="ml-2 text-[10px] text-amber-700 font-bold">JIJ</span>}</td>
+                        <td className="px-3 py-2 text-right font-medium">{s.calls}</td>
+                        <td className="px-3 py-2 text-right font-medium">{s.afspraken}</td>
+                        <td className="px-3 py-2 text-right font-bold text-emerald-700">{s.plaatsingen}</td>
+                        <td className="px-3 py-2 text-right font-medium">€ {s.bedrag.toLocaleString("nl-NL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
+
+        {/* Setter eigen geschiedenis */}
+        {isSetter && eigenEodGeschiedenis.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-3">Laatste 14 dagen</h2>
+            <div className="bg-white rounded-xl shadow-sm divide-y">
+              {eigenEodGeschiedenis.map((r) => (
+                <EodHistorieRow key={r.rapport_datum} r={r} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Coach / Admin: open aanvragen */}
+        {(isAdmin || isCoach) && openAanvragen.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-3">Open 1-op-1 aanvragen</h2>
+            <div className="space-y-2">
+              {openAanvragen.map((a) => {
+                const s = Array.isArray(a.setter) ? a.setter[0] : a.setter;
+                const naam = `${s?.voornaam ?? ""} ${s?.achternaam ?? ""}`.trim() || "Onbekend";
+                return (
+                  <CoachingAanvraagItem key={a.id} id={a.id} setterNaam={naam} bericht={a.bericht} status={a.status} created_at={a.created_at} />
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Coach / Admin: per-setter overzicht */}
+        {(isAdmin || isCoach) && (
+          <section>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-3">EOD vandaag — alle setters</h2>
+            <AdminVandaagOverzicht tenantId={tenantId} vandaag={vandaag} />
+          </section>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function EodHistorieRow({ r }: { r: EodLight }) {
+  const datum = new Date(r.rapport_datum).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+  return (
+    <details className="px-5 py-3 group">
+      <summary className="cursor-pointer flex items-center gap-3 list-none">
+        {r.doel_behaald ? (
+          <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+        ) : (
+          <XCircle size={14} className="text-red-500 shrink-0" />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-sm text-gray-800">{datum}</div>
+          <div className="text-xs text-gray-500 truncate">{r.doel_vandaag ?? "Geen doel ingevuld"}</div>
+        </div>
+        <div className="text-xs text-gray-500 hidden md:flex gap-3">
+          <span><b>{r.aantal_calls ?? 0}</b> calls</span>
+          <span><b>{r.aantal_afspraken ?? 0}</b> afspraken</span>
+          <span><b>{r.aantal_plaatsingen ?? 0}</b> plaatsingen</span>
+          <span className="inline-flex items-center gap-0.5"><Battery size={10} /> {r.energie_focus ?? "—"}</span>
+        </div>
+      </summary>
+      <div className="mt-3 pl-7 text-xs text-gray-700 space-y-2">
+        {r.obstakel && <div><b>Obstakel:</b> {r.obstakel}</div>}
+        {r.afwijzings_reden && <div><b>Reden afwijzing:</b> {r.afwijzings_reden}</div>}
+        {r.morgen_anders && <div><b>Morgen anders:</b> {r.morgen_anders}</div>}
+        {r.doel_morgen && <div><b>Doel morgen:</b> {r.doel_morgen}</div>}
+      </div>
+    </details>
+  );
+}
+
+async function AdminVandaagOverzicht({ tenantId, vandaag }: { tenantId: string; vandaag: string }) {
+  const admin = createAdminClient();
+  const { data: setters } = await admin
+    .from("profiles")
+    .select("id, voornaam, achternaam")
+    .eq("tenant_id", tenantId)
+    .eq("rol", "setter")
+    .eq("is_active", true);
+  const { data: eodVandaag } = await admin
+    .from("eod_rapporten")
+    .select("*")
+    .eq("tenant_id", tenantId)
+    .eq("rapport_datum", vandaag);
+
+  const map = new Map((eodVandaag ?? []).map(r => [r.setter_id, r as EodLight]));
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm divide-y">
+      {(setters ?? []).map((s) => {
+        const r = map.get(s.id);
+        const naam = `${s.voornaam ?? ""} ${s.achternaam ?? ""}`.trim();
+        return (
+          <div key={s.id} className="px-5 py-3 flex items-center gap-3">
+            {!r ? (
+              <span className="w-2.5 h-2.5 rounded-full bg-gray-300" title="Nog niet ingevuld" />
+            ) : r.doel_behaald ? (
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" title="Doel behaald" />
+            ) : (
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500" title="Doel niet behaald" />
+            )}
+            <div className="flex-1">
+              <div className="font-semibold text-sm text-gray-800">{naam}</div>
+              <div className="text-xs text-gray-500 truncate">
+                {!r ? "Nog geen rapport vandaag" : (r.doel_vandaag ?? "Geen doel ingevuld")}
+              </div>
+            </div>
+            {r && (
+              <div className="text-xs text-gray-500 hidden md:flex gap-3">
+                <span><b>{r.aantal_calls ?? 0}</b> calls</span>
+                <span><b>{r.aantal_afspraken ?? 0}</b> afspraken</span>
+                <span><b>{r.aantal_plaatsingen ?? 0}</b> plaatsingen</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}

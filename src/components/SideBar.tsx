@@ -20,6 +20,7 @@ import {
   PhoneCall,
   Send,
   Calendar,
+  Sparkles as SparklesIcon,
 } from "lucide-react";
 
 type Item = {
@@ -65,6 +66,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, log
     { key: "jobdigger", href: "/jobdigger", label: "Jobdigger", Icon: PhoneCall, sectie: 2 } as Item,
     { key: "inbox",        href: "/inbox",        label: "E-mail",      Icon: Mail,            sectie: 3 },
     ...(!isSetter ? [{ key: "setters", href: "/setters", label: "Setters", Icon: UserCog, sectie: 4 } as Item] : []),
+    { key: "coaching", href: "/coaching", label: "Coaching", Icon: SparklesIcon, sectie: 4 } as Item,
     { key: "instellingen", href: "/instellingen", label: "Instellingen", Icon: Settings,       sectie: 4 },
   ];
 
