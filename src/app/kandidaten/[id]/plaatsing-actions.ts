@@ -24,8 +24,12 @@ export async function meldPlaatsing(formData: FormData) {
   const contact_email   = (formData.get("contact_email") as string)?.trim() || null;
   const contact_telefoon= (formData.get("contact_telefoon") as string)?.trim() || null;
   const opmerking       = (formData.get("opmerking") as string)?.trim() || null;
+  const startdatum      = (formData.get("startdatum") as string)?.trim() || null;
 
   if (!kandidaatId) redirect("/kandidaten");
+  if (!startdatum) {
+    redirect(`/kandidaten/${kandidaatId}?error=Startdatum+verplicht`);
+  }
   if (basis !== "uitzend" && basis !== "werving_selectie") {
     redirect(`/kandidaten/${kandidaatId}?error=Ongeldige+basis`);
   }
@@ -85,6 +89,7 @@ export async function meldPlaatsing(formData: FormData) {
       contact_email,
       contact_telefoon,
       opmerking,
+      startdatum,
       aangemeld_door: user.id,
     })
     .select("id")
@@ -106,7 +111,7 @@ export async function meldPlaatsing(formData: FormData) {
     await sendPlaatsingNaarBackoffice({
       kandidaat,
       klant: { bedrijf, contactpersoon, contact_email, contact_telefoon },
-      deal: { basis: basis as "uitzend" | "werving_selectie", tarief_factor, tarief_pct, betaling: betaling as "1x_7d" | "50_50_7d_30d", opmerking },
+      deal: { basis: basis as "uitzend" | "werving_selectie", tarief_factor, tarief_pct, betaling: betaling as "1x_7d" | "50_50_7d_30d", startdatum, opmerking },
       aangemeldDoor: {
         voornaam: profile.voornaam ?? "",
         achternaam: profile.achternaam ?? "",

@@ -149,6 +149,18 @@ export function PlaatsingDialog({
             </div>
           </div>
 
+          {/* Startdatum */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-2">Startdatum *</label>
+            <input
+              type="date"
+              name="startdatum"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+            <small className="text-gray-400 text-xs">Eerste werkdag bij de klant.</small>
+          </div>
+
           {/* Betaling */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-2">Betalingsconditie</label>

@@ -377,6 +377,7 @@ export async function sendPlaatsingNaarBackoffice({
     tarief_factor?: number | null;
     tarief_pct?: number | null;
     betaling: "1x_7d" | "50_50_7d_30d";
+    startdatum?: string | null;
     opmerking?: string | null;
   };
   aangemeldDoor: { voornaam: string; achternaam: string; email: string };
@@ -390,6 +391,9 @@ export async function sendPlaatsingNaarBackoffice({
   const betalingLabel = deal.betaling === "1x_7d"
     ? "100% binnen 7 dagen"
     : "50% binnen 7 dagen, 50% na 30 dagen";
+  const startdatumLabel = deal.startdatum
+    ? new Date(deal.startdatum).toLocaleDateString("nl-NL", { dateStyle: "full" })
+    : null;
 
   const rij = (label: string, waarde: string | null | undefined) =>
     waarde
@@ -419,6 +423,7 @@ export async function sendPlaatsingNaarBackoffice({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
   ${rij("Basis", basisLabel)}
   ${rij("Tarief", tariefLabel)}
+  ${rij("Startdatum", startdatumLabel)}
   ${rij("Betaling", betalingLabel)}
   ${rij("Opmerking", deal.opmerking)}
 </table>
