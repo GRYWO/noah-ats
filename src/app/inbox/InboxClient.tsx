@@ -174,6 +174,17 @@ export function InboxClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, geopendeMail?.body_loaded]);
 
+  // Pre-fetch top 3 mails in background zodat klikken instant voelt
+  useEffect(() => {
+    const top = berichten.slice(0, 3);
+    top.forEach((b, i) => {
+      setTimeout(() => {
+        fetch(`/api/mail/body?account=${accountId}&map=${encodeURIComponent(mapPad)}&uid=${b.uid}`, { method: "POST" }).catch(() => {});
+      }, i * 600); // gespreid om IMAP niet te overbelasten
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapPad, accountId]);
+
   // Auto-sync elke 15 seconden (haalt uit IMAP)
   useEffect(() => {
     if (!autoRefresh) return;
@@ -561,10 +572,21 @@ export function InboxClient({
                 <div><b>Datum:</b> {new Date(geopendeMail.datum).toLocaleString("nl-NL")}</div>
               </div>
 
-              {geopendeMail.html ? (
-                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: geopendeMail.html }} />
+              {geopendeMail.body_loaded ? (
+                geopendeMail.html ? (
+                  <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: geopendeMail.html }} />
+                ) : (
+                  <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700">{geopendeMail.tekst}</pre>
+                )
               ) : (
-                <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700">{geopendeMail.tekst}</pre>
+                <div className="space-y-3 animate-pulse">
+                  <div className="h-3 bg-gray-100 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-100 rounded w-5/6"></div>
+                  <div className="h-3 bg-gray-100 rounded w-2/3"></div>
+                  <div className="h-3 bg-gray-100 rounded w-4/5"></div>
+                  <div className="h-3 bg-gray-100 rounded w-1/2"></div>
+                  <p className="text-xs text-gray-400 mt-4">Bericht wordt geladen via IMAP...</p>
+                </div>
               )}
             </div>
           </div>
