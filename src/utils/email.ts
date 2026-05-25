@@ -355,6 +355,7 @@ export async function sendPlaatsingNaarBackoffice({
   klant,
   deal,
   aangemeldDoor,
+  from,
 }: {
   kandidaat: {
     voornaam: string;
@@ -379,6 +380,7 @@ export async function sendPlaatsingNaarBackoffice({
     opmerking?: string | null;
   };
   aangemeldDoor: { voornaam: string; achternaam: string; email: string };
+  from?: string;
 }) {
   const fullnaam = `${kandidaat.voornaam} ${kandidaat.tussenvoegsel ? kandidaat.tussenvoegsel + " " : ""}${kandidaat.achternaam}`.trim();
   const basisLabel = deal.basis === "uitzend" ? "Uitzendbasis" : "Werving & Selectie";
@@ -424,12 +426,17 @@ export async function sendPlaatsingNaarBackoffice({
 <p style="margin-top:24px;color:#666;font-size:12px;">Deze mail is automatisch gegenereerd vanuit Noah ATS.</p>
 `;
 
-  return resend.emails.send({
-    from: FROM,
+  const result = await resend.emails.send({
+    from: from ?? FROM,
     to: "backoffice@grywo.nl",
+    cc: aangemeldDoor.email ? [aangemeldDoor.email] : undefined,
     subject: `Nieuwe plaatsing: ${fullnaam} bij ${klant.bedrijf}`,
-    html: brandedLayout({ titel: `Plaatsing: ${fullnaam}`, body }),
+    html: brandedLayout({ titel: `Plaatsing: ${fullnaam}`, body, merk: "noah" }),
   });
+  if (result.error) {
+    throw new Error(`Resend afgewezen: ${result.error.message}`);
+  }
+  return result;
 }
 
 /**

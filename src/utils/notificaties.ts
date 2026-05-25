@@ -5,6 +5,7 @@ export type NotificatieType =
   | "voorstel_rood"
   | "kennismaking_gepland"
   | "plaatsing"
+  | "plaatsing_aangemeld"
   | "contact_recruiter"
   | "contact_setter"
   | "cv_goedgekeurd"

@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendPlaatsingNaarBackoffice } from "@/utils/email";
+import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
+import { notifyTeam } from "@/utils/notificaties";
 
 const TOEGESTANE_FACTOREN = new Set(["2.3", "2.4", "2.5"]);
 const TOEGESTANE_PCT      = new Set(["15", "16", "17"]);
@@ -97,7 +99,9 @@ export async function meldPlaatsing(formData: FormData) {
     kanban_stap: "geplaatst",
   }).eq("id", kandidaatId);
 
-  // Backoffice-mail
+  // Backoffice-mail — vanuit aanmelder's mail-adres zodat from-domein klopt
+  const setterFrom = await getSetterFrom(user.id);
+  let mailFout: string | null = null;
   try {
     await sendPlaatsingNaarBackoffice({
       kandidaat,
@@ -108,12 +112,30 @@ export async function meldPlaatsing(formData: FormData) {
         achternaam: profile.achternaam ?? "",
         email: user.email ?? "",
       },
+      from: setterFrom,
     });
     await admin.from("plaatsingen")
       .update({ backoffice_mail_sent: new Date().toISOString() })
       .eq("id", plaatsing.id);
   } catch (e) {
     console.error("Backoffice-mail plaatsing mislukt:", e);
+    mailFout = (e as Error).message;
+  }
+
+  // In-app notificatie naar admins als back-up zodat de info niet verloren gaat
+  // wanneer Resend faalt of de mail in spam belandt
+  try {
+    await notifyTeam({
+      tenantId: profile.tenant_id,
+      vanUserId: user.id,
+      type: "plaatsing",
+      titel: `Plaatsing: ${kandidaat.voornaam} ${kandidaat.achternaam} bij ${bedrijf}`,
+      bericht: `${basis === "uitzend" ? `Factor ${tarief_factor}` : `${tarief_pct}%`} · ${betaling === "1x_7d" ? "100% binnen 7 dagen" : "50/50 7d/30d"}${mailFout ? `\n\nLet op: backoffice-mail mislukte (${mailFout})` : ""}`,
+      linkUrl: `/kandidaten/${kandidaatId}`,
+      kandidaatId,
+    });
+  } catch (e) {
+    console.error("Plaatsings-notificatie mislukt:", e);
   }
 
   await logVoorstelEvent({
@@ -127,5 +149,9 @@ export async function meldPlaatsing(formData: FormData) {
 
   revalidatePath(`/kandidaten/${kandidaatId}`);
   revalidatePath("/kandidaten");
-  redirect(`/kandidaten/${kandidaatId}?ok=plaatsing`);
+  redirect(
+    mailFout
+      ? `/kandidaten/${kandidaatId}?ok=plaatsing&error=${encodeURIComponent("Plaatsing opgeslagen, maar mail naar backoffice mislukte: " + mailFout)}`
+      : `/kandidaten/${kandidaatId}?ok=plaatsing`
+  );
 }
