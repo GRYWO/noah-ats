@@ -76,20 +76,53 @@ export function NotificatieBel({ userId }: { userId: string }) {
     try {
       setMuted(localStorage.getItem(PING_MUTE_KEY) === "1");
     } catch {}
-    laad().then(() => { eersteLaadRef.current = false; });
 
+    let huidigeIds = new Set<string>();
+    async function laadMetPing() {
+      const { data } = await supabase
+        .from("notificaties")
+        .select("id, type, titel, bericht, link_url, gelezen, created_at, van_user_id")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      const lijst = data ?? [];
+      if (!eersteLaadRef.current) {
+        const nieuwe = lijst.filter(n => !huidigeIds.has(n.id));
+        if (nieuwe.length > 0) pingAfspelen();
+      }
+      huidigeIds = new Set(lijst.map(n => n.id));
+      setItems(lijst);
+      eersteLaadRef.current = false;
+    }
+
+    laadMetPing();
+
+    // Realtime — primaire kanaal
     const ch = supabase
       .channel("notif-" + userId)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notificaties", filter: `user_id=eq.${userId}` },
-        () => {
-          laad();
-          if (!eersteLaadRef.current) pingAfspelen();
-        },
+        () => { laadMetPing(); },
       )
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+      .subscribe((status) => {
+        console.log("[Noah Notif] realtime status:", status);
+      });
+
+    // Polling-fallback: elke 10s opnieuw laden — overlapt realtime maar vangt missers op
+    const poll = setInterval(() => { laadMetPing(); }, 10000);
+
+    // Tab weer zichtbaar → meteen verversen
+    const onVisible = () => { if (document.visibilityState === "visible") laadMetPing(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+
+    return () => {
+      supabase.removeChannel(ch);
+      clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
