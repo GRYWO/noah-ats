@@ -133,13 +133,10 @@ export default async function BureausPage({
                   <input name="tenaamstelling" placeholder="BureauX B.V." className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Marge-split</label>
-                  <select name="marge_split" defaultValue="0.50" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
-                    <option value="0.50">50/50</option>
-                    <option value="0.55">55/45 (bureau hoger)</option>
-                    <option value="0.45">45/55 (bureau lager)</option>
-                    <option value="0.60">60/40</option>
-                    <option value="0.40">40/60</option>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Betaling</label>
+                  <select name="setup_fee_paid" defaultValue="false" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-semibold">
+                    <option value="true">Betaald</option>
+                    <option value="false">Niet betaald</option>
                   </select>
                 </div>
                 <div>
@@ -206,7 +203,7 @@ export default async function BureausPage({
                   <th className="text-left px-4 py-3 font-semibold">KvK</th>
                   <th className="text-left px-4 py-3 font-semibold">BTW</th>
                   <th className="text-left px-4 py-3 font-semibold">IBAN</th>
-                  <th className="text-left px-4 py-3 font-semibold">Split</th>
+                  <th className="text-left px-4 py-3 font-semibold">Betaling</th>
                   <th className="text-left px-4 py-3 font-semibold">Status</th>
                 </tr>
               </thead>
@@ -217,7 +214,17 @@ export default async function BureausPage({
                     <td className="px-4 py-3 text-sm text-gray-600"><Link href={`/bureaus/${b.id}`} className="block">{b.kvk ?? "—"}</Link></td>
                     <td className="px-4 py-3 text-sm text-gray-600"><Link href={`/bureaus/${b.id}`} className="block">{b.btw_nummer ?? "—"}</Link></td>
                     <td className="px-4 py-3 text-sm text-gray-600"><Link href={`/bureaus/${b.id}`} className="block">{b.iban ?? "—"}</Link></td>
-                    <td className="px-4 py-3 text-sm"><Link href={`/bureaus/${b.id}`} className="block">{b.marge_split ? `${Math.round(b.marge_split * 100)}/${Math.round((1-b.marge_split)*100)}` : "—"}</Link></td>
+                    <td className="px-4 py-3 text-sm">
+                      <Link href={`/bureaus/${b.id}`} className="block">
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                          b.setup_fee_paid
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-red-100 text-red-800"
+                        }`}>
+                          {b.setup_fee_paid ? "Betaald" : "Niet betaald"}
+                        </span>
+                      </Link>
+                    </td>
                     <td className="px-4 py-3">
                       <Link href={`/bureaus/${b.id}`} className="block">
                         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${

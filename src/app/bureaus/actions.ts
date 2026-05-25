@@ -34,7 +34,7 @@ export async function nieuwBureau(formData: FormData) {
   const iban              = (formData.get("iban") as string)?.trim() || null;
   const bic               = (formData.get("bic") as string)?.trim() || null;
   const tenaamstelling    = (formData.get("tenaamstelling") as string)?.trim() || null;
-  const marge_split       = parseFloat(formData.get("marge_split") as string ?? "0.5");
+  const setup_fee_paid    = (formData.get("setup_fee_paid") as string) === "true";
   const finance_email     = (formData.get("finance_email") as string)?.trim() || null;
   const contact_naam      = (formData.get("contact_naam") as string)?.trim() || null;
   const contact_functie   = (formData.get("contact_functie") as string)?.trim() || null;
@@ -63,7 +63,7 @@ export async function nieuwBureau(formData: FormData) {
     iban,
     bic,
     tenaamstelling,
-    marge_split,
+    setup_fee_paid,
     finance_email,
     contact_naam,
     contact_functie,

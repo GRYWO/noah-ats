@@ -154,13 +154,18 @@ export default async function BureauDetail({
                 <input name="tenaamstelling" defaultValue={b.tenaamstelling ?? ""} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Marge-split</label>
-                <select name="marge_split" defaultValue={String(b.marge_split ?? "0.5")} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
-                  <option value="0.5">50/50</option>
-                  <option value="0.55">55/45</option>
-                  <option value="0.45">45/55</option>
-                  <option value="0.6">60/40</option>
-                  <option value="0.4">40/60</option>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Betaling</label>
+                <select
+                  name="setup_fee_paid"
+                  defaultValue={b.setup_fee_paid ? "true" : "false"}
+                  className={`w-full px-3 py-2 border rounded-md text-sm font-semibold ${
+                    b.setup_fee_paid
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                      : "border-red-300 bg-red-50 text-red-800"
+                  }`}
+                >
+                  <option value="true">Betaald</option>
+                  <option value="false">Niet betaald</option>
                 </select>
               </div>
               <div>

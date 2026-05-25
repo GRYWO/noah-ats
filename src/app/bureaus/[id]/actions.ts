@@ -28,7 +28,7 @@ export async function updateBureau(formData: FormData) {
     iban:              (formData.get("iban") as string)?.trim() || null,
     bic:               (formData.get("bic") as string)?.trim() || null,
     tenaamstelling:    (formData.get("tenaamstelling") as string)?.trim() || null,
-    marge_split:       parseFloat(formData.get("marge_split") as string ?? "0.5"),
+    setup_fee_paid:    (formData.get("setup_fee_paid") as string) === "true",
     finance_email:     (formData.get("finance_email") as string)?.trim() || null,
     contact_naam:      (formData.get("contact_naam") as string)?.trim() || null,
     contact_functie:   (formData.get("contact_functie") as string)?.trim() || null,
