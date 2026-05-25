@@ -5,10 +5,18 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { genereerProfielschets } from "@/utils/ai";
-import { sendIntakeAfgerond } from "@/utils/email";
+import { sendIntakeAfgerond, sendKandidaatStatusAfwijzing } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 import { autoWijsKandidaatToe } from "@/utils/setter-assign";
+
+type RodeVlag = {
+  code: string;
+  beschrijving: string;
+  punten: number;
+  vraag_aan_recruiter?: string;
+  toelichting?: string;
+};
 
 async function vereisRecruiterOfAdmin(kandidaatId: string) {
   const supabase = await createClient();
@@ -73,11 +81,31 @@ export async function verzendIntake(formData: FormData) {
     .eq("id", kandidaatId)
     .single();
   const cvVeld = (huidig?.cv_geparseerd ?? {}) as Record<string, unknown>;
+
+  // Rode vlaggen: lees toelichting per vlag uit form
+  const vlaggenRaw = (cvVeld.rode_vlaggen ?? []) as (RodeVlag | string)[];
+  const vlaggen: RodeVlag[] = vlaggenRaw.map(v =>
+    typeof v === "string" ? { code: "overig", beschrijving: v, punten: -5 } : v
+  );
+  const ontbrekendeToelichtingen: string[] = [];
+  const verwerkteVlaggen = vlaggen.map(v => {
+    const toelichting = ((formData.get(`vlag_toelichting_${v.code}`) as string) ?? "").trim();
+    if (!toelichting) ontbrekendeToelichtingen.push(v.code);
+    return { ...v, toelichting };
+  });
+
+  if (ontbrekendeToelichtingen.length > 0) {
+    redirect(`/kandidaten/${kandidaatId}?error=${encodeURIComponent(
+      `Geef een toelichting bij elke rode vlag (${ontbrekendeToelichtingen.length} ontbreken). Klopt het niet? Gebruik 'Kandidaat afkeuren' onderaan.`
+    )}`);
+  }
+
   update.cv_geparseerd = {
     ...cvVeld,
     werkervaring,
     vaardigheden,
     talen,
+    rode_vlaggen: verwerkteVlaggen,
   };
   update.intake_zoekfilters_voltooid = true;
 
@@ -182,4 +210,64 @@ export async function keurProfielschetsGoed(formData: FormData) {
   revalidatePath(`/kandidaten/${kandidaatId}`);
   revalidatePath("/kandidaten");
   redirect(`/kandidaten/${kandidaatId}?ok=intake_afgerond`);
+}
+
+export async function keurIntakeAf(formData: FormData) {
+  const kandidaatId = formData.get("id") as string;
+  if (!kandidaatId) redirect("/kandidaten");
+  const reden = ((formData.get("afkeur_reden") as string) ?? "").trim();
+  if (!reden) {
+    redirect(`/kandidaten/${kandidaatId}?error=Reden+afkeur+verplicht`);
+  }
+
+  const { user, profile } = await vereisRecruiterOfAdmin(kandidaatId);
+  const admin = createAdminClient();
+
+  const { data: k } = await admin
+    .from("kandidaten")
+    .select("voornaam, email, tenant_id, notitie")
+    .eq("id", kandidaatId)
+    .single();
+
+  const intakeReden = `[Intake afgekeurd door ${profile.voornaam ?? ""} ${profile.achternaam ?? ""}]: ${reden}`;
+  const samengevoegdeNotitie = k?.notitie ? `${k.notitie}\n\n${intakeReden}` : intakeReden;
+
+  await admin.from("kandidaten").update({
+    cv_controle_status: "afgekeurd",
+    cv_controle_op: new Date().toISOString(),
+    cv_controle_door: user.id,
+    status: "afgewezen",
+    kanban_stap: "afgewezen",
+    notitie: samengevoegdeNotitie,
+  }).eq("id", kandidaatId);
+
+  if (k?.email) {
+    try {
+      const setterFrom = await getSetterFrom(user.id);
+      await sendKandidaatStatusAfwijzing({
+        naar: k.email,
+        kandidaatVoornaam: k.voornaam ?? "",
+        from: setterFrom,
+      });
+      await admin.from("kandidaten")
+        .update({ afwijzing_mail_sent: new Date().toISOString() })
+        .eq("id", kandidaatId);
+    } catch (e) {
+      console.error("Mail afwijzing mislukt:", e);
+    }
+  }
+
+  if (k?.tenant_id) {
+    await logVoorstelEvent({
+      tenantId: k.tenant_id,
+      kandidaatId,
+      event: "afwijzing",
+      beschrijving: intakeReden,
+      zichtbaarVoorKandidaat: true,
+    });
+  }
+
+  revalidatePath(`/kandidaten/${kandidaatId}`);
+  revalidatePath("/kandidaten");
+  redirect(`/kandidaten/${kandidaatId}?ok=intake_afgewezen`);
 }

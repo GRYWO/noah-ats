@@ -216,7 +216,7 @@ export default async function KandidaatDetail({
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@grywo.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : ok === "intake_afgerond" ? "Interne intake afgerond — kandidaat heeft mail ontvangen" : ok === "intake_opgeslagen" ? "Intake opgeslagen — controleer de profielschets" : ok === "tweede_gesprek" ? "2e gesprek-datum opgeslagen" : "Opgeslagen"}
+            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@grywo.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : ok === "intake_afgerond" ? "Interne intake afgerond — kandidaat heeft mail ontvangen" : ok === "intake_opgeslagen" ? "Intake opgeslagen — controleer de profielschets" : ok === "tweede_gesprek" ? "2e gesprek-datum opgeslagen" : ok === "intake_afgewezen" ? "Kandidaat afgekeurd — afwijzings-mail verstuurd" : "Opgeslagen"}
           </div>
         )}
         {error && (

@@ -2,8 +2,16 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Sparkles, Loader2, Check, Sparkle } from "lucide-react";
-import { verzendIntake, keurProfielschetsGoed } from "./intake-formulier-actions";
+import { FileText, Sparkles, Loader2, Check, Sparkle, AlertTriangle, X, ThumbsDown } from "lucide-react";
+import { verzendIntake, keurProfielschetsGoed, keurIntakeAf } from "./intake-formulier-actions";
+
+type RodeVlag = {
+  code: string;
+  beschrijving: string;
+  punten: number;
+  vraag_aan_recruiter?: string;
+  toelichting?: string;
+};
 
 type Geparseerd = {
   werkervaring?: string;
@@ -11,6 +19,9 @@ type Geparseerd = {
   talen?: string;
   rijbewijs?: string;
   eigen_vervoer?: boolean;
+  rode_vlaggen?: RodeVlag[] | string[];
+  ai_score?: number;
+  ai_advies?: "goedkeuren" | "twijfel" | "afkeuren";
 };
 
 export type IntakeKandidaat = {
@@ -57,7 +68,13 @@ function Vragenlijst({ k }: { k: IntakeKandidaat }) {
   const cv = k.cv_geparseerd ?? {};
   const [aiLoading, setAiLoading] = useState(false);
   const [aiFout, setAiFout] = useState<string | null>(null);
+  const [afkeurOpen, setAfkeurOpen] = useState(false);
   const router = useRouter();
+
+  const vlaggenRaw = cv.rode_vlaggen ?? [];
+  const vlaggen: RodeVlag[] = vlaggenRaw.map((v) =>
+    typeof v === "string" ? { code: "overig", beschrijving: v, punten: -5 } : v
+  );
 
   async function aiCvLezen() {
     if (!k.cv_url) {
@@ -182,6 +199,43 @@ function Vragenlijst({ k }: { k: IntakeKandidaat }) {
         </Veld>
       </Card>
 
+      {/* Rode vlaggen — verplichte toelichting */}
+      {vlaggen.length > 0 && (
+        <Card titel="Rode vlaggen — toelichting verplicht" badge="AI-detectie">
+          <div className="bg-red-50 border border-red-200 rounded-md p-3 text-xs text-red-900 mb-3">
+            <b>Belangrijk:</b> de AI heeft {vlaggen.length} mogelijke aandachtspunt(en) gevonden in
+            het CV. Geef bij elk een logische verklaring (bv. &quot;was 3 jaar ZZP&apos;er&quot;).
+            Geen verklaring? Gebruik dan onderaan &quot;Kandidaat afkeuren&quot;.
+          </div>
+          <div className="space-y-3">
+            {vlaggen.map((v) => (
+              <div key={v.code} className="bg-red-50/50 border border-red-200 rounded-lg p-3">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle size={14} className="text-red-700 mt-0.5 shrink-0" />
+                    <div className="text-xs">
+                      <div className="font-bold text-red-900">{v.beschrijving}</div>
+                      {v.vraag_aan_recruiter && (
+                        <div className="text-red-800 mt-0.5 italic">Vraag: {v.vraag_aan_recruiter}</div>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-red-800 bg-white border border-red-200 rounded-full px-2 py-0.5 shrink-0">{v.punten}</span>
+                </div>
+                <textarea
+                  name={`vlag_toelichting_${v.code}`}
+                  defaultValue={v.toelichting ?? ""}
+                  required
+                  rows={2}
+                  placeholder={v.vraag_aan_recruiter ? "Antwoord van recruiter (verplicht)..." : "Toelichting (verplicht)..."}
+                  className="w-full px-2 py-1.5 border border-red-200 rounded-md text-xs bg-white"
+                />
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {k.profielschets && (
         <label className="flex items-center gap-2 text-xs text-gray-600">
           <input type="checkbox" name="forceer_nieuwe_schets" value="1" className="w-3.5 h-3.5 accent-[#333399]" />
@@ -189,10 +243,72 @@ function Vragenlijst({ k }: { k: IntakeKandidaat }) {
         </label>
       )}
 
-      <div className="flex items-center justify-end gap-3 pt-3 border-t">
+      <div className="flex items-center justify-between gap-3 pt-3 border-t flex-wrap">
+        <button
+          type="button"
+          onClick={() => setAfkeurOpen(true)}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 border border-red-200 px-3 py-2 rounded-md"
+        >
+          <ThumbsDown size={13} /> Kandidaat afkeuren
+        </button>
         <VerstuurKnop />
       </div>
+
+      {afkeurOpen && <AfkeurModal kandidaatId={k.id} onClose={() => setAfkeurOpen(false)} />}
     </form>
+  );
+}
+
+function AfkeurModal({ kandidaatId, onClose }: { kandidaatId: string; onClose: () => void }) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div className="px-5 py-4 border-b flex items-center justify-between">
+          <h3 className="font-bold text-gray-800 inline-flex items-center gap-2">
+            <ThumbsDown size={14} /> Kandidaat afkeuren
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
+            <X size={16} />
+          </button>
+        </div>
+        <form
+          action={keurIntakeAf}
+          onSubmit={() => startTransition(() => {})}
+          className="p-5 space-y-3"
+        >
+          <input type="hidden" name="id" value={kandidaatId} />
+          <div className="bg-red-50 border border-red-200 text-red-900 text-xs rounded-md p-3">
+            Status wordt &quot;afgewezen&quot;, kanban-stap wordt &quot;afgewezen&quot;, en de
+            kandidaat krijgt een afwijzings-mail. De reden wordt toegevoegd aan de notitie.
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Reden afkeuring *</label>
+            <textarea
+              name="afkeur_reden"
+              required
+              rows={4}
+              autoFocus
+              placeholder="bv. 'geen logische uitleg voor jobhoppen' of 'twijfels over werkervaring'"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t">
+            <button type="button" onClick={onClose} className="text-sm text-gray-600 hover:underline px-3 py-1.5">
+              Annuleer
+            </button>
+            <button
+              type="submit"
+              disabled={pending}
+              className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-semibold px-5 py-2 rounded-md text-sm"
+            >
+              {pending ? <Loader2 size={14} className="animate-spin" /> : <ThumbsDown size={14} />}
+              Afkeuren
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
