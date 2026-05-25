@@ -10,13 +10,15 @@ type CallBackData = {
   type: string;
 };
 
-// react-joyride exporteert ReactJoyride als default; bij dynamic moeten we 'm casten
-// naar een geldige ComponentType voor next/dynamic.
+// react-joyride v3 exporteert 'Joyride' als named export, niet default
+// We casten naar een flexibele type omdat de props in v3 strikt zijn
 const Joyride = dynamic(
-  () => import("react-joyride") as unknown as Promise<{
-    default: React.ComponentType<Record<string, unknown>>;
-  }>,
-  { ssr: false }
+  async () => {
+    const mod = await import("react-joyride");
+    console.log("[Noah Tour] react-joyride module geladen");
+    return mod.Joyride as unknown as React.ComponentType<Record<string, unknown>>;
+  },
+  { ssr: false, loading: () => null }
 );
 
 type Rol = "admin" | "recruiter" | "setter" | "super_admin";
@@ -188,10 +190,13 @@ export function OnboardingTour({
   const [stappen, setStappen] = useState<Step[]>([]);
 
   useEffect(() => {
+    console.log("[Noah Tour] mounted | autoStart=", autoStart, "| rol=", rol);
     if (autoStart) {
       // Korte vertraging zodat de pagina kan renderen
       const t = setTimeout(() => {
-        setStappen(stappenVoorRol(rol));
+        const s = stappenVoorRol(rol);
+        console.log("[Noah Tour] starting tour with", s.length, "steps");
+        setStappen(s);
         setActief(true);
       }, 800);
       return () => clearTimeout(t);
