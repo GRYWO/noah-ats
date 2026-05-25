@@ -107,6 +107,17 @@ export async function verwijderBellijstItem(formData: FormData) {
   revalidatePath(`/kandidaten/${kandidaatId}`);
 }
 
+export async function updateBellijstNaam(formData: FormData) {
+  const id = formData.get("id") as string;
+  const kandidaatId = formData.get("kandidaat_id") as string;
+  const naam = (formData.get("naam") as string)?.trim();
+  if (!naam) return;
+
+  const admin = createAdminClient();
+  await admin.from("bellijsten").update({ naam, updated_at: new Date().toISOString() }).eq("id", id);
+  revalidatePath(`/kandidaten/${kandidaatId}`);
+}
+
 export async function verwijderBellijst(formData: FormData) {
   const id = formData.get("id") as string;
   const kandidaatId = formData.get("kandidaat_id") as string;

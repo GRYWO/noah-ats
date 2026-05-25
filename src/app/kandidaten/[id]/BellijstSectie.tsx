@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2, PhoneOutgoing, Search } from "lucide-react";
+import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2, PhoneOutgoing, Search, Pencil, Check, X } from "lucide-react";
 import Link from "next/link";
 import { telLink } from "@/utils/tel";
 import {
@@ -11,6 +11,7 @@ import {
   verwijderBellijstItem,
   verwijderBellijst,
   maakRelatieVanBellijstItem,
+  updateBellijstNaam,
 } from "./bellijst-actions";
 
 type BellijstItem = {
@@ -114,21 +115,25 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
             const gedaan = b.items.filter(i => i.status === "gedaan" || i.label).length;
             return (
               <div key={b.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-gray-50 px-4 py-3 flex items-center justify-between">
+                <div className="bg-gray-50 px-4 py-3 flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => setOpenLijst(isOpen ? null : b.id)}
-                    className="flex items-center gap-2 text-left flex-1"
+                    className="shrink-0"
                   >
                     {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    <span className="font-semibold text-sm text-gray-800">{b.naam}</span>
-                    <span className="text-xs text-gray-500">{gedaan}/{b.aantal_items} verwerkt</span>
                   </button>
+                  <BellijstNaamEdit
+                    bellijstId={b.id}
+                    huidigeNaam={b.naam}
+                    kandidaatId={kandidaatId}
+                  />
+                  <span className="text-xs text-gray-500 shrink-0">{gedaan}/{b.aantal_items} verwerkt</span>
                   <button
                     type="button"
                     onClick={() => onVerwijderBellijst(b.id)}
                     title="Bellijst verwijderen"
-                    className="text-gray-400 hover:text-red-600 p-1"
+                    className="text-gray-400 hover:text-red-600 p-1 shrink-0"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -140,6 +145,72 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function BellijstNaamEdit({
+  bellijstId,
+  huidigeNaam,
+  kandidaatId,
+}: {
+  bellijstId: string;
+  huidigeNaam: string;
+  kandidaatId: string;
+}) {
+  const [bewerken, setBewerken] = useState(false);
+  const [naam, setNaam] = useState(huidigeNaam);
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+
+  function opslaan() {
+    if (!naam.trim() || naam === huidigeNaam) {
+      setBewerken(false);
+      return;
+    }
+    const fd = new FormData();
+    fd.append("id", bellijstId);
+    fd.append("kandidaat_id", kandidaatId);
+    fd.append("naam", naam.trim());
+    startTransition(async () => {
+      await updateBellijstNaam(fd);
+      setBewerken(false);
+      router.refresh();
+    });
+  }
+
+  if (!bewerken) {
+    return (
+      <button
+        type="button"
+        onClick={() => setBewerken(true)}
+        title="Klik om de naam aan te passen"
+        className="font-semibold text-sm text-gray-800 hover:text-[#333399] inline-flex items-center gap-1.5 group flex-1 min-w-0 truncate text-left"
+      >
+        <span className="truncate">{huidigeNaam}</span>
+        <Pencil size={11} className="opacity-0 group-hover:opacity-100 shrink-0" />
+      </button>
+    );
+  }
+
+  return (
+    <div className="inline-flex items-center gap-1 flex-1 min-w-0">
+      <input
+        value={naam}
+        onChange={(e) => setNaam(e.target.value)}
+        autoFocus
+        onKeyDown={(e) => {
+          if (e.key === "Enter") opslaan();
+          if (e.key === "Escape") { setNaam(huidigeNaam); setBewerken(false); }
+        }}
+        className="px-2 py-1 border border-gray-300 rounded text-sm flex-1 min-w-0"
+      />
+      <button type="button" onClick={opslaan} disabled={pending} title="Opslaan" className="text-emerald-600 hover:text-emerald-800 p-1">
+        {pending ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+      </button>
+      <button type="button" onClick={() => { setNaam(huidigeNaam); setBewerken(false); }} title="Annuleren" className="text-gray-400 hover:text-red-600 p-1">
+        <X size={12} />
+      </button>
     </div>
   );
 }
