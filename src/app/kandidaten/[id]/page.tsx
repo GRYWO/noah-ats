@@ -300,13 +300,23 @@ export default async function KandidaatDetail({
                 const bedrijfNaam = v.bedrijf || v.opdrachtgever_naam || "Onbekend";
                 const fmtDate = (d: string | null | undefined) =>
                   d ? new Date(d).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" }) : null;
-                const stappen: Array<{ label: string; datum: string | null; kleur: string }> = [
+                const reactieLabel =
+                  v.status === "uitnodigen"      ? "Uitgenodigd" :
+                  v.status === "niet_uitnodigen" ? "Afgewezen" :
+                  v.status === "verlopen"        ? "Verlopen" :
+                  "Reactie";
+                const reactieKleur =
+                  v.status === "uitnodigen"      ? "bg-emerald-500" :
+                  v.status === "niet_uitnodigen" ? "bg-red-500" :
+                  v.status === "verlopen"        ? "bg-gray-500" : "bg-gray-300";
+                const reactieText =
+                  v.status === "uitnodigen"      ? "text-emerald-700" :
+                  v.status === "niet_uitnodigen" ? "text-red-700" :
+                  v.status === "verlopen"        ? "text-gray-600" : "text-gray-700";
+                const stappen: Array<{ label: string; datum: string | null; kleur: string; tekst?: string }> = [
                   { label: "Verzonden", datum: fmtDate(v.verzonden_op), kleur: "bg-[#333399]" },
                   { label: "Geopend",   datum: fmtDate(v.geopend_op),   kleur: v.geopend_op ? "bg-blue-500" : "bg-gray-300" },
-                  { label: "Reactie",   datum: fmtDate(v.reactie_op),   kleur:
-                    v.status === "uitnodigen"      ? "bg-emerald-500" :
-                    v.status === "niet_uitnodigen" ? "bg-red-500" :
-                    v.status === "verlopen"        ? "bg-gray-500" : "bg-gray-300" },
+                  { label: reactieLabel, datum: fmtDate(v.reactie_op), kleur: reactieKleur, tekst: reactieText },
                   { label: "Kennismaking", datum: fmtDate(v.kennismaking_op), kleur: v.kennismaking_op ? "bg-amber-500" : "bg-gray-300" },
                 ];
                 return (
@@ -334,7 +344,7 @@ export default async function KandidaatDetail({
                         <div key={s.label} className="flex items-start gap-1.5">
                           <div className={`w-2 h-2 rounded-full ${s.kleur} mt-1 shrink-0`} />
                           <div className="min-w-0">
-                            <div className="font-semibold text-gray-700">{s.label}</div>
+                            <div className={`font-semibold ${s.tekst ?? "text-gray-700"}`}>{s.label}</div>
                             <div className="text-gray-500 truncate">{s.datum ?? "—"}</div>
                           </div>
                         </div>
