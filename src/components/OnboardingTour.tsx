@@ -190,9 +190,13 @@ export function OnboardingTour({
   const [stappen, setStappen] = useState<Step[]>([]);
 
   useEffect(() => {
-    console.log("[Noah Tour] mounted | autoStart=", autoStart, "| rol=", rol);
-    if (autoStart) {
-      // Korte vertraging zodat de pagina kan renderen
+    // Forceer-start via ?tour=1 in URL (gebruikt door 'Tour opnieuw bekijken' knop)
+    const forceer =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("tour") === "1";
+    const moetStarten = autoStart || forceer;
+    console.log("[Noah Tour] mounted | autoStart=", autoStart, "| forceer=", forceer, "| rol=", rol);
+    if (moetStarten) {
       const t = setTimeout(() => {
         const s = stappenVoorRol(rol);
         console.log("[Noah Tour] starting tour with", s.length, "steps");
