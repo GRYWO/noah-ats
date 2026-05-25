@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2, PhoneOutgoing } from "lucide-react";
+import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2, PhoneOutgoing, Search } from "lucide-react";
 import Link from "next/link";
 import { telLink } from "@/utils/tel";
 import {
@@ -134,20 +134,107 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
                   </button>
                 </div>
 
-                {isOpen && (
-                  <div className="divide-y divide-gray-100">
-                    {b.items.length === 0 ? (
-                      <p className="p-4 text-sm text-gray-500">Geen items.</p>
-                    ) : b.items.map((item) => (
-                      <BellijstItemRij key={item.id} item={item} kandidaatId={kandidaatId} />
-                    ))}
-                  </div>
-                )}
+                {isOpen && <BellijstItemsLijst items={b.items} kandidaatId={kandidaatId} />}
               </div>
             );
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function BellijstItemsLijst({ items, kandidaatId }: { items: BellijstItem[]; kandidaatId: string }) {
+  const [zoek, setZoek] = useState("");
+  const [filter, setFilter] = useState<"alle" | "open" | "in_crm" | "gebeld" | "callback" | "geinteresseerd" | "niet_bellen" | "afgewezen">("alle");
+
+  // Tellingen per filter
+  const tellingen = {
+    alle:           items.length,
+    open:           items.filter(i => !i.label && !i.opdrachtgever_id).length,
+    in_crm:         items.filter(i => i.opdrachtgever_id).length,
+    gebeld:         items.filter(i => i.label === "gebeld").length,
+    callback:       items.filter(i => i.label === "callback").length,
+    geinteresseerd: items.filter(i => i.label === "geinteresseerd").length,
+    niet_bellen:    items.filter(i => i.label === "niet_bellen").length,
+    afgewezen:      items.filter(i => i.label === "afgewezen").length,
+  };
+
+  // Filter + zoek
+  const term = zoek.trim().toLowerCase();
+  const gefilterd = items.filter(item => {
+    if (filter === "open" && (item.label || item.opdrachtgever_id)) return false;
+    if (filter === "in_crm" && !item.opdrachtgever_id) return false;
+    if (["gebeld", "callback", "geinteresseerd", "niet_bellen", "afgewezen"].includes(filter)) {
+      if (item.label !== filter) return false;
+    }
+    if (term) {
+      const haystack = [item.bedrijf, item.functie, item.plaats, item.telefoon, item.website].filter(Boolean).join(" ").toLowerCase();
+      if (!haystack.includes(term)) return false;
+    }
+    return true;
+  });
+
+  const FILTER_LABELS: Array<{ key: typeof filter; label: string }> = [
+    { key: "alle",           label: "Alle" },
+    { key: "open",           label: "Open" },
+    { key: "gebeld",         label: "Gebeld" },
+    { key: "callback",       label: "Terugbellen" },
+    { key: "geinteresseerd", label: "Geïnteresseerd" },
+    { key: "niet_bellen",    label: "Niet bellen" },
+    { key: "afgewezen",      label: "Afgewezen" },
+    { key: "in_crm",         label: "In CRM" },
+  ];
+
+  if (items.length === 0) {
+    return <p className="p-4 text-sm text-gray-500">Geen items.</p>;
+  }
+
+  return (
+    <div>
+      {/* Zoek + filters */}
+      <div className="px-4 py-3 bg-gray-50/50 border-b border-gray-100 space-y-2">
+        <div className="relative">
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={zoek}
+            onChange={(e) => setZoek(e.target.value)}
+            placeholder="Zoek op bedrijf, functie, plaats..."
+            className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-xs bg-white"
+          />
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {FILTER_LABELS.map(f => {
+            const aantal = tellingen[f.key];
+            const actief = filter === f.key;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFilter(f.key)}
+                className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border ${
+                  actief
+                    ? "bg-[#333399] text-white border-[#333399]"
+                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"
+                }`}
+              >
+                {f.label}
+                <span className={`text-[10px] ${actief ? "bg-white/20" : "bg-gray-100 text-gray-600"} px-1 rounded`}>{aantal}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Items */}
+      <div className="divide-y divide-gray-100">
+        {gefilterd.length === 0 ? (
+          <p className="p-4 text-sm text-gray-500 text-center">Geen items binnen filter.</p>
+        ) : gefilterd.map(item => (
+          <BellijstItemRij key={item.id} item={item} kandidaatId={kandidaatId} />
+        ))}
+      </div>
     </div>
   );
 }
