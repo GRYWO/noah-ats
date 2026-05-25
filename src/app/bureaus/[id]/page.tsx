@@ -6,6 +6,7 @@ import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
 import { updateBureau } from "./actions";
 import { DeleteBureauButton } from "./DeleteBureauButton";
+import { BetaaldSelect } from "../BetaaldSelect";
 
 export default async function BureauDetail({
   params,
@@ -155,18 +156,7 @@ export default async function BureauDetail({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Betaling</label>
-                <select
-                  name="setup_fee_paid"
-                  defaultValue={b.setup_fee_paid ? "true" : "false"}
-                  className={`w-full px-3 py-2 border rounded-md text-sm font-semibold ${
-                    b.setup_fee_paid
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-                      : "border-red-300 bg-red-50 text-red-800"
-                  }`}
-                >
-                  <option value="true">Betaald</option>
-                  <option value="false">Niet betaald</option>
-                </select>
+                <BetaaldSelect defaultBetaald={!!b.setup_fee_paid} />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Finance mailadres</label>

@@ -5,6 +5,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
 import { nieuwBureau } from "./actions";
+import { BetaaldSelect } from "./BetaaldSelect";
 
 export default async function BureausPage({
   searchParams,
@@ -134,10 +135,7 @@ export default async function BureausPage({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Betaling</label>
-                  <select name="setup_fee_paid" defaultValue="false" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-semibold">
-                    <option value="true">Betaald</option>
-                    <option value="false">Niet betaald</option>
-                  </select>
+                  <BetaaldSelect defaultBetaald={false} />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Mail finance (voor marge-overzicht)</label>
