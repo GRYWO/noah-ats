@@ -295,39 +295,74 @@ export default async function KandidaatDetail({
           )}
 
           {voorstellen && voorstellen.length > 0 ? (
-            <table className="w-full text-sm">
-              <thead className="text-xs text-gray-500 uppercase">
-                <tr>
-                  <th className="text-left py-2">Opdrachtgever</th>
-                  <th className="text-left py-2">Status</th>
-                  <th className="text-left py-2">Verzonden</th>
-                  <th className="text-right py-2">Link</th>
-                </tr>
-              </thead>
-              <tbody>
-                {voorstellen.map((v) => (
-                  <tr key={v.id} className="border-t">
-                    <td className="py-2">
-                      <div className="font-semibold">{v.opdrachtgever_naam ?? "—"}</div>
-                      <div className="text-xs text-gray-500">{v.opdrachtgever_email}</div>
-                    </td>
-                    <td className="py-2">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${VOORSTEL_STATUS_KLEUREN[v.status] ?? "bg-gray-100"}`}>
-                        {VOORSTEL_STATUS_LABEL[v.status] ?? v.status}
-                      </span>
-                    </td>
-                    <td className="py-2 text-gray-600 text-xs">
-                      {new Date(v.verzonden_op).toLocaleDateString("nl-NL")}
-                    </td>
-                    <td className="py-2 text-right">
-                      <a href={`/voorstel/${v.token}`} target="_blank" className="text-xs text-[#333399] hover:underline">
-                        Voorbeeld
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="space-y-3">
+              {voorstellen.map((v) => {
+                const bedrijfNaam = v.bedrijf || v.opdrachtgever_naam || "Onbekend";
+                const fmtDate = (d: string | null | undefined) =>
+                  d ? new Date(d).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" }) : null;
+                const stappen: Array<{ label: string; datum: string | null; kleur: string }> = [
+                  { label: "Verzonden", datum: fmtDate(v.verzonden_op), kleur: "bg-[#333399]" },
+                  { label: "Geopend",   datum: fmtDate(v.geopend_op),   kleur: v.geopend_op ? "bg-blue-500" : "bg-gray-300" },
+                  { label: "Reactie",   datum: fmtDate(v.reactie_op),   kleur:
+                    v.status === "uitnodigen"      ? "bg-emerald-500" :
+                    v.status === "niet_uitnodigen" ? "bg-red-500" :
+                    v.status === "verlopen"        ? "bg-gray-500" : "bg-gray-300" },
+                  { label: "Kennismaking", datum: fmtDate(v.kennismaking_op), kleur: v.kennismaking_op ? "bg-amber-500" : "bg-gray-300" },
+                ];
+                return (
+                  <div key={v.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="px-4 py-3 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <div className="font-bold text-gray-800">{bedrijfNaam}</div>
+                        <div className="text-xs text-gray-500">
+                          {v.opdrachtgever_naam && v.bedrijf && <span>{v.opdrachtgever_naam} · </span>}
+                          <a href={`mailto:${v.opdrachtgever_email}`} className="text-[#333399] hover:underline">{v.opdrachtgever_email}</a>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${VOORSTEL_STATUS_KLEUREN[v.status] ?? "bg-gray-100"}`}>
+                          {VOORSTEL_STATUS_LABEL[v.status] ?? v.status}
+                        </span>
+                        <a href={`/voorstel/${v.token}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#333399] hover:underline">
+                          Voorbeeld
+                        </a>
+                      </div>
+                    </div>
+                    {/* Tijdlijn */}
+                    <div className="px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                      {stappen.map((s) => (
+                        <div key={s.label} className="flex items-start gap-1.5">
+                          <div className={`w-2 h-2 rounded-full ${s.kleur} mt-1 shrink-0`} />
+                          <div className="min-w-0">
+                            <div className="font-semibold text-gray-700">{s.label}</div>
+                            <div className="text-gray-500 truncate">{s.datum ?? "—"}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Extra info bij groen */}
+                    {v.status === "uitnodigen" && (v.contactpersoon || v.contact_telefoon || v.contact_email || v.locatie_url) && (
+                      <div className="px-4 py-2 bg-emerald-50/50 border-t border-emerald-100 text-xs text-gray-700">
+                        <div className="font-semibold text-emerald-800 mb-1">Contact bij {bedrijfNaam}</div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          {v.contactpersoon && <span><b>Naam:</b> {v.contactpersoon}</span>}
+                          {v.contact_telefoon && <span><b>Tel:</b> <a href={`tel:${v.contact_telefoon}`} className="text-[#333399] hover:underline">{v.contact_telefoon}</a></span>}
+                          {v.contact_email && <span><b>Mail:</b> <a href={`mailto:${v.contact_email}`} className="text-[#333399] hover:underline">{v.contact_email}</a></span>}
+                          {v.locatie_url && <span><a href={v.locatie_url} target="_blank" rel="noopener noreferrer" className="text-[#333399] hover:underline">Locatie</a></span>}
+                        </div>
+                        {v.opmerking && <div className="mt-2 italic text-gray-600">&ldquo;{v.opmerking}&rdquo;</div>}
+                      </div>
+                    )}
+                    {/* Reden bij rood */}
+                    {v.status === "niet_uitnodigen" && v.opmerking && (
+                      <div className="px-4 py-2 bg-red-50/50 border-t border-red-100 text-xs text-red-800">
+                        <b>Reden:</b> {v.opmerking}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           ) : (
             <p className="text-sm text-gray-500">Nog geen voorstellen verstuurd voor deze kandidaat.</p>
           )}
