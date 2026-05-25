@@ -19,6 +19,7 @@ export async function maakNotificatie(opts: {
   bericht?: string | null;
   linkUrl?: string | null;
   kandidaatId?: string | null;
+  parentNotificatieId?: string | null;
 }) {
   const admin = createAdminClient();
   await admin.from("notificaties").insert({
@@ -30,6 +31,7 @@ export async function maakNotificatie(opts: {
     bericht: opts.bericht ?? null,
     link_url: opts.linkUrl ?? null,
     kandidaat_id: opts.kandidaatId ?? null,
+    parent_notificatie_id: opts.parentNotificatieId ?? null,
   });
 }
 
