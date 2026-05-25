@@ -567,6 +567,30 @@ export async function sendIntakeAfgerond({
 }
 
 /**
+ * In proces — setter is begonnen met zoeken (bellijst opgeslagen).
+ */
+export async function sendInProcesGestart({
+  naar,
+  kandidaatVoornaam,
+  from,
+}: {
+  naar: string;
+  kandidaatVoornaam: string;
+  from?: string;
+}) {
+  const body = `
+<p>Hoi ${kandidaatVoornaam},</p>
+<p>We zijn gestart met het zoeken naar een nieuwe uitdaging voor je. Vanaf nu benaderen we de relevante opdrachtgevers — we houden je op de hoogte zodra er een match is.</p>
+<p>Tot snel!</p>`;
+  return resend.emails.send({
+    from: from ?? FROM,
+    to: naar,
+    subject: "We zijn gestart met je zoektocht",
+    html: brandedLayout({ titel: "Op zoek naar jouw volgende stap", body }),
+  });
+}
+
+/**
  * Bevestiging 1e gesprek — kandidaat krijgt afspraak-details.
  */
 export async function sendGesprek1Bevestiging({

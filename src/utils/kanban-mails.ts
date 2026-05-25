@@ -4,6 +4,7 @@ import {
   sendKandidaatVoorgesteld,
   sendGesprek1Bevestiging,
   sendGesprek2Succes,
+  sendInProcesGestart,
 } from "@/utils/email";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 
@@ -29,12 +30,34 @@ export async function triggerKanbanMails(opts: {
   const admin = createAdminClient();
   const { data: k } = await admin
     .from("kandidaten")
-    .select("voornaam, email, tenant_id, voorgesteld_mail_sent, gesprek1_mail_sent, gesprek2_mail_sent")
+    .select("voornaam, email, tenant_id, voorgesteld_mail_sent, gesprek1_mail_sent, gesprek2_mail_sent, in_proces_mail_sent")
     .eq("id", opts.kandidaatId)
     .single();
   if (!k?.email || !k.tenant_id) return;
 
   const setterFrom = await getSetterFrom(opts.vanUserId);
+
+  if (opts.nieuweStap === "in_proces" && !k.in_proces_mail_sent) {
+    try {
+      await sendInProcesGestart({
+        naar: k.email,
+        kandidaatVoornaam: k.voornaam ?? "",
+        from: setterFrom,
+      });
+      await admin.from("kandidaten")
+        .update({ in_proces_mail_sent: new Date().toISOString() })
+        .eq("id", opts.kandidaatId);
+      await logVoorstelEvent({
+        tenantId: k.tenant_id,
+        kandidaatId: opts.kandidaatId,
+        event: "voorstel_verstuurd",
+        beschrijving: "Setter is gestart met zoeken (mail naar kandidaat verstuurd)",
+        zichtbaarVoorKandidaat: true,
+      });
+    } catch (e) {
+      console.error("Mail in_proces mislukt:", e);
+    }
+  }
 
   if (opts.nieuweStap === "voorgesteld_opdrachtgever" && !k.voorgesteld_mail_sent) {
     try {

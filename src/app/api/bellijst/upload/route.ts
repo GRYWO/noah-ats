@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { parseJobdiggerExcel } from "@/utils/jobdigger-parser";
+import { triggerKanbanMails } from "@/utils/kanban-mails";
+
+const STAPPEN_VOOR_IN_PROCES = new Set([
+  "interne_intake",
+  "in_afwachting_cv",
+  "in_wachtrij",
+  "bij_setter",
+]);
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +84,25 @@ export async function POST(request: Request) {
 
   for (let i = 0; i < items.length; i += 100) {
     await admin.from("bellijst_items").insert(items.slice(i, i + 100));
+  }
+
+  // Auto-overgang naar "in_proces" als kandidaat nog in een eerdere stap zit
+  const { data: huidigeStap } = await admin
+    .from("kandidaten")
+    .select("kanban_stap")
+    .eq("id", kandidaatId)
+    .single();
+  if (huidigeStap && STAPPEN_VOOR_IN_PROCES.has(huidigeStap.kanban_stap)) {
+    await admin.from("kandidaten").update({
+      kanban_stap: "in_proces",
+      status: "in_proces",
+    }).eq("id", kandidaatId);
+    await triggerKanbanMails({
+      kandidaatId,
+      oudeStap: huidigeStap.kanban_stap,
+      nieuweStap: "in_proces",
+      vanUserId: user.id,
+    });
   }
 
   return NextResponse.json({ ok: true, bellijst_id: bellijst.id, aantal: parsed.rows.length });

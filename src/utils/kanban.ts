@@ -3,6 +3,7 @@ export type KanbanStap =
   | "in_afwachting_cv"
   | "in_wachtrij"
   | "bij_setter"
+  | "in_proces"
   | "voorgesteld_opdrachtgever"
   | "1e_gesprek"
   | "2e_gesprek"
@@ -22,9 +23,10 @@ export const KANBAN_STAPPEN: KanbanOptie[] = [
   { key: "in_afwachting_cv",          label: "2. In afwachting van CV",    kortLabel: "Wacht op CV",            rand: "border-cyan-500",   vink: "bg-cyan-500"   },
   { key: "in_wachtrij",               label: "3. In wachtrij",             kortLabel: "Wachtrij",               rand: "border-indigo-500", vink: "bg-indigo-500" },
   { key: "bij_setter",                label: "4. Bij setter",              kortLabel: "Bij setter",             rand: "border-purple-500", vink: "bg-purple-500" },
-  { key: "voorgesteld_opdrachtgever", label: "5. Voorgesteld opdrachtgever", kortLabel: "Voorgesteld",          rand: "border-pink-500",   vink: "bg-pink-500"   },
-  { key: "1e_gesprek",                label: "6. 1e gesprek",              kortLabel: "1e gesprek",             rand: "border-amber-500",  vink: "bg-amber-500"  },
-  { key: "2e_gesprek",                label: "7. 2e gesprek",              kortLabel: "2e gesprek",             rand: "border-orange-500", vink: "bg-orange-500" },
+  { key: "in_proces",                 label: "5. In proces",               kortLabel: "In proces",              rand: "border-fuchsia-500",vink: "bg-fuchsia-500"},
+  { key: "voorgesteld_opdrachtgever", label: "6. Voorgesteld opdrachtgever", kortLabel: "Voorgesteld",          rand: "border-pink-500",   vink: "bg-pink-500"   },
+  { key: "1e_gesprek",                label: "7. 1e gesprek",              kortLabel: "1e gesprek",             rand: "border-amber-500",  vink: "bg-amber-500"  },
+  { key: "2e_gesprek",                label: "8. 2e gesprek",              kortLabel: "2e gesprek",             rand: "border-orange-500", vink: "bg-orange-500" },
   { key: "geplaatst",                 label: "Geplaatst",                  kortLabel: "Geplaatst",              rand: "border-green-500",  vink: "bg-green-500"  },
   { key: "afgewezen",                 label: "Afgewezen",                  kortLabel: "Afgewezen",              rand: "border-red-500",    vink: "bg-red-500"    },
 ];

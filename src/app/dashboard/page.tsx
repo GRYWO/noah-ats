@@ -26,6 +26,7 @@ const PIPELINE = [
   { key: "in_afwachting_cv",          label: "Wacht op CV",     kleur: "bg-cyan-500"   },
   { key: "in_wachtrij",               label: "Wachtrij",        kleur: "bg-indigo-500" },
   { key: "bij_setter",                label: "Bij setter",      kleur: "bg-purple-500" },
+  { key: "in_proces",                 label: "In proces",       kleur: "bg-fuchsia-500"},
   { key: "voorgesteld_opdrachtgever", label: "Voorgesteld",     kleur: "bg-pink-500"   },
   { key: "1e_gesprek",                label: "1e gesprek",      kleur: "bg-amber-500"  },
   { key: "2e_gesprek",                label: "2e gesprek",      kleur: "bg-orange-500" },
