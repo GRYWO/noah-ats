@@ -24,6 +24,7 @@ export async function TopBar({ active }: Props) {
     <SideBar
       active={active}
       userEmail={user?.email ?? ""}
+      userId={user?.id ?? ""}
       isSuperAdmin={isSuperAdmin}
       isSetter={isSetter}
       logoutAction={logout}

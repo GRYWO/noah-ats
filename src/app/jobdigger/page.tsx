@@ -99,7 +99,10 @@ function Zoekfilters({ kandidaat }: { kandidaat: {
 
   return (
     <div className="mb-3 bg-[#eef0ff] border border-[#333399]/20 rounded-lg p-4">
-      <div className="text-xs font-bold uppercase tracking-wide text-[#333399] mb-2">Zoekfilters</div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-xs font-bold uppercase tracking-wide text-[#333399]">Zoekfilters</div>
+        <div className="text-xs text-[#333399]/80 italic">Tip: vul de zoekopdracht zo breed mogelijk in zodat de bellijst groter wordt.</div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
         <div>
           <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">

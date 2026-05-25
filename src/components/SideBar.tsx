@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { NotificatieBel } from "./NotificatieBel";
 import {
   LayoutDashboard,
   Building2,
@@ -31,12 +32,13 @@ type Item = {
 type Props = {
   active?: string;
   userEmail: string;
+  userId: string;
   isSuperAdmin: boolean;
   isSetter: boolean;
   logoutAction: () => Promise<void>;
 };
 
-export function SideBar({ active, userEmail, isSuperAdmin, isSetter, logoutAction }: Props) {
+export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, logoutAction }: Props) {
   const [open, setOpen] = useState(false);
 
   // localStorage persist
@@ -122,8 +124,12 @@ export function SideBar({ active, userEmail, isSuperAdmin, isSetter, logoutActio
         })}
       </nav>
 
-      {/* Footer: user + logout + collapse-toggle */}
+      {/* Footer: notificaties + user + logout + collapse-toggle */}
       <div className="border-t border-gray-100 p-2">
+        {/* Notificatie-bel */}
+        <div className={open ? "px-1 mb-1" : "flex justify-center mb-1"}>
+          <NotificatieBel userId={userId} />
+        </div>
         {open && (
           <div className="px-2 py-1.5 text-xs text-gray-500 truncate" title={userEmail}>
             {userEmail}

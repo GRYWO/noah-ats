@@ -6,6 +6,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { sendKandidaatBevestiging, sendKandidaatAfwijzing } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
+import { maakNotificatie, notifyTeam } from "@/utils/notificaties";
 
 export async function uitnodigen(formData: FormData) {
   const token = formData.get("token") as string;
@@ -144,6 +145,25 @@ export async function uitnodigen(formData: FormData) {
         zichtbaarVoorKandidaat: true,
       });
     }
+
+    // Notificatie naar setter + team
+    const titel = `🟢 ${bedrijf} wil kennismaken`;
+    const bericht = `Voorstel groen — kennismaking ${kennismakingOp ? `op ${new Date(kennismakingOp).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })}` : "gepland"}.`;
+    const link = `/kandidaten/${voorstel.kandidaat_id}`;
+    if (voorstel.setter_id) {
+      await maakNotificatie({
+        tenantId: voorstel.tenant_id,
+        userId: voorstel.setter_id,
+        type: "voorstel_groen",
+        titel, bericht, linkUrl: link, kandidaatId: voorstel.kandidaat_id,
+      });
+    }
+    await notifyTeam({
+      tenantId: voorstel.tenant_id,
+      vanUserId: voorstel.setter_id,
+      type: "voorstel_groen",
+      titel, bericht, linkUrl: link, kandidaatId: voorstel.kandidaat_id,
+    });
   }
 
   // Mail naar kandidaat sturen — vanaf de setter
@@ -208,6 +228,25 @@ export async function afwijzen(formData: FormData) {
       beschrijving: "Opdrachtgever heeft het voorstel afgewezen",
       zichtbaarVoorKandidaat: true,
       metadata: { reden },
+    });
+
+    // Notificatie naar setter + team
+    const titel = `🔴 Voorstel afgewezen`;
+    const bericht = reden ? `Reden: ${reden}` : "Opdrachtgever wil niet verder met de kandidaat.";
+    const link = `/kandidaten/${voorstel.kandidaat_id}`;
+    if (voorstel.setter_id) {
+      await maakNotificatie({
+        tenantId: voorstel.tenant_id,
+        userId: voorstel.setter_id,
+        type: "voorstel_rood",
+        titel, bericht, linkUrl: link, kandidaatId: voorstel.kandidaat_id,
+      });
+    }
+    await notifyTeam({
+      tenantId: voorstel.tenant_id,
+      vanUserId: voorstel.setter_id,
+      type: "voorstel_rood",
+      titel, bericht, linkUrl: link, kandidaatId: voorstel.kandidaat_id,
     });
   }
 

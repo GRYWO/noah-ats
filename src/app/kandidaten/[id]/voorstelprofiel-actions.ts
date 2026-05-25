@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { autoWijsKandidaatToe } from "@/utils/setter-assign";
+import { maakNotificatie } from "@/utils/notificaties";
+import { genereerProfielschets } from "@/utils/ai";
 
 async function checkAdminOfRecruiter() {
   const supabase = await createClient();
@@ -35,7 +37,54 @@ export async function goedkeurenCv(formData: FormData) {
   }).eq("id", id);
 
   // Auto-toewijzen aan vrije setter; geen vrij? → blijft eigenaar_id null = wachtrij
-  await autoWijsKandidaatToe(id);
+  const assign = await autoWijsKandidaatToe(id);
+
+  // Haal kandidaat-data voor profielschets + notificatie
+  const { data: k } = await admin
+    .from("kandidaten")
+    .select("voornaam, achternaam, leeftijd, woonplaats, opleiding, open_voor, notitie, max_reisafstand_km, cv_geparseerd, profielschets, tenant_id")
+    .eq("id", id)
+    .single();
+
+  // Auto-genereer profielschets als nog niet aanwezig
+  if (k && !k.profielschets) {
+    try {
+      const cv = (k.cv_geparseerd ?? {}) as { werkervaring?: string; vaardigheden?: string };
+      const schets = await genereerProfielschets({
+        voornaam: k.voornaam,
+        achternaam: k.achternaam,
+        leeftijd: k.leeftijd,
+        woonplaats: k.woonplaats,
+        opleiding: k.opleiding,
+        open_voor: k.open_voor,
+        werkervaring: cv.werkervaring,
+        vaardigheden: cv.vaardigheden,
+        notitie: k.notitie,
+        max_reisafstand_km: k.max_reisafstand_km,
+      });
+      await admin.from("kandidaten").update({ profielschets: schets }).eq("id", id);
+    } catch (e) {
+      console.error("Auto-profielschets mislukt:", e);
+    }
+  }
+
+  // Notificatie naar de toegewezen setter
+  if (assign.toegewezen && k?.tenant_id) {
+    try {
+      await maakNotificatie({
+        tenantId: k.tenant_id,
+        userId: assign.toegewezen,
+        vanUserId: userId,
+        type: "cv_goedgekeurd",
+        titel: `Nieuwe kandidaat: ${k.voornaam} ${k.achternaam}`,
+        bericht: "Intake afgerond door recruiter. Open de kandidaat om te starten met bellen.",
+        linkUrl: `/kandidaten/${id}`,
+        kandidaatId: id,
+      });
+    } catch (e) {
+      console.error("Notificatie naar setter mislukt:", e);
+    }
+  }
 
   revalidatePath(`/kandidaten/${id}`);
   revalidatePath("/kandidaten");

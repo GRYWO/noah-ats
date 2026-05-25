@@ -9,6 +9,7 @@ import { CvUpload } from "./CvUpload";
 import { BellijstSectie } from "./BellijstSectie";
 import { IntakeFiltersBanner } from "./IntakeFiltersBanner";
 import { CvControle } from "./CvControle";
+import { ContactRecruiterKnop } from "./ContactRecruiter";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -332,7 +333,7 @@ export default async function KandidaatDetail({
           )}
         </div>
 
-        {/* CV-controle & voorstelprofiel — admin/recruiter only voor edit; setter ziet via voorstelprofiel-link */}
+        {/* CV-controle & voorstelprofiel — alleen voor admin/recruiter */}
         {!isSetter && (
           <CvControle
             kandidaatId={k.id}
@@ -343,6 +344,29 @@ export default async function KandidaatDetail({
             profielschets={k.profielschets ?? null}
             intakeVoltooid={k.intake_voltooid ?? false}
           />
+        )}
+
+        {/* Setter ziet alleen voorstelprofiel-link + contact-knop */}
+        {isSetter && (
+          <div className="bg-white rounded-xl shadow-sm p-6 mt-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-bold text-gray-800">Voorstelprofiel</h2>
+              <p className="text-xs text-gray-500 mt-1">Alle relevante info over deze kandidaat in GRYWO-stijl.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {k.voorstelprofiel_token && (
+                <a
+                  href={`/voorstelprofiel/${k.voorstelprofiel_token}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-4 py-2 rounded-md text-sm"
+                >
+                  Open voorstelprofiel
+                </a>
+              )}
+              <ContactRecruiterKnop kandidaatId={k.id} />
+            </div>
+          </div>
         )}
 
         {/* Bellijsten (Jobdigger) */}
