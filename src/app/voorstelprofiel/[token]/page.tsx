@@ -28,6 +28,20 @@ export default async function VoorstelprofielPage({
 
   if (!k) notFound();
 
+  // Eerstvolgende geplande kennismaking voor deze kandidaat
+  const nuIso = new Date().toISOString();
+  const { data: aankomendVoorstel } = await admin
+    .from("voorstellen")
+    .select("kennismaking_op")
+    .eq("kandidaat_id", k.id)
+    .eq("status", "uitnodigen")
+    .not("kennismaking_op", "is", null)
+    .gte("kennismaking_op", nuIso)
+    .order("kennismaking_op", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const eerstvolgendeKennismaking = aankomendVoorstel?.kennismaking_op ?? null;
+
   // Belangrijk: opdrachtgever mag de kandidaat niet zelf kunnen benaderen.
   // Daarom tonen we alléén de voornaam — geen achternaam, geen email, geen telefoon.
   const naam = (k.voornaam ?? "").trim();
@@ -78,6 +92,24 @@ export default async function VoorstelprofielPage({
             </div>
           </div>
         </div>
+
+        {/* Eerstvolgende kennismaking */}
+        {eerstvolgendeKennismaking && (
+          <div className="bg-white rounded-2xl shadow-md p-6 mb-6 flex items-center gap-4">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center text-white shrink-0"
+              style={{ backgroundColor: GRYWO_PAARS }}
+            >
+              <Calendar size={20} />
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Eerstvolgende kennismaking</div>
+              <div className="text-lg font-bold text-gray-900">
+                {new Date(eerstvolgendeKennismaking).toLocaleString("nl-NL", { dateStyle: "full", timeStyle: "short" })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Profielschets */}
         {k.profielschets && (

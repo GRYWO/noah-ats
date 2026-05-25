@@ -8,6 +8,70 @@ import { sendVoorstelMail, sendKandidaatVoorgesteld } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 
+export async function updateKennismakingDatum(formData: FormData) {
+  const voorstelId = formData.get("voorstel_id") as string;
+  const kandidaatId = formData.get("kandidaat_id") as string;
+  const datumLocal = (formData.get("kennismaking_op") as string)?.trim();
+
+  if (!voorstelId || !kandidaatId) {
+    redirect(`/kandidaten/${kandidaatId}?error=Ongeldige+invoer`);
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id, rol")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.tenant_id) {
+    redirect(`/kandidaten/${kandidaatId}?error=Geen+tenant`);
+  }
+
+  if (profile.rol !== "setter" && profile.rol !== "admin") {
+    redirect(`/kandidaten/${kandidaatId}?error=Geen+rechten`);
+  }
+
+  const iso = datumLocal ? new Date(datumLocal).toISOString() : null;
+
+  const { data: bestaand } = await supabase
+    .from("voorstellen")
+    .select("tenant_id, kennismaking_op")
+    .eq("id", voorstelId)
+    .single();
+
+  if (!bestaand || bestaand.tenant_id !== profile.tenant_id) {
+    redirect(`/kandidaten/${kandidaatId}?error=Voorstel+niet+gevonden`);
+  }
+
+  const { error } = await supabase
+    .from("voorstellen")
+    .update({ kennismaking_op: iso })
+    .eq("id", voorstelId);
+
+  if (error) {
+    redirect(`/kandidaten/${kandidaatId}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  await logVoorstelEvent({
+    tenantId: profile.tenant_id,
+    voorstelId,
+    kandidaatId,
+    event: "kennismaking_gepland",
+    beschrijving: iso
+      ? `Kennismaking ingepland op ${new Date(iso).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })}`
+      : "Kennismaking-datum verwijderd",
+    zichtbaarVoorKandidaat: false,
+  });
+
+  revalidatePath(`/kandidaten/${kandidaatId}`);
+  revalidatePath("/voorstellen");
+  redirect(`/kandidaten/${kandidaatId}?ok=kennismaking`);
+}
+
 export async function stuurVoorstel(formData: FormData) {
   const kandidaatId = formData.get("kandidaat_id") as string;
   const opdrachtgeverEmail = (formData.get("opdrachtgever_email") as string)?.trim().toLowerCase();

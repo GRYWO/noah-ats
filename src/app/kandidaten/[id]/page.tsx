@@ -9,7 +9,9 @@ import { CvUpload } from "./CvUpload";
 import { BellijstSectie } from "./BellijstSectie";
 import { IntakeFiltersBanner } from "./IntakeFiltersBanner";
 import { CvControle } from "./CvControle";
+import { KandidaatOverzicht } from "./KandidaatOverzicht";
 import { ContactRecruiterKnop } from "./ContactRecruiter";
+import { KennismakingDatumEdit } from "./KennismakingDatumEdit";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -171,7 +173,7 @@ export default async function KandidaatDetail({
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : "Opgeslagen"}
+            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : "Opgeslagen"}
           </div>
         )}
         {error && (
@@ -180,7 +182,27 @@ export default async function KandidaatDetail({
           </div>
         )}
 
-        {/* EDIT FORM */}
+        {/* Setter: read-only overzicht */}
+        {isSetter && (
+          <KandidaatOverzicht k={{
+            voornaam: k.voornaam, tussenvoegsel: k.tussenvoegsel, achternaam: k.achternaam,
+            email: k.email, telefoon: k.telefoon, geslacht: k.geslacht, leeftijd: k.leeftijd,
+            woonplaats: k.woonplaats, opleiding: k.opleiding, open_voor: k.open_voor,
+            rijbewijs: k.rijbewijs, eigen_vervoer: k.eigen_vervoer,
+            max_reisafstand_km: k.max_reisafstand_km,
+            soort_dienstverband: k.soort_dienstverband,
+            werving_of_uitzend: k.werving_of_uitzend,
+            salaris_indicatie: k.salaris_indicatie,
+            tarief_ws: k.tarief_ws,
+            bijzonderheden: k.bijzonderheden,
+            blacklist_bedrijven: k.blacklist_bedrijven,
+            profielschets: k.profielschets,
+            cv_geparseerd: k.cv_geparseerd,
+          }} />
+        )}
+
+        {/* EDIT FORM — alleen recruiter/admin */}
+        {!isSetter && (
         <form action={updateKandidaat} className="space-y-6">
           <input type="hidden" name="id" value={k.id} />
 
@@ -251,12 +273,15 @@ export default async function KandidaatDetail({
             </button>
           </div>
         </form>
+        )}
 
-        {/* CV upload (separate, has own logic) */}
+        {/* CV upload — alleen recruiter/admin */}
+        {!isSetter && (
         <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
           <h2 className="font-bold text-gray-800 mb-4 pb-2 border-b">CV (PDF)</h2>
           <CvUpload kandidaatId={k.id} tenantId={k.tenant_id} huidigeCvUrl={k.cv_url} />
         </div>
+        )}
 
         {/* Voorstellen (separate form) */}
         <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
@@ -350,6 +375,19 @@ export default async function KandidaatDetail({
                         </div>
                       ))}
                     </div>
+                    {/* Setter mag kennismaking-datum aanpassen */}
+                    {isSetter && v.status === "uitnodigen" && (
+                      <div className="px-4 py-2 bg-amber-50/40 border-t border-amber-100 flex items-center justify-between gap-2 flex-wrap">
+                        <div className="text-xs text-gray-600">
+                          <b>Kennismaking:</b> {fmtDate(v.kennismaking_op) ?? "nog niet ingepland"}
+                        </div>
+                        <KennismakingDatumEdit
+                          voorstelId={v.id}
+                          kandidaatId={k.id}
+                          huidigeDatum={v.kennismaking_op ?? null}
+                        />
+                      </div>
+                    )}
                     {/* Extra info bij groen */}
                     {v.status === "uitnodigen" && (v.contactpersoon || v.contact_telefoon || v.contact_email || v.locatie_url) && (
                       <div className="px-4 py-2 bg-emerald-50/50 border-t border-emerald-100 text-xs text-gray-700">
