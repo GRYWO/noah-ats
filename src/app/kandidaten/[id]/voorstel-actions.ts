@@ -8,6 +8,50 @@ import { sendVoorstelMail, sendKandidaatVoorgesteld } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 
+export async function updateTweedeGesprek(formData: FormData) {
+  const voorstelId = formData.get("voorstel_id") as string;
+  const kandidaatId = formData.get("kandidaat_id") as string;
+  const datumLocal = (formData.get("tweede_gesprek_op") as string)?.trim();
+
+  if (!voorstelId || !kandidaatId) {
+    redirect(`/kandidaten/${kandidaatId}?error=Ongeldige+invoer`);
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id, rol")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) redirect(`/kandidaten/${kandidaatId}?error=Geen+tenant`);
+  if (profile.rol !== "admin" && profile.rol !== "recruiter" && profile.rol !== "setter") {
+    redirect(`/kandidaten/${kandidaatId}?error=Geen+rechten`);
+  }
+
+  const iso = datumLocal ? new Date(datumLocal).toISOString() : null;
+
+  const { data: bestaand } = await supabase
+    .from("voorstellen")
+    .select("tenant_id")
+    .eq("id", voorstelId)
+    .single();
+  if (!bestaand || bestaand.tenant_id !== profile.tenant_id) {
+    redirect(`/kandidaten/${kandidaatId}?error=Voorstel+niet+gevonden`);
+  }
+
+  await supabase
+    .from("voorstellen")
+    .update({ tweede_gesprek_op: iso, reminder_2e_gesprek_sent: null })
+    .eq("id", voorstelId);
+
+  revalidatePath(`/kandidaten/${kandidaatId}`);
+  revalidatePath("/agenda");
+  redirect(`/kandidaten/${kandidaatId}?ok=tweede_gesprek`);
+}
+
 export async function updateKennismakingDatum(formData: FormData) {
   const voorstelId = formData.get("voorstel_id") as string;
   const kandidaatId = formData.get("kandidaat_id") as string;

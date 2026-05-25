@@ -12,6 +12,7 @@ import { CvControle } from "./CvControle";
 import { KandidaatOverzicht } from "./KandidaatOverzicht";
 import { ContactRecruiterKnop } from "./ContactRecruiter";
 import { KennismakingDatumEdit } from "./KennismakingDatumEdit";
+import { TweedeGesprekEdit } from "./TweedeGesprekEdit";
 import { PlaatsingTrigger } from "./PlaatsingTrigger";
 import { KANBAN_OPTIES } from "@/utils/kanban";
 import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
@@ -418,17 +419,29 @@ export default async function KandidaatDetail({
                         </div>
                       ))}
                     </div>
-                    {/* Setter mag kennismaking-datum aanpassen */}
-                    {isSetter && v.status === "uitnodigen" && (
-                      <div className="px-4 py-2 bg-amber-50/40 border-t border-amber-100 flex items-center justify-between gap-2 flex-wrap">
-                        <div className="text-xs text-gray-600">
-                          <b>Kennismaking:</b> {fmtDate(v.kennismaking_op) ?? "nog niet ingepland"}
+                    {/* Gespreks-datums (1e + 2e) */}
+                    {v.status === "uitnodigen" && (
+                      <div className="px-4 py-2 bg-amber-50/40 border-t border-amber-100 space-y-1.5">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="text-xs text-gray-600">
+                            <b>1e gesprek:</b> {fmtDate(v.kennismaking_op) ?? "nog niet ingepland"}
+                          </div>
+                          <KennismakingDatumEdit
+                            voorstelId={v.id}
+                            kandidaatId={k.id}
+                            huidigeDatum={v.kennismaking_op ?? null}
+                          />
                         </div>
-                        <KennismakingDatumEdit
-                          voorstelId={v.id}
-                          kandidaatId={k.id}
-                          huidigeDatum={v.kennismaking_op ?? null}
-                        />
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="text-xs text-gray-600">
+                            <b>2e gesprek:</b> {fmtDate(v.tweede_gesprek_op) ?? "nog niet ingepland"}
+                          </div>
+                          <TweedeGesprekEdit
+                            voorstelId={v.id}
+                            kandidaatId={k.id}
+                            huidigeDatum={v.tweede_gesprek_op ?? null}
+                          />
+                        </div>
                       </div>
                     )}
                     {/* Extra info bij groen */}
