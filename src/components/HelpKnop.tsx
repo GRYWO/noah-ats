@@ -48,7 +48,7 @@ export function HelpKnop() {
         type="button"
         onClick={() => setOpen(true)}
         title="Hulp nodig?"
-        className="p-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-800 w-full flex items-center justify-center"
+        className="relative p-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-800"
       >
         <HelpCircle size={20} strokeWidth={1.8} />
       </button>
