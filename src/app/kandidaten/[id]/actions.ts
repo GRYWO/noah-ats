@@ -105,9 +105,25 @@ export async function updateKandidaat(formData: FormData) {
     }
   }
 
+  // Bij overgang naar "geplaatst": open de plaatsing-modal automatisch
+  // zodat setter direct de deal-details invult voor backoffice.
+  const wordtGeplaatst = update.status === "geplaatst" && huidig?.status !== "geplaatst";
+  let bestaandePlaatsing = false;
+  if (wordtGeplaatst) {
+    const { count } = await admin
+      .from("plaatsingen")
+      .select("id", { count: "exact", head: true })
+      .eq("kandidaat_id", id);
+    bestaandePlaatsing = (count ?? 0) > 0;
+  }
+
   revalidatePath(`/kandidaten/${id}`);
   revalidatePath(`/kandidaten`);
-  redirect(`/kandidaten/${id}?ok=1`);
+  redirect(
+    wordtGeplaatst && !bestaandePlaatsing
+      ? `/kandidaten/${id}?ok=1&plaatsing=open`
+      : `/kandidaten/${id}?ok=1`
+  );
 }
 
 export async function deleteKandidaat(formData: FormData) {

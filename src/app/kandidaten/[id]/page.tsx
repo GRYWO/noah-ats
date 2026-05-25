@@ -12,6 +12,7 @@ import { CvControle } from "./CvControle";
 import { KandidaatOverzicht } from "./KandidaatOverzicht";
 import { ContactRecruiterKnop } from "./ContactRecruiter";
 import { KennismakingDatumEdit } from "./KennismakingDatumEdit";
+import { PlaatsingTrigger } from "./PlaatsingTrigger";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -55,10 +56,10 @@ export default async function KandidaatDetail({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; error?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string; plaatsing?: string }>;
 }) {
   const { id } = await params;
-  const { ok, error } = await searchParams;
+  const { ok, error, plaatsing: plaatsingQuery } = await searchParams;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -85,6 +86,15 @@ export default async function KandidaatDetail({
     .select("*")
     .eq("kandidaat_id", id)
     .order("created_at", { ascending: false });
+
+  const { data: plaatsingen } = await supabase
+    .from("plaatsingen")
+    .select("id, created_at")
+    .eq("kandidaat_id", id)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const alAangemeld = (plaatsingen?.length ?? 0) > 0;
+  const showPlaatsingTrigger = !isSetter && (k.status === "geplaatst" || k.kanban_stap === "geplaatst");
 
   const { data: logs } = await supabase
     .from("voorstel_logs")
@@ -171,9 +181,43 @@ export default async function KandidaatDetail({
           />
         )}
 
+        {showPlaatsingTrigger && (
+          <div className={`rounded-xl shadow-sm p-5 mb-6 flex items-center justify-between gap-4 flex-wrap ${
+            alAangemeld ? "bg-emerald-50 border border-emerald-200" : "bg-amber-50 border border-amber-200"
+          }`}>
+            <div>
+              <h3 className={`font-bold ${alAangemeld ? "text-emerald-800" : "text-amber-900"}`}>
+                {alAangemeld ? "Plaatsing aangemeld" : "Plaatsing nog niet aangemeld"}
+              </h3>
+              <p className={`text-xs mt-0.5 ${alAangemeld ? "text-emerald-700" : "text-amber-800"}`}>
+                {alAangemeld
+                  ? "Backoffice heeft de details ontvangen."
+                  : "Vul de deal-details in zodat backoffice@grywo.nl de financiële afhandeling kan starten."}
+              </p>
+            </div>
+            <PlaatsingTrigger
+              kandidaatId={k.id}
+              kandidaatNaam={`${k.voornaam ?? ""} ${k.achternaam ?? ""}`.trim()}
+              voorstellen={(voorstellen ?? [])
+                .filter(v => v.status === "uitnodigen")
+                .map(v => ({
+                  id: v.id,
+                  bedrijf: v.bedrijf ?? null,
+                  opdrachtgever_naam: v.opdrachtgever_naam ?? null,
+                  opdrachtgever_email: v.opdrachtgever_email,
+                  contactpersoon: v.contactpersoon ?? null,
+                  contact_telefoon: v.contact_telefoon ?? null,
+                  contact_email: v.contact_email ?? null,
+                }))}
+              autoOpen={plaatsingQuery === "open" && !alAangemeld}
+              alAangemeld={alAangemeld}
+            />
+          </div>
+        )}
+
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : "Opgeslagen"}
+            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@grywo.nl" : "Opgeslagen"}
           </div>
         )}
         {error && (

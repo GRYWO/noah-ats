@@ -347,6 +347,92 @@ ${intro}
 }
 
 /**
+ * Plaatsing aanmelden bij backoffice (financiële afhandeling).
+ * Bevat alle deal-details + kandidaat- en klantgegevens.
+ */
+export async function sendPlaatsingNaarBackoffice({
+  kandidaat,
+  klant,
+  deal,
+  aangemeldDoor,
+}: {
+  kandidaat: {
+    voornaam: string;
+    tussenvoegsel?: string | null;
+    achternaam: string;
+    email?: string | null;
+    telefoon?: string | null;
+    woonplaats?: string | null;
+    geboortedatum?: string | null;
+  };
+  klant: {
+    bedrijf: string;
+    contactpersoon?: string | null;
+    contact_email?: string | null;
+    contact_telefoon?: string | null;
+  };
+  deal: {
+    basis: "uitzend" | "werving_selectie";
+    tarief_factor?: number | null;
+    tarief_pct?: number | null;
+    betaling: "1x_7d" | "50_50_7d_30d";
+    opmerking?: string | null;
+  };
+  aangemeldDoor: { voornaam: string; achternaam: string; email: string };
+}) {
+  const fullnaam = `${kandidaat.voornaam} ${kandidaat.tussenvoegsel ? kandidaat.tussenvoegsel + " " : ""}${kandidaat.achternaam}`.trim();
+  const basisLabel = deal.basis === "uitzend" ? "Uitzendbasis" : "Werving & Selectie";
+  const tariefLabel = deal.basis === "uitzend"
+    ? (deal.tarief_factor != null ? `factor ${deal.tarief_factor}` : "—")
+    : (deal.tarief_pct != null ? `${deal.tarief_pct}%` : "—");
+  const betalingLabel = deal.betaling === "1x_7d"
+    ? "100% binnen 7 dagen"
+    : "50% binnen 7 dagen, 50% na 30 dagen";
+
+  const rij = (label: string, waarde: string | null | undefined) =>
+    waarde
+      ? `<tr><td style="padding:6px 0;color:#666;width:35%;">${label}</td><td style="padding:6px 0;font-weight:600;">${waarde}</td></tr>`
+      : "";
+
+  const body = `
+<p>Nieuwe plaatsing aangemeld door <b>${aangemeldDoor.voornaam} ${aangemeldDoor.achternaam}</b> (${aangemeldDoor.email}).</p>
+
+<h3 style="color:${GRYWO_KLEUR};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Kandidaat</h3>
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+  ${rij("Naam", fullnaam)}
+  ${rij("E-mail", kandidaat.email)}
+  ${rij("Telefoon", kandidaat.telefoon)}
+  ${rij("Woonplaats", kandidaat.woonplaats)}
+</table>
+
+<h3 style="color:${GRYWO_KLEUR};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Klant</h3>
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+  ${rij("Bedrijf", klant.bedrijf)}
+  ${rij("Contactpersoon", klant.contactpersoon)}
+  ${rij("E-mail", klant.contact_email)}
+  ${rij("Telefoon", klant.contact_telefoon)}
+</table>
+
+<h3 style="color:${GRYWO_KLEUR};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Afspraken</h3>
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+  ${rij("Basis", basisLabel)}
+  ${rij("Tarief", tariefLabel)}
+  ${rij("Betaling", betalingLabel)}
+  ${rij("Opmerking", deal.opmerking)}
+</table>
+
+<p style="margin-top:24px;color:#666;font-size:12px;">Deze mail is automatisch gegenereerd vanuit Noah ATS.</p>
+`;
+
+  return resend.emails.send({
+    from: FROM,
+    to: "backoffice@grywo.nl",
+    subject: `Nieuwe plaatsing: ${fullnaam} bij ${klant.bedrijf}`,
+    html: brandedLayout({ titel: `Plaatsing: ${fullnaam}`, body }),
+  });
+}
+
+/**
  * Plaatsing — gefeliciteerd.
  */
 export async function sendKandidaatPlaatsing({
