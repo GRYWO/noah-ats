@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { uitnodigen } from "../actions";
+import { GrywoLogo } from "@/components/GrywoLogo";
 
 export default async function UitnodigenPage({
   params,
@@ -21,10 +22,7 @@ export default async function UitnodigenPage({
     <main className="min-h-screen bg-[#f4f4f7] py-8 px-6">
       <div className="max-w-2xl mx-auto">
         <div className="bg-[#333399] rounded-t-2xl p-5 text-center">
-          <div className="inline-flex items-baseline">
-            <span className="text-white text-3xl font-black tracking-tighter">noah</span>
-            <span className="ml-1.5 w-2.5 h-2.5 rounded-full bg-[#ffd84d] inline-block"></span>
-          </div>
+          <GrywoLogo size="md" />
         </div>
         <div className="bg-white rounded-b-2xl shadow-xl p-8">
           <h1 className="text-2xl font-bold text-[#333399] mb-1">

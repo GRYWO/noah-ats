@@ -15,14 +15,14 @@ function brandedLayout({ titel, body }: { titel: string; body: string }) {
     <tr><td align="center">
       <table cellpadding="0" cellspacing="0" border="0" width="600" style="background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
         <tr><td style="background-color:${GRYWO_KLEUR};padding:32px 24px;text-align:center;">
-          <span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">noah</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>
+          <span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">GRYWO</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>
         </td></tr>
         <tr><td style="padding:32px;color:#1a1a2e;">
           <h2 style="color:${GRYWO_KLEUR};margin:0 0 16px 0;font-size:22px;">${titel}</h2>
           ${body}
         </td></tr>
         <tr><td style="background-color:#f4f4f7;padding:16px;text-align:center;font-size:12px;color:#888;">
-          Noah ATS — powered by GRYWO
+          GRYWO · noah@grywo.nl
         </td></tr>
       </table>
     </td></tr>
