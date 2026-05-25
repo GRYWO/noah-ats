@@ -7,6 +7,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { encrypt } from "@/utils/crypto";
 import { herverdeelKandidaten, verwerkWachtrij } from "@/utils/setter-assign";
 import { sendWelkomstmailUser } from "@/utils/email";
+import { bouwHandtekening } from "@/utils/email-signature";
 
 export async function nieuweSetter(formData: FormData) {
   const supabase = await createClient();
@@ -51,13 +52,15 @@ export async function nieuweSetter(formData: FormData) {
     redirect(`/setters?error=${encodeURIComponent(createErr?.message ?? "Aanmaken mislukt")}`);
   }
 
-  // Auto handtekening bouwen
-  const handtekening = `<div style="font-family:Arial,sans-serif;color:#444;font-size:13px;line-height:1.4;margin-top:16px;">
-<b>${voornaam} ${achternaam}</b><br>
-${rol === "admin" ? "Admin" : rol === "recruiter" ? "Recruiter" : "Setter"} · GRYWO<br>
-${telefoon ? `${telefoon} · ` : ""}${mailAdres}<br>
-<span style="color:#333399;font-weight:bold;">grywo.nl</span>
-</div>`;
+  // Auto handtekening bouwen via centrale helper
+  const handtekening = bouwHandtekening({
+    voornaam,
+    achternaam,
+    rol: rol as "admin" | "recruiter" | "setter",
+    telefoon,
+    mailAdres,
+    functieTitel: null,
+  });
 
   // 2. Maak profile aan (gekoppeld aan zelfde tenant)
   const { error: profileErr } = await admin.from("profiles").insert({

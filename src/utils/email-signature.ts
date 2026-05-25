@@ -1,0 +1,69 @@
+import { getGrywoLogoDataUri } from "@/utils/grywo-logo";
+
+const GRYWO_PAARS = "#333399";
+const GRYWO_GEEL = "#ffd84d";
+
+export type SignatureInput = {
+  voornaam: string;
+  achternaam: string;
+  rol: "admin" | "recruiter" | "setter";
+  telefoon?: string | null;
+  mailAdres: string;
+  functieTitel?: string | null;
+};
+
+/**
+ * Bouw een nette email-banner voor onder elke mail.
+ *
+ * - Paarse banner-balk met wit GRYWO-logo + geel puntje.
+ * - Witte info-strook met naam, contact en website.
+ * - Functie-regel verschijnt ALLEEN voor admins (recruiters/setters niet,
+ *   tenzij ze zelf expliciet een functie-titel invullen).
+ */
+export function bouwHandtekening({
+  voornaam,
+  achternaam,
+  rol,
+  telefoon,
+  mailAdres,
+  functieTitel,
+}: SignatureInput): string {
+  const logoUri = getGrywoLogoDataUri();
+  const naam = `${voornaam} ${achternaam}`.trim();
+
+  // Functie zichtbaar voor admin altijd (fallback "Admin bij GRYWO").
+  // Voor recruiter/setter alleen als ze zelf iets invulden.
+  const toonFunctie =
+    rol === "admin" || (functieTitel && functieTitel.trim().length > 0);
+  const functieRegel = toonFunctie
+    ? (functieTitel?.trim() ||
+      (rol === "admin" ? "Admin bij GRYWO" : ""))
+    : "";
+
+  const logoBlok = logoUri
+    ? `<img src="${logoUri}" alt="GRYWO" height="36" style="display:block;border:0;outline:none;text-decoration:none;height:36px;width:auto;filter:brightness(0) invert(1);">`
+    : `<span style="font-family:Helvetica,Arial,sans-serif;font-size:30px;font-weight:900;letter-spacing:-1.5px;color:#ffffff;">GRYWO</span><span style="display:inline-block;width:8px;height:8px;background-color:${GRYWO_GEEL};border-radius:50%;margin-left:4px;vertical-align:2px;"></span>`;
+
+  return `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;border-collapse:collapse;width:480px;max-width:100%;">
+  <tr>
+    <td style="background-color:${GRYWO_PAARS};padding:14px 22px;border-radius:8px 8px 0 0;">
+      ${logoBlok}
+    </td>
+  </tr>
+  <tr>
+    <td style="background-color:#ffffff;border:1px solid #e5e5ec;border-top:0;border-radius:0 0 8px 8px;padding:18px 22px;">
+      <div style="font-size:16px;font-weight:700;color:#1a1a2e;letter-spacing:-0.2px;line-height:1.3;">
+        ${naam}
+      </div>
+      ${functieRegel
+        ? `<div style="font-size:13px;color:${GRYWO_PAARS};font-weight:600;margin-top:2px;">${functieRegel}</div>`
+        : ""}
+      <div style="font-size:13px;color:#555;margin-top:10px;line-height:1.6;">
+        ${telefoon ? `<a href="tel:${telefoon}" style="color:#555;text-decoration:none;">${telefoon}</a><br>` : ""}
+        <a href="mailto:${mailAdres}" style="color:#555;text-decoration:none;">${mailAdres}</a><br>
+        <a href="https://grywo.nl" style="color:${GRYWO_PAARS};text-decoration:none;font-weight:600;">grywo.nl</a>
+      </div>
+    </td>
+  </tr>
+</table>`;
+}
