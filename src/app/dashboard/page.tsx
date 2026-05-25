@@ -22,12 +22,14 @@ const STATUS_KLEUR: Record<string, string> = {
 };
 
 const PIPELINE = [
-  { key: "nieuwe_sollicitatie", label: "Nieuw", kleur: "bg-blue-500" },
-  { key: "shortlist", label: "Shortlist", kleur: "bg-cyan-500" },
-  { key: "interne_intake_voltooid", label: "Intake", kleur: "bg-purple-500" },
-  { key: "voorgesteld_opdrachtgever", label: "Voorgesteld", kleur: "bg-pink-500" },
-  { key: "kennismaking_ingepland", label: "Kennismaking", kleur: "bg-amber-500" },
-  { key: "geplaatst", label: "Geplaatst", kleur: "bg-green-500" },
+  { key: "interne_intake",            label: "Interne intake",  kleur: "bg-blue-500"   },
+  { key: "in_afwachting_cv",          label: "Wacht op CV",     kleur: "bg-cyan-500"   },
+  { key: "in_wachtrij",               label: "Wachtrij",        kleur: "bg-indigo-500" },
+  { key: "bij_setter",                label: "Bij setter",      kleur: "bg-purple-500" },
+  { key: "voorgesteld_opdrachtgever", label: "Voorgesteld",     kleur: "bg-pink-500"   },
+  { key: "1e_gesprek",                label: "1e gesprek",      kleur: "bg-amber-500"  },
+  { key: "2e_gesprek",                label: "2e gesprek",      kleur: "bg-orange-500" },
+  { key: "geplaatst",                 label: "Geplaatst",       kleur: "bg-green-500"  },
 ];
 
 const VOORSTEL_STATUS_LABEL: Record<string, string> = {

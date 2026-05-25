@@ -212,7 +212,7 @@ export async function keurAfPlaatsing(formData: FormData) {
   // Reset kandidaat-status
   await admin.from("kandidaten").update({
     status: "in_proces",
-    kanban_stap: "kennismaking_ingepland",
+    kanban_stap: "1e_gesprek",
     plaatsing_mail_sent: null,
   }).eq("id", kandidaatId);
 

@@ -46,7 +46,7 @@ export async function maakKandidaatVanWizard(formData: FormData) {
     bijzonderheden:       (formData.get("bijzonderheden") as string)?.trim() || null,
     tarief_ws:            (formData.get("tarief_ws") as string)?.trim() || null,
     status: "nieuw",
-    kanban_stap: "nieuwe_sollicitatie",
+    kanban_stap: "interne_intake",
   };
 
   const leeftijdStr = formData.get("leeftijd") as string;

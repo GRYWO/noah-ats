@@ -46,7 +46,7 @@ export async function autoWijsKandidaatToe(kandidaatId: string): Promise<{ toege
 
   const { data: kandidaat } = await admin
     .from("kandidaten")
-    .select("tenant_id, eigenaar_id")
+    .select("tenant_id, eigenaar_id, kanban_stap")
     .eq("id", kandidaatId)
     .single();
 
@@ -58,7 +58,12 @@ export async function autoWijsKandidaatToe(kandidaatId: string): Promise<{ toege
   const setterId = await vindBeschikbareSetter(kandidaat.tenant_id);
   if (!setterId) return { toegewezen: null };
 
-  await admin.from("kandidaten").update({ eigenaar_id: setterId }).eq("id", kandidaatId);
+  // Bij toewijzing: schuif kanban-stap door naar "bij_setter" als nog in wachtrij/afwachting cv
+  const update: Record<string, unknown> = { eigenaar_id: setterId };
+  if (kandidaat.kanban_stap === "in_wachtrij" || kandidaat.kanban_stap === "in_afwachting_cv") {
+    update.kanban_stap = "bij_setter";
+  }
+  await admin.from("kandidaten").update(update).eq("id", kandidaatId);
 
   return { toegewezen: setterId };
 }

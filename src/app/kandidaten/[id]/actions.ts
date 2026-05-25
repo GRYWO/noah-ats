@@ -8,9 +8,10 @@ import { autoWijsKandidaatToe } from "@/utils/setter-assign";
 import { sendKandidaatPlaatsing, sendKandidaatStatusAfwijzing } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
+import { triggerKanbanMails } from "@/utils/kanban-mails";
 
 // Stages waarbij de intake klaar is en de kandidaat naar een setter moet
-const INTAKE_KLAAR_STAGES = ["interne_intake_voltooid", "voorgesteld_opdrachtgever"];
+const INTAKE_KLAAR_STAGES = ["in_wachtrij", "bij_setter", "voorgesteld_opdrachtgever"];
 
 export async function updateKandidaat(formData: FormData) {
   const id = formData.get("id") as string;
@@ -32,15 +33,15 @@ export async function updateKandidaat(formData: FormData) {
     rijbewijs:     (formData.get("rijbewijs") as string)?.trim() || null,
     eigen_vervoer: formData.get("eigen_vervoer") === "on",
     status:        (formData.get("status") as string)?.trim() || "nieuw",
-    kanban_stap:   (formData.get("kanban_stap") as string)?.trim() || "nieuwe_sollicitatie",
+    kanban_stap:   (formData.get("kanban_stap") as string)?.trim() || "interne_intake",
     score:         formData.get("score") ? parseInt(formData.get("score") as string) : null,
     notitie:       (formData.get("notitie") as string)?.trim() || null,
   };
 
-  // Huidige status ophalen om wijziging te detecteren
+  // Huidige status + kanban_stap ophalen om wijziging te detecteren
   const { data: huidig } = await supabase
     .from("kandidaten")
-    .select("status, tenant_id, plaatsing_mail_sent, afwijzing_mail_sent, email, voornaam")
+    .select("status, kanban_stap, tenant_id, plaatsing_mail_sent, afwijzing_mail_sent, email, voornaam")
     .eq("id", id)
     .single();
 
@@ -57,6 +58,14 @@ export async function updateKandidaat(formData: FormData) {
   if (INTAKE_KLAAR_STAGES.includes(update.kanban_stap)) {
     await autoWijsKandidaatToe(id);
   }
+
+  // Trigger automatische kandidaat-mails bij kanban-stap-wijziging
+  await triggerKanbanMails({
+    kandidaatId: id,
+    oudeStap: huidig?.kanban_stap ?? null,
+    nieuweStap: update.kanban_stap,
+    vanUserId: user?.id ?? null,
+  });
 
   // Plaatsing/afwijzing detecteren (alleen bij eerste keer)
   const admin = createAdminClient();

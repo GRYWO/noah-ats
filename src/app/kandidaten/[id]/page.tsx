@@ -13,6 +13,8 @@ import { KandidaatOverzicht } from "./KandidaatOverzicht";
 import { ContactRecruiterKnop } from "./ContactRecruiter";
 import { KennismakingDatumEdit } from "./KennismakingDatumEdit";
 import { PlaatsingTrigger } from "./PlaatsingTrigger";
+import { KANBAN_OPTIES } from "@/utils/kanban";
+import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -21,20 +23,6 @@ const STATUS_OPTIES = [
   { value: "bemiddelbaar", label: "Bemiddelbaar" },
   { value: "geplaatst", label: "Geplaatst" },
   { value: "afgewezen", label: "Afgewezen" },
-];
-
-const KANBAN_OPTIES = [
-  { value: "nieuwe_sollicitatie", label: "1. Nieuwe sollicitatie" },
-  { value: "shortlist", label: "2. Shortlist" },
-  { value: "interne_intake_ingepland", label: "3. Interne intake ingepland" },
-  { value: "interne_intake_voltooid", label: "4. Interne intake voltooid" },
-  { value: "voorgesteld_opdrachtgever", label: "5. Voorgesteld opdrachtgever" },
-  { value: "opdrachtgever_geinteresseerd", label: "6. Opdrachtgever geïnteresseerd" },
-  { value: "kennismaking_ingepland", label: "7. Kennismaking ingepland" },
-  { value: "1e_gesprek", label: "8. 1e gesprek" },
-  { value: "2e_gesprek", label: "9. 2e gesprek" },
-  { value: "geplaatst", label: "Geplaatst" },
-  { value: "niet_geplaatst", label: "Niet geplaatst" },
 ];
 
 const VOORSTEL_STATUS_KLEUREN: Record<string, string> = {
@@ -97,7 +85,9 @@ export default async function KandidaatDetail({
   const alAangemeld = (plaatsingen?.length ?? 0) > 0;
   const huidigePlaatsingId = plaatsingen?.[0]?.id ?? null;
   const isAdmin = myProfile?.rol === "admin";
+  const isRecruiterOrAdmin = isAdmin || isRecruiter;
   const showPlaatsingTrigger = !isSetter && (k.status === "geplaatst" || k.kanban_stap === "geplaatst");
+  const toonIntakeAfrondKnop = isRecruiterOrAdmin && k.kanban_stap === "interne_intake";
 
   const { data: logs } = await supabase
     .from("voorstel_logs")
@@ -184,6 +174,10 @@ export default async function KandidaatDetail({
           />
         )}
 
+        {toonIntakeAfrondKnop && (
+          <IntakeAfrondKnop kandidaatId={k.id} heeftCv={!!k.cv_url} />
+        )}
+
         {showPlaatsingTrigger && (
           <div className={`rounded-xl shadow-sm p-5 mb-6 flex items-center justify-between gap-4 flex-wrap ${
             alAangemeld ? "bg-emerald-50 border border-emerald-200" : "bg-amber-50 border border-amber-200"
@@ -222,7 +216,7 @@ export default async function KandidaatDetail({
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@grywo.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : "Opgeslagen"}
+            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@grywo.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : ok === "intake_afgerond" ? "Interne intake afgerond — kandidaat heeft mail ontvangen" : "Opgeslagen"}
           </div>
         )}
         {error && (

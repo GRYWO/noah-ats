@@ -32,7 +32,7 @@ export async function goedkeurenCv(formData: FormData) {
     cv_controle_status: "goedgekeurd",
     cv_controle_op: new Date().toISOString(),
     cv_controle_door: userId,
-    kanban_stap: "interne_intake_voltooid",
+    kanban_stap: "in_wachtrij",
     intake_voltooid: true,
   }).eq("id", id);
 

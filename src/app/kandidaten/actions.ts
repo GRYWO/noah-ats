@@ -35,7 +35,7 @@ export async function nieuweKandidaat(formData: FormData) {
     leeftijd:     formData.get("leeftijd") ? parseInt(formData.get("leeftijd") as string) : null,
     open_voor:    (formData.get("open_voor") as string)?.trim() || null,
     status: "nieuw",
-    kanban_stap: "nieuwe_sollicitatie",
+    kanban_stap: "interne_intake",
   };
 
   const { error } = await supabase.from("kandidaten").insert(insert);

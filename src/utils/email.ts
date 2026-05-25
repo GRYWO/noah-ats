@@ -542,6 +542,101 @@ export async function sendHelpVraagNaarYorith({
 }
 
 /**
+ * Interne intake afgerond — kandidaat krijgt bevestiging.
+ */
+export async function sendIntakeAfgerond({
+  naar,
+  kandidaatVoornaam,
+  from,
+}: {
+  naar: string;
+  kandidaatVoornaam: string;
+  from?: string;
+}) {
+  const body = `
+<p>Hoi ${kandidaatVoornaam},</p>
+<p>We hebben je interne intake afgerond. Vanaf nu gaan we voor je aan de slag om de juiste match te vinden — we houden je op de hoogte van elke stap.</p>
+<p>Heb je vragen of wil je iets aanpassen aan je voorkeuren? Reply gerust op deze mail.</p>
+<p>Veel succes!</p>`;
+  return resend.emails.send({
+    from: from ?? FROM,
+    to: naar,
+    subject: "Je intake is afgerond",
+    html: brandedLayout({ titel: "Intake afgerond", body }),
+  });
+}
+
+/**
+ * Bevestiging 1e gesprek — kandidaat krijgt afspraak-details.
+ */
+export async function sendGesprek1Bevestiging({
+  naar,
+  kandidaatVoornaam,
+  bedrijf,
+  kennismaking_op,
+  contactpersoon,
+  contact_telefoon,
+  locatie_url,
+  from,
+}: {
+  naar: string;
+  kandidaatVoornaam: string;
+  bedrijf: string | null;
+  kennismaking_op?: string | null;
+  contactpersoon?: string | null;
+  contact_telefoon?: string | null;
+  locatie_url?: string | null;
+  from?: string;
+}) {
+  const tijd = kennismaking_op
+    ? new Date(kennismaking_op).toLocaleString("nl-NL", { dateStyle: "full", timeStyle: "short" })
+    : null;
+  const body = `
+<p>Hoi ${kandidaatVoornaam},</p>
+<p>Hierbij de bevestiging van je 1e gesprek${bedrijf ? ` bij <b>${bedrijf}</b>` : ""}.</p>
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
+  ${tijd ? `<tr><td style="padding:6px 0;color:#666;width:35%;">Datum &amp; tijd</td><td style="padding:6px 0;font-weight:600;">${tijd}</td></tr>` : ""}
+  ${bedrijf ? `<tr><td style="padding:6px 0;color:#666;">Bedrijf</td><td style="padding:6px 0;font-weight:600;">${bedrijf}</td></tr>` : ""}
+  ${contactpersoon ? `<tr><td style="padding:6px 0;color:#666;">Contactpersoon</td><td style="padding:6px 0;font-weight:600;">${contactpersoon}</td></tr>` : ""}
+  ${contact_telefoon ? `<tr><td style="padding:6px 0;color:#666;">Telefoon</td><td style="padding:6px 0;font-weight:600;">${contact_telefoon}</td></tr>` : ""}
+  ${locatie_url ? `<tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;"><a href="${locatie_url}" style="color:${GRYWO_KLEUR};">Bekijk op Google Maps</a></td></tr>` : ""}
+</table>
+<p>Veel succes! Laat het weten als er iets onverwachts gebeurt.</p>`;
+  return resend.emails.send({
+    from: from ?? FROM,
+    to: naar,
+    subject: `Bevestiging 1e gesprek${bedrijf ? ` bij ${bedrijf}` : ""}`,
+    html: brandedLayout({ titel: "Je 1e gesprek staat gepland", body }),
+  });
+}
+
+/**
+ * Succes met 2e gesprek.
+ */
+export async function sendGesprek2Succes({
+  naar,
+  kandidaatVoornaam,
+  bedrijf,
+  from,
+}: {
+  naar: string;
+  kandidaatVoornaam: string;
+  bedrijf?: string | null;
+  from?: string;
+}) {
+  const body = `
+<p>Hoi ${kandidaatVoornaam},</p>
+<p>Je gaat door naar de 2e gespreksronde${bedrijf ? ` bij <b>${bedrijf}</b>` : ""}. Heel goed gedaan!</p>
+<p>We duimen voor je — laat het weten hoe het gaat.</p>`;
+  return resend.emails.send({
+    from: from ?? FROM,
+    to: naar,
+    subject: `Succes met je 2e gesprek${bedrijf ? ` bij ${bedrijf}` : ""}`,
+    html: brandedLayout({ titel: "Door naar de 2e ronde", body }),
+  });
+}
+
+/**
  * Plaatsing — gefeliciteerd.
  */
 export async function sendKandidaatPlaatsing({

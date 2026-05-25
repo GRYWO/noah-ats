@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { setKanbanStap } from "./actions";
+import { KANBAN_STAPPEN } from "@/utils/kanban";
 
 type Kandidaat = {
   id: string;
@@ -14,19 +15,7 @@ type Kandidaat = {
   open_voor: string | null;
 };
 
-const KOLOMMEN = [
-  { key: "nieuwe_sollicitatie", titel: "Nieuwe sollicitatie", kleur: "border-blue-500" },
-  { key: "shortlist", titel: "Shortlist", kleur: "border-cyan-500" },
-  { key: "interne_intake_ingepland", titel: "Intake ingepland", kleur: "border-indigo-500" },
-  { key: "interne_intake_voltooid", titel: "Intake voltooid", kleur: "border-purple-500" },
-  { key: "voorgesteld_opdrachtgever", titel: "Voorgesteld", kleur: "border-pink-500" },
-  { key: "opdrachtgever_geinteresseerd", titel: "Opdrachtgever ja", kleur: "border-fuchsia-500" },
-  { key: "kennismaking_ingepland", titel: "Kennismaking", kleur: "border-amber-500" },
-  { key: "1e_gesprek", titel: "1e gesprek", kleur: "border-orange-500" },
-  { key: "2e_gesprek", titel: "2e gesprek", kleur: "border-yellow-500" },
-  { key: "geplaatst", titel: "Geplaatst", kleur: "border-green-500" },
-  { key: "niet_geplaatst", titel: "Niet geplaatst", kleur: "border-red-500" },
-];
+const KOLOMMEN = KANBAN_STAPPEN.map(s => ({ key: s.key, titel: s.kortLabel, kleur: s.rand }));
 
 export function KanbanBoard({ initialKandidaten }: { initialKandidaten: Kandidaat[] }) {
   const [kandidaten, setKandidaten] = useState(initialKandidaten);
