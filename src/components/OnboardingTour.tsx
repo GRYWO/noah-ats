@@ -186,7 +186,13 @@ export function OnboardingTour({
   rol: Rol;
   autoStart: boolean;
 }) {
+  // Tijdelijk geparkeerd — niets renderen
+  void rol; void autoStart;
+  return null;
+
+  // eslint-disable-next-line no-unreachable
   const [actief, setActief] = useState(false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [stappen, setStappen] = useState<Step[]>([]);
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { HelpCircle } from "lucide-react";
-import { RONDLEIDING_PADEN, RONDLEIDING_KEY, TOUR_GEZIEN_KEY } from "@/utils/rondleiding";
+import { RONDLEIDING_PADEN, RONDLEIDING_KEY, TOUR_GEZIEN_KEY, TOUR_GEPARKEERD } from "@/utils/rondleiding";
 
 // react-joyride v3 — named export "Joyride"
 const Joyride = dynamic(
@@ -37,8 +37,21 @@ type Props = {
  * - Anders: alleen starten via de 'Uitleg' knop rechtsonder.
  */
 export function PaginaTour({ pad, naam, stappen }: Props) {
+  // Feature uit — niets renderen tot we 'm weer aanzetten via TOUR_GEPARKEERD
+  if (TOUR_GEPARKEERD) {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(RONDLEIDING_KEY);
+      } catch {}
+    }
+    return null;
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [actief, setActief] = useState(false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const router = useRouter();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const gestart = useRef(false);
 
   // Auto-start tijdens een actieve globale rondleiding — maar maximaal 1x per mount

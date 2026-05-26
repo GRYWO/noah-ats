@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { RONDLEIDING_KEY, RONDLEIDING_PADEN, TOUR_GEZIEN_KEY } from "@/utils/rondleiding";
+import { RONDLEIDING_KEY, RONDLEIDING_PADEN, TOUR_GEZIEN_KEY, TOUR_GEPARKEERD } from "@/utils/rondleiding";
 
 /**
  * Zet de globale rondleiding aan bij eerste login of via ?rondleiding=1.
@@ -10,6 +10,14 @@ import { RONDLEIDING_KEY, RONDLEIDING_PADEN, TOUR_GEZIEN_KEY } from "@/utils/ron
  */
 export function RondleidingStarter({ autoStart }: { autoStart: boolean }) {
   useEffect(() => {
+    if (TOUR_GEPARKEERD) {
+      // Cleanup eventuele oude vlaggen zodat oude users geen tour meer krijgen
+      try {
+        localStorage.removeItem(RONDLEIDING_KEY);
+        localStorage.setItem(TOUR_GEZIEN_KEY, "1");
+      } catch {}
+      return;
+    }
     if (typeof window === "undefined") return;
 
     const url = new URL(window.location.href);

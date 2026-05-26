@@ -4,7 +4,12 @@ import { useState } from "react";
 import { PlayCircle, Loader2 } from "lucide-react";
 
 export function TourHerstartKnop() {
+  // Tijdelijk geparkeerd — niets renderen
+  return null;
+
+  // eslint-disable-next-line no-unreachable
   const [bezig, setBezig] = useState(false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [fout, setFout] = useState<string | null>(null);
 
   async function onClick(e: React.MouseEvent) {
