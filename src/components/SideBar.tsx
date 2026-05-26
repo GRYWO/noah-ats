@@ -21,7 +21,6 @@ import {
   Send,
   Calendar,
   Sparkles as SparklesIcon,
-  ClipboardList,
 } from "lucide-react";
 
 type Item = {
@@ -132,19 +131,6 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, log
 
       {/* Footer: notificaties + user + logout + collapse-toggle */}
       <div className="border-t border-gray-100 p-2">
-        {/* EOD-knop (alleen setters) */}
-        {isSetter && (
-          <div className={open ? "px-1 mb-1" : "flex justify-center mb-1"}>
-            <Link
-              href="/coaching"
-              title="EOD-rapport invullen"
-              className="relative p-2 rounded-lg text-gray-600 hover:bg-amber-50 hover:text-amber-700 inline-flex"
-            >
-              <ClipboardList size={20} strokeWidth={1.8} />
-              {open && <span className="ml-2 text-sm font-medium">EOD invullen</span>}
-            </Link>
-          </div>
-        )}
         {/* Notificatie-bel */}
         <div className={open ? "px-1 mb-1" : "flex justify-center mb-1"}>
           <NotificatieBel userId={userId} />
