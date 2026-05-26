@@ -7,6 +7,7 @@ import { OnboardingTour, TOUR_VERSIE } from "@/components/OnboardingTour";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_DASHBOARD } from "@/utils/pagina-tours";
 import { RondleidingStarter } from "@/components/RondleidingStarter";
+import { BureauAdminDashboard } from "./BureauAdminDashboard";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
 function geldigePeriode(p: string | undefined): Periode {
@@ -73,6 +74,8 @@ export default async function Dashboard({
     .single();
 
   const isSetter = myProfile?.rol === "setter";
+  const isSuperAdmin = isSuperAdminEmail(user?.email);
+  const isBureauAdmin = myProfile?.rol === "admin" && !isSuperAdmin;
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -96,14 +99,18 @@ export default async function Dashboard({
 
         {isSetter
           ? <SetterDashboard userId={user!.id} />
-          : <AdminDashboard />
+          : isBureauAdmin
+            ? <BureauAdminDashboard tenantId={myProfile!.tenant_id!} bureauNaam={tenant?.naam ?? "jouw bureau"} />
+            : <AdminDashboard />
         }
 
-        {/* Performance per setter / leaderboard — voor admin alle setters, voor setter alleen eigen */}
-        <SetterPerformance
-          periode={periode}
-          beperkTotUserId={isSetter ? user!.id : undefined}
-        />
+        {/* Performance / leaderboard — niet voor bureau-admin (zij krijgen simpel dashboard) */}
+        {!isBureauAdmin && (
+          <SetterPerformance
+            periode={periode}
+            beperkTotUserId={isSetter ? user!.id : undefined}
+          />
+        )}
 
         {/* Globale rondleiding: opent automatisch elke pagina + uitleg bij eerste login */}
         <RondleidingStarter
