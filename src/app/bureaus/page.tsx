@@ -9,6 +9,7 @@ import { BetaaldSelect } from "./BetaaldSelect";
 import { ResetWachtwoordKnop } from "@/app/setters/ResetWachtwoordKnop";
 import { InloggegevensKnop } from "./InloggegevensKnop";
 import { WisTestdataKnop } from "./WisTestdataKnop";
+import { MailTestKnop } from "./MailTestKnop";
 
 export default async function BureausPage({
   searchParams,
@@ -64,7 +65,10 @@ export default async function BureausPage({
             <h1 className="text-3xl font-bold text-gray-800">Bureaus</h1>
             <p className="text-gray-500 text-sm mt-1">{bureaus?.length ?? 0} bureaus die Noah gebruiken</p>
           </div>
-          <WisTestdataKnop />
+          <div className="flex flex-col items-end gap-2">
+            <MailTestKnop />
+            <WisTestdataKnop />
+          </div>
         </div>
 
         {ok && (
