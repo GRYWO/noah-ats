@@ -8,6 +8,7 @@ import { encrypt } from "@/utils/crypto";
 import { herverdeelKandidaten, verwerkWachtrij } from "@/utils/setter-assign";
 import { sendWelkomstmailUser } from "@/utils/email";
 import { bouwHandtekening } from "@/utils/email-signature";
+import { isSuperAdminEmail } from "@/utils/auth";
 
 export async function nieuweSetter(formData: FormData) {
   const supabase = await createClient();
@@ -31,9 +32,15 @@ export async function nieuweSetter(formData: FormData) {
   const achternaam      = (formData.get("achternaam") as string)?.trim();
   const telefoon        = (formData.get("telefoon") as string)?.trim() || null;
   const voysNummer      = (formData.get("voys_nummer") as string)?.trim() || null;
-  const rol             = (formData.get("rol") as string)?.trim() || "setter";
+  let rol               = (formData.get("rol") as string)?.trim() || "setter";
   const mailAdres       = (formData.get("mail_adres") as string)?.trim().toLowerCase() || email;
   const mailWachtwoord  = (formData.get("mail_wachtwoord") as string)?.trim() || null;
+
+  // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken — forceer rol
+  const isSuperAdmin = isSuperAdminEmail(user.email);
+  if (!isSuperAdmin && rol !== "recruiter") {
+    rol = "recruiter";
+  }
 
   if (!email || !wachtwoord || wachtwoord.length < 8) {
     redirect(`/setters?error=${encodeURIComponent("E-mail + wachtwoord (min 8 tekens) verplicht")}`);

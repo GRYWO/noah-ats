@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
 import { nieuweSetter, verwijderSetter } from "./actions";
 import { DeleteSetterButton } from "./DeleteSetterButton";
@@ -41,6 +42,9 @@ export default async function SettersPage({
     .single();
 
   const isAdmin = myProfile?.rol === "admin";
+  const isSuperAdmin = isSuperAdminEmail(user?.email);
+  // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken
+  const magAlleRollen = isSuperAdmin;
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -98,11 +102,21 @@ export default async function SettersPage({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Rol *</label>
-                <select name="rol" defaultValue="setter" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
-                  <option value="setter">Setter</option>
-                  <option value="recruiter">Recruiter</option>
-                  <option value="admin">Admin</option>
-                </select>
+                {magAlleRollen ? (
+                  <select name="rol" defaultValue="setter" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                    <option value="setter">Setter</option>
+                    <option value="recruiter">Recruiter</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                ) : (
+                  <>
+                    <input type="hidden" name="rol" value="recruiter" />
+                    <div className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm bg-gray-50 text-gray-700">
+                      Recruiter
+                    </div>
+                    <small className="text-gray-400 text-xs">Setters/admins worden door Noah toegevoegd. Hulp nodig? Bel 085-4016082.</small>
+                  </>
+                )}
               </div>
               <div className="col-span-2 pt-3 mt-2 border-t">
                 <h4 className="text-xs uppercase text-gray-500 font-semibold mb-2">Mailbox (Hostnet)</h4>
