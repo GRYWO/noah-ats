@@ -774,7 +774,25 @@ export async function sendWelkomstmailBureau({
 }) {
   const intro = await renderMailTemplate("welkom_bureau", { voornaam, bedrijf });
   const loginBlok = inlogBlok(email, wachtwoord);
-  const body = `${intro}\n${loginBlok}`;
+
+  const dashboardKnop = `
+<div style="text-align:center;margin:24px 0;">
+  <a href="${APP_URL}/dashboard"
+     style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+    Open je dashboard
+  </a>
+</div>`;
+
+  const eersteStappen = `
+<h3 style="color:${GRYWO_KLEUR};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">In 4 stappen klaar</h3>
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0;">
+  <tr><td style="padding:8px 0;width:30px;font-weight:bold;color:${GRYWO_KLEUR};">1.</td><td style="padding:8px 0;">Vul je bedrijfsgegevens aan op het dashboard (contactpersoon, telefoon, adres).</td></tr>
+  <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">2.</td><td style="padding:8px 0;">Voeg je recruiters en setters toe via &quot;Recruiters &amp; setters beheren&quot;.</td></tr>
+  <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">3.</td><td style="padding:8px 0;">Koppel je zakelijke mailbox via Instellingen, zodat voorstellen vanaf jouw domein vertrekken.</td></tr>
+  <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">4.</td><td style="padding:8px 0;">Vragen of hulp nodig? Bel <a href="tel:0854016082" style="color:${GRYWO_KLEUR};font-weight:bold;">085-4016082</a> &mdash; wij regelen de rest achter de schermen.</td></tr>
+</table>`;
+
+  const body = `${intro}\n${loginBlok}\n${dashboardKnop}\n${eersteStappen}`;
   return resend.emails.send({
     from: FROM,
     to: naar,
