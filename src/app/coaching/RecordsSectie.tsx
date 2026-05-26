@@ -60,9 +60,11 @@ export function RecordsSectie({ records }: { records: Records }) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-5">
-      <h2 className="font-bold text-gray-800 mb-4 pb-2 border-b inline-flex items-center gap-2">
-        <Trophy size={16} /> Mijn persoonlijke records
-      </h2>
+      <div className="flex items-center justify-between mb-4 pb-2 border-b">
+        <h2 className="font-bold text-gray-800 inline-flex items-center gap-2">
+          <Trophy size={16} /> Mijn persoonlijke records
+        </h2>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
         {items.map((it) => (
           <div
