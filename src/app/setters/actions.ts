@@ -60,11 +60,13 @@ export async function nieuweSetter(formData: FormData) {
   }
 
   // Auto handtekening bouwen via centrale helper
+  // NB: telefoon (privé/mobiel) is puur administratief en komt NIET in de handtekening.
+  // Het Voys-nummer is wel het zakelijke nummer dat onder de mail mag.
   const handtekening = bouwHandtekening({
     voornaam,
     achternaam,
     rol: rol as "admin" | "recruiter" | "setter",
-    telefoon,
+    voysNummer,
     mailAdres,
     functieTitel: null,
   });

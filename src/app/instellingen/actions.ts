@@ -16,11 +16,11 @@ export async function updateMailConfig(formData: FormData) {
   const telefoon       = (formData.get("telefoon") as string)?.trim();
   const functieTitelInput = (formData.get("functie_titel") as string)?.trim();
 
-  // Haal rol + primair mail-adres op
+  // Haal rol + voys-nummer + primair mail-adres op
   const admin = createAdminClient();
   const { data: huidigeProfile } = await admin
     .from("profiles")
-    .select("rol")
+    .select("rol, voys_nummer")
     .eq("id", user.id)
     .single();
   const { data: primair } = await admin
@@ -31,15 +31,18 @@ export async function updateMailConfig(formData: FormData) {
     .maybeSingle();
   const mailAdres = primair?.mail_adres ?? user.email ?? "";
   const rol = (huidigeProfile?.rol ?? "setter") as "admin" | "recruiter" | "setter";
+  const voysNummer = (huidigeProfile?.voys_nummer ?? null) as string | null;
 
   // Alleen admin mag een functie-titel zetten (recruiter/setter zien het veld niet)
   const functieTitel = rol === "admin" ? (functieTitelInput || null) : null;
 
+  // Telefoon (privé/mobiel) blijft administratief en gaat NIET in de handtekening.
+  // Alleen het Voys-nummer komt zichtbaar onder de mail.
   const handtekening = bouwHandtekening({
     voornaam,
     achternaam,
     rol,
-    telefoon,
+    voysNummer,
     mailAdres,
     functieTitel,
   });

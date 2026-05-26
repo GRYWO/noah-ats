@@ -7,7 +7,7 @@ export type SignatureInput = {
   voornaam: string;
   achternaam: string;
   rol: "admin" | "recruiter" | "setter";
-  telefoon?: string | null;
+  voysNummer?: string | null;   // zakelijk VoIP-nummer dat in handtekening komt
   mailAdres: string;
   functieTitel?: string | null;
 };
@@ -24,7 +24,7 @@ export function bouwHandtekening({
   voornaam,
   achternaam,
   rol,
-  telefoon,
+  voysNummer,
   mailAdres,
   functieTitel,
 }: SignatureInput): string {
@@ -59,8 +59,8 @@ export function bouwHandtekening({
         ? `<div style="font-size:13px;color:${GRYWO_PAARS};font-weight:600;margin-top:2px;">${functieRegel}</div>`
         : ""}
       <div style="font-size:13px;color:#555;margin-top:10px;line-height:1.6;">
-        ${telefoon ? `<a href="tel:${telefoon}" style="color:#555;text-decoration:none;">${telefoon}</a><br>` : ""}
         <a href="mailto:${mailAdres}" style="color:#555;text-decoration:none;">${mailAdres}</a><br>
+        ${voysNummer ? `<a href="tel:${voysNummer}" style="color:#555;text-decoration:none;">${voysNummer}</a><br>` : ""}
         <a href="https://grywo.nl" style="color:${GRYWO_PAARS};text-decoration:none;font-weight:600;">grywo.nl</a>
       </div>
     </td>
