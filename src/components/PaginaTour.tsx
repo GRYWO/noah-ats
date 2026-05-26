@@ -81,11 +81,29 @@ export function PaginaTour({ pad, naam, stappen }: Props) {
     type?: string;
     step?: { target?: string };
   }) {
-    // Target in beeld scrollen (handig voor kanban horizontaal)
-    if ((data.type === "step:before" || data.type === "tooltip") && typeof data.step?.target === "string" && data.step.target !== "body") {
+    // Target in beeld scrollen — handelt horizontale parents (zoals kanban) apart af
+    if (typeof data.step?.target === "string" && data.step.target !== "body") {
       try {
         const el = document.querySelector(data.step.target) as HTMLElement | null;
-        el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "center" });
+        if (el) {
+          // Vind de eerste horizontale-scroll ouder en center de kolom
+          let parent: HTMLElement | null = el.parentElement;
+          while (parent && parent !== document.body) {
+            const cs = getComputedStyle(parent);
+            if (parent.scrollWidth > parent.clientWidth &&
+                (cs.overflowX === "auto" || cs.overflowX === "scroll")) {
+              const parentRect = parent.getBoundingClientRect();
+              const elRect = el.getBoundingClientRect();
+              const offsetLeft = elRect.left - parentRect.left + parent.scrollLeft;
+              const doel = offsetLeft - (parentRect.width / 2) + (elRect.width / 2);
+              parent.scrollTo({ left: doel, behavior: "smooth" });
+              break;
+            }
+            parent = parent.parentElement;
+          }
+          // Verticaal in beeld (binnen window)
+          el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        }
       } catch {}
     }
 
