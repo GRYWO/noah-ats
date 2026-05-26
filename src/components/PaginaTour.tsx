@@ -63,7 +63,15 @@ export function PaginaTour({ pad, naam, stappen }: Props) {
     setTimeout(() => setActief(true), 100);
   }
 
-  function onCallback(data: { status?: string; action?: string; type?: string }) {
+  function onCallback(data: { status?: string; action?: string; type?: string; step?: { target?: string } }) {
+    // Bij iedere stap: target horizontaal/verticaal in beeld scrollen
+    // (handig voor de Kanban die horizontaal scrollt)
+    if ((data.type === "step:before" || data.type === "tooltip") && typeof data.step?.target === "string" && data.step.target !== "body") {
+      try {
+        const el = document.querySelector(data.step.target) as HTMLElement | null;
+        el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "center" });
+      } catch {}
+    }
     if (data.status === "finished" || data.status === "skipped") {
       setActief(false);
       // Tijdens actieve rondleiding: navigeer door naar de volgende pagina
