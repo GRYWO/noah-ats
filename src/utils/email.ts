@@ -463,6 +463,36 @@ export async function sendPlaatsingNaarBackoffice({
 }
 
 /**
+ * Stuur nieuwe inloggegevens (na wachtwoord-reset) aan een user.
+ */
+export async function sendInloggegevensOpnieuw({
+  naar,
+  voornaam,
+  email,
+  wachtwoord,
+  rolLabel,
+  bedrijf,
+}: {
+  naar: string;
+  voornaam: string;
+  email: string;
+  wachtwoord: string;
+  rolLabel: string;
+  bedrijf: string;
+}) {
+  const intro = `<p>Hi ${voornaam},</p>
+<p>Je inloggegevens voor Noah ATS zijn opnieuw verstuurd. Je rol bij <b>${bedrijf}</b>: <b>${rolLabel}</b>.</p>
+<p>Hieronder je nieuwe tijdelijke wachtwoord. Wijzig het direct na de eerste keer inloggen via Instellingen.</p>`;
+  const loginBlok = inlogBlok(email, wachtwoord);
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: "Je nieuwe inloggegevens voor Noah ATS",
+    html: brandedLayout({ titel: "Nieuwe inloggegevens", body: `${intro}\n${loginBlok}`, merk: "noah" }),
+  });
+}
+
+/**
  * Reminder naar kandidaat op de wachtlijst om CV toe te sturen.
  */
 export async function sendCvReminderAanWachtende({

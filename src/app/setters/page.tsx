@@ -4,6 +4,7 @@ import { nieuweSetter, verwijderSetter } from "./actions";
 import { DeleteSetterButton } from "./DeleteSetterButton";
 import { InlineVoysEdit } from "./InlineVoysEdit";
 import { CoachToggle } from "./CoachToggle";
+import { ResetWachtwoordKnop } from "./ResetWachtwoordKnop";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_SETTERS } from "@/utils/pagina-tours";
 
@@ -166,7 +167,10 @@ export default async function SettersPage({
                     </td>
                     {isAdmin && (
                       <td className="px-4 py-3 text-right">
-                        {s.id !== user?.id && <DeleteSetterButton id={s.id} naam={`${s.voornaam} ${s.achternaam}`} />}
+                        <div className="inline-flex items-center gap-2">
+                          {s.id !== user?.id && <ResetWachtwoordKnop userId={s.id} naam={`${s.voornaam} ${s.achternaam}`} />}
+                          {s.id !== user?.id && <DeleteSetterButton id={s.id} naam={`${s.voornaam} ${s.achternaam}`} />}
+                        </div>
                       </td>
                     )}
                   </tr>
