@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { sendInloggegevensOpnieuw } from "@/utils/email";
+import { getSetterFrom } from "@/utils/email-helpers";
 
 function genereerWachtwoord(lengte = 12) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -66,6 +67,7 @@ export async function resetUserWachtwoord(formData: FormData): Promise<{ ok?: bo
     : "Setter";
 
   try {
+    const from = await getSetterFrom(huidigeUser.id);
     await sendInloggegevensOpnieuw({
       naar: authUser.user.email,
       voornaam: doelProfile.voornaam ?? "",
@@ -73,6 +75,7 @@ export async function resetUserWachtwoord(formData: FormData): Promise<{ ok?: bo
       wachtwoord: nieuwWachtwoord,
       rolLabel,
       bedrijf,
+      from,
     });
   } catch (e) {
     return { error: "Wachtwoord gereset, maar mail mislukt: " + (e as Error).message };

@@ -472,6 +472,7 @@ export async function sendInloggegevensOpnieuw({
   wachtwoord,
   rolLabel,
   bedrijf,
+  from,
 }: {
   naar: string;
   voornaam: string;
@@ -479,17 +480,22 @@ export async function sendInloggegevensOpnieuw({
   wachtwoord: string;
   rolLabel: string;
   bedrijf: string;
+  from?: string;
 }) {
   const intro = `<p>Hi ${voornaam},</p>
 <p>Je inloggegevens voor Noah ATS zijn opnieuw verstuurd. Je rol bij <b>${bedrijf}</b>: <b>${rolLabel}</b>.</p>
 <p>Hieronder je nieuwe tijdelijke wachtwoord. Wijzig het direct na de eerste keer inloggen via Instellingen.</p>`;
   const loginBlok = inlogBlok(email, wachtwoord);
-  return resend.emails.send({
-    from: FROM,
+  const result = await resend.emails.send({
+    from: from ?? FROM,
     to: naar,
     subject: "Je nieuwe inloggegevens voor Noah ATS",
     html: brandedLayout({ titel: "Nieuwe inloggegevens", body: `${intro}\n${loginBlok}`, merk: "noah" }),
   });
+  if (result.error) {
+    throw new Error(`Resend afgewezen: ${result.error.message}`);
+  }
+  return result;
 }
 
 /**
@@ -795,12 +801,14 @@ export async function sendWelkomstmailBureau({
   email,
   wachtwoord,
   bedrijf,
+  from,
 }: {
   naar: string;
   voornaam: string;
   email: string;
   wachtwoord: string;
   bedrijf: string;
+  from?: string;
 }) {
   const intro = await renderMailTemplate("welkom_bureau", { voornaam, bedrijf });
   const loginBlok = inlogBlok(email, wachtwoord);
@@ -823,12 +831,16 @@ export async function sendWelkomstmailBureau({
 </table>`;
 
   const body = `${intro}\n${loginBlok}\n${dashboardKnop}\n${eersteStappen}`;
-  return resend.emails.send({
-    from: FROM,
+  const result = await resend.emails.send({
+    from: from ?? FROM,
     to: naar,
     subject: `Welkom bij Noah ATS — ${bedrijf}`,
     html: brandedLayout({ titel: "Welkom bij Noah ATS", body, merk: "noah" }),
   });
+  if (result.error) {
+    throw new Error(`Resend afgewezen: ${result.error.message}`);
+  }
+  return result;
 }
 
 function inlogBlok(email: string, wachtwoord: string) {

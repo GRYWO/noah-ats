@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { sendWelkomstmailBureau } from "@/utils/email";
+import { getSetterFrom } from "@/utils/email-helpers";
 
 function genereerWachtwoord(lengte = 12) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -86,12 +87,14 @@ export async function stuurInloggegevensBureau(formData: FormData): Promise<{ ok
 
   // Welkomstmail (= inloggegevens + dashboard-knop + 4 stappen)
   try {
+    const from = await getSetterFrom(user.id);
     await sendWelkomstmailBureau({
       naar: tenant.contact_email,
       voornaam,
       email: tenant.contact_email,
       wachtwoord,
       bedrijf,
+      from,
     });
   } catch (e) {
     return { error: "Wachtwoord ingesteld, maar mail mislukt: " + (e as Error).message };
