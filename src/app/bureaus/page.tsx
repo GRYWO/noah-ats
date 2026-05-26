@@ -6,6 +6,7 @@ import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
 import { nieuwBureau } from "./actions";
 import { BetaaldSelect } from "./BetaaldSelect";
+import { ResetWachtwoordKnop } from "@/app/setters/ResetWachtwoordKnop";
 
 export default async function BureausPage({
   searchParams,
@@ -26,6 +27,26 @@ export default async function BureausPage({
     .from("tenants")
     .select("*")
     .order("created_at", { ascending: false });
+
+  // Per bureau de hoofd-admin (oudste admin van die tenant) ophalen voor reset-knop
+  const tenantIds = (bureaus ?? []).map(b => b.id);
+  const { data: admins } = tenantIds.length > 0
+    ? await admin
+        .from("profiles")
+        .select("id, tenant_id, voornaam, achternaam, created_at, rol")
+        .in("tenant_id", tenantIds)
+        .eq("rol", "admin")
+        .order("created_at", { ascending: true })
+    : { data: [] };
+  const hoofdAdminPerTenant = new Map<string, { id: string; naam: string }>();
+  for (const a of admins ?? []) {
+    if (!hoofdAdminPerTenant.has(a.tenant_id)) {
+      hoofdAdminPerTenant.set(a.tenant_id, {
+        id: a.id,
+        naam: `${a.voornaam ?? ""} ${a.achternaam ?? ""}`.trim() || "Admin",
+      });
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -203,6 +224,7 @@ export default async function BureausPage({
                   <th className="text-left px-4 py-3 font-semibold">IBAN</th>
                   <th className="text-left px-4 py-3 font-semibold">Betaling</th>
                   <th className="text-left px-4 py-3 font-semibold">Status</th>
+                  <th className="text-right px-4 py-3 font-semibold">Acties</th>
                 </tr>
               </thead>
               <tbody>
@@ -233,6 +255,14 @@ export default async function BureausPage({
                           {b.status}
                         </span>
                       </Link>
+                    </td>
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      {(() => {
+                        const hoofdAdmin = hoofdAdminPerTenant.get(b.id);
+                        return hoofdAdmin
+                          ? <ResetWachtwoordKnop userId={hoofdAdmin.id} naam={hoofdAdmin.naam} />
+                          : <span className="text-xs text-gray-400">Geen admin</span>;
+                      })()}
                     </td>
                   </tr>
                 ))}
