@@ -204,10 +204,20 @@ export function NotificatieBel({ userId }: { userId: string }) {
               ) : items.map(n => {
                 const kanReageren = !!n.van_user_id;
                 const isOpen = reageerOp === n.id;
+                const isAlert = n.type === "reactie_alert";
+                const isPositief = n.type === "reactie_positief";
+                const achtergrond = n.gelezen
+                  ? (isAlert ? "bg-red-50/40" : isPositief ? "bg-emerald-50/40" : "")
+                  : (isAlert ? "bg-red-50" : isPositief ? "bg-emerald-50" : "bg-blue-50/50");
+                const accentRand = isAlert
+                  ? "border-l-4 border-l-red-500"
+                  : isPositief
+                  ? "border-l-4 border-l-emerald-500"
+                  : "";
                 return (
                   <div
                     key={n.id}
-                    className={`border-b border-gray-100 ${n.gelezen ? "" : "bg-blue-50/50"}`}
+                    className={`border-b border-gray-100 ${accentRand} ${achtergrond}`}
                   >
                     <div className="px-4 py-3 flex items-start gap-2">
                       {!n.gelezen && <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />}

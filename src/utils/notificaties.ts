@@ -11,6 +11,8 @@ export type NotificatieType =
   | "cv_goedgekeurd"
   | "help_vraag"
   | "help_probleem"
+  | "reactie_positief"
+  | "reactie_alert"
   | "info";
 
 export async function maakNotificatie(opts: {

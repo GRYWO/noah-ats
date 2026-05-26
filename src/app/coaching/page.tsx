@@ -8,6 +8,8 @@ import { CoachingKnop } from "./CoachingKnop";
 import { CoachingAanvraagItem } from "./CoachingAanvraagItem";
 import { DoelenSectie, type Doelen, type Voortgang } from "./DoelenSectie";
 import { RecordsSectie, type Records } from "./RecordsSectie";
+import { AdminFilterBar } from "./AdminFilterBar";
+import { SetterReactieKnop } from "./SetterReactieKnop";
 
 function vandaagAmsterdam(): string {
   const nu = new Date();
@@ -65,9 +67,9 @@ type EodLight = {
 export default async function CoachingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periode?: string; ok?: string; error?: string }>;
+  searchParams: Promise<{ periode?: string; ok?: string; error?: string; setter?: string; filter?: string }>;
 }) {
-  const { periode = "week", ok, error } = await searchParams;
+  const { periode = "week", ok, error, setter: setterFilter, filter } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -257,6 +259,102 @@ export default async function CoachingPage({
     .sort((a, b) => b.plaatsingen - a.plaatsingen || b.bedrag - a.bedrag)
     .slice(0, 10);
 
+  // Filter-data voor admin/coach
+  const gefilterdeSetterId = (isAdmin || isCoach) ? (setterFilter || null) : null;
+  const gefilterdeStatus = (isAdmin || isCoach) ? (filter || null) : null;
+  let gefilterdEod: EodLight[] = [];
+  let gefilterdeSetterStats: SetterStats | null = null;
+  let gefilterdeSetterDoelen: Doelen | null = null;
+  let gefilterdeSetterRecords: Records | null = null;
+  if (gefilterdeSetterId) {
+    // Volledig overzicht van 1 setter
+    let q = admin
+      .from("eod_rapporten")
+      .select("rapport_datum, doel_vandaag, doel_morgen, doel_behaald, aantal_calls, aantal_voicemails, aantal_voorgesteld, aantal_afspraken, aantal_plaatsingen, obstakel, afwijzings_reden, energie_focus, morgen_anders")
+      .eq("tenant_id", tenantId)
+      .eq("setter_id", gefilterdeSetterId)
+      .order("rapport_datum", { ascending: false })
+      .limit(60);
+    if (gefilterdeStatus === "behaald") q = q.eq("doel_behaald", true);
+    else if (gefilterdeStatus === "niet_behaald") q = q.eq("doel_behaald", false);
+    const { data: ed } = await q;
+    gefilterdEod = (ed ?? []) as EodLight[];
+
+    // Doelen van die setter
+    const { data: sp } = await admin
+      .from("profiles")
+      .select("voornaam, achternaam, doel_calls_dag, doel_voorgesteld_week, doel_afspraken_week, doel_plaatsingen_maand, doel_omzet_maand")
+      .eq("id", gefilterdeSetterId)
+      .single();
+    if (sp) {
+      gefilterdeSetterDoelen = {
+        doel_calls_dag:         sp.doel_calls_dag         ?? 50,
+        doel_voorgesteld_week:  sp.doel_voorgesteld_week  ?? 5,
+        doel_afspraken_week:    sp.doel_afspraken_week    ?? 3,
+        doel_plaatsingen_maand: sp.doel_plaatsingen_maand ?? 2,
+        doel_omzet_maand:       Number(sp.doel_omzet_maand ?? 0),
+      };
+    }
+
+    // Stats van die setter over geselecteerde periode (uit reeds geladen stats)
+    gefilterdeSetterStats = stats[gefilterdeSetterId] ?? null;
+
+    // Records voor die setter (lifetime)
+    const { data: alleEodSetter } = await admin
+      .from("eod_rapporten")
+      .select("rapport_datum, doel_behaald, aantal_calls, aantal_afspraken")
+      .eq("setter_id", gefilterdeSetterId);
+    let bC = { aantal: 0, datum: null as string | null };
+    let bA = { aantal: 0, datum: null as string | null };
+    const eodMap = new Map<string, boolean>();
+    for (const r of alleEodSetter ?? []) {
+      const c = r.aantal_calls ?? 0;
+      if (c > bC.aantal) bC = { aantal: c, datum: r.rapport_datum };
+      const a = r.aantal_afspraken ?? 0;
+      if (a > bA.aantal) bA = { aantal: a, datum: r.rapport_datum };
+      eodMap.set(r.rapport_datum, r.doel_behaald === true);
+    }
+    let streak = 0;
+    const cur = new Date();
+    for (let i = 0; i < 365; i++) {
+      const dag = cur.getDay();
+      if (dag === 0 || dag === 6) { cur.setDate(cur.getDate() - 1); continue; }
+      const iso = cur.toISOString().slice(0, 10);
+      if (i === 0 && !eodMap.has(iso)) { cur.setDate(cur.getDate() - 1); continue; }
+      if (eodMap.get(iso) === true) {
+        streak++;
+        cur.setDate(cur.getDate() - 1);
+      } else break;
+    }
+    const { data: setterPlaatsingen } = await admin
+      .from("plaatsingen")
+      .select("created_at, tarief_bedrag")
+      .eq("aangemeld_door", gefilterdeSetterId)
+      .is("afgekeurd_op", null);
+    const perMaand = new Map<string, { aantal: number; bedrag: number }>();
+    for (const p of setterPlaatsingen ?? []) {
+      const d = new Date(p.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const x = perMaand.get(key) ?? { aantal: 0, bedrag: 0 };
+      x.aantal += 1;
+      x.bedrag += Number(p.tarief_bedrag ?? 0);
+      perMaand.set(key, x);
+    }
+    let bP = { aantal: 0, maand: null as string | null };
+    let bO = { bedrag: 0, maand: null as string | null };
+    for (const [maand, x] of perMaand) {
+      if (x.aantal > bP.aantal) bP = { aantal: x.aantal, maand };
+      if (x.bedrag > bO.bedrag) bO = { bedrag: x.bedrag, maand };
+    }
+    gefilterdeSetterRecords = {
+      beste_calls_dag: bC,
+      beste_afspraken_dag: bA,
+      beste_plaatsingen_maand: bP,
+      beste_omzet_maand: bO,
+      langste_streak: streak,
+    };
+  }
+
   // Niet-behaalde doelen vandaag (voor admin/coach banner)
   let nietBehaaldVandaag: EodLight[] = [];
   if (isAdmin || isCoach) {
@@ -303,6 +401,59 @@ export default async function CoachingPage({
         {ok && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
           {ok === "eod" ? "EOD-rapport opgeslagen." : ok === "coaching_aanvraag" ? "Aanvraag verzonden naar Pepijn." : ok === "coaching_reactie" ? "Reactie verzonden." : ok === "doelen" ? "Doelen bijgewerkt." : "Opgeslagen."}
         </div>}
+
+        {/* Admin/coach: filter-bar */}
+        {(isAdmin || isCoach) && (
+          <AdminFilterBar
+            setters={(setters ?? []).map(s => ({ id: s.id, voornaam: s.voornaam, achternaam: s.achternaam }))}
+            huidigeSetter={gefilterdeSetterId}
+            huidigeFilter={gefilterdeStatus}
+          />
+        )}
+
+        {/* Setter-detailweergave wanneer geselecteerd */}
+        {(isAdmin || isCoach) && gefilterdeSetterId && gefilterdeSetterStats && (
+          <section className="mb-6 space-y-4">
+            <div className="bg-white rounded-xl shadow-sm p-5 flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <h2 className="font-bold text-gray-800 text-lg">{gefilterdeSetterStats.naam}</h2>
+                <p className="text-xs text-gray-500">Detailweergave</p>
+              </div>
+              <SetterReactieKnop setterId={gefilterdeSetterId} setterNaam={gefilterdeSetterStats.naam} />
+            </div>
+            {gefilterdeSetterDoelen && gefilterdeSetterRecords && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <RecordsSectie records={gefilterdeSetterRecords} />
+                <div className="bg-white rounded-xl shadow-sm p-5">
+                  <h3 className="font-bold text-gray-800 mb-3 pb-2 border-b">Periode-stats ({periodeLabel.toLowerCase()})</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <Stat label="Calls"        v={gefilterdeSetterStats.calls} />
+                    <Stat label="Voicemails"   v={gefilterdeSetterStats.voicemails} />
+                    <Stat label="Voorgesteld"  v={gefilterdeSetterStats.voorgesteld} />
+                    <Stat label="Afspraken"    v={gefilterdeSetterStats.afspraken} />
+                    <Stat label="Plaatsingen"  v={gefilterdeSetterStats.plaatsingen} accent />
+                    <Stat label="Omzet (€)"    v={Math.round(gefilterdeSetterStats.bedrag).toLocaleString("nl-NL")} accent />
+                  </div>
+                  <div className="mt-3 pt-3 border-t text-xs text-gray-500">
+                    Doelen: {gefilterdeSetterDoelen.doel_calls_dag} calls/dag · {gefilterdeSetterDoelen.doel_plaatsingen_maand} plaatsingen/maand
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b font-bold text-gray-800 text-sm">
+                EOD-rapporten {gefilterdeStatus === "behaald" ? "(alleen behaald)" : gefilterdeStatus === "niet_behaald" ? "(alleen niet behaald)" : ""}
+              </div>
+              {gefilterdEod.length === 0 ? (
+                <p className="p-6 text-sm text-gray-500 text-center">Geen rapporten met deze filter.</p>
+              ) : (
+                <div className="divide-y">
+                  {gefilterdEod.map(r => <EodHistorieRow key={r.rapport_datum} r={r} />)}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">{error}</div>}
 
         {/* Niet-behaalde doelen vandaag — admin/coach */}
@@ -439,6 +590,15 @@ export default async function CoachingPage({
   );
 }
 
+function Stat({ label, v, accent = false }: { label: string; v: number | string; accent?: boolean }) {
+  return (
+    <div className={`rounded-lg p-3 ${accent ? "bg-amber-50" : "bg-gray-50"}`}>
+      <div className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{label}</div>
+      <div className={`text-lg font-bold ${accent ? "text-amber-800" : "text-gray-800"}`}>{v}</div>
+    </div>
+  );
+}
+
 function EodHistorieRow({ r }: { r: EodLight }) {
   const datum = new Date(r.rapport_datum).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
   return (
@@ -513,6 +673,7 @@ async function AdminVandaagOverzicht({ tenantId, vandaag }: { tenantId: string; 
                 <span><b>{r.aantal_plaatsingen ?? 0}</b> plaatsingen</span>
               </div>
             )}
+            <SetterReactieKnop setterId={s.id} setterNaam={naam} />
           </div>
         );
       })}

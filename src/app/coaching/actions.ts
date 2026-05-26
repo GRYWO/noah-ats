@@ -195,6 +195,59 @@ export async function updateDoelen(formData: FormData) {
   redirect("/coaching?ok=doelen");
 }
 
+export async function stuurSetterReactie(formData: FormData) {
+  const setterId = (formData.get("setter_id") as string) ?? "";
+  const bericht = ((formData.get("bericht") as string) ?? "").trim();
+  const toon = ((formData.get("toon") as string) ?? "positief").trim();
+  if (!setterId || !bericht) return { error: "Setter en bericht verplicht" };
+  if (toon !== "positief" && toon !== "alert") return { error: "Ongeldige toon" };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Niet ingelogd" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id, rol, is_coach, voornaam, achternaam")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) return { error: "Geen tenant" };
+  if (profile.rol !== "admin" && !profile.is_coach) {
+    return { error: "Alleen admin of coach mag reactie sturen" };
+  }
+
+  const admin = createAdminClient();
+  const { data: target } = await admin
+    .from("profiles")
+    .select("tenant_id, voornaam, achternaam")
+    .eq("id", setterId)
+    .single();
+  if (!target || target.tenant_id !== profile.tenant_id) return { error: "Setter niet in jouw tenant" };
+
+  const afzender = `${profile.voornaam ?? ""} ${profile.achternaam ?? ""}`.trim() || "Coach";
+  const titel = toon === "alert"
+    ? `🔴 Aandacht van ${afzender}`
+    : `🟢 Compliment van ${afzender}`;
+
+  try {
+    await maakNotificatie({
+      tenantId: profile.tenant_id,
+      userId: setterId,
+      vanUserId: user.id,
+      type: toon === "alert" ? "reactie_alert" : "reactie_positief",
+      titel,
+      bericht,
+      linkUrl: "/coaching",
+    });
+  } catch (e) {
+    console.error("Setter-reactie notificatie mislukt:", e);
+    return { error: "Versturen mislukt" };
+  }
+
+  revalidatePath("/coaching");
+  return { ok: true };
+}
+
 export async function reageerCoaching(formData: FormData) {
   const id = (formData.get("id") as string) ?? "";
   const reactie = ((formData.get("reactie") as string) ?? "").trim() || null;
