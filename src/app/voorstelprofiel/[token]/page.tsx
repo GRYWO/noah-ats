@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { MapPin, GraduationCap, Briefcase, Languages, Car, Calendar, Wallet, Clock, FileCheck } from "lucide-react";
+import { MapPin, Briefcase, Languages, Car, Calendar, Wallet, Clock, FileCheck, User } from "lucide-react";
+import { GrywoLogo } from "@/components/GrywoLogo";
 
 export const dynamic = "force-dynamic";
 
 const GRYWO_PAARS = "#333399";
-const GRYWO_GEEL = "#ffd84d";
 
 export default async function VoorstelprofielPage({
   params,
@@ -42,6 +42,29 @@ export default async function VoorstelprofielPage({
     .maybeSingle();
   const eerstvolgendeKennismaking = aankomendVoorstel?.kennismaking_op ?? null;
 
+  // Setter-email uit meest recente voorstel — voor footer "vragen?" link
+  const { data: laatsteVoorstel } = await admin
+    .from("voorstellen")
+    .select("setter_id")
+    .eq("kandidaat_id", k.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  let setterContact: { naam: string; email: string } | null = null;
+  if (laatsteVoorstel?.setter_id) {
+    const { data: setterProfiel } = await admin
+      .from("profiles")
+      .select("voornaam, achternaam, mail_adres")
+      .eq("id", laatsteVoorstel.setter_id)
+      .single();
+    if (setterProfiel?.mail_adres) {
+      setterContact = {
+        naam: `${setterProfiel.voornaam ?? ""} ${setterProfiel.achternaam ?? ""}`.trim() || "je contactpersoon",
+        email: setterProfiel.mail_adres,
+      };
+    }
+  }
+
   // Belangrijk: opdrachtgever mag de kandidaat niet zelf kunnen benaderen.
   // Daarom tonen we alléén de voornaam — geen achternaam, geen email, geen telefoon.
   const naam = (k.voornaam ?? "").trim();
@@ -55,10 +78,7 @@ export default async function VoorstelprofielPage({
         {/* Header met GRYWO-branding */}
         <div className="bg-white rounded-2xl shadow-md overflow-hidden mb-6">
           <div className="px-8 py-6 flex items-center justify-between" style={{ backgroundColor: GRYWO_PAARS }}>
-            <div className="flex items-baseline">
-              <span className="text-white text-4xl font-black tracking-tighter">GRYWO</span>
-              <span className="ml-1 w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: GRYWO_GEEL }}></span>
-            </div>
+            <GrywoLogo size="lg" />
             <div className="text-xs text-white/70 uppercase tracking-wider">Kandidaatprofiel</div>
           </div>
 
@@ -70,22 +90,22 @@ export default async function VoorstelprofielPage({
               {initials || "??"}
             </div>
             <div className="flex-1 min-w-0">
+              {k.open_voor && (
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1 inline-flex items-center gap-1">
+                  <Briefcase size={12} /> {k.open_voor}
+                </div>
+              )}
               <h1 className="text-3xl font-bold text-gray-900">{naam || "Onbekende kandidaat"}</h1>
               <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-600">
-                {k.leeftijd && (
-                  <span className="inline-flex items-center gap-1">
-                    <Calendar size={14} /> {k.leeftijd} jaar
-                  </span>
-                )}
                 {k.woonplaats && (
                   <span className="inline-flex items-center gap-1">
                     <MapPin size={14} /> {k.woonplaats}
                     {k.max_reisafstand_km ? ` (max ${k.max_reisafstand_km} km)` : ""}
                   </span>
                 )}
-                {k.opleiding && (
+                {k.leeftijd && (
                   <span className="inline-flex items-center gap-1">
-                    <GraduationCap size={14} /> {k.opleiding}
+                    <Calendar size={14} /> {k.leeftijd} jaar
                   </span>
                 )}
               </div>
@@ -179,7 +199,15 @@ export default async function VoorstelprofielPage({
 
         {/* Footer */}
         <div className="text-center text-xs text-gray-500 py-4">
-          Voorgesteld door <b style={{ color: GRYWO_PAARS }}>GRYWO</b> · Vragen? <a href="mailto:noah@grywo.nl" style={{ color: GRYWO_PAARS }}>noah@grywo.nl</a>
+          Voorgesteld door <b style={{ color: GRYWO_PAARS }}>GRYWO</b>
+          {setterContact && (
+            <>
+              {" · Vragen? Mail "}
+              <a href={`mailto:${setterContact.email}`} style={{ color: GRYWO_PAARS }}>
+                <b>{setterContact.naam}</b> ({setterContact.email})
+              </a>
+            </>
+          )}
         </div>
       </div>
     </main>
