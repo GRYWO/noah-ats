@@ -3,6 +3,8 @@ import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { ExternalLink, MapPin, Briefcase, Ban } from "lucide-react";
 import { DropZone } from "./DropZone";
+import { PaginaTour } from "@/components/PaginaTour";
+import { TOUR_JOBDIGGER } from "@/utils/pagina-tours";
 
 const JOBDIGGER_URL = "https://jobdigger.nl/auth/login";
 
@@ -40,6 +42,7 @@ export default async function JobdiggerPage({
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="jobdigger" />
+      <PaginaTour pad="/jobdigger" naam="Jobdigger" stappen={TOUR_JOBDIGGER} />
 
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">

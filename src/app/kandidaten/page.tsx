@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
+import { PaginaTour } from "@/components/PaginaTour";
+import { TOUR_KANDIDATEN } from "@/utils/pagina-tours";
 import { WachtendOpCvSectie } from "./nieuw/WachtendOpCv";
 import { ruimOudeWachtenden } from "./nieuw/wachtend-actions";
 
@@ -47,6 +49,7 @@ export default async function KandidatenPage({
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="kandidaten" />
+      <PaginaTour pad="/kandidaten" naam="Kandidaten" stappen={TOUR_KANDIDATEN} />
 
       <div className="p-8 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">

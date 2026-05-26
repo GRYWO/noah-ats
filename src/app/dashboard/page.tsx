@@ -4,6 +4,8 @@ import { TopBar } from "@/components/TopBar";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { SetterPerformance } from "./SetterPerformance";
 import { OnboardingTour, TOUR_VERSIE } from "@/components/OnboardingTour";
+import { PaginaTour } from "@/components/PaginaTour";
+import { TOUR_DASHBOARD } from "@/utils/pagina-tours";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
 function geldigePeriode(p: string | undefined): Periode {
@@ -74,6 +76,7 @@ export default async function Dashboard({
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="dashboard" />
+      <PaginaTour pad="/dashboard" naam="Dashboard" stappen={TOUR_DASHBOARD} />
 
       <div className="p-8 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">

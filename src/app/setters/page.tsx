@@ -4,6 +4,8 @@ import { nieuweSetter, verwijderSetter } from "./actions";
 import { DeleteSetterButton } from "./DeleteSetterButton";
 import { InlineVoysEdit } from "./InlineVoysEdit";
 import { CoachToggle } from "./CoachToggle";
+import { PaginaTour } from "@/components/PaginaTour";
+import { TOUR_SETTERS } from "@/utils/pagina-tours";
 
 const ROL_LABELS: Record<string, string> = {
   admin: "Admin",
@@ -42,6 +44,7 @@ export default async function SettersPage({
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="setters" />
+      <PaginaTour pad="/setters" naam="Setters" stappen={TOUR_SETTERS} />
 
       <div className="p-8 max-w-6xl mx-auto">
         <div className="mb-6">

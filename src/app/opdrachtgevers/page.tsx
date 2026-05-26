@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { nieuweOpdrachtgever } from "./actions";
+import { PaginaTour } from "@/components/PaginaTour";
+import { TOUR_OPDRACHTGEVERS } from "@/utils/pagina-tours";
 
 const STATUS_KLEUREN: Record<string, string> = {
   lead:      "bg-blue-100 text-blue-800",
@@ -45,6 +47,7 @@ export default async function OpdrachtgeversPage({
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="opdrachtgevers" />
+      <PaginaTour pad="/opdrachtgevers" naam="CRM" stappen={TOUR_OPDRACHTGEVERS} />
 
       <div className="p-8 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">

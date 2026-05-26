@@ -10,6 +10,8 @@ import { DoelenSectie, type Doelen, type Voortgang } from "./DoelenSectie";
 import { RecordsSectie, type Records } from "./RecordsSectie";
 import { AdminFilterBar } from "./AdminFilterBar";
 import { SetterReactieKnop } from "./SetterReactieKnop";
+import { PaginaTour } from "@/components/PaginaTour";
+import { TOUR_COACHING } from "@/utils/pagina-tours";
 
 function vandaagAmsterdam(): string {
   const nu = new Date();
@@ -397,6 +399,7 @@ export default async function CoachingPage({
           </div>
           {isSetter && <CoachingKnop />}
         </div>
+        <PaginaTour pad="/coaching" naam="Coaching" stappen={TOUR_COACHING} />
 
         {ok && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
           {ok === "eod" ? "EOD-rapport opgeslagen." : ok === "coaching_aanvraag" ? "Aanvraag verzonden naar Pepijn." : ok === "coaching_reactie" ? "Reactie verzonden." : ok === "doelen" ? "Doelen bijgewerkt." : "Opgeslagen."}
@@ -480,14 +483,14 @@ export default async function CoachingPage({
         {/* Setter: records + doelen */}
         {isSetter && eigenRecords && eigenDoelen && eigenVoortgang && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <DoelenSectie doelen={eigenDoelen} voortgang={eigenVoortgang} />
-            <RecordsSectie records={eigenRecords} />
+            <div data-tour="doelen-kaart"><DoelenSectie doelen={eigenDoelen} voortgang={eigenVoortgang} /></div>
+            <div data-tour="records-kaart"><RecordsSectie records={eigenRecords} /></div>
           </div>
         )}
 
         {/* Setter: eigen EOD-form */}
         {isSetter && (
-          <section className="mb-8">
+          <section className="mb-8" data-tour="eod-form">
             <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-3 inline-flex items-center gap-2">
               <ListTodo size={14} /> EOD-rapport vandaag {eigenEodVandaag && <span className="text-emerald-600 normal-case">— al ingevuld, je kunt bijwerken</span>}
             </h2>

@@ -1,6 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { KanbanBoard } from "./KanbanBoard";
+import { PaginaTour } from "@/components/PaginaTour";
+import { TOUR_KANBAN } from "@/utils/pagina-tours";
 
 export default async function KanbanPage() {
   const supabase = await createClient();
@@ -14,6 +16,7 @@ export default async function KanbanPage() {
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="kanban" />
+      <PaginaTour pad="/kanban" naam="Kanban" stappen={TOUR_KANBAN} />
 
       <div className="p-6">
         <div className="mb-4">

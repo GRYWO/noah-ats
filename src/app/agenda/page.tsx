@@ -3,6 +3,8 @@ import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { Calendar, Video, MapPin, Trash2, Users, Briefcase, PartyPopper } from "lucide-react";
 import { maakAgendaEvent, verwijderAgendaEvent } from "./actions";
+import { PaginaTour } from "@/components/PaginaTour";
+import { TOUR_AGENDA } from "@/utils/pagina-tours";
 
 type AgendaItem = {
   id: string;
@@ -174,6 +176,7 @@ export default async function AgendaPage({
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="agenda" />
+      <PaginaTour pad="/agenda" naam="Agenda" stappen={TOUR_AGENDA} />
 
       <div className="p-8 max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">

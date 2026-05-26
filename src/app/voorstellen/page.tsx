@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { Mail, MailOpen, Check, X, Clock } from "lucide-react";
+import { PaginaTour } from "@/components/PaginaTour";
+import { TOUR_VOORSTELLEN } from "@/utils/pagina-tours";
 
 const STATUS_LABELS: Record<string, string> = {
   verzonden: "Wachten op reactie",
@@ -110,6 +112,7 @@ export default async function VoorstellenPage({
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="voorstellen" />
+      <PaginaTour pad="/voorstellen" naam="Voorstellen" stappen={TOUR_VOORSTELLEN} />
 
       <div className="p-8 max-w-7xl mx-auto">
         <div className="mb-6">
