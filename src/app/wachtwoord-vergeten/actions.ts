@@ -50,6 +50,8 @@ export async function vraagNieuwWachtwoordAan(formData: FormData) {
         : profile?.rol === "setter" ? "Setter"
         : "Gebruiker";
 
+      const from = "Noah <noreply@grywo.nl>";
+      console.log("[wachtwoord-vergeten] versturen vanaf:", from, "naar:", email);
       await sendInloggegevensOpnieuw({
         naar: email,
         voornaam: profile?.voornaam ?? "",
@@ -57,12 +59,15 @@ export async function vraagNieuwWachtwoordAan(formData: FormData) {
         wachtwoord: nieuwWachtwoord,
         rolLabel,
         bedrijf,
+        from,
       });
+      console.log("[wachtwoord-vergeten] mail verzonden ok");
+    } else {
+      console.log("[wachtwoord-vergeten] email niet bekend:", email);
     }
-    // Geen response-verschil bestaand/niet-bestaand om enumeration te voorkomen
   } catch (e) {
-    console.error("[wachtwoord-vergeten] mislukt:", e);
-    // Toch met success doorgaan om geen info te lekken
+    console.error("[wachtwoord-vergeten] mislukt:", (e as Error).message);
+    redirect(`/wachtwoord-vergeten?error=${encodeURIComponent("Verzenden mislukt: " + (e as Error).message)}`);
   }
 
   redirect("/wachtwoord-vergeten?ok=1");
