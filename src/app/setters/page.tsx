@@ -41,8 +41,8 @@ export default async function SettersPage({
     .eq("id", user!.id)
     .single();
 
-  const isAdmin = myProfile?.rol === "admin";
   const isSuperAdmin = isSuperAdminEmail(user?.email);
+  const isAdmin = myProfile?.rol === "admin" || isSuperAdmin;
   // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken
   const magAlleRollen = isSuperAdmin;
 

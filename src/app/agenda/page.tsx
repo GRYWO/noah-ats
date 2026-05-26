@@ -5,6 +5,7 @@ import { Calendar, Video, MapPin, Trash2, Users, Briefcase, PartyPopper } from "
 import { maakAgendaEvent, verwijderAgendaEvent } from "./actions";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_AGENDA } from "@/utils/pagina-tours";
+import { isSuperAdminEmail } from "@/utils/auth";
 
 type AgendaItem = {
   id: string;
@@ -55,7 +56,7 @@ export default async function AgendaPage({
     .single();
   if (!profile?.tenant_id) return null;
 
-  const isAdmin = profile.rol === "admin";
+  const isAdmin = profile.rol === "admin" || isSuperAdminEmail(user.email);
   const rol = profile.rol;
   const tenantId = profile.tenant_id;
 
