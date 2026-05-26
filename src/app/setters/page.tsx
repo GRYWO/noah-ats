@@ -53,7 +53,7 @@ export default async function SettersPage({
 
       <div className="p-8 max-w-6xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Setters & users</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Users</h1>
           <p className="text-gray-500 text-sm mt-1">{setters?.length ?? 0} users in dit bureau</p>
         </div>
 
