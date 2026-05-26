@@ -55,19 +55,28 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, log
   }, [open]);
 
   const items: Item[] = [
+    // Sectie 1: Overzicht
     { key: "dashboard",    href: "/dashboard",    label: "Dashboard",   Icon: LayoutDashboard, sectie: 1 },
     ...(isSuperAdmin ? [{ key: "bureaus", href: "/bureaus", label: "Bureaus", Icon: Building2, sectie: 1 } as Item] : []),
-    { key: "kandidaten",   href: "/kandidaten",   label: "Kandidaten",  Icon: Users,           sectie: 2 },
-    { key: "kanban",       href: "/kanban",       label: "Kanban",      Icon: KanbanSquare,    sectie: 2 },
-    { key: "agenda",       href: "/agenda",       label: "Agenda",      Icon: Calendar,        sectie: 2 },
-    { key: "voorstellen", href: "/voorstellen", label: "Voorstellen", Icon: Send, sectie: 2 } as Item,
-    { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",     Icon: Contact,         sectie: 2 },
-    ...(!isSetter ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 2 } as Item] : []),
-    { key: "jobdigger", href: "/jobdigger", label: "Jobdigger", Icon: PhoneCall, sectie: 2 } as Item,
-    { key: "inbox",        href: "/inbox",        label: "E-mail",      Icon: Mail,            sectie: 3 },
-    ...(!isSetter ? [{ key: "setters", href: "/setters", label: "Setters", Icon: UserCog, sectie: 4 } as Item] : []),
-    { key: "coaching", href: "/coaching", label: "Coaching", Icon: SparklesIcon, sectie: 4 } as Item,
-    { key: "instellingen", href: "/instellingen", label: "Instellingen", Icon: Settings,       sectie: 4 },
+
+    // Sectie 2: Werkstroom — recruitment
+    { key: "kandidaten",     href: "/kandidaten",     label: "Kandidaten",   Icon: Users,         sectie: 2 },
+    { key: "kanban",         href: "/kanban",         label: "Kanban",       Icon: KanbanSquare,  sectie: 2 },
+    { key: "voorstellen",    href: "/voorstellen",    label: "Voorstellen",  Icon: Send,          sectie: 2 } as Item,
+    { key: "agenda",         href: "/agenda",         label: "Agenda",       Icon: Calendar,      sectie: 2 },
+
+    // Sectie 3: Relaties & tools
+    { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",          Icon: Contact,       sectie: 3 },
+    { key: "jobdigger",      href: "/jobdigger",      label: "Jobdigger",    Icon: PhoneCall,     sectie: 3 } as Item,
+    ...(!isSetter ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 3 } as Item] : []),
+
+    // Sectie 4: Communicatie
+    { key: "inbox",          href: "/inbox",          label: "E-mail",       Icon: Mail,          sectie: 4 },
+
+    // Sectie 5: Team & beheer
+    { key: "coaching",       href: "/coaching",       label: "Coaching",     Icon: SparklesIcon,  sectie: 5 } as Item,
+    ...(!isSetter ? [{ key: "setters", href: "/setters", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
+    { key: "instellingen",   href: "/instellingen",   label: "Instellingen", Icon: Settings,      sectie: 5 },
   ];
 
   // Groepeer per sectie voor separators
