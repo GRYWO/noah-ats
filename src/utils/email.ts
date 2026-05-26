@@ -7,21 +7,37 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 const GRYWO_KLEUR = "#333399";
 
+/**
+ * Pak naam + email uit een "Voornaam Achternaam <email@domein>" of "email" string.
+ */
+function parseFrom(from: string | undefined): { naam?: string; email?: string } {
+  if (!from) return {};
+  const match = from.match(/^(.+?)\s*<(.+?)>$/);
+  if (match) return { naam: match[1].trim(), email: match[2].trim() };
+  return { email: from.trim() };
+}
+
 function brandedLayout({
   titel,
   body,
   merk = "grywo",
+  afzenderNaam,
+  afzenderEmail,
 }: {
   titel: string;
   body: string;
   merk?: "grywo" | "noah";
+  afzenderNaam?: string;
+  afzenderEmail?: string;
 }) {
   const header = merk === "noah"
     ? `<span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">noah</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>`
-    : `<span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">GRYWO</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>`;
+    : `<img src="${APP_URL}/grywo-logo-wit.png" alt="GRYWO" width="160" style="display:inline-block;border:0;outline:none;text-decoration:none;height:auto;">`;
   const footer = merk === "noah"
     ? `Noah ATS · het ATS-platform voor recruitment bureaus`
-    : `GRYWO · noah@grywo.nl`;
+    : afzenderEmail
+      ? `${afzenderNaam ? `${afzenderNaam} · ` : ""}<a href="mailto:${afzenderEmail}" style="color:#888;text-decoration:underline;">${afzenderEmail}</a>`
+      : `GRYWO`;
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background-color:#f4f4f7;">
@@ -458,17 +474,18 @@ export async function sendCvReminderAanWachtende({
   voornaam: string;
   from?: string;
 }) {
+  const { naam: afzenderNaam, email: afzenderEmail } = parseFrom(from);
   const body = `
 <p>Hoi ${voornaam},</p>
 <p>Welkom alvast! We zouden graag aan de slag gaan met jouw zoektocht, maar we missen nog je CV.</p>
 <p>Kun je 'm zo snel mogelijk doorsturen? Antwoord gewoon op deze mail met je CV als bijlage — dan kunnen we direct verder.</p>
-<p>Heb je 'm op dit moment niet beschikbaar? Stuur even kort terug wanneer wel, dan plannen we er rekening mee.</p>
+<p>Heb je 'm op dit moment niet beschikbaar? Stuur even kort terug wanneer wel, dan houden we er rekening mee.</p>
 <p>Bedankt!</p>`;
   return resend.emails.send({
     from: from ?? FROM,
     to: naar,
     subject: "Wij missen nog je CV — kun je 'm doorsturen?",
-    html: brandedLayout({ titel: "We missen nog je CV", body }),
+    html: brandedLayout({ titel: "We missen nog je CV", body, afzenderNaam, afzenderEmail }),
   });
 }
 
