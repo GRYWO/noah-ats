@@ -6,6 +6,7 @@ import { SetterPerformance } from "./SetterPerformance";
 import { OnboardingTour, TOUR_VERSIE } from "@/components/OnboardingTour";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_DASHBOARD } from "@/utils/pagina-tours";
+import { RondleidingStarter } from "@/components/RondleidingStarter";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
 function geldigePeriode(p: string | undefined): Periode {
@@ -104,10 +105,14 @@ export default async function Dashboard({
           beperkTotUserId={isSetter ? user!.id : undefined}
         />
 
-        {/* Onboarding tour — start automatisch bij eerste bezoek of nieuwe versie */}
+        {/* Globale rondleiding: opent automatisch elke pagina + uitleg bij eerste login */}
+        <RondleidingStarter
+          autoStart={(myProfile?.onboarding_versie ?? 0) < TOUR_VERSIE}
+        />
+        {/* Oude tour-component blijft beschikbaar voor backwards compat, niet meer auto-start */}
         <OnboardingTour
           rol={isSuperAdminEmail(user?.email) ? "super_admin" : (myProfile?.rol ?? "setter") as "admin" | "recruiter" | "setter"}
-          autoStart={(myProfile?.onboarding_versie ?? 0) < TOUR_VERSIE}
+          autoStart={false}
         />
       </div>
     </main>

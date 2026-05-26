@@ -13,16 +13,19 @@ export function TourHerstartKnop() {
     setBezig(true);
     setFout(null);
     try {
-      // Lokale flag wissen zodat de tour 100% start, ook als DB-call faalt
-      try { localStorage.removeItem("noah-tour-gezien"); } catch {}
+      // Lokale flags wissen zodat de rondleiding 100% start
+      try {
+        localStorage.removeItem("noah-tour-gezien");
+        localStorage.removeItem("noah-rondleiding-actief");
+      } catch {}
       const r = await fetch("/api/profile/onboarding-voltooid", { method: "DELETE" });
       if (!r.ok) {
         setFout("Reset mislukt — probeer opnieuw.");
         setBezig(false);
         return;
       }
-      // Forceer reload van /dashboard (ook als we daar al zijn)
-      window.location.assign("/dashboard?tour=1");
+      // Forceer reload van /dashboard met rondleiding-vlag
+      window.location.assign("/dashboard?rondleiding=1");
     } catch (e) {
       setFout((e as Error).message);
       setBezig(false);

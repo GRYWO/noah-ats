@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { HelpCircle } from "lucide-react";
+import { RONDLEIDING_PADEN, RONDLEIDING_KEY } from "@/utils/rondleiding";
 
 // react-joyride v3 — named export "Joyride"
 const Joyride = dynamic(
@@ -34,6 +36,18 @@ type Props = {
  */
 export function PaginaTour({ pad, naam, stappen }: Props) {
   const [actief, setActief] = useState(false);
+  const router = useRouter();
+
+  // Auto-start tijdens een actieve globale rondleiding
+  useEffect(() => {
+    try {
+      const actiefInRondleiding = typeof window !== "undefined" && localStorage.getItem(RONDLEIDING_KEY) === "1";
+      if (actiefInRondleiding && RONDLEIDING_PADEN.includes(pad)) {
+        const t = setTimeout(() => setActief(true), 700);
+        return () => clearTimeout(t);
+      }
+    } catch {}
+  }, [pad]);
 
   function herstart() {
     setActief(false);
@@ -43,6 +57,22 @@ export function PaginaTour({ pad, naam, stappen }: Props) {
   function onCallback(data: { status?: string; action?: string; type?: string }) {
     if (data.status === "finished" || data.status === "skipped") {
       setActief(false);
+      // Tijdens actieve rondleiding: navigeer door naar de volgende pagina
+      try {
+        if (typeof window !== "undefined" && localStorage.getItem(RONDLEIDING_KEY) === "1") {
+          const idx = RONDLEIDING_PADEN.indexOf(pad);
+          if (idx !== -1 && idx < RONDLEIDING_PADEN.length - 1) {
+            // Wachten zodat de tour-overlay weg is voor we navigeren
+            setTimeout(() => router.push(RONDLEIDING_PADEN[idx + 1]), 400);
+          } else {
+            // Rondleiding voltooid
+            localStorage.removeItem(RONDLEIDING_KEY);
+            localStorage.setItem("noah-tour-gezien", "1");
+            // Voltooid in DB markeren (zelfde endpoint als de bestaande tour)
+            fetch("/api/profile/onboarding-voltooid", { method: "POST" }).catch(() => {});
+          }
+        }
+      } catch {}
     }
   }
 
