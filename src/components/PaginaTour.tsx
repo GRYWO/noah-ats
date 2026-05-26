@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { HelpCircle } from "lucide-react";
-import { RONDLEIDING_PADEN, RONDLEIDING_KEY } from "@/utils/rondleiding";
+import { RONDLEIDING_PADEN, RONDLEIDING_KEY, TOUR_GEZIEN_KEY } from "@/utils/rondleiding";
 
 // react-joyride v3 — named export "Joyride"
 const Joyride = dynamic(
@@ -30,27 +30,30 @@ type Props = {
 };
 
 /**
- * Per-pagina onboarding-tour. Start NIET automatisch — alleen via de
- * "Uitleg" knop rechtsonder. De globale welkom-rondleiding op dashboard
- * blijft wel automatisch starten bij eerste login.
+ * Per-pagina onboarding-tour.
+ * - Bij actieve rondleiding: 1x automatisch starten op deze pagina, en bij
+ *   'finished' doornavigeren naar de volgende pagina.
+ * - Bij 'skip' / 'close': stoppen we de hele rondleiding (en zetten 'gezien').
+ * - Anders: alleen starten via de 'Uitleg' knop rechtsonder.
  */
 export function PaginaTour({ pad, naam, stappen }: Props) {
   const [actief, setActief] = useState(false);
   const router = useRouter();
+  const gestart = useRef(false);
 
-  // Auto-start tijdens een actieve globale rondleiding
+  // Auto-start tijdens een actieve globale rondleiding — maar maximaal 1x per mount
   useEffect(() => {
     function checkEnStart() {
+      if (gestart.current) return;
       try {
         const aan = typeof window !== "undefined" && localStorage.getItem(RONDLEIDING_KEY) === "1";
         if (aan && RONDLEIDING_PADEN.includes(pad)) {
+          gestart.current = true;
           setActief(true);
         }
       } catch {}
     }
-    // Eerst bij mount checken (voor navigatie binnen rondleiding)
     const t = setTimeout(checkEnStart, 900);
-    // Plus luisteren naar event vanaf RondleidingStarter (voor /dashboard race)
     window.addEventListener("noah-rondleiding-start", checkEnStart);
     return () => {
       clearTimeout(t);
@@ -59,35 +62,53 @@ export function PaginaTour({ pad, naam, stappen }: Props) {
   }, [pad]);
 
   function herstart() {
+    gestart.current = true;
     setActief(false);
     setTimeout(() => setActief(true), 100);
   }
 
-  function onCallback(data: { status?: string; action?: string; type?: string; step?: { target?: string } }) {
-    // Bij iedere stap: target horizontaal/verticaal in beeld scrollen
-    // (handig voor de Kanban die horizontaal scrollt)
+  function stopRondleidingHelemaal() {
+    try {
+      localStorage.removeItem(RONDLEIDING_KEY);
+      localStorage.setItem(TOUR_GEZIEN_KEY, "1");
+      fetch("/api/profile/onboarding-voltooid", { method: "POST" }).catch(() => {});
+    } catch {}
+  }
+
+  function onCallback(data: {
+    status?: string;
+    action?: string;
+    type?: string;
+    step?: { target?: string };
+  }) {
+    // Target in beeld scrollen (handig voor kanban horizontaal)
     if ((data.type === "step:before" || data.type === "tooltip") && typeof data.step?.target === "string" && data.step.target !== "body") {
       try {
         const el = document.querySelector(data.step.target) as HTMLElement | null;
         el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "center" });
       } catch {}
     }
-    if (data.status === "finished" || data.status === "skipped") {
+
+    // Klik op X (close) of "Sla over" stopt de HELE rondleiding
+    if (data.action === "close" || data.status === "skipped") {
       setActief(false);
-      // Tijdens actieve rondleiding: navigeer door naar de volgende pagina
+      stopRondleidingHelemaal();
+      return;
+    }
+
+    // Pagina-tour klaar (alle stappen doorlopen): door naar volgende pagina
+    if (data.status === "finished") {
+      setActief(false);
       try {
-        if (typeof window !== "undefined" && localStorage.getItem(RONDLEIDING_KEY) === "1") {
-          const idx = RONDLEIDING_PADEN.indexOf(pad);
-          if (idx !== -1 && idx < RONDLEIDING_PADEN.length - 1) {
-            // Wachten zodat de tour-overlay weg is voor we navigeren
-            setTimeout(() => router.push(RONDLEIDING_PADEN[idx + 1]), 400);
-          } else {
-            // Rondleiding voltooid
-            localStorage.removeItem(RONDLEIDING_KEY);
-            localStorage.setItem("noah-tour-gezien", "1");
-            // Voltooid in DB markeren (zelfde endpoint als de bestaande tour)
-            fetch("/api/profile/onboarding-voltooid", { method: "POST" }).catch(() => {});
-          }
+        const rondleidingAan = typeof window !== "undefined" && localStorage.getItem(RONDLEIDING_KEY) === "1";
+        if (!rondleidingAan) return; // standalone gebruik van de knop — geen vervolg
+
+        const idx = RONDLEIDING_PADEN.indexOf(pad);
+        if (idx !== -1 && idx < RONDLEIDING_PADEN.length - 1) {
+          setTimeout(() => router.push(RONDLEIDING_PADEN[idx + 1]), 400);
+        } else {
+          // Laatste pagina: rondleiding voltooid
+          stopRondleidingHelemaal();
         }
       } catch {}
     }
