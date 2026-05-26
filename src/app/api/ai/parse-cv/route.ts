@@ -67,6 +67,12 @@ export async function POST(request: Request) {
     cv_controle_status: "in_controle",
   };
 
+  // AI-score automatisch overnemen als kandidaat-score (overschrijft altijd
+  // zodat de score actueel is na elke CV-parse)
+  if (typeof parsed.ai_score === "number") {
+    update.score = Math.max(0, Math.min(100, Math.round(parsed.ai_score)));
+  }
+
   // Optioneel: vul lege velden met AI-resultaten
   const { data: huidig } = await admin
     .from("kandidaten")
