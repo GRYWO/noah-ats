@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { sendCvReminderAanWachtende } from "@/utils/email";
+import { getSetterFrom } from "@/utils/email-helpers";
 
 const VERVAL_DAGEN = 7;
 
@@ -45,6 +47,41 @@ export async function voegToeWachtendOpCv(formData: FormData) {
 
   revalidatePath("/kandidaten/nieuw");
   redirect("/kandidaten/nieuw?ok=wachtend");
+}
+
+export async function stuurCvReminder(formData: FormData): Promise<{ ok?: boolean; error?: string }> {
+  const id = formData.get("id") as string;
+  if (!id) return { error: "Geen id" };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Niet ingelogd" };
+
+  const admin = createAdminClient();
+  const { data: w } = await admin
+    .from("wachtend_op_cv")
+    .select("voornaam, email")
+    .eq("id", id)
+    .single();
+  if (!w?.email) return { error: "Geen e-mailadres bij deze kandidaat" };
+
+  try {
+    const from = await getSetterFrom(user.id);
+    await sendCvReminderAanWachtende({
+      naar: w.email,
+      voornaam: w.voornaam ?? "",
+      from,
+    });
+    await admin
+      .from("wachtend_op_cv")
+      .update({ reminder_sent: new Date().toISOString() })
+      .eq("id", id);
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+
+  revalidatePath("/kandidaten");
+  return { ok: true };
 }
 
 export async function verwijderWachtend(formData: FormData) {

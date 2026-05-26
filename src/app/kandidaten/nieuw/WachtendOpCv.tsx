@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import { UserPlus, X, Loader2, Clock, Mail, Phone } from "lucide-react";
-import { voegToeWachtendOpCv, verwijderWachtend } from "./wachtend-actions";
+import { UserPlus, X, Loader2, Clock, Mail, Phone, Send, Check } from "lucide-react";
+import { voegToeWachtendOpCv, verwijderWachtend, stuurCvReminder } from "./wachtend-actions";
 
 function SubmitKnop() {
   const { pending } = useFormStatus();
@@ -28,6 +28,7 @@ type Wachtend = {
   email: string | null;
   notitie: string | null;
   created_at: string;
+  reminder_sent: string | null;
 };
 
 function dagenSinds(iso: string): number {
@@ -45,6 +46,9 @@ export function WachtendOpCvSectie({ wachtenden }: { wachtenden: Wachtend[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
+  const [reminderBezig, setReminderBezig] = useState<string | null>(null);
+  const [reminderFout, setReminderFout] = useState<string | null>(null);
+
   function onVerwijder(id: string) {
     const fd = new FormData();
     fd.append("id", id);
@@ -52,6 +56,17 @@ export function WachtendOpCvSectie({ wachtenden }: { wachtenden: Wachtend[] }) {
       await verwijderWachtend(fd);
       router.refresh();
     });
+  }
+
+  async function onReminder(id: string) {
+    setReminderBezig(id);
+    setReminderFout(null);
+    const fd = new FormData();
+    fd.append("id", id);
+    const r = await stuurCvReminder(fd);
+    setReminderBezig(null);
+    if (r?.error) setReminderFout(r.error);
+    else router.refresh();
   }
 
   return (
@@ -116,6 +131,7 @@ export function WachtendOpCvSectie({ wachtenden }: { wachtenden: Wachtend[] }) {
               In afwachting van CV ({wachtenden.length})
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">Auto-verwijderd na 7 dagen — groen 0-1 dag, oranje 2-3 dagen, rood vanaf 4 dagen.</p>
+            {reminderFout && <p className="text-xs text-red-600 mt-1">{reminderFout}</p>}
           </div>
           <ul className="divide-y divide-gray-100">
             {wachtenden.map((w) => {
@@ -144,6 +160,24 @@ export function WachtendOpCvSectie({ wachtenden }: { wachtenden: Wachtend[] }) {
                       {w.notitie && <span className="italic">{w.notitie}</span>}
                     </div>
                   </div>
+                  {w.email && (
+                    <button
+                      type="button"
+                      onClick={() => onReminder(w.id)}
+                      disabled={reminderBezig === w.id}
+                      title={w.reminder_sent
+                        ? `Laatst gemaild: ${new Date(w.reminder_sent).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })}`
+                        : "Stuur CV-reminder per mail"}
+                      className={`text-xs font-semibold px-2 py-1 rounded-md inline-flex items-center gap-1 ${
+                        w.reminder_sent
+                          ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
+                          : "text-[#333399] bg-[#333399]/5 hover:bg-[#333399]/10"
+                      } disabled:opacity-60`}
+                    >
+                      {reminderBezig === w.id ? <Loader2 size={11} className="animate-spin" /> : w.reminder_sent ? <Check size={11} /> : <Send size={11} />}
+                      {w.reminder_sent ? "Opnieuw mailen" : "Mail CV-reminder"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => onVerwijder(w.id)}

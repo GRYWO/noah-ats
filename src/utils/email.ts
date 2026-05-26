@@ -447,6 +447,32 @@ export async function sendPlaatsingNaarBackoffice({
 }
 
 /**
+ * Reminder naar kandidaat op de wachtlijst om CV toe te sturen.
+ */
+export async function sendCvReminderAanWachtende({
+  naar,
+  voornaam,
+  from,
+}: {
+  naar: string;
+  voornaam: string;
+  from?: string;
+}) {
+  const body = `
+<p>Hoi ${voornaam},</p>
+<p>Welkom alvast! We zouden graag aan de slag gaan met jouw zoektocht, maar we missen nog je CV.</p>
+<p>Kun je 'm zo snel mogelijk doorsturen? Antwoord gewoon op deze mail met je CV als bijlage — dan kunnen we direct verder.</p>
+<p>Heb je 'm op dit moment niet beschikbaar? Stuur even kort terug wanneer wel, dan plannen we er rekening mee.</p>
+<p>Bedankt!</p>`;
+  return resend.emails.send({
+    from: from ?? FROM,
+    to: naar,
+    subject: "Wij missen nog je CV — kun je 'm doorsturen?",
+    html: brandedLayout({ titel: "We missen nog je CV", body }),
+  });
+}
+
+/**
  * Plaatsing afgekeurd door admin — meld dit ook aan backoffice.
  */
 export async function sendPlaatsingAfgekeurdNaarBackoffice({
