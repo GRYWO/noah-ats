@@ -21,11 +21,41 @@ function fmtMaand(m: string | null): string {
 
 export function RecordsSectie({ records }: { records: Records }) {
   const items = [
-    { icoon: <Phone size={14} />,         label: "Beste belDag",         waarde: records.beste_calls_dag.aantal,           sub: fmtDatum(records.beste_calls_dag.datum) },
-    { icoon: <CalendarCheck size={14} />, label: "Beste afspraken-dag",  waarde: records.beste_afspraken_dag.aantal,       sub: fmtDatum(records.beste_afspraken_dag.datum) },
-    { icoon: <Briefcase size={14} />,     label: "Beste maand plaatsingen", waarde: records.beste_plaatsingen_maand.aantal, sub: fmtMaand(records.beste_plaatsingen_maand.maand) },
-    { icoon: <Coins size={14} />,         label: "Beste maand omzet",    waarde: `€ ${Math.round(records.beste_omzet_maand.bedrag).toLocaleString("nl-NL")}`, sub: fmtMaand(records.beste_omzet_maand.maand) },
-    { icoon: <Flame size={14} />,         label: "Langste streak",       waarde: `${records.langste_streak} dagen`,        sub: "dagdoel behaald" },
+    {
+      icoon: <Phone size={12} />,
+      label: "Belrecord",
+      waarde: records.beste_calls_dag.aantal,
+      eenheid: "calls",
+      sub: fmtDatum(records.beste_calls_dag.datum),
+    },
+    {
+      icoon: <CalendarCheck size={12} />,
+      label: "Afspraken",
+      waarde: records.beste_afspraken_dag.aantal,
+      eenheid: "op 1 dag",
+      sub: fmtDatum(records.beste_afspraken_dag.datum),
+    },
+    {
+      icoon: <Briefcase size={12} />,
+      label: "Plaatsingen",
+      waarde: records.beste_plaatsingen_maand.aantal,
+      eenheid: "in 1 maand",
+      sub: fmtMaand(records.beste_plaatsingen_maand.maand),
+    },
+    {
+      icoon: <Coins size={12} />,
+      label: "Omzet",
+      waarde: `€ ${Math.round(records.beste_omzet_maand.bedrag).toLocaleString("nl-NL")}`,
+      eenheid: "in 1 maand",
+      sub: fmtMaand(records.beste_omzet_maand.maand),
+    },
+    {
+      icoon: <Flame size={12} />,
+      label: "Streak",
+      waarde: records.langste_streak,
+      eenheid: records.langste_streak === 1 ? "dag" : "dagen",
+      sub: "dagdoel behaald",
+    },
   ];
 
   return (
@@ -33,14 +63,24 @@ export function RecordsSectie({ records }: { records: Records }) {
       <h2 className="font-bold text-gray-800 mb-4 pb-2 border-b inline-flex items-center gap-2">
         <Trophy size={16} /> Mijn persoonlijke records
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
         {items.map((it) => (
-          <div key={it.label} className="bg-gradient-to-br from-[#333399]/5 to-amber-100/30 rounded-lg p-3 text-center">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1 inline-flex items-center justify-center gap-1">
+          <div
+            key={it.label}
+            className="bg-gradient-to-br from-[#333399]/5 to-amber-100/30 rounded-lg p-3 flex flex-col items-center justify-between text-center h-28"
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 inline-flex items-center gap-1 whitespace-nowrap">
               {it.icoon}{it.label}
             </div>
-            <div className="text-xl font-black text-[#333399]">{it.waarde}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5">{it.sub}</div>
+            <div className="text-lg font-black text-[#333399] leading-tight">
+              {it.waarde}{" "}
+              <span className="text-[10px] font-semibold text-gray-500 normal-case tracking-normal">
+                {it.eenheid}
+              </span>
+            </div>
+            <div className="text-[10px] text-gray-500 leading-tight truncate w-full" title={it.sub}>
+              {it.sub}
+            </div>
           </div>
         ))}
       </div>
