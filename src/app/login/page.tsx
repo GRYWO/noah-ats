@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -55,6 +56,12 @@ export default async function LoginPage({
             Inloggen
           </button>
         </form>
+
+        <div className="text-center mt-5">
+          <Link href="/wachtwoord-vergeten" className="text-sm text-[#333399] hover:underline font-semibold">
+            Wachtwoord vergeten?
+          </Link>
+        </div>
       </div>
     </main>
   );
