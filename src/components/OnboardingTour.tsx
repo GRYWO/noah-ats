@@ -194,14 +194,26 @@ export function OnboardingTour({
     const forceer =
       typeof window !== "undefined" &&
       new URLSearchParams(window.location.search).get("tour") === "1";
-    const moetStarten = autoStart || forceer;
-    console.log("[Noah Tour] mounted | autoStart=", autoStart, "| forceer=", forceer, "| rol=", rol);
+
+    // Lokale "al gezien" markering — voorkomt herhalen bij refresh zelfs als
+    // de DB-call faalt. Wordt gewist door de herstart-knop.
+    let lokaalGezien = false;
+    try {
+      lokaalGezien = typeof window !== "undefined" && localStorage.getItem("noah-tour-gezien") === "1";
+    } catch {}
+
+    const moetStarten = forceer || (autoStart && !lokaalGezien);
     if (moetStarten) {
       const t = setTimeout(() => {
         const s = stappenVoorRol(rol);
-        console.log("[Noah Tour] starting tour with", s.length, "steps");
         setStappen(s);
         setActief(true);
+        // Schoonmaak: verwijder ?tour=1 uit URL zodat refresh hem niet opnieuw triggert
+        if (forceer && typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("tour");
+          window.history.replaceState({}, "", url.toString());
+        }
       }, 800);
       return () => clearTimeout(t);
     }
@@ -227,6 +239,8 @@ export function OnboardingTour({
     const eindStatussen: string[] = ["finished", "skipped", "closed"];
     if (eindStatussen.includes(data.status)) {
       setActief(false);
+      // Lokaal markeren — zelfs als de DB-update faalt blijft de tour weg
+      try { localStorage.setItem("noah-tour-gezien", "1"); } catch {}
       markVoltooid();
     }
   }
