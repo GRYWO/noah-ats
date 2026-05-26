@@ -256,7 +256,7 @@ export default async function BureausPage({
                         </span>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-4 py-3 text-right">
                       {(() => {
                         const hoofdAdmin = hoofdAdminPerTenant.get(b.id);
                         return hoofdAdmin
