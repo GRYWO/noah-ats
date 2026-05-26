@@ -40,13 +40,22 @@ export function PaginaTour({ pad, naam, stappen }: Props) {
 
   // Auto-start tijdens een actieve globale rondleiding
   useEffect(() => {
-    try {
-      const actiefInRondleiding = typeof window !== "undefined" && localStorage.getItem(RONDLEIDING_KEY) === "1";
-      if (actiefInRondleiding && RONDLEIDING_PADEN.includes(pad)) {
-        const t = setTimeout(() => setActief(true), 700);
-        return () => clearTimeout(t);
-      }
-    } catch {}
+    function checkEnStart() {
+      try {
+        const aan = typeof window !== "undefined" && localStorage.getItem(RONDLEIDING_KEY) === "1";
+        if (aan && RONDLEIDING_PADEN.includes(pad)) {
+          setActief(true);
+        }
+      } catch {}
+    }
+    // Eerst bij mount checken (voor navigatie binnen rondleiding)
+    const t = setTimeout(checkEnStart, 900);
+    // Plus luisteren naar event vanaf RondleidingStarter (voor /dashboard race)
+    window.addEventListener("noah-rondleiding-start", checkEnStart);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("noah-rondleiding-start", checkEnStart);
+    };
   }, [pad]);
 
   function herstart() {

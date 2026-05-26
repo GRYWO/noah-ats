@@ -31,12 +31,17 @@ export function RondleidingStarter({ autoStart }: { autoStart: boolean }) {
       window.history.replaceState({}, "", url.toString());
     }
 
-    // Als we niet op de eerste pagina staan, navigeer ernaartoe
+    // Niet op de eerste pagina? Navigeer ernaartoe — die mount triggert PaginaTour
     if (window.location.pathname !== RONDLEIDING_PADEN[0]) {
       window.location.assign(RONDLEIDING_PADEN[0]);
+      return;
     }
-    // Als we wel op /dashboard staan: PaginaTour daar pakt het op via de
-    // RONDLEIDING_KEY in localStorage en start automatisch.
+
+    // Wel op /dashboard: PaginaTour staat al gemount maar heeft de localStorage
+    // check al gedaan. We dispatchen een event waar 'ie naar luistert.
+    setTimeout(() => {
+      window.dispatchEvent(new Event("noah-rondleiding-start"));
+    }, 300);
   }, [autoStart]);
 
   return null;
