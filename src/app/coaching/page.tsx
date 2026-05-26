@@ -6,6 +6,8 @@ import { CheckCircle2, XCircle, Trophy, AlertTriangle, Phone, CalendarCheck, Bri
 import { EodForm } from "./EodForm";
 import { CoachingKnop } from "./CoachingKnop";
 import { CoachingAanvraagItem } from "./CoachingAanvraagItem";
+import { DoelenSectie, type Doelen, type Voortgang } from "./DoelenSectie";
+import { RecordsSectie, type Records } from "./RecordsSectie";
 
 function vandaagAmsterdam(): string {
   const nu = new Date();
@@ -72,7 +74,7 @@ export default async function CoachingPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("tenant_id, rol, is_coach, voornaam, achternaam")
+    .select("tenant_id, rol, is_coach, voornaam, achternaam, doel_calls_dag, doel_voorgesteld_week, doel_afspraken_week, doel_plaatsingen_maand, doel_omzet_maand")
     .eq("id", user.id)
     .single();
   if (!profile?.tenant_id) return null;
@@ -109,6 +111,102 @@ export default async function CoachingPage({
       .gte("rapport_datum", grens.toISOString().slice(0, 10))
       .order("rapport_datum", { ascending: false });
     eigenEodGeschiedenis = (gesch ?? []) as EodLight[];
+  }
+
+  // Persoonlijke records + voortgang (alleen voor setter)
+  let eigenRecords: Records | null = null;
+  let eigenDoelen: Doelen | null = null;
+  let eigenVoortgang: Voortgang | null = null;
+  if (isSetter) {
+    eigenDoelen = {
+      doel_calls_dag:         profile.doel_calls_dag         ?? 50,
+      doel_voorgesteld_week:  profile.doel_voorgesteld_week  ?? 5,
+      doel_afspraken_week:    profile.doel_afspraken_week    ?? 3,
+      doel_plaatsingen_maand: profile.doel_plaatsingen_maand ?? 2,
+      doel_omzet_maand:       Number(profile.doel_omzet_maand ?? 0),
+    };
+
+    // Alle EOD-rapporten van deze setter (voor records + streak)
+    const { data: alleEod } = await admin
+      .from("eod_rapporten")
+      .select("rapport_datum, doel_behaald, aantal_calls, aantal_voicemails, aantal_voorgesteld, aantal_afspraken, aantal_plaatsingen")
+      .eq("setter_id", user.id)
+      .order("rapport_datum", { ascending: false });
+
+    // Records uit eod
+    let besteCalls = { aantal: 0, datum: null as string | null };
+    let besteAfspraken = { aantal: 0, datum: null as string | null };
+    for (const r of alleEod ?? []) {
+      const c = r.aantal_calls ?? 0;
+      if (c > besteCalls.aantal) besteCalls = { aantal: c, datum: r.rapport_datum };
+      const a = r.aantal_afspraken ?? 0;
+      if (a > besteAfspraken.aantal) besteAfspraken = { aantal: a, datum: r.rapport_datum };
+    }
+
+    // Streak vanaf vandaag (werkdagen ma-vr, alleen tellen als doel_behaald=true)
+    const eodMap = new Map<string, boolean>(
+      (alleEod ?? []).map(r => [r.rapport_datum, r.doel_behaald === true])
+    );
+    let streak = 0;
+    const cur = new Date();
+    for (let i = 0; i < 365; i++) {
+      const dag = cur.getDay();
+      if (dag === 0 || dag === 6) { cur.setDate(cur.getDate() - 1); continue; }
+      const iso = cur.toISOString().slice(0, 10);
+      // Vandaag mag nog leeg zijn — sla over
+      if (i === 0 && !eodMap.has(iso)) { cur.setDate(cur.getDate() - 1); continue; }
+      if (eodMap.get(iso) === true) {
+        streak++;
+        cur.setDate(cur.getDate() - 1);
+      } else break;
+    }
+
+    // Plaatsingen — per maand groeperen voor records
+    const { data: allePlaatsingen } = await admin
+      .from("plaatsingen")
+      .select("created_at, tarief_bedrag")
+      .eq("aangemeld_door", user.id)
+      .is("afgekeurd_op", null);
+
+    const perMaand = new Map<string, { aantal: number; bedrag: number }>();
+    for (const p of allePlaatsingen ?? []) {
+      const d = new Date(p.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const x = perMaand.get(key) ?? { aantal: 0, bedrag: 0 };
+      x.aantal += 1;
+      x.bedrag += Number(p.tarief_bedrag ?? 0);
+      perMaand.set(key, x);
+    }
+    let bestePlaatsingen = { aantal: 0, maand: null as string | null };
+    let besteOmzet = { bedrag: 0, maand: null as string | null };
+    for (const [maand, x] of perMaand) {
+      if (x.aantal > bestePlaatsingen.aantal) bestePlaatsingen = { aantal: x.aantal, maand };
+      if (x.bedrag > besteOmzet.bedrag) besteOmzet = { bedrag: x.bedrag, maand };
+    }
+
+    eigenRecords = {
+      beste_calls_dag: besteCalls,
+      beste_afspraken_dag: besteAfspraken,
+      beste_plaatsingen_maand: bestePlaatsingen,
+      beste_omzet_maand: besteOmzet,
+      langste_streak: streak,
+    };
+
+    // Voortgang in de huidige periodes
+    const callsVandaag = eigenEodVandaag?.aantal_calls ?? 0;
+    const eodWeek = (alleEod ?? []).filter(r => r.rapport_datum >= startWeek);
+    const voorgesteldWeek = eodWeek.reduce((s, r) => s + (r.aantal_voorgesteld ?? 0), 0);
+    const afsprakenWeek   = eodWeek.reduce((s, r) => s + (r.aantal_afspraken   ?? 0), 0);
+    const plaatsingenMaand = (allePlaatsingen ?? []).filter(p => p.created_at >= new Date(startMaand).toISOString());
+    const omzetMaand = plaatsingenMaand.reduce((s, p) => s + Number(p.tarief_bedrag ?? 0), 0);
+
+    eigenVoortgang = {
+      calls_vandaag: callsVandaag,
+      voorgesteld_week: voorgesteldWeek,
+      afspraken_week: afsprakenWeek,
+      plaatsingen_maand: plaatsingenMaand.length,
+      omzet_maand: omzetMaand,
+    };
   }
 
   // Setters in tenant
@@ -203,7 +301,7 @@ export default async function CoachingPage({
         </div>
 
         {ok && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-          {ok === "eod" ? "EOD-rapport opgeslagen." : ok === "coaching_aanvraag" ? "Aanvraag verzonden naar Pepijn." : ok === "coaching_reactie" ? "Reactie verzonden." : "Opgeslagen."}
+          {ok === "eod" ? "EOD-rapport opgeslagen." : ok === "coaching_aanvraag" ? "Aanvraag verzonden naar Pepijn." : ok === "coaching_reactie" ? "Reactie verzonden." : ok === "doelen" ? "Doelen bijgewerkt." : "Opgeslagen."}
         </div>}
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">{error}</div>}
 
@@ -225,6 +323,14 @@ export default async function CoachingPage({
                 );
               })}
             </ul>
+          </div>
+        )}
+
+        {/* Setter: records + doelen */}
+        {isSetter && eigenRecords && eigenDoelen && eigenVoortgang && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <DoelenSectie doelen={eigenDoelen} voortgang={eigenVoortgang} />
+            <RecordsSectie records={eigenRecords} />
           </div>
         )}
 

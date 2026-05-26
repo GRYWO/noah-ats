@@ -162,6 +162,39 @@ export async function vraagCoachingMeetingAan(formData: FormData) {
   redirect("/coaching?ok=coaching_aanvraag");
 }
 
+export async function updateDoelen(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const intOf = (k: string, fallback: number) => {
+    const v = formData.get(k) as string;
+    if (!v || !v.trim()) return fallback;
+    const n = parseInt(v);
+    return isNaN(n) || n < 0 ? fallback : n;
+  };
+  const numOf = (k: string, fallback: number) => {
+    const v = formData.get(k) as string;
+    if (!v || !v.trim()) return fallback;
+    const n = parseFloat(v);
+    return isNaN(n) || n < 0 ? fallback : n;
+  };
+
+  const update = {
+    doel_calls_dag:         intOf("doel_calls_dag", 50),
+    doel_voorgesteld_week:  intOf("doel_voorgesteld_week", 5),
+    doel_afspraken_week:    intOf("doel_afspraken_week", 3),
+    doel_plaatsingen_maand: intOf("doel_plaatsingen_maand", 2),
+    doel_omzet_maand:       numOf("doel_omzet_maand", 0),
+  };
+
+  const admin = createAdminClient();
+  await admin.from("profiles").update(update).eq("id", user.id);
+
+  revalidatePath("/coaching");
+  redirect("/coaching?ok=doelen");
+}
+
 export async function reageerCoaching(formData: FormData) {
   const id = (formData.get("id") as string) ?? "";
   const reactie = ((formData.get("reactie") as string) ?? "").trim() || null;
