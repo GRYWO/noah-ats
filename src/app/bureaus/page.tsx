@@ -7,6 +7,7 @@ import { TopBar } from "@/components/TopBar";
 import { nieuwBureau } from "./actions";
 import { BetaaldSelect } from "./BetaaldSelect";
 import { ResetWachtwoordKnop } from "@/app/setters/ResetWachtwoordKnop";
+import { InloggegevensKnop } from "./InloggegevensKnop";
 
 export default async function BureausPage({
   searchParams,
@@ -265,7 +266,7 @@ export default async function BureausPage({
                         const hoofdAdmin = hoofdAdminPerTenant.get(b.id);
                         return hoofdAdmin
                           ? <ResetWachtwoordKnop userId={hoofdAdmin.id} naam={hoofdAdmin.naam} />
-                          : <span className="text-xs text-gray-400">Geen admin</span>;
+                          : <InloggegevensKnop tenantId={b.id} bureauNaam={b.naam} heeftEmail={!!b.contact_email} />;
                       })()}
                     </td>
                   </tr>
