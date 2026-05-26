@@ -10,6 +10,7 @@ import { DoelenSectie, type Doelen, type Voortgang } from "./DoelenSectie";
 import { RecordsSectie, type Records } from "./RecordsSectie";
 import { AdminFilterBar } from "./AdminFilterBar";
 import { SetterReactieKnop } from "./SetterReactieKnop";
+import { CoachToevoegenKnop } from "./CoachToevoegenKnop";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_COACHING } from "@/utils/pagina-tours";
 
@@ -220,6 +221,21 @@ export default async function CoachingPage({
     .eq("tenant_id", tenantId)
     .eq("rol", "setter");
 
+  // Alle actieve users (voor admin coach-toggle modal)
+  const { data: alleActieveUsers } = await admin
+    .from("profiles")
+    .select("id, voornaam, achternaam, rol, is_coach")
+    .eq("tenant_id", tenantId)
+    .eq("is_active", true)
+    .order("created_at", { ascending: true });
+  const alleUsers = (alleActieveUsers ?? []).map(u => ({
+    id: u.id,
+    voornaam: u.voornaam,
+    achternaam: u.achternaam,
+    rol: u.rol,
+    is_coach: !!u.is_coach,
+  }));
+
   // Aggregeer eod-stats over periode
   const { data: eodRows } = await admin
     .from("eod_rapporten")
@@ -397,7 +413,10 @@ export default async function CoachingPage({
               {isSetter ? "Jouw EOD-rapporten, doelen en stats" : isCoach ? "Coach-dashboard" : "Coaching-overzicht"}
             </p>
           </div>
-          {isSetter && <div data-tour="coaching-knop"><CoachingKnop /></div>}
+          <div className="flex items-center gap-2 flex-wrap">
+            {isAdmin && <CoachToevoegenKnop users={alleUsers} />}
+            {isSetter && <div data-tour="coaching-knop"><CoachingKnop /></div>}
+          </div>
         </div>
         <PaginaTour pad="/coaching" naam="Coaching" stappen={TOUR_COACHING} />
 
