@@ -13,6 +13,8 @@ export function TourHerstartKnop() {
     setBezig(true);
     setFout(null);
     try {
+      // Lokale flag wissen zodat de tour 100% start, ook als DB-call faalt
+      try { localStorage.removeItem("noah-tour-gezien"); } catch {}
       const r = await fetch("/api/profile/onboarding-voltooid", { method: "DELETE" });
       if (!r.ok) {
         setFout("Reset mislukt — probeer opnieuw.");
