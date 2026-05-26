@@ -18,7 +18,8 @@ export function ResetWachtwoordKnop({ userId, naam }: { userId: string; naam: st
         setGelukt(true);
         setTimeout(() => setGelukt(false), 3000);
       } else {
-        alert(r?.error ?? "Reset mislukt");
+        // Toon volledige error zodat Resend-feedback zichtbaar is
+        alert(r?.error ?? "Reset mislukt — controleer Vercel-logs voor details");
       }
     });
   }

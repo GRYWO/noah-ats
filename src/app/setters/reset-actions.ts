@@ -68,6 +68,7 @@ export async function resetUserWachtwoord(formData: FormData): Promise<{ ok?: bo
 
   try {
     const from = await getSetterFrom(huidigeUser.id);
+    console.log("[reset-wachtwoord] versturen vanaf:", from ?? "(default FROM)", "naar:", authUser.user.email);
     await sendInloggegevensOpnieuw({
       naar: authUser.user.email,
       voornaam: doelProfile.voornaam ?? "",
@@ -77,8 +78,11 @@ export async function resetUserWachtwoord(formData: FormData): Promise<{ ok?: bo
       bedrijf,
       from,
     });
+    console.log("[reset-wachtwoord] mail verzonden ok");
   } catch (e) {
-    return { error: "Wachtwoord gereset, maar mail mislukt: " + (e as Error).message };
+    const msg = (e as Error).message ?? "onbekende fout";
+    console.error("[reset-wachtwoord] mail mislukt:", msg);
+    return { error: "Wachtwoord gereset, maar mail mislukt: " + msg };
   }
 
   revalidatePath("/setters");

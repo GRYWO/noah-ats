@@ -88,6 +88,7 @@ export async function stuurInloggegevensBureau(formData: FormData): Promise<{ ok
   // Welkomstmail (= inloggegevens + dashboard-knop + 4 stappen)
   try {
     const from = await getSetterFrom(user.id);
+    console.log("[inloggegevens] versturen vanaf:", from ?? "(default FROM)", "naar:", tenant.contact_email);
     await sendWelkomstmailBureau({
       naar: tenant.contact_email,
       voornaam,
@@ -96,8 +97,11 @@ export async function stuurInloggegevensBureau(formData: FormData): Promise<{ ok
       bedrijf,
       from,
     });
+    console.log("[inloggegevens] mail verzonden ok");
   } catch (e) {
-    return { error: "Wachtwoord ingesteld, maar mail mislukt: " + (e as Error).message };
+    const msg = (e as Error).message ?? "onbekende fout";
+    console.error("[inloggegevens] mail mislukt:", msg);
+    return { error: "Wachtwoord ingesteld, maar mail mislukt: " + msg };
   }
 
   revalidatePath("/bureaus");
