@@ -8,6 +8,7 @@ import { nieuwBureau } from "./actions";
 import { BetaaldSelect } from "./BetaaldSelect";
 import { ResetWachtwoordKnop } from "@/app/setters/ResetWachtwoordKnop";
 import { InloggegevensKnop } from "./InloggegevensKnop";
+import { WisTestdataKnop } from "./WisTestdataKnop";
 
 export default async function BureausPage({
   searchParams,
@@ -58,9 +59,12 @@ export default async function BureausPage({
       <TopBar active="bureaus" />
 
       <div className="p-8 max-w-6xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Bureaus</h1>
-          <p className="text-gray-500 text-sm mt-1">{bureaus?.length ?? 0} bureaus die Noah gebruiken</p>
+        <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Bureaus</h1>
+            <p className="text-gray-500 text-sm mt-1">{bureaus?.length ?? 0} bureaus die Noah gebruiken</p>
+          </div>
+          <WisTestdataKnop />
         </div>
 
         {ok && (
