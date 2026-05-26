@@ -53,13 +53,14 @@ export function KanbanBoard({ initialKandidaten }: { initialKandidaten: Kandidaa
     s >= 50 ? "text-amber-600" : "text-red-500";
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-4">
+    <div className="flex gap-3 overflow-x-auto pb-4" data-tour="kanban-board">
       {KOLOMMEN.map(kolom => {
         const items = kandidaten.filter(k => k.kanban_stap === kolom.key);
         const isOver = dragOverCol === kolom.key;
         return (
           <div
             key={kolom.key}
+            data-tour={`kol-${kolom.key}`}
             onDragOver={(e) => { e.preventDefault(); setDragOverCol(kolom.key); }}
             onDragLeave={() => setDragOverCol(null)}
             onDrop={() => handleDrop(kolom.key)}

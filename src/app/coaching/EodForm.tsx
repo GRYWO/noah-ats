@@ -45,7 +45,7 @@ export function EodForm({ bestaand }: { bestaand?: Bestaand | null }) {
 
   return (
     <form action={submitEodRapport} className="space-y-5">
-      <Card titel="Doelen">
+      <div data-tour="eod-doelen"><Card titel="Doelen">
         <Veld label="Wat was je doel van vandaag? *">
           <textarea name="doel_vandaag" required rows={2} defaultValue={bestaand?.doel_vandaag ?? ""} className={txtIn} />
         </Veld>
@@ -66,9 +66,9 @@ export function EodForm({ bestaand }: { bestaand?: Bestaand | null }) {
         <Veld label="Wat is je doel van morgen? *">
           <textarea name="doel_morgen" required rows={2} defaultValue={bestaand?.doel_morgen ?? ""} className={txtIn} />
         </Veld>
-      </Card>
+      </Card></div>
 
-      <Card titel="Activiteit">
+      <div data-tour="eod-activiteit"><Card titel="Activiteit">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <NumVeld label="Calls" name="aantal_calls" defaultValue={bestaand?.aantal_calls ?? 0} cls={numIn} />
           <NumVeld label="Voicemails / geen gehoor" name="aantal_voicemails" defaultValue={bestaand?.aantal_voicemails ?? 0} cls={numIn} />
@@ -76,9 +76,9 @@ export function EodForm({ bestaand }: { bestaand?: Bestaand | null }) {
           <NumVeld label="Afspraken ingepland" name="aantal_afspraken" defaultValue={bestaand?.aantal_afspraken ?? 0} cls={numIn} />
           <NumVeld label="Plaatsingen" name="aantal_plaatsingen" defaultValue={bestaand?.aantal_plaatsingen ?? 0} cls={numIn} />
         </div>
-      </Card>
+      </Card></div>
 
-      <Card titel="Reflectie">
+      <div data-tour="eod-reflectie"><Card titel="Reflectie">
         <Veld label="Wat was je grootste obstakel vandaag?">
           <textarea name="obstakel" rows={2} defaultValue={bestaand?.obstakel ?? ""} className={txtIn} />
         </Veld>
@@ -100,7 +100,7 @@ export function EodForm({ bestaand }: { bestaand?: Bestaand | null }) {
         <Veld label="Wat is 1 ding dat je morgen anders moet doen?">
           <textarea name="morgen_anders" rows={2} defaultValue={bestaand?.morgen_anders ?? ""} className={txtIn} />
         </Veld>
-      </Card>
+      </Card></div>
 
       <div className="flex justify-end pt-3 border-t">
         <VerzendKnop label={bestaand ? "Bijwerken" : "Verzenden"} />

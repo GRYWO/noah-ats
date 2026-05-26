@@ -69,6 +69,7 @@ export default async function KandidatenPage({
         {!isSetter && (
           <Link
             href="/kandidaten/nieuw"
+            data-tour="kandidaat-nieuw"
             className="inline-block bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-6 py-3 rounded-xl text-sm mb-6 shadow-sm"
           >
             + Nieuwe kandidaat (CV uploaden)
@@ -77,13 +78,13 @@ export default async function KandidatenPage({
 
         {/* Wachtlijst — in afwachting van CV */}
         {!isSetter && wachtenden && wachtenden.length > 0 && (
-          <div className="mb-6">
+          <div className="mb-6" data-tour="kandidaat-wachtend">
             <WachtendOpCvSectie wachtenden={wachtenden} />
           </div>
         )}
 
         {/* List */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden" data-tour="kandidaat-tabel">
           {kandidaten && kandidaten.length > 0 ? (
             <table className="w-full">
               <thead className="bg-gray-50 text-xs text-gray-500 uppercase">

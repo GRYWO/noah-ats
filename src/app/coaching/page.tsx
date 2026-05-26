@@ -388,7 +388,7 @@ export default async function CoachingPage({
       <TopBar active="coaching" />
 
       <div className="p-8 max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3" data-tour="coaching-titel">
           <div>
             <h1 className="text-2xl font-bold text-gray-800 inline-flex items-center gap-2">
               <Sparkles size={20} /> Coaching
@@ -397,7 +397,7 @@ export default async function CoachingPage({
               {isSetter ? "Jouw EOD-rapporten, doelen en stats" : isCoach ? "Coach-dashboard" : "Coaching-overzicht"}
             </p>
           </div>
-          {isSetter && <CoachingKnop />}
+          {isSetter && <div data-tour="coaching-knop"><CoachingKnop /></div>}
         </div>
         <PaginaTour pad="/coaching" naam="Coaching" stappen={TOUR_COACHING} />
 
@@ -499,7 +499,7 @@ export default async function CoachingPage({
         )}
 
         {/* Leaderboard */}
-        <section className="mb-8">
+        <section className="mb-8" data-tour="leaderboard">
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 inline-flex items-center gap-2">
               <Trophy size={14} /> Top 10 setters — {periodeLabel}

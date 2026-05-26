@@ -53,6 +53,7 @@ export function DoelenSectie({ doelen, voortgang }: { doelen: Doelen; voortgang:
         </h2>
         <button
           type="button"
+          data-tour="doelen-aanpassen"
           onClick={() => setOpen(!open)}
           className="text-xs font-semibold text-[#333399] hover:underline inline-flex items-center gap-1"
         >
