@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { HelpCircle } from "lucide-react";
 
@@ -27,36 +27,21 @@ type Props = {
   stappen: TourStap[];
 };
 
-const KEY_PREFIX = "noah-tour-pagina-";
-
 /**
- * Per-pagina onboarding-tour. Start automatisch bij eerste bezoek; daarna kun
- * je 'm via de "Uitleg" knop in de pagina-header opnieuw bekijken.
- * Voltooid-status wordt in localStorage opgeslagen.
+ * Per-pagina onboarding-tour. Start NIET automatisch — alleen via de
+ * "Uitleg" knop rechtsonder. De globale welkom-rondleiding op dashboard
+ * blijft wel automatisch starten bij eerste login.
  */
 export function PaginaTour({ pad, naam, stappen }: Props) {
   const [actief, setActief] = useState(false);
 
-  useEffect(() => {
-    try {
-      const voltooid = localStorage.getItem(KEY_PREFIX + pad);
-      if (!voltooid) {
-        // Wacht even tot DOM klaar is voordat we de tour starten
-        const t = setTimeout(() => setActief(true), 600);
-        return () => clearTimeout(t);
-      }
-    } catch {}
-  }, [pad]);
-
   function herstart() {
-    try { localStorage.removeItem(KEY_PREFIX + pad); } catch {}
     setActief(false);
     setTimeout(() => setActief(true), 100);
   }
 
   function onCallback(data: { status?: string; action?: string; type?: string }) {
     if (data.status === "finished" || data.status === "skipped") {
-      try { localStorage.setItem(KEY_PREFIX + pad, new Date().toISOString()); } catch {}
       setActief(false);
     }
   }
