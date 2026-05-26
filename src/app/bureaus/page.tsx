@@ -29,23 +29,27 @@ export default async function BureausPage({
     .order("created_at", { ascending: false });
 
   // Per bureau de hoofd-admin (oudste admin van die tenant) ophalen voor reset-knop
-  const tenantIds = (bureaus ?? []).map(b => b.id);
-  const { data: admins } = tenantIds.length > 0
-    ? await admin
+  const hoofdAdminPerTenant = new Map<string, { id: string; naam: string }>();
+  try {
+    const tenantIds = (bureaus ?? []).map(b => b.id);
+    if (tenantIds.length > 0) {
+      const { data: admins } = await admin
         .from("profiles")
         .select("id, tenant_id, voornaam, achternaam, created_at, rol")
         .in("tenant_id", tenantIds)
         .eq("rol", "admin")
-        .order("created_at", { ascending: true })
-    : { data: [] };
-  const hoofdAdminPerTenant = new Map<string, { id: string; naam: string }>();
-  for (const a of admins ?? []) {
-    if (!hoofdAdminPerTenant.has(a.tenant_id)) {
-      hoofdAdminPerTenant.set(a.tenant_id, {
-        id: a.id,
-        naam: `${a.voornaam ?? ""} ${a.achternaam ?? ""}`.trim() || "Admin",
-      });
+        .order("created_at", { ascending: true });
+      for (const a of admins ?? []) {
+        if (!hoofdAdminPerTenant.has(a.tenant_id)) {
+          hoofdAdminPerTenant.set(a.tenant_id, {
+            id: a.id,
+            naam: `${a.voornaam ?? ""} ${a.achternaam ?? ""}`.trim() || "Admin",
+          });
+        }
+      }
     }
+  } catch (e) {
+    console.error("[bureaus] hoofd-admin lookup mislukt:", e);
   }
 
   return (
