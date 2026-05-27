@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { PrintKnop } from "./PrintKnop";
+import { GrywoLogo } from "@/components/GrywoLogo";
 
 /**
  * Genereert een volledige verwerkersovereenkomst (DPA) met alle
@@ -56,9 +57,12 @@ export default async function DpaPage({
 
       {/* DPA-inhoud — A4-stijl */}
       <article className="max-w-[800px] mx-auto px-12 py-12 print:px-16 print:py-12 print:max-w-none text-[14px] leading-relaxed">
-        <header className="border-b-2 border-[#333399] pb-4 mb-8">
-          <div className="text-[#333399] text-3xl font-bold tracking-tight">Verwerkersovereenkomst</div>
-          <div className="text-sm text-gray-600 mt-1">Conform artikel 28 AVG · Datum: {vandaag}</div>
+        <header className="border-b-2 border-[#333399] pb-4 mb-8 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <div className="text-[#333399] text-3xl font-bold tracking-tight">Verwerkersovereenkomst</div>
+            <div className="text-sm text-gray-600 mt-1">Conform artikel 28 AVG · Datum: {vandaag}</div>
+          </div>
+          <GrywoLogo size="md" wit={false} />
         </header>
 
         <section className="mb-6">

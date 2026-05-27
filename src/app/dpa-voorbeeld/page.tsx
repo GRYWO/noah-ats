@@ -1,3 +1,5 @@
+import { GrywoLogo } from "@/components/GrywoLogo";
+
 /**
  * Visuele preview van de inline DPA-tekenflow.
  * Publiek toegankelijk (zit in middleware whitelist).
@@ -11,12 +13,11 @@ export default function DpaVoorbeeldPage() {
           <b>👀 Visuele preview</b> — dit is hoe een bureau de DPA zou zien. Knoppen werken nog niet, dit is alleen om het design te beoordelen.
         </div>
 
-        {/* Header banner */}
+        {/* Header banner met echt GRYWO-logo */}
         <div className="bg-[#333399] rounded-2xl p-5 mb-4 flex items-center justify-between flex-wrap gap-3">
-          <div className="inline-flex items-baseline">
-            <span className="text-white text-3xl font-black tracking-tighter">grywo</span>
-            <span className="ml-1 w-2 h-2 rounded-full bg-[#ffd84d] inline-block self-center"></span>
-            <span className="ml-3 text-white/70 text-xs">Verwerkersovereenkomst — Noah ATS</span>
+          <div className="inline-flex items-center gap-3">
+            <GrywoLogo size="md" wit={true} />
+            <span className="text-white/70 text-xs">Verwerkersovereenkomst — Noah ATS</span>
           </div>
           <div className="text-white/85 text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-2">
             <span className="w-2 h-2 bg-[#ffd84d] rounded-full"></span>
