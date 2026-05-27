@@ -797,6 +797,30 @@ export async function sendKandidaatPlaatsing({
  * Algemene afwijzing (status=afgewezen op kandidaat).
  */
 /**
+ * Chrome-extensie download-blok voor in welkomstmails.
+ * Eén klik = installeren via Chrome Web Store.
+ */
+const CHROME_EXTENSIE_URL =
+  "https://chrome.google.com/webstore/detail/fcbfdbgcpigefifjlegkeihcgokgeomk";
+
+function extensieBlok(): string {
+  return `
+<div style="background-color:#eef0ff;border:1px solid #d4d7f5;border-radius:8px;padding:18px 20px;margin:20px 0;">
+  <div style="font-size:14px;font-weight:700;color:${GRYWO_KLEUR};margin-bottom:6px;">📥 Installeer de Chrome-extensie</div>
+  <p style="margin:0 0 12px 0;font-size:13px;color:#444;line-height:1.5;">
+    Maakt <b>Robin</b> en <b>Jobdigger</b> direct bruikbaar binnen Noah ATS.
+    CV-downloads van Jobdigger worden automatisch toegevoegd aan de actieve kandidaat.
+  </p>
+  <a href="${CHROME_EXTENSIE_URL}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:bold;font-size:13px;">
+    Installeer in Chrome
+  </a>
+  <p style="margin:10px 0 0 0;font-size:11px;color:#888;">
+    Werkt alleen in Google Chrome. Eenmalig installeren — werkt daarna automatisch.
+  </p>
+</div>`;
+}
+
+/**
  * Welkomstmail voor nieuwe interne user (setter / recruiter / admin).
  */
 export async function sendWelkomstmailUser({
@@ -816,7 +840,7 @@ export async function sendWelkomstmailUser({
 }) {
   const intro = await renderMailTemplate("welkom_user", { voornaam, rol_label: rolLabel, bedrijf });
   const loginBlok = inlogBlok(email, wachtwoord);
-  const body = `${intro}\n${loginBlok}`;
+  const body = `${intro}\n${loginBlok}\n${extensieBlok()}`;
   return resend.emails.send({
     from: FROM,
     to: naar,
@@ -863,7 +887,7 @@ export async function sendWelkomstmailBureau({
   <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">4.</td><td style="padding:8px 0;">Vragen of hulp nodig? Bel <a href="tel:0854016082" style="color:${GRYWO_KLEUR};font-weight:bold;">085-4016082</a> &mdash; wij regelen de rest achter de schermen.</td></tr>
 </table>`;
 
-  const body = `${intro}\n${loginBlok}\n${dashboardKnop}\n${eersteStappen}`;
+  const body = `${intro}\n${loginBlok}\n${dashboardKnop}\n${eersteStappen}\n${extensieBlok()}`;
   const result = await resend.emails.send({
     from: from ?? FROM,
     to: naar,
