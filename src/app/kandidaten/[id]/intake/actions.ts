@@ -106,6 +106,15 @@ export async function wizardOpslaanIntake(formData: FormData): Promise<Result> {
   };
   update.intake_zoekfilters_voltooid = true;
 
+  // Score herberekenen: AI-score uit cv_geparseerd minus aftrek voor
+  // 'niet logisch' beoordeelde vlaggen. Resultaat opslaan in kandidaten.score
+  // zodat hij overal consistent zichtbaar is (lijst, kanban, AI-blok).
+  const aiScore = typeof cvVeld.ai_score === "number" ? cvVeld.ai_score : 100;
+  const aftrek = verwerkteVlaggen
+    .filter((v) => v.logisch === false)
+    .reduce((s, v) => s + Math.abs(v.punten ?? 0), 0);
+  update.score = Math.max(0, aiScore - aftrek);
+
   const { error: updErr } = await admin.from("kandidaten").update(update).eq("id", kandidaatId);
   if (updErr) return { error: updErr.message };
 

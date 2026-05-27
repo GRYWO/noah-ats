@@ -16,7 +16,6 @@ import { TweedeGesprekEdit } from "./TweedeGesprekEdit";
 import { PlaatsingTrigger } from "./PlaatsingTrigger";
 import { KANBAN_OPTIES } from "@/utils/kanban";
 import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
-import { IntakeFormulier } from "./IntakeFormulier";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -46,10 +45,10 @@ export default async function KandidaatDetail({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; error?: string; plaatsing?: string; intake_stap?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string; plaatsing?: string }>;
 }) {
   const { id } = await params;
-  const { ok, error, plaatsing: plaatsingQuery, intake_stap: intakeStapQuery } = await searchParams;
+  const { ok, error, plaatsing: plaatsingQuery } = await searchParams;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -90,7 +89,6 @@ export default async function KandidaatDetail({
   const isRecruiterOrAdmin = isAdmin || isRecruiter;
   const showPlaatsingTrigger = !isSetter && (k.status === "geplaatst" || k.kanban_stap === "geplaatst");
   const toonIntakeFormulier = isRecruiterOrAdmin && k.kanban_stap === "interne_intake";
-  const intakeFase: "vragenlijst" | "schets" = intakeStapQuery === "schets" ? "schets" : "vragenlijst";
 
   const { data: logs } = await supabase
     .from("voorstel_logs")
@@ -244,29 +242,30 @@ export default async function KandidaatDetail({
           }} />
         )}
 
-        {/* Intake-formulier tijdens interne_intake stap (recruiter/admin) */}
+        {/* Intake-wizard banner — verschijnt zolang intake niet is afgerond.
+            Klik = nieuwe 4-stappen wizard op /kandidaten/[id]/intake. */}
         {toonIntakeFormulier && (
-          <IntakeFormulier
-            fase={intakeFase}
-            k={{
-              id: k.id,
-              voornaam: k.voornaam, tussenvoegsel: k.tussenvoegsel, achternaam: k.achternaam,
-              email: k.email, telefoon: k.telefoon, geslacht: k.geslacht, leeftijd: k.leeftijd,
-              woonplaats: k.woonplaats, opleiding: k.opleiding, open_voor: k.open_voor,
-              rijbewijs: k.rijbewijs, eigen_vervoer: k.eigen_vervoer,
-              max_reisafstand_km: k.max_reisafstand_km,
-              soort_dienstverband: k.soort_dienstverband,
-              werving_of_uitzend: k.werving_of_uitzend,
-              salaris_indicatie: k.salaris_indicatie,
-              tarief_ws: k.tarief_ws,
-              bijzonderheden: k.bijzonderheden,
-              blacklist_bedrijven: k.blacklist_bedrijven,
-              notitie: k.notitie,
-              profielschets: k.profielschets,
-              cv_geparseerd: k.cv_geparseerd,
-              cv_url: k.cv_url,
-            }}
-          />
+          <div className="bg-gradient-to-r from-[#333399] to-[#4a4abf] text-white rounded-xl shadow-sm p-6 mb-6">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <h2 className="font-bold text-lg inline-flex items-center gap-2">
+                  <span>Intake-wizard</span>
+                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wide">4 stappen</span>
+                </h2>
+                <p className="text-sm text-white/90 mt-1 max-w-2xl">
+                  Doorloop de intake in één lange flow: rode vlaggen beantwoorden,
+                  goed/afkeuren, profielschets bewerken, voorstelprofiel checken,
+                  daarna naar de wachtrij.
+                </p>
+              </div>
+              <a
+                href={`/kandidaten/${k.id}/intake`}
+                className="bg-white text-[#333399] hover:bg-gray-50 font-semibold px-5 py-2 rounded-md text-sm shadow"
+              >
+                Start intake-wizard →
+              </a>
+            </div>
+          </div>
         )}
 
         {/* EDIT FORM — alleen recruiter/admin, niet tijdens interne_intake */}
