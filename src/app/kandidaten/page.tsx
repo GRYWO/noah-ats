@@ -73,10 +73,10 @@ export default async function KandidatenPage({
           </div>
         )}
 
-        {/* Wachtlijst — in afwachting van CV */}
-        {!isSetter && wachtenden && wachtenden.length > 0 && (
+        {/* Wachtlijst — bevat ook de "Of: voeg toe zonder CV" knop, dus altijd tonen */}
+        {!isSetter && (
           <div className="mb-6" data-tour="kandidaat-wachtend">
-            <WachtendOpCvSectie wachtenden={wachtenden} />
+            <WachtendOpCvSectie wachtenden={wachtenden ?? []} />
           </div>
         )}
 
