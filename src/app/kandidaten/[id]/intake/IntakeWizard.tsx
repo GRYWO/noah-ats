@@ -311,6 +311,15 @@ export function IntakeWizard({ kandidaat: kInit }: { kandidaat: Kandidaat }) {
               <textarea name="vaardigheden" rows={3} defaultValue={(cvInit.vaardigheden as string) ?? ""} className={input} />
             </Veld>
             <Veld label="Talen"><input name="talen" defaultValue={(cvInit.talen as string) ?? ""} className={input} /></Veld>
+            <Veld label="Diploma's & certificaten">
+              <textarea
+                name="diplomas"
+                rows={4}
+                defaultValue={(cvInit.diplomas as string) ?? ""}
+                placeholder={"Eén per regel, bv:\n2010 · VMBO Techniek — ROC Twente\n2018 · VCA Basis\n2020 · Lasdiploma MIG/MAG niv. 3"}
+                className={input}
+              />
+            </Veld>
             <Grid>
               <Veld label="Rijbewijs"><input name="rijbewijs" defaultValue={k.rijbewijs ?? ""} className={input} /></Veld>
               <Veld label="">

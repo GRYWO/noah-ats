@@ -78,6 +78,7 @@ export async function wizardOpslaanIntake(formData: FormData): Promise<Result> {
   const werkervaring = (formData.get("werkervaring") as string)?.trim() || null;
   const vaardigheden = (formData.get("vaardigheden") as string)?.trim() || null;
   const talen        = (formData.get("talen") as string)?.trim() || null;
+  const diplomas     = (formData.get("diplomas") as string)?.trim() || null;
 
   const { data: huidig } = await admin
     .from("kandidaten")
@@ -102,6 +103,7 @@ export async function wizardOpslaanIntake(formData: FormData): Promise<Result> {
     werkervaring,
     vaardigheden,
     talen,
+    diplomas,
     rode_vlaggen: verwerkteVlaggen,
   };
   update.intake_zoekfilters_voltooid = true;
@@ -146,6 +148,7 @@ export async function wizardGenereerSchets(kandidaatId: string): Promise<Result 
       open_voor: k.open_voor,
       werkervaring: cv.werkervaring as string | null,
       vaardigheden: cv.vaardigheden as string | null,
+      diplomas: cv.diplomas as string | null,
       notitie: k.notitie,
       max_reisafstand_km: k.max_reisafstand_km,
     });

@@ -69,7 +69,19 @@ export default async function VoorstelprofielPage({
   // Belangrijk: opdrachtgever mag de kandidaat niet zelf kunnen benaderen.
   // Daarom tonen we alléén de voornaam — geen achternaam, geen email, geen telefoon.
   const naam = (k.voornaam ?? "").trim();
-  const cv = (k.cv_geparseerd ?? {}) as { talen?: string; werkervaring?: string; vaardigheden?: string };
+  const cv = (k.cv_geparseerd ?? {}) as { talen?: string; werkervaring?: string; vaardigheden?: string; diplomas?: string };
+
+  // Splits multiline-strings naar lijstjes (één regel per item).
+  // Eerst splitten op newline, dan ook op '•' of ';' als fallback.
+  function naarLijst(s: string | null | undefined): string[] {
+    if (!s) return [];
+    return s
+      .split(/\r?\n|•|;|·\s*\n/g)
+      .map((r) => r.trim().replace(/^[•·\-*]\s*/, ""))
+      .filter((r) => r.length > 0);
+  }
+  const werkervaringRegels = naarLijst(cv.werkervaring);
+  const diplomasRegels = naarLijst(cv.diplomas);
   const extra = (k.voorstelprofiel_extra ?? {}) as Record<string, unknown>;
 
   return (
@@ -143,9 +155,28 @@ export default async function VoorstelprofielPage({
               {k.open_voor}
             </Card>
           )}
-          {cv.werkervaring && (
+          {werkervaringRegels.length > 0 && (
             <Card icon={<Briefcase size={16} />} titel="Werkervaring">
-              {cv.werkervaring}
+              <ul className="space-y-1.5">
+                {werkervaringRegels.map((r, i) => (
+                  <li key={i} className="text-sm text-gray-800 flex gap-2">
+                    <span className="text-gray-400 mt-1.5 w-1 h-1 rounded-full bg-gray-400 shrink-0" />
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+          {diplomasRegels.length > 0 && (
+            <Card icon={<FileCheck size={16} />} titel="Diploma's & certificaten">
+              <ul className="space-y-1.5">
+                {diplomasRegels.map((r, i) => (
+                  <li key={i} className="text-sm text-gray-800 flex gap-2">
+                    <span className="text-gray-400 mt-1.5 w-1 h-1 rounded-full bg-gray-400 shrink-0" />
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
             </Card>
           )}
           {cv.vaardigheden && (

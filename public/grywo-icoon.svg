@@ -1,19 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
   <defs>
-    <linearGradient id="grywoGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%"  stop-color="#333399" />
-      <stop offset="100%" stop-color="#3a7fd6" />
+    <!-- Blauwe gradient van donker linksonder naar lichter rechtsboven -->
+    <linearGradient id="grywoGrad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%"  stop-color="#1f2bb0" />
+      <stop offset="55%" stop-color="#2c5fd4" />
+      <stop offset="100%" stop-color="#3a8de8" />
     </linearGradient>
   </defs>
-  <rect width="200" height="200" rx="32" fill="url(#grywoGrad)" />
-  <text
-    x="50%"
-    y="56%"
-    text-anchor="middle"
-    dominant-baseline="middle"
-    font-family="'Nunito', 'Quicksand', 'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-weight="900"
-    font-size="150"
-    letter-spacing="-4"
-    fill="#ffffff">g</text>
+
+  <!-- Vierkant met afgeronde hoeken -->
+  <rect width="200" height="200" rx="34" fill="url(#grywoGrad)" />
+
+  <!-- Witte 'g' — typografische lowercase met cirkel + open staart.
+       Gemaakt als path zodat we niet afhankelijk zijn van het systeem-font. -->
+  <g transform="translate(48 38)" fill="#ffffff">
+    <!-- Bowl: bijna gesloten cirkel met opening rechts -->
+    <path d="
+      M 48 0
+      C 22 0  4 18  4 44
+      C 4 70  22 88  48 88
+      C 60 88  68 84  74 78
+      L 74 88
+      C 74 110  62 122  44 122
+      C 32 122  22 116  16 106
+      L 6 116
+      C 14 130  28 138  46 138
+      C 78 138  98 120  98 88
+      L 98 4
+      L 82 4
+      L 80 14
+      C 74 6  62 0  48 0
+      Z
+      M 50 22
+      C 64 22  74 32  74 44
+      C 74 56  64 66  50 66
+      C 36 66  26 56  26 44
+      C 26 32  36 22  50 22
+      Z
+    " />
+  </g>
 </svg>

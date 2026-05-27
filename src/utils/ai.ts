@@ -27,7 +27,10 @@ export type GeparseerdCV = {
   rijbewijs?: string;
   eigen_vervoer?: boolean;
   talen?: string;
+  /** Multiline string, één regel per baan: "JAARTAL · BEDRIJF — FUNCTIE" */
   werkervaring?: string;
+  /** Multiline string, één regel per diploma/certificaat */
+  diplomas?: string;
   vaardigheden?: string;
   // Intake-velden (zelden in CV, vaak via gesprek)
   soort_dienstverband?: string;
@@ -149,8 +152,17 @@ Basis (vaak in CV):
 - rijbewijs (bv "B" of "B, BE")
 - eigen_vervoer (boolean op basis van rijbewijs + auto-tekst)
 - talen (komma-gescheiden)
-- werkervaring (korte samenvatting van laatste 2-3 jobs)
-- vaardigheden (komma-gescheiden top vaardigheden)
+- werkervaring: GESTRUCTUREERDE LIJST met één regel per baan, NIET één lange tekst.
+  Formaat per regel: "JAARTAL · BEDRIJF — FUNCTIE/TAAK"
+  Scheid regels met "\n" (newline). Meest recent bovenaan. Max 8 regels.
+  Voorbeeld:
+    "2023–2024 · Vink Koeltechniek — RVS leidingwerk bakkerij\n2025 · TRF Engineering — Lasser Lamb Weston\n2019, 2015–2016 · Tata Steel — Pijplasser"
+- diplomas: GESTRUCTUREERDE LIJST met één regel per diploma/certificaat.
+  Formaat per regel: "JAARTAL · DIPLOMA/CERTIFICAAT — INSTELLING (optioneel)"
+  Scheid regels met "\n". Behalve school-diploma's ook lasdiploma's, VCA, BHV, heftruck, taxipas, etc.
+  Voorbeeld:
+    "2010 · VMBO Techniek — ROC Twente\n2018 · VCA Basis\n2020 · Lasdiploma MIG/MAG niv. 3"
+- vaardigheden (komma-gescheiden top vaardigheden, max 8)
 
 Intake (zelden in CV — laat leeg als niet duidelijk):
 - soort_dienstverband (Fulltime / Parttime / Flex / Stage)
@@ -220,6 +232,7 @@ export async function genereerProfielschets(data: {
   open_voor?: string | null;
   werkervaring?: string | null;
   vaardigheden?: string | null;
+  diplomas?: string | null;
   notitie?: string | null;
   max_reisafstand_km?: number | null;
 }): Promise<string> {
@@ -228,30 +241,34 @@ export async function genereerProfielschets(data: {
 
   const res = await client().messages.create({
     model: MODEL,
-    max_tokens: 800,
+    max_tokens: 900,
     messages: [
       {
         role: "user",
-        content: `Schrijf een professionele profielschets in het Nederlands voor de volgende kandidaat.
+        content: `Schrijf een professionele profielschets in het Nederlands voor de volgende kandidaat — bestemd voor de opdrachtgever van een recruitment bureau.
 
 EISEN (strikt):
-- Schrijf in de DERDE PERSOON (bv "${voornaam} is...", niet "Ik ben...")
+- Schrijf in de DERDE PERSOON (bv "${voornaam} is...", "Hij heeft...", nooit "Ik ben...")
 - Gebruik ALLEEN de voornaam, NOOIT de achternaam
 - Vermeld GEEN e-mailadres, telefoonnummer of andere contactgegevens
-- 100 tot 180 woorden
-- Drie alinea's: (1) persoonlijke introductie + woonplaats/opleiding, (2) werkervaring + vaardigheden, (3) ambitie + wat hij/zij zoekt
-- Professioneel maar warm; geen overdreven marketingtaal
-- Géén bullet points
-- Géén kopjes
-- Geef alleen de schets-tekst terug, geen extra uitleg
+- 120 tot 200 woorden
+- DRIE alinea's, gescheiden door één lege regel:
+  Alinea 1 — introductie: voornaam + leeftijd + woonplaats + één positieve karaktertrek/kerncompetentie
+  Alinea 2 — ervaring: focus op de meest relevante banen/branches en wat de kandidaat daar kon. Géén ratel-opsomming van alle werkgevers; samenvatten in 2-3 zinnen.
+  Alinea 3 — ambitie + match: wat zoekt hij/zij nu, wat brengt diegene mee, eventueel reisafstand
+- Professioneel maar warm; geen overdreven marketingtaal, geen superlatieven
+- Géén bullet points, géén kopjes
+- Géén kale jaartallen of werkgever-opsommingen — die staan al apart in het voorstelprofiel
+- Geef ALLEEN de schets-tekst terug, geen extra uitleg of intro
 
-Kandidaat-gegevens (alleen voor jou ter context):
+Kandidaat-gegevens (alleen voor jou ter context — gebruik ze om een vloeiend verhaal te schrijven, niet om ze letterlijk over te tikken):
 - Voornaam: ${voornaam}
 ${data.leeftijd ? `- Leeftijd: ${data.leeftijd}` : ""}
 ${data.woonplaats ? `- Woonplaats: ${data.woonplaats}` : ""}
 ${data.opleiding ? `- Opleiding: ${data.opleiding}` : ""}
+${data.diplomas ? `- Diploma's / certificaten:\n${data.diplomas}` : ""}
 ${data.open_voor ? `- Open voor functies: ${data.open_voor}` : ""}
-${data.werkervaring ? `- Werkervaring: ${data.werkervaring}` : ""}
+${data.werkervaring ? `- Werkervaring (al gestructureerd):\n${data.werkervaring}` : ""}
 ${data.vaardigheden ? `- Vaardigheden: ${data.vaardigheden}` : ""}
 ${data.max_reisafstand_km ? `- Max reisafstand: ${data.max_reisafstand_km} km` : ""}
 ${data.notitie ? `- Interne notitie: ${data.notitie}` : ""}`,
