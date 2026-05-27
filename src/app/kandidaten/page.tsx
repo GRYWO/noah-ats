@@ -5,6 +5,7 @@ import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_KANDIDATEN } from "@/utils/pagina-tours";
 import { WachtendOpCvSectie } from "./nieuw/WachtendOpCv";
 import { ruimOudeWachtenden } from "./nieuw/wachtend-actions";
+import { Wizard } from "./nieuw/Wizard";
 
 const STATUS_COLORS: Record<string, string> = {
   nieuw: "bg-blue-100 text-blue-800",
@@ -65,15 +66,11 @@ export default async function KandidatenPage({
           </div>
         )}
 
-        {/* Nieuwe kandidaat-knop → wizard */}
+        {/* CV-dropzone direct bovenaan — geen extra klik meer nodig */}
         {!isSetter && (
-          <Link
-            href="/kandidaten/nieuw"
-            data-tour="kandidaat-nieuw"
-            className="inline-block bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-6 py-3 rounded-xl text-sm mb-6 shadow-sm"
-          >
-            + Nieuwe kandidaat (CV uploaden)
-          </Link>
+          <div className="mb-6" data-tour="kandidaat-nieuw">
+            <Wizard />
+          </div>
         )}
 
         {/* Wachtlijst — in afwachting van CV */}
@@ -122,7 +119,7 @@ export default async function KandidatenPage({
             </table>
           ) : (
             <div className="p-12 text-center text-gray-500">
-              <p className="text-sm">Nog geen kandidaten. Klap &quot;Nieuwe kandidaat toevoegen&quot; open om je eerste toe te voegen.</p>
+              <p className="text-sm">Nog geen kandidaten — sleep een CV in het vak hierboven om de eerste toe te voegen.</p>
             </div>
           )}
         </div>
