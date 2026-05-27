@@ -4,14 +4,21 @@ import { getGrywoLogoWitDataUri } from "@/utils/grywo-logo";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
-// Productie-URL bepalen voor links in mails. Volgorde:
-// 1. NEXT_PUBLIC_APP_URL (kun je in Vercel overrulen)
-// 2. VERCEL_URL (automatisch gezet door Vercel — geeft preview-domein)
-// 3. https://noah-ats.nl (productie-fallback — nooit meer localhost in mails)
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-  "https://noah-ats.nl";
+// Productie-URL bepalen voor links in mails.
+// Volgorde:
+// 1. NEXT_PUBLIC_APP_URL — MAAR alleen als hij niet naar localhost wijst
+//    (oude env-var kan nog 'http://localhost:3000' bevatten in Vercel)
+// 2. VERCEL_URL (automatisch gezet door Vercel)
+// 3. https://noah-ats.nl (hard productie-fallback)
+function bepaalAppUrl(): string {
+  const env = process.env.NEXT_PUBLIC_APP_URL;
+  if (env && !env.includes("localhost") && !env.includes("127.0.0.1")) {
+    return env;
+  }
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "https://noah-ats.nl";
+}
+const APP_URL = bepaalAppUrl();
 
 const GRYWO_KLEUR = "#333399";
 
