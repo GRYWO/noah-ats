@@ -59,8 +59,21 @@ export async function maakKandidaatVanWizard(formData: FormData) {
   const cvGeparseerdJson = formData.get("cv_geparseerd") as string;
   if (cvGeparseerdJson) {
     try {
-      data.cv_geparseerd = JSON.parse(cvGeparseerdJson);
+      const parsed = JSON.parse(cvGeparseerdJson);
+      data.cv_geparseerd = parsed;
       data.cv_controle_status = "in_controle";
+
+      // Score direct herberekenen: AI-score min aftrek voor 'niet logisch' vlaggen.
+      // Zo zie je in de detailpagina meteen het juiste cijfer, zonder dat de
+      // recruiter eerst de hele intake-wizard hoeft te doorlopen.
+      const aiScore = typeof parsed.ai_score === "number" ? parsed.ai_score : null;
+      if (aiScore != null) {
+        type Vlag = { punten?: number; logisch?: boolean };
+        const aftrek = ((parsed.rode_vlaggen ?? []) as Vlag[])
+          .filter((v) => v.logisch === false)
+          .reduce((s, v) => s + Math.abs(v.punten ?? 0), 0);
+        data.score = Math.max(0, aiScore - aftrek);
+      }
     } catch {}
   }
 

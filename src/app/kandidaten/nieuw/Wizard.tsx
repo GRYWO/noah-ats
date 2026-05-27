@@ -54,6 +54,9 @@ export function Wizard() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  // Per rode vlag: toelichting + logisch ja/nee (default = logisch zodat geen punten worden afgetrokken)
+  const [vlagToelichting, setVlagToelichting] = useState<Record<string, string>>({});
+  const [vlagLogisch, setVlagLogisch] = useState<Record<string, boolean>>({});
 
   async function onFile(f: File) {
     setFile(f);
@@ -99,7 +102,16 @@ export function Wizard() {
     if (parsed) {
       // Merge form fields + vragen-antwoorden
       const merged = { ...parsed, ...formData, ...vragen };
-      fd.append("cv_geparseerd", JSON.stringify(parsed));
+
+      // Werk rode_vlaggen bij met de zojuist gegeven toelichting + logisch-keuze
+      const vlaggenMetAntwoord = (parsed.rode_vlaggen ?? []).map((v) => ({
+        ...v,
+        toelichting: vlagToelichting[v.code] ?? "",
+        logisch: vlagLogisch[v.code] !== false, // default = logisch (tenzij expliciet niet)
+      }));
+      const parsedMetAntwoorden = { ...parsed, rode_vlaggen: vlaggenMetAntwoord };
+      fd.append("cv_geparseerd", JSON.stringify(parsedMetAntwoorden));
+
       for (const [k, v] of Object.entries(merged)) {
         if (v == null || v === "") continue;
         if (k === "ontbrekend" || k === "rode_vlaggen" || k === "ai_score" || k === "ai_advies") continue;
@@ -191,29 +203,58 @@ export function Wizard() {
             </div>
           )}
 
-          {/* Rode vlaggen */}
+          {/* Rode vlaggen — beantwoorden hier direct, niet pas in vervolg-stap */}
           {parsed.rode_vlaggen && parsed.rode_vlaggen.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm p-5">
-              <h3 className="text-sm font-bold text-gray-800 mb-3 inline-flex items-center gap-2">
+              <h3 className="text-sm font-bold text-gray-800 mb-1 inline-flex items-center gap-2">
                 <AlertTriangle size={14} className="text-red-600" />
-                Rode vlaggen
+                Rode vlaggen — beantwoorden
               </h3>
+              <p className="text-xs text-gray-500 mb-3">
+                Geef per vlag een antwoord en klik <b>Logisch</b> (geen punten-aftrek) of <b>Niet logisch</b> (punten worden afgetrokken).
+              </p>
               <div className="space-y-2">
-                {parsed.rode_vlaggen.map((v) => (
-                  <div key={v.code} className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="font-bold text-red-900">{v.beschrijving}</div>
-                        {v.vraag_aan_recruiter && (
-                          <div className="text-red-800 mt-0.5 italic">Vraag: {v.vraag_aan_recruiter}</div>
-                        )}
+                {parsed.rode_vlaggen.map((v) => {
+                  const logischState = vlagLogisch[v.code];
+                  return (
+                    <div key={v.code} className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1">
+                          <div className="font-bold text-red-900">{v.beschrijving}</div>
+                          {v.vraag_aan_recruiter && (
+                            <div className="text-red-800 mt-0.5 italic">Vraag: {v.vraag_aan_recruiter}</div>
+                          )}
+                        </div>
+                        <span className="text-xs font-bold text-red-800 bg-white border border-red-200 rounded-full px-2 py-0.5 shrink-0">
+                          {v.punten}
+                        </span>
                       </div>
-                      <span className="text-xs font-bold text-red-800 bg-white border border-red-200 rounded-full px-2 py-0.5 shrink-0">
-                        {v.punten}
-                      </span>
+                      <textarea
+                        value={vlagToelichting[v.code] ?? ""}
+                        onChange={(e) => setVlagToelichting(p => ({ ...p, [v.code]: e.target.value }))}
+                        rows={2}
+                        placeholder="Antwoord van kandidaat / jouw beoordeling..."
+                        className="w-full px-2 py-1.5 border border-red-200 rounded-md text-xs bg-white"
+                      />
+                      <div className="mt-2 inline-flex rounded-md overflow-hidden border border-red-200 bg-white text-xs font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setVlagLogisch(p => ({ ...p, [v.code]: true }))}
+                          className={`px-3 py-1 ${logischState === true ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-50"}`}
+                        >
+                          Logisch
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVlagLogisch(p => ({ ...p, [v.code]: false }))}
+                          className={`px-3 py-1 ${logischState === false ? "bg-red-500 text-white" : "text-gray-600 hover:bg-gray-50"}`}
+                        >
+                          Niet logisch
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
