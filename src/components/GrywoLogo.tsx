@@ -8,14 +8,13 @@ const HOOGTE: Record<Size, number> = {
   lg: 56,
 };
 
-// Verhouding van het echte logo-bestand
-const BREEDTE_FACTOR = 200 / 52;
+// Verhouding van het echte logo-bestand (3282 × 856 ≈ 3.83 : 1)
+const BREEDTE_FACTOR = 3282 / 856;
 
 /**
- * GRYWO-wordmark — gebruikt het echte PNG-logo uit /public.
- * De witte variant wordt extra wit gemaakt via CSS filter, zodat hij
- * altijd zuiver wit oogt op de paarse huisstijl-achtergrond — ook als
- * de bron-PNG iets anti-aliased grijs heeft.
+ * GRYWO-wordmark uit /public.
+ * - wit: het officiële witte logo (op paarse huisstijl-achtergrond)
+ * - wit=false: het officiële paarse 'gryvo' logo (op witte achtergrond)
  */
 export function GrywoLogo({ size = "md", wit = true }: { size?: Size; wit?: boolean }) {
   const h = HOOGTE[size];
@@ -28,13 +27,7 @@ export function GrywoLogo({ size = "md", wit = true }: { size?: Size; wit?: bool
       height={h}
       priority
       className="inline-block"
-      style={{
-        height: `${h}px`,
-        width: "auto",
-        // brightness(0) invert(1) maakt alle gekleurde pixels zuiver wit
-        // zodat het logo écht wit oogt — ongeacht of de PNG zelf perfect wit is.
-        filter: wit ? "brightness(0) invert(1)" : undefined,
-      }}
+      style={{ height: `${h}px`, width: "auto" }}
     />
   );
 }
