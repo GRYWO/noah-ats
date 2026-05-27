@@ -900,6 +900,129 @@ export async function sendWelkomstmailBureau({
   return result;
 }
 
+/**
+ * Verstuurt de uitnodiging om de verwerkersovereenkomst (DPA) digitaal te ondertekenen.
+ * De link bevat een unieke token; ontvanger hoeft niet in te loggen.
+ */
+export async function sendDpaTerOndertekening({
+  naar,
+  contactNaam,
+  bureauNaam,
+  token,
+}: {
+  naar: string;
+  contactNaam: string;
+  bureauNaam: string;
+  token: string;
+}) {
+  const url = `${APP_URL}/dpa-tekenen/${token}`;
+  const body = `
+<p>Hallo ${contactNaam || ""},</p>
+<p>Voor je live gaat met Noah ATS sluiten we volgens de AVG een <b>verwerkersovereenkomst (DPA)</b>.
+Dit is wettelijk verplicht en regelt hoe wij namens <b>${bureauNaam}</b> jullie kandidaat-data verwerken.</p>
+
+<p>Klik op de knop hieronder om de overeenkomst door te lezen en digitaal te ondertekenen — duurt minder dan 2 minuten.</p>
+
+<div style="margin:20px 0;text-align:center;">
+  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+    Onderteken de verwerkersovereenkomst
+  </a>
+</div>
+
+<p style="font-size:13px;color:#666;">
+Of kopieer deze link in je browser:<br>
+<a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
+</p>
+
+<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail noreply@grywo.nl of bel 085-4016082.</p>`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `Onderteken verwerkersovereenkomst — Noah ATS · ${bureauNaam}`,
+    html: brandedLayout({ titel: "Verwerkersovereenkomst klaar voor ondertekening", body }),
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}
+
+/**
+ * Bevestiging naar bureau-admin nadat hij/zij de DPA heeft getekend.
+ */
+export async function sendDpaGetekendBevestiging({
+  naar,
+  contactNaam,
+  bureauNaam,
+  token,
+}: {
+  naar: string;
+  contactNaam: string;
+  bureauNaam: string;
+  token: string;
+}) {
+  const url = `${APP_URL}/dpa-tekenen/${token}`;
+  const body = `
+<p>Hallo ${contactNaam || ""},</p>
+<p>Bedankt voor het ondertekenen van de verwerkersovereenkomst voor <b>${bureauNaam}</b>.</p>
+<p>Een kopie van de getekende DPA blijft toegankelijk via onderstaande link. Beide partijen hebben nu een rechtsgeldige overeenkomst.</p>
+
+<div style="margin:20px 0;text-align:center;">
+  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">
+    Bekijk getekende DPA
+  </a>
+</div>
+
+<p style="font-size:12px;color:#888;margin-top:18px;">Bij vragen: noreply@grywo.nl · 085-4016082.</p>`;
+
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `✓ Verwerkersovereenkomst getekend — ${bureauNaam}`,
+    html: brandedLayout({ titel: "DPA succesvol getekend", body }),
+  });
+}
+
+/**
+ * Interne notificatie naar GRYWO dat een bureau heeft getekend.
+ */
+export async function sendDpaGetekendIntern({
+  bureauNaam,
+  ondertekenaarNaam,
+  ondertekenaarEmail,
+  ondertekenaarFunctie,
+  token,
+}: {
+  bureauNaam: string;
+  ondertekenaarNaam: string;
+  ondertekenaarEmail: string;
+  ondertekenaarFunctie: string;
+  token: string;
+}) {
+  const url = `${APP_URL}/dpa-tekenen/${token}`;
+  const body = `
+<p>Een bureau heeft zojuist de verwerkersovereenkomst getekend:</p>
+
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
+  <tr><td style="padding:6px 0;color:#666;width:30%;">Bureau</td><td style="padding:6px 0;font-weight:600;">${bureauNaam}</td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Ondertekend door</td><td style="padding:6px 0;font-weight:600;">${ondertekenaarNaam} (${ondertekenaarFunctie})</td></tr>
+  <tr><td style="padding:6px 0;color:#666;">E-mail</td><td style="padding:6px 0;">${ondertekenaarEmail}</td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Tijdstip</td><td style="padding:6px 0;">${new Date().toLocaleString("nl-NL")}</td></tr>
+</table>
+
+<div style="margin:20px 0;text-align:center;">
+  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">
+    Bekijk getekende DPA
+  </a>
+</div>`;
+
+  return resend.emails.send({
+    from: FROM,
+    to: "yorith@grywo.nl",
+    subject: `[GRYWO] DPA getekend — ${bureauNaam}`,
+    html: brandedLayout({ titel: "DPA getekend", body }),
+  });
+}
+
 function inlogBlok(email: string, wachtwoord: string) {
   return `
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">

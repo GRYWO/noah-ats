@@ -5,8 +5,10 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
 import { updateBureau } from "./actions";
+import { stuurDpaUit, trekDpaIn } from "./dpa-actions";
 import { DeleteBureauButton } from "./DeleteBureauButton";
 import { BetaaldSelect } from "../BetaaldSelect";
+import { ShieldCheck, Send, RefreshCw, X, FileSignature } from "lucide-react";
 
 export default async function BureauDetail({
   params,
@@ -40,6 +42,15 @@ export default async function BureauDetail({
     .from("kandidaten")
     .select("*", { count: "exact", head: true })
     .eq("tenant_id", id);
+
+  // Laatste DPA-uitnodiging (voor status-blok)
+  const { data: dpa } = await admin
+    .from("dpa_signatures")
+    .select("*")
+    .eq("tenant_id", id)
+    .order("verzonden_op", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -77,7 +88,7 @@ export default async function BureauDetail({
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            Opgeslagen.
+            {ok === "dpa_verzonden" ? "Verzoek tot ondertekening verstuurd naar de contactpersoon." : "Opgeslagen."}
           </div>
         )}
         {error && (
@@ -85,6 +96,110 @@ export default async function BureauDetail({
             {error}
           </div>
         )}
+
+        {/* DPA-status */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+            <div>
+              <h2 className="font-bold text-gray-800 inline-flex items-center gap-2">
+                <ShieldCheck size={16} className="text-[#333399]" />
+                Verwerkersovereenkomst (DPA)
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                Verplicht onder AVG art. 28 — bureau moet tekenen vóór hij data invoert.
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-2">
+              <Link
+                href={`/bureaus/${id}/dpa`}
+                target="_blank"
+                className="text-xs text-[#333399] hover:underline font-semibold inline-flex items-center gap-1"
+              >
+                <FileSignature size={12} /> PDF-preview
+              </Link>
+            </div>
+          </div>
+
+          {!dpa && (
+            <form action={stuurDpaUit}>
+              <input type="hidden" name="tenant_id" value={id} />
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between flex-wrap gap-3">
+                <div className="text-sm text-amber-900">
+                  <b>Nog niet verzonden.</b> Klik op de knop om de DPA naar <b>{b.contact_email || "[geen contact-email]"}</b> te sturen ter digitale ondertekening.
+                </div>
+                <button
+                  type="submit"
+                  disabled={!b.contact_email}
+                  className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-5 py-2 rounded-md text-sm inline-flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Send size={13} /> Stuur DPA ter ondertekening
+                </button>
+              </div>
+            </form>
+          )}
+
+          {dpa?.status === "wachtend" && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="text-sm text-amber-900">
+                  <b>⏳ Wacht op handtekening</b><br />
+                  Verzonden naar <b>{dpa.verzonden_aan_email}</b> op {new Date(dpa.verzonden_op).toLocaleString("nl-NL", { dateStyle: "long", timeStyle: "short" })}
+                </div>
+                <div className="inline-flex items-center gap-2">
+                  <Link
+                    href={`/dpa-tekenen/${dpa.token}`}
+                    target="_blank"
+                    className="text-xs text-[#333399] hover:underline font-semibold inline-flex items-center gap-1"
+                  >
+                    Bekijk teken-link
+                  </Link>
+                  <form action={stuurDpaUit}>
+                    <input type="hidden" name="tenant_id" value={id} />
+                    <button type="submit" className="text-xs bg-[#333399]/10 hover:bg-[#333399]/20 text-[#333399] font-semibold px-3 py-1.5 rounded-md inline-flex items-center gap-1">
+                      <RefreshCw size={11} /> Opnieuw sturen
+                    </button>
+                  </form>
+                  <form action={trekDpaIn}>
+                    <input type="hidden" name="id" value={dpa.id} />
+                    <button type="submit" className="text-xs text-red-600 hover:bg-red-50 font-semibold px-2 py-1.5 rounded-md inline-flex items-center gap-1">
+                      <X size={11} /> Intrekken
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {dpa?.status === "getekend" && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-center justify-between flex-wrap gap-3">
+              <div className="text-sm text-emerald-900">
+                <b>✅ Getekend op {new Date(dpa.getekend_op!).toLocaleString("nl-NL", { dateStyle: "long", timeStyle: "short" })}</b><br />
+                door <b>{dpa.getekend_door_naam}</b> ({dpa.getekend_door_functie}) — {dpa.getekend_door_email}
+              </div>
+              <Link
+                href={`/dpa-tekenen/${dpa.token}`}
+                target="_blank"
+                className="text-sm bg-white border border-emerald-300 text-emerald-700 hover:bg-emerald-100 font-semibold px-4 py-2 rounded-md inline-flex items-center gap-1.5"
+              >
+                Bekijk getekende DPA
+              </Link>
+            </div>
+          )}
+
+          {dpa?.status === "ingetrokken" && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between flex-wrap gap-3">
+              <div className="text-sm text-gray-700">
+                Vorige uitnodiging ingetrokken op {new Date(dpa.verzonden_op).toLocaleDateString("nl-NL")}
+              </div>
+              <form action={stuurDpaUit}>
+                <input type="hidden" name="tenant_id" value={id} />
+                <button type="submit" className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-4 py-2 rounded-md text-sm inline-flex items-center gap-1.5">
+                  <Send size={13} /> Stuur nieuwe uitnodiging
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
 
         <form action={updateBureau} className="space-y-6">
           <input type="hidden" name="id" value={b.id} />
