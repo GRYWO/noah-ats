@@ -9,6 +9,7 @@ import { herverdeelKandidaten, verwerkWachtrij } from "@/utils/setter-assign";
 import { sendWelkomstmailUser } from "@/utils/email";
 import { bouwHandtekening } from "@/utils/email-signature";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { MENU_KEYS } from "@/utils/menu-permissions";
 
 export async function nieuweSetter(formData: FormData) {
   const supabase = await createClient();
@@ -71,6 +72,21 @@ export async function nieuweSetter(formData: FormData) {
     functieTitel: null,
   });
 
+  // Menu-rechten — alleen super-admin mag dit zetten bij aanmaken.
+  // Lees de checkboxes uit het form (name="menu_perm_<key>").
+  let menuPermissions: Record<string, boolean> | null = null;
+  if (isSuperAdmin) {
+    const perms: Record<string, boolean> = {};
+    let heeftEntries = false;
+    for (const m of MENU_KEYS) {
+      // Een unchecked checkbox stuurt geen waarde — dus afwezig = false.
+      const aangevinkt = formData.get(`menu_perm_${m.key}`) === "on";
+      perms[m.key] = aangevinkt;
+      heeftEntries = true;
+    }
+    if (heeftEntries) menuPermissions = perms;
+  }
+
   // 2. Maak profile aan (gekoppeld aan zelfde tenant)
   const { error: profileErr } = await admin.from("profiles").insert({
     id: created.user.id,
@@ -84,6 +100,7 @@ export async function nieuweSetter(formData: FormData) {
     mail_wachtwoord: mailWachtwoord ? encrypt(mailWachtwoord) : null,
     handtekening_html: handtekening,
     mail_status: mailWachtwoord ? "actief" : "niet_geconfigureerd",
+    menu_permissions: menuPermissions,
   });
 
   if (profileErr) {

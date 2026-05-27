@@ -6,6 +6,8 @@ import { nieuweSetter } from "./actions";
 import { UserRij } from "./UserRij";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_SETTERS } from "@/utils/pagina-tours";
+import { MENU_KEYS } from "@/utils/menu-permissions";
+import { ShieldCheck } from "lucide-react";
 
 export default async function SettersPage({
   searchParams,
@@ -134,6 +136,32 @@ export default async function SettersPage({
                 <input name="mail_wachtwoord" type="password" placeholder="Voor IMAP/SMTP" autoComplete="new-password" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                 <small className="text-gray-400 text-xs">Versleuteld opgeslagen</small>
               </div>
+
+              {/* Menu-rechten — alleen super-admin mag deze meegeven bij aanmaken */}
+              {isSuperAdmin && (
+                <div className="col-span-2 pt-3 mt-2 border-t">
+                  <h4 className="text-xs uppercase text-gray-500 font-semibold mb-2 inline-flex items-center gap-1.5">
+                    <ShieldCheck size={12} className="text-[#333399]" />
+                    Menu-rechten
+                  </h4>
+                  <p className="text-xs text-gray-400 mb-2">Alleen aangevinkte items verschijnen in het menu van deze user.</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {MENU_KEYS.map((m) => (
+                      <label key={m.key} className="flex items-center gap-2 text-sm text-gray-700 px-2 py-1 rounded hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name={`menu_perm_${m.key}`}
+                          defaultChecked={true}
+                          className="accent-[#333399]"
+                        />
+                        <span>{m.label}</span>
+                        {m.uitleg && <span className="text-[10px] text-gray-400 ml-auto">{m.uitleg}</span>}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="col-span-2 flex justify-end">
                 <button type="submit" className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-6 py-2 rounded-md text-sm">
                   User aanmaken
