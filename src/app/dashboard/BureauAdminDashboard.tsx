@@ -189,8 +189,8 @@ export async function BureauAdminDashboard({ tenantId, bureauNaam }: { tenantId:
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SnelLink
           href="/setters"
-          titel="Recruiters & setters beheren"
-          beschrijving="Voeg recruiters of setters toe, beheer rechten en wijs een coach aan."
+          titel="Recruiters beheren"
+          beschrijving="Voeg recruiters toe en beheer hun gegevens. Setters worden centraal door GRYWO geregeld."
           icoon={<UserPlus size={20} />}
         />
         <SnelLink

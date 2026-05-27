@@ -840,7 +840,7 @@ export async function sendWelkomstmailBureau({
 <h3 style="color:${GRYWO_KLEUR};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">In 4 stappen klaar</h3>
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0;">
   <tr><td style="padding:8px 0;width:30px;font-weight:bold;color:${GRYWO_KLEUR};">1.</td><td style="padding:8px 0;">Vul je bedrijfsgegevens aan op het dashboard (contactpersoon, telefoon, adres).</td></tr>
-  <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">2.</td><td style="padding:8px 0;">Voeg je recruiters en setters toe via &quot;Recruiters &amp; setters beheren&quot;.</td></tr>
+  <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">2.</td><td style="padding:8px 0;">Voeg je recruiters toe via &quot;Users&quot;. Setters worden centraal door GRYWO geregeld.</td></tr>
   <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">3.</td><td style="padding:8px 0;">Koppel je zakelijke mailbox via Instellingen, zodat voorstellen vanaf jouw domein vertrekken.</td></tr>
   <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">4.</td><td style="padding:8px 0;">Vragen of hulp nodig? Bel <a href="tel:0854016082" style="color:${GRYWO_KLEUR};font-weight:bold;">085-4016082</a> &mdash; wij regelen de rest achter de schermen.</td></tr>
 </table>`;
