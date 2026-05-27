@@ -59,8 +59,8 @@ export function CoachToevoegenKnop({ users }: { users: User[] }) {
             </div>
             <div className="p-5 space-y-3">
               <p className="text-xs text-gray-500">
-                De coach krijgt automatisch alle 1-op-1 aanvragen en &quot;doel niet behaald&quot;-meldingen.
-                Eén coach per bureau — wisselen kan altijd.
+                De coach begeleidt de GRYWO-setters en krijgt automatisch alle 1-op-1 aanvragen
+                en &quot;doel niet behaald&quot;-meldingen. Wisselen van coach kan altijd.
               </p>
 
               {users.length === 0 ? (
