@@ -1023,6 +1023,89 @@ export async function sendDpaGetekendIntern({
   });
 }
 
+/**
+ * Verstuurt de uitnodiging om individuele NDA / gebruiksvoorwaarden te tekenen.
+ */
+export async function sendAkkoordTerOndertekening({
+  naar,
+  naam,
+  type,
+  token,
+}: {
+  naar: string;
+  naam: string;
+  type: "nda_setter" | "gebruiksvoorwaarden";
+  token: string;
+}) {
+  const url = `${APP_URL}/tekenen/${token}`;
+  const titel = type === "nda_setter" ? "Geheimhoudingsverklaring (NDA)" : "Gebruiksvoorwaarden Noah ATS";
+  const uitleg = type === "nda_setter"
+    ? "Als GRYWO-setter krijg je toegang tot kandidaten van meerdere bureaus. Onze geheimhoudingsverklaring legt vast hoe je met deze data omgaat — verplicht onder AVG art. 32 lid 4."
+    : "Voordat je live gaat met Noah ATS vragen we eenmalig akkoord op onze gebruiksvoorwaarden. Beschermt jou én de kandidaten die je beheert.";
+
+  const body = `
+<p>Hallo ${naam || ""},</p>
+<p>${uitleg}</p>
+
+<div style="margin:20px 0;text-align:center;">
+  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+    Lees en onderteken
+  </a>
+</div>
+
+<p style="font-size:13px;color:#666;">
+Of kopieer deze link in je browser:<br>
+<a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
+</p>
+
+<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail noreply@grywo.nl of bel 085-4016082.</p>`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `${titel} — ondertekening vereist`,
+    html: brandedLayout({ titel, body, merk: "noah" }),
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}
+
+/**
+ * Bevestiging na ondertekening individuele NDA / gebruiksvoorwaarden.
+ */
+export async function sendAkkoordBevestiging({
+  naar,
+  naam,
+  type,
+  token,
+}: {
+  naar: string;
+  naam: string;
+  type: "nda_setter" | "gebruiksvoorwaarden";
+  token: string;
+}) {
+  const url = `${APP_URL}/tekenen/${token}`;
+  const titel = type === "nda_setter" ? "Geheimhoudingsverklaring" : "Gebruiksvoorwaarden";
+  const body = `
+<p>Hallo ${naam},</p>
+<p>Bedankt voor het ondertekenen van de ${titel.toLowerCase()}. Je kunt nu volledig gebruikmaken van Noah ATS.</p>
+
+<div style="margin:20px 0;text-align:center;">
+  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">
+    Bekijk getekende versie
+  </a>
+</div>
+
+<p style="font-size:12px;color:#888;margin-top:18px;">Bewaar deze mail. Bij vragen: noreply@grywo.nl.</p>`;
+
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `✓ ${titel} getekend`,
+    html: brandedLayout({ titel: `${titel} getekend`, body, merk: "noah" }),
+  });
+}
+
 function inlogBlok(email: string, wachtwoord: string) {
   return `
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">

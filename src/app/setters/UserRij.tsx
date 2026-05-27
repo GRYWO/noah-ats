@@ -2,12 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, X, Loader2, ShieldCheck } from "lucide-react";
+import { Pencil, X, Loader2, ShieldCheck, Send, CheckCircle2, Clock, RefreshCw } from "lucide-react";
 import { InlineVoysEdit } from "./InlineVoysEdit";
 import { CoachToggle } from "./CoachToggle";
 import { ResetWachtwoordKnop } from "./ResetWachtwoordKnop";
 import { DeleteSetterButton } from "./DeleteSetterButton";
 import { bewerkUser } from "./actions";
+import { stuurAkkoordUit, trekAkkoordIn } from "./akkoord-actions";
 import { MENU_KEYS } from "@/utils/menu-permissions";
 
 const ROL_LABELS: Record<string, string> = {
@@ -36,6 +37,15 @@ type SetterRecord = {
   menu_permissions: Record<string, boolean> | null;
 };
 
+type AkkoordInfo = {
+  id: string;
+  status: string;
+  token: string;
+  type: string;
+  verzonden_op: string;
+  getekend_op: string | null;
+};
+
 type Props = {
   setter: SetterRecord;
   isHuidigeUser: boolean;
@@ -45,6 +55,8 @@ type Props = {
   isSuperAdmin: boolean;
   /** Is de huidige viewer een super-admin? Alleen dan rechten + rol tonen. */
   viewerIsSuperAdmin: boolean;
+  /** Laatste NDA / gebruiksvoorwaarden status (null = nog niet verstuurd). */
+  akkoord: AkkoordInfo | null;
 };
 
 /**
@@ -52,7 +64,7 @@ type Props = {
  * behalve op de interactieve cellen (Voys-edit, coach-toggle, acties)
  * — die hebben hun eigen click-stop in een wrapper-div.
  */
-export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSuperAdmin, viewerIsSuperAdmin }: Props) {
+export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSuperAdmin, viewerIsSuperAdmin, akkoord }: Props) {
   const [open, setOpen] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
@@ -120,6 +132,9 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSu
         </td>
         <td className="px-4 py-3" onClick={stop}>
           <CoachToggle userId={s.id} isCoach={!!s.is_coach} disabled={!isAdmin} />
+        </td>
+        <td className="px-4 py-3" onClick={stop}>
+          <AkkoordCel userId={s.id} akkoord={akkoord} kanBewerken={isAdmin && !isSuperAdmin} />
         </td>
         <td className="px-4 py-3 text-sm text-gray-500">
           {s.created_at ? new Date(s.created_at).toLocaleDateString("nl-NL") : "—"}
@@ -240,5 +255,119 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSu
         </tr>
       )}
     </>
+  );
+}
+
+/**
+ * Akkoord-cel: toont status van NDA / gebruiksvoorwaarden + actie-knop.
+ */
+function AkkoordCel({ userId, akkoord, kanBewerken }: { userId: string; akkoord: AkkoordInfo | null; kanBewerken: boolean }) {
+  const router = useRouter();
+  const [bezig, setBezig] = useState(false);
+  const [, startTransition] = useTransition();
+
+  function stuur() {
+    setBezig(true);
+    const fd = new FormData();
+    fd.set("user_id", userId);
+    startTransition(async () => {
+      await stuurAkkoordUit(fd);
+      setBezig(false);
+      router.refresh();
+    });
+  }
+  function trekIn() {
+    if (!akkoord) return;
+    setBezig(true);
+    const fd = new FormData();
+    fd.set("id", akkoord.id);
+    startTransition(async () => {
+      await trekAkkoordIn(fd);
+      setBezig(false);
+      router.refresh();
+    });
+  }
+
+  if (!akkoord) {
+    return (
+      <button
+        type="button"
+        onClick={kanBewerken ? stuur : undefined}
+        disabled={!kanBewerken || bezig}
+        title={kanBewerken ? "Stuur NDA / gebruiksvoorwaarden" : "Alleen door admin te versturen"}
+        className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md ${
+          kanBewerken ? "bg-[#333399]/5 text-[#333399] hover:bg-[#333399]/15" : "bg-gray-50 text-gray-400 cursor-not-allowed"
+        }`}
+      >
+        {bezig ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+        Verstuur
+      </button>
+    );
+  }
+
+  if (akkoord.status === "getekend") {
+    return (
+      <a
+        href={`/tekenen/${akkoord.token}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`Getekend op ${new Date(akkoord.getekend_op!).toLocaleString("nl-NL")}`}
+        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-md"
+      >
+        <CheckCircle2 size={11} /> Getekend
+      </a>
+    );
+  }
+
+  if (akkoord.status === "wachtend") {
+    return (
+      <div className="inline-flex items-center gap-1">
+        <a
+          href={`/tekenen/${akkoord.token}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={`Verzonden op ${new Date(akkoord.verzonden_op).toLocaleString("nl-NL")}`}
+          className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-md"
+        >
+          <Clock size={11} /> Wachten
+        </a>
+        {kanBewerken && (
+          <>
+            <button
+              type="button"
+              onClick={stuur}
+              disabled={bezig}
+              title="Opnieuw sturen"
+              className="text-xs text-gray-500 hover:text-[#333399] p-1"
+            >
+              {bezig ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+            </button>
+            <button
+              type="button"
+              onClick={trekIn}
+              disabled={bezig}
+              title="Intrekken"
+              className="text-xs text-gray-400 hover:text-red-600 p-1"
+            >
+              <X size={11} />
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ingetrokken
+  return (
+    <button
+      type="button"
+      onClick={kanBewerken ? stuur : undefined}
+      disabled={!kanBewerken || bezig}
+      title="Ingetrokken — klik om opnieuw te sturen"
+      className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200"
+    >
+      {bezig ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+      Opnieuw
+    </button>
   );
 }

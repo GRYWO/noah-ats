@@ -40,6 +40,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/privacy") ||  // privacybeleid (publiek, ook voor Chrome Web Store)
     path.startsWith("/dpa-voorbeeld") || // tijdelijke DPA-preview
     path.startsWith("/dpa-tekenen") ||   // publieke DPA-tekenflow per token
+    path.startsWith("/tekenen") ||       // publieke NDA / gebruiksvoorwaarden teken-flow
     path.startsWith("/api/cron");   // cron jobs (eigen secret)
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

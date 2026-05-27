@@ -41,14 +41,28 @@ export default async function SettersPage({
   // Email-map ophalen via admin-client zodat we per setter kunnen checken
   // of het de super-admin is (alleen Yorith) — voor de "Super admin" badge.
   const emailById = new Map<string, string>();
+  const adminCli = createAdminClient();
   try {
-    const adminCli = createAdminClient();
     const { data: lijst } = await adminCli.auth.admin.listUsers({ perPage: 200 });
     for (const u of lijst?.users ?? []) {
       if (u.email) emailById.set(u.id, u.email);
     }
   } catch (e) {
     console.error("[setters] auth.admin.listUsers mislukt:", e);
+  }
+
+  // Laatste akkoord-status per user — voor de "Akkoord"-kolom
+  const akkoordById = new Map<string, { id: string; status: string; token: string; type: string; verzonden_op: string; getekend_op: string | null }>();
+  try {
+    const { data: rows } = await adminCli
+      .from("user_agreements")
+      .select("id, user_id, status, token, type, verzonden_op, getekend_op")
+      .order("verzonden_op", { ascending: false });
+    for (const r of rows ?? []) {
+      if (!akkoordById.has(r.user_id)) akkoordById.set(r.user_id, r);
+    }
+  } catch (e) {
+    console.error("[setters] akkoord-status laden mislukt:", e);
   }
 
   return (
@@ -182,6 +196,7 @@ export default async function SettersPage({
                   <th className="text-left px-4 py-3 font-semibold">Telefoon</th>
                   <th className="text-left px-4 py-3 font-semibold">Voys</th>
                   <th className="text-left px-4 py-3 font-semibold">Coach</th>
+                  <th className="text-left px-4 py-3 font-semibold">Akkoord</th>
                   <th className="text-left px-4 py-3 font-semibold">Aangemaakt</th>
                   {isAdmin && <th className="text-right px-4 py-3 font-semibold">Acties</th>}
                 </tr>
@@ -189,6 +204,7 @@ export default async function SettersPage({
               <tbody>
                 {setters.map((s) => {
                   const setterEmail = emailById.get(s.id) ?? null;
+                  const akkoord = akkoordById.get(s.id) ?? null;
                   return (
                     <UserRij
                       key={s.id}
@@ -198,6 +214,7 @@ export default async function SettersPage({
                       magAlleRollen={magAlleRollen}
                       isSuperAdmin={isSuperAdminEmail(setterEmail)}
                       viewerIsSuperAdmin={isSuperAdmin}
+                      akkoord={akkoord}
                     />
                   );
                 })}
