@@ -38,10 +38,11 @@ type Props = {
   userId: string;
   isSuperAdmin: boolean;
   isSetter: boolean;
+  menuPermissions: Record<string, boolean> | null;
   logoutAction: () => Promise<void>;
 };
 
-export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, logoutAction }: Props) {
+export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, menuPermissions, logoutAction }: Props) {
   const [open, setOpen] = useState(false);
 
   // localStorage persist
@@ -54,7 +55,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, log
     document.documentElement.setAttribute("data-sidebar", open ? "open" : "closed");
   }, [open]);
 
-  const items: Item[] = [
+  const alleItems: Item[] = [
     // Sectie 1: Overzicht
     { key: "dashboard",    href: "/dashboard",    label: "Dashboard",   Icon: LayoutDashboard, sectie: 1 },
     ...(isSuperAdmin ? [{ key: "bureaus", href: "/bureaus", label: "Bureaus", Icon: Building2, sectie: 1 } as Item] : []),
@@ -78,6 +79,15 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, log
     ...(!isSetter ? [{ key: "setters", href: "/setters", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
     { key: "instellingen",   href: "/instellingen",   label: "Instellingen", Icon: Settings,      sectie: 5 },
   ];
+
+  // Super-admin (Yorith) ziet alles, ongeacht permissions.
+  // Anders: filter op menu_permissions (null = alles aan, false = verbergen).
+  const items: Item[] = isSuperAdmin
+    ? alleItems
+    : alleItems.filter((it) => {
+        if (!menuPermissions) return true;
+        return menuPermissions[it.key] !== false;
+      });
 
   // Groepeer per sectie voor separators
   let vorigeSectie = 0;

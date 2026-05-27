@@ -14,12 +14,13 @@ export async function TopBar({ active }: Props) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("rol")
+    .select("rol, menu_permissions")
     .eq("id", user?.id ?? "")
     .single();
 
   const isSuperAdmin = isSuperAdminEmail(user?.email);
   const isSetter = profile?.rol === "setter";
+  const menuPermissions = (profile?.menu_permissions ?? null) as Record<string, boolean> | null;
 
   return (
     <>
@@ -30,6 +31,7 @@ export async function TopBar({ active }: Props) {
         userId={user?.id ?? ""}
         isSuperAdmin={isSuperAdmin}
         isSetter={isSetter}
+        menuPermissions={menuPermissions}
         logoutAction={logout}
       />
     </>

@@ -131,6 +131,7 @@ export async function bewerkUser(formData: FormData) {
   const mail_adres    = (formData.get("mail_adres") as string)?.trim().toLowerCase() || null;
   const functie_titel = (formData.get("functie_titel") as string)?.trim() || null;
   const nieuweRol     = (formData.get("rol") as string)?.trim() || null;
+  const permsRaw      = (formData.get("menu_permissions") as string)?.trim() || null;
 
   if (!id || !voornaam || !achternaam) {
     return { error: "Voornaam + achternaam verplicht" };
@@ -164,6 +165,17 @@ export async function bewerkUser(formData: FormData) {
   // Alleen super-admin mag rol wijzigen
   if (isSuperAdmin && nieuweRol && ["admin", "recruiter", "setter"].includes(nieuweRol)) {
     update.rol = nieuweRol;
+  }
+  // Alleen super-admin mag menu-rechten zetten
+  if (isSuperAdmin && permsRaw) {
+    try {
+      const parsed = JSON.parse(permsRaw);
+      if (parsed && typeof parsed === "object") {
+        update.menu_permissions = parsed;
+      }
+    } catch {
+      return { error: "Ongeldige menu-rechten JSON" };
+    }
   }
 
   // Bureau-admin mag alleen users in eigen tenant bewerken

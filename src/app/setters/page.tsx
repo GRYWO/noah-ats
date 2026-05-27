@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
 import { nieuweSetter } from "./actions";
@@ -30,6 +31,19 @@ export default async function SettersPage({
   const isAdmin = myProfile?.rol === "admin" || isSuperAdmin;
   // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken
   const magAlleRollen = isSuperAdmin;
+
+  // Email-map ophalen via admin-client zodat we per setter kunnen checken
+  // of het de super-admin is (alleen Yorith) — voor de "Super admin" badge.
+  const emailById = new Map<string, string>();
+  try {
+    const adminCli = createAdminClient();
+    const { data: lijst } = await adminCli.auth.admin.listUsers({ perPage: 200 });
+    for (const u of lijst?.users ?? []) {
+      if (u.email) emailById.set(u.id, u.email);
+    }
+  } catch (e) {
+    console.error("[setters] auth.admin.listUsers mislukt:", e);
+  }
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -141,15 +155,20 @@ export default async function SettersPage({
                 </tr>
               </thead>
               <tbody>
-                {setters.map((s) => (
-                  <UserRij
-                    key={s.id}
-                    setter={s}
-                    isHuidigeUser={s.id === user?.id}
-                    isAdmin={isAdmin}
-                    magAlleRollen={magAlleRollen}
-                  />
-                ))}
+                {setters.map((s) => {
+                  const setterEmail = emailById.get(s.id) ?? null;
+                  return (
+                    <UserRij
+                      key={s.id}
+                      setter={s}
+                      isHuidigeUser={s.id === user?.id}
+                      isAdmin={isAdmin}
+                      magAlleRollen={magAlleRollen}
+                      isSuperAdmin={isSuperAdminEmail(setterEmail)}
+                      viewerIsSuperAdmin={isSuperAdmin}
+                    />
+                  );
+                })}
               </tbody>
             </table>
           ) : (

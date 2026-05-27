@@ -2,12 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, X, Loader2 } from "lucide-react";
+import { Pencil, X, Loader2, ShieldCheck } from "lucide-react";
 import { InlineVoysEdit } from "./InlineVoysEdit";
 import { CoachToggle } from "./CoachToggle";
 import { ResetWachtwoordKnop } from "./ResetWachtwoordKnop";
 import { DeleteSetterButton } from "./DeleteSetterButton";
 import { bewerkUser } from "./actions";
+import { MENU_KEYS } from "@/utils/menu-permissions";
 
 const ROL_LABELS: Record<string, string> = {
   admin: "Admin",
@@ -32,6 +33,7 @@ type SetterRecord = {
   functie_titel: string | null;
   is_coach: boolean | null;
   created_at: string | null;
+  menu_permissions: Record<string, boolean> | null;
 };
 
 type Props = {
@@ -39,6 +41,10 @@ type Props = {
   isHuidigeUser: boolean;
   isAdmin: boolean;
   magAlleRollen: boolean;
+  /** Wordt deze user gezien als super-admin (op basis van email)? */
+  isSuperAdmin: boolean;
+  /** Is de huidige viewer een super-admin? Alleen dan rechten + rol tonen. */
+  viewerIsSuperAdmin: boolean;
 };
 
 /**
@@ -46,16 +52,33 @@ type Props = {
  * behalve op de interactieve cellen (Voys-edit, coach-toggle, acties)
  * — die hebben hun eigen click-stop in een wrapper-div.
  */
-export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen }: Props) {
+export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSuperAdmin, viewerIsSuperAdmin }: Props) {
   const [open, setOpen] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
   const [, startTransition] = useTransition();
   const router = useRouter();
 
+  // Lokale state voor checkboxes (alleen relevant voor super-admin viewer)
+  const initialPerms: Record<string, boolean> = {};
+  for (const m of MENU_KEYS) {
+    // default true tenzij expliciet false in opgeslagen perms
+    initialPerms[m.key] = s.menu_permissions?.[m.key] !== false;
+  }
+  const [perms, setPerms] = useState<Record<string, boolean>>(initialPerms);
+
+  function togglePerm(key: string) {
+    setPerms((p) => ({ ...p, [key]: !p[key] }));
+  }
+
   function onSubmit(fd: FormData) {
     setFout(null);
     setBezig(true);
+    // Voeg menu-rechten JSON toe (alleen super-admin viewer mag dit zetten,
+    // maar het is veilig om altijd mee te sturen: server-side wordt gecheckt)
+    if (viewerIsSuperAdmin) {
+      fd.set("menu_permissions", JSON.stringify(perms));
+    }
     startTransition(async () => {
       const r = await bewerkUser(fd);
       setBezig(false);
@@ -79,6 +102,11 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen }: Pr
       >
         <td className="px-4 py-3 font-semibold text-gray-800">
           {s.voornaam} {s.achternaam}
+          {isSuperAdmin && (
+            <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-[#333399]/10 text-[#333399] px-1.5 py-0.5 rounded">
+              <ShieldCheck size={10} /> Super admin
+            </span>
+          )}
           {isHuidigeUser && <span className="ml-2 text-xs text-gray-400">(jij)</span>}
         </td>
         <td className="px-4 py-3">
@@ -162,6 +190,31 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen }: Pr
                         <option value="recruiter">Recruiter</option>
                         <option value="admin">Admin</option>
                       </select>
+                    </div>
+                  )}
+
+                  {/* Menu-rechten: alleen super-admin viewer mag dit zetten,
+                      en niet voor zichzelf of een andere super-admin (die hebben altijd alles). */}
+                  {viewerIsSuperAdmin && !isSuperAdmin && (
+                    <div className="col-span-2 pt-3 border-t">
+                      <div className="text-xs font-semibold text-gray-700 mb-2 inline-flex items-center gap-1.5">
+                        <ShieldCheck size={12} className="text-[#333399]" />
+                        Menu-rechten — alleen aangevinkte items verschijnen in het menu
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {MENU_KEYS.map((m) => (
+                          <label key={m.key} className="flex items-center gap-2 text-sm text-gray-700 px-2 py-1 rounded hover:bg-gray-50 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!!perms[m.key]}
+                              onChange={() => togglePerm(m.key)}
+                              className="accent-[#333399]"
+                            />
+                            <span>{m.label}</span>
+                            {m.uitleg && <span className="text-[10px] text-gray-400 ml-auto">{m.uitleg}</span>}
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   )}
 
