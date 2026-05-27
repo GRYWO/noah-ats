@@ -223,16 +223,19 @@ export default async function VoorstelprofielPage({
           })}
         </div>
 
-        {/* Footer */}
-        <div className="text-center text-xs text-gray-500 py-4">
-          Voorgesteld door <b style={{ color: GRYWO_PAARS }}>GRYWO</b>
+        {/* Footer met paars logo i.p.v. tekst-naam */}
+        <div className="flex flex-col items-center gap-2 py-6 text-xs text-gray-500">
+          <div className="inline-flex items-center gap-2">
+            <span>Voorgesteld door</span>
+            <GrywoLogo size="sm" wit={false} />
+          </div>
           {setterContact && (
-            <>
-              {" · Vragen? Mail "}
+            <div>
+              Vragen? Mail{" "}
               <a href={`mailto:${setterContact.email}`} style={{ color: GRYWO_PAARS }}>
                 <b>{setterContact.naam}</b> ({setterContact.email})
               </a>
-            </>
+            </div>
           )}
         </div>
       </div>
