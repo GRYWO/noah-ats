@@ -72,6 +72,14 @@ export default function PrivacyPage() {
           <p>
             Bij wijzigingen op dit beleid wordt de datum bovenaan bijgewerkt. Wezenlijke wijzigingen melden we per e-mail aan ingelogde gebruikers.
           </p>
+
+          <h2 className="text-xl font-bold text-gray-800 mt-8 mb-2">8. Voor bureaus — verwerkersovereenkomst</h2>
+          <p>
+            Bureaus die Noah ATS gebruiken sluiten met GRYWO een verwerkersovereenkomst (DPA) conform art. 28 AVG.
+            Vraag de template-DPA op via{" "}
+            <a href="mailto:noreply@grywo.nl?subject=DPA Noah ATS" className="text-[#333399] underline">noreply@grywo.nl</a>{" "}
+            (we sturen 'm direct retour).
+          </p>
         </div>
 
         <div className="mt-12 pt-6 border-t text-sm text-gray-500 flex items-center justify-between">
