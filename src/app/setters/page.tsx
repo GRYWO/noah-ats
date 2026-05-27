@@ -85,11 +85,11 @@ export default async function SettersPage({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">E-mail *</label>
-                <input name="email" type="email" required placeholder="bart@grywo.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <input name="email" type="email" required placeholder="voorbeeld@grywo.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Wachtwoord * (min 8 tekens)</label>
-                <input name="wachtwoord" type="text" required minLength={8} placeholder="setter123..." className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <input name="wachtwoord" type="text" required minLength={8} placeholder="setter123..." autoComplete="new-password" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Telefoon</label>
@@ -123,12 +123,12 @@ export default async function SettersPage({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-adres bedrijf</label>
-                <input name="mail_adres" type="email" placeholder="bart@grywo.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <input name="mail_adres" type="email" placeholder="voorbeeld@grywo.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                 <small className="text-gray-400 text-xs">Laat leeg = zelfde als login-mail</small>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-wachtwoord (Hostnet)</label>
-                <input name="mail_wachtwoord" type="password" placeholder="Voor IMAP/SMTP" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <input name="mail_wachtwoord" type="password" placeholder="Voor IMAP/SMTP" autoComplete="new-password" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                 <small className="text-gray-400 text-xs">Versleuteld opgeslagen</small>
               </div>
               <div className="col-span-2 flex justify-end">
