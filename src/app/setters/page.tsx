@@ -16,7 +16,12 @@ export default async function SettersPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: setters } = await supabase
+  const isSuperAdmin = isSuperAdminEmail(user?.email);
+
+  // Super-admin gebruikt admin-client zodat RLS niets uitfiltert
+  // (anders zou de lijst leeg blijven als de eigen tenant geen users heeft).
+  const settersClient = isSuperAdmin ? createAdminClient() : supabase;
+  const { data: setters } = await settersClient
     .from("profiles")
     .select("*")
     .order("created_at", { ascending: true });
@@ -27,7 +32,6 @@ export default async function SettersPage({
     .eq("id", user!.id)
     .single();
 
-  const isSuperAdmin = isSuperAdminEmail(user?.email);
   const isAdmin = myProfile?.rol === "admin" || isSuperAdmin;
   // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken
   const magAlleRollen = isSuperAdmin;
