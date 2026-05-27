@@ -37,7 +37,8 @@ export default async function LoginPage({
               type="email"
               name="email"
               required
-              placeholder="yorith@grywo.nl"
+              autoComplete="off"
+              placeholder="voorbeeld@grywo.nl"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#333399]"
             />
           </div>
@@ -49,6 +50,8 @@ export default async function LoginPage({
               type="password"
               name="password"
               required
+              autoComplete="off"
+              defaultValue=""
               placeholder="••••••••"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#333399]"
             />
