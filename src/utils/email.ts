@@ -4,7 +4,14 @@ import { getGrywoLogoWitDataUri } from "@/utils/grywo-logo";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+// Productie-URL bepalen voor links in mails. Volgorde:
+// 1. NEXT_PUBLIC_APP_URL (kun je in Vercel overrulen)
+// 2. VERCEL_URL (automatisch gezet door Vercel — geeft preview-domein)
+// 3. https://noah-ats.nl (productie-fallback — nooit meer localhost in mails)
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+  "https://noah-ats.nl";
 
 const GRYWO_KLEUR = "#333399";
 
