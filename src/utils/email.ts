@@ -5,8 +5,16 @@ import { getGrywoLogoWitDataUri } from "@/utils/grywo-logo";
 const resend = new Resend(process.env.RESEND_API_KEY);
 // Default afzender. Vereist dat grywo.nl in Resend geverifieerd is
 // (Resend → Domains → grywo.nl → status 'Verified').
-// Override via env-var RESEND_FROM_EMAIL als je een ander adres wilt.
-const FROM = process.env.RESEND_FROM_EMAIL ?? "Noah ATS <noreply@grywo.nl>";
+// Harde guard: alleen een grywo.nl-adres is toegestaan, anders forceer
+// fallback. Voorkomt dat een verkeerde RESEND_FROM_EMAIL env-var (bv.
+// onboarding@resend.dev of een lege string) Resend in test-mode laat
+// blijven hangen.
+function bepaalFrom(): string {
+  const env = (process.env.RESEND_FROM_EMAIL ?? "").trim();
+  if (env && /@grywo\.nl[>]?\s*$/i.test(env)) return env;
+  return "Noah ATS <noreply@grywo.nl>";
+}
+const FROM = bepaalFrom();
 // Productie-URL bepalen voor links in mails.
 // Volgorde:
 // 1. NEXT_PUBLIC_APP_URL — MAAR alleen als hij niet naar localhost wijst
