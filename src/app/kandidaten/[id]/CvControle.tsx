@@ -268,6 +268,10 @@ function RodeVlaggenSectie({
     : "bg-red-100 text-red-800";
   const adviesLabel = advies === "goedkeuren" ? "Goedkeuren" : advies === "twijfel" ? "Twijfel" : advies === "afkeuren" ? "Afkeuren" : null;
 
+  // Hoeveel vlaggen hebben nog GEEN toelichting? → gebruik dit om gebruiker
+  // duidelijk naar de wizard te sturen voor beantwoording.
+  const zonderToelichting = lijst.filter((v) => !v.toelichting?.trim()).length;
+
   return (
     <div className="space-y-3">
       {score != null && (
@@ -277,6 +281,20 @@ function RodeVlaggenSectie({
           {adviesLabel && <div className="text-xs mt-1">Advies: <b>{adviesLabel}</b></div>}
         </div>
       )}
+
+      {/* Prominente knop naar de intake-wizard zolang er nog vlaggen zonder
+          toelichting zijn — daar staan ze met groene/rode knop én textarea
+          en wordt de score automatisch herrekend. */}
+      {zonderToelichting > 0 && (
+        <a
+          href={`/kandidaten/${kandidaatId}/intake`}
+          className="block bg-gradient-to-r from-[#333399] to-[#4a4abf] hover:from-[#2a2a80] hover:to-[#3a3aa0] text-white rounded-lg p-3 text-sm font-semibold flex items-center justify-between shadow-sm"
+        >
+          <span>→ Beantwoord {zonderToelichting} vlag{zonderToelichting === 1 ? "" : "(gen)"} in de intake-wizard</span>
+          <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wide">Snelste route</span>
+        </a>
+      )}
+
       <div className="space-y-2">
         {lijst.map((v) => <VlagItem key={v.code} kandidaatId={kandidaatId} vlag={v} />)}
       </div>

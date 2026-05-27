@@ -88,7 +88,11 @@ export default async function KandidaatDetail({
   const isAdmin = myProfile?.rol === "admin";
   const isRecruiterOrAdmin = isAdmin || isRecruiter;
   const showPlaatsingTrigger = !isSetter && (k.status === "geplaatst" || k.kanban_stap === "geplaatst");
-  const toonIntakeFormulier = isRecruiterOrAdmin && k.kanban_stap === "interne_intake";
+  // Toon de paarse 'Start intake-wizard'-banner zolang de intake niet
+  // is afgerond én de kandidaat niet is afgewezen — niet alleen bij
+  // kanban_stap=interne_intake (oude logica).
+  const intakeAlAfgerond = !!k.intake_voltooid || k.cv_controle_status === "goedgekeurd" || k.cv_controle_status === "afgekeurd";
+  const toonIntakeFormulier = isRecruiterOrAdmin && !intakeAlAfgerond && k.status !== "afgewezen";
 
   const { data: logs } = await supabase
     .from("voorstel_logs")
