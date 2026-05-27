@@ -98,5 +98,7 @@ export async function maakKandidaatVanWizard(formData: FormData) {
   }
 
   revalidatePath("/kandidaten");
-  redirect(`/kandidaten/${nieuw.id}?ok=1`);
+  // Direct door naar de intake-wizard zodat de recruiter de hele intake
+  // in één lange flow doorloopt — geen losse pagina's meer.
+  redirect(`/kandidaten/${nieuw.id}/intake`);
 }
