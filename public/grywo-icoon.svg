@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="grywoGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#333399" />
+      <stop offset="100%" stop-color="#3a7fd6" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="32" fill="url(#grywoGrad)" />
+  <text
+    x="50%"
+    y="56%"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="'Nunito', 'Quicksand', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-weight="900"
+    font-size="150"
+    letter-spacing="-4"
+    fill="#ffffff">g</text>
+</svg>

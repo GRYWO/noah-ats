@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { MapPin, Briefcase, Languages, Car, Calendar, Wallet, Clock, FileCheck, User } from "lucide-react";
 import { GrywoLogo } from "@/components/GrywoLogo";
+import { GrywoAvatar } from "@/components/GrywoAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +69,6 @@ export default async function VoorstelprofielPage({
   // Belangrijk: opdrachtgever mag de kandidaat niet zelf kunnen benaderen.
   // Daarom tonen we alléén de voornaam — geen achternaam, geen email, geen telefoon.
   const naam = (k.voornaam ?? "").trim();
-  const initials = (k.voornaam?.[0] ?? "?").toUpperCase();
   const cv = (k.cv_geparseerd ?? {}) as { talen?: string; werkervaring?: string; vaardigheden?: string };
   const extra = (k.voorstelprofiel_extra ?? {}) as Record<string, unknown>;
 
@@ -83,12 +83,7 @@ export default async function VoorstelprofielPage({
           </div>
 
           <div className="p-8 flex items-center gap-6">
-            <div
-              className="w-24 h-24 rounded-full text-white text-3xl font-bold flex items-center justify-center shrink-0"
-              style={{ backgroundColor: GRYWO_PAARS }}
-            >
-              {initials || "??"}
-            </div>
+            <GrywoAvatar size={96} />
             <div className="flex-1 min-w-0">
               {k.open_voor && (
                 <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1 inline-flex items-center gap-1">

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" preserveAspectRatio="xMidYMid meet">
+  <!-- 'gryvo' wordmark, spierwit, afgeronde sans-serif -->
+  <text
+    x="0"
+    y="46"
+    font-family="'Nunito', 'Quicksand', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-weight="900"
+    font-size="54"
+    letter-spacing="-2"
+    fill="#ffffff">grywo</text>
+  <!-- gele huisstijl-bullet aan het einde -->
+  <circle cx="220" cy="42" r="6" fill="#ffd84d" />
+</svg>
