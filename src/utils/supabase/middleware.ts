@@ -35,6 +35,9 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/login") ||
     path.startsWith("/auth") ||
     path.startsWith("/voorstel") || // publieke opdrachtgever-flow
+    path.startsWith("/voorstelprofiel") || // publiek voorstelprofiel
+    path.startsWith("/wachtwoord-vergeten") ||
+    path.startsWith("/privacy") ||  // privacybeleid (publiek, ook voor Chrome Web Store)
     path.startsWith("/api/cron");   // cron jobs (eigen secret)
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
