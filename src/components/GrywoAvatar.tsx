@@ -16,7 +16,7 @@ export function GrywoAvatar({
   return (
     /* eslint-disable-next-line @next/next/no-img-element */
     <img
-      src="/grywo-icoon.png"
+      src="/grywo-icoon.jpg"
       alt="GRYWO"
       width={size}
       height={size}
