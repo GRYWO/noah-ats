@@ -3,7 +3,10 @@ import { renderMailTemplate } from "@/utils/mail-templates";
 import { getGrywoLogoWitDataUri } from "@/utils/grywo-logo";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
+// Default afzender. Vereist dat grywo.nl in Resend geverifieerd is
+// (Resend → Domains → grywo.nl → status 'Verified').
+// Override via env-var RESEND_FROM_EMAIL als je een ander adres wilt.
+const FROM = process.env.RESEND_FROM_EMAIL ?? "Noah ATS <noreply@grywo.nl>";
 // Productie-URL bepalen voor links in mails.
 // Volgorde:
 // 1. NEXT_PUBLIC_APP_URL — MAAR alleen als hij niet naar localhost wijst
