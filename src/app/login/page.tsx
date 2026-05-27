@@ -15,9 +15,9 @@ export default async function LoginPage({
           <span className="text-white text-5xl font-black tracking-tighter">noah</span>
           <span className="ml-2 w-3 h-3 rounded-full bg-[#ffd84d] inline-block"></span>
         </div>
-        <div className="flex items-center justify-center gap-2 mb-8 text-xs text-gray-500">
-          <span>by</span>
-          <GrywoLogo size="sm" wit={false} />
+        <div className="flex flex-col items-center justify-center gap-1 mb-8 text-xs text-gray-500">
+          <span>Powered by</span>
+          <GrywoLogo size="md" wit={false} />
         </div>
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Welkom terug</h1>
         <p className="text-gray-600 mb-6 text-sm">Log in met je e-mailadres</p>
