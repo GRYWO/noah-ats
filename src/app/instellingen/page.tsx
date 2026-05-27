@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
 import { isSuperAdminEmail } from "@/utils/auth";
-import { updateMailConfig } from "./actions";
+import { updateMailConfig, wijzigEigenWachtwoord } from "./actions";
 import { nieuwMailAccount, verwijderMailAccount, maakPrimair } from "./mail-actions";
 import { updateMailTemplate, resetMailTemplate } from "./template-actions";
 import { TEMPLATE_META, DEFAULT_BODIES, type TemplateSleutel } from "@/utils/mail-templates";
@@ -45,6 +45,7 @@ export default async function InstellingenPage({
     primair: "Primaire mailbox gewijzigd.",
     template: "Template opgeslagen.",
     template_reset: "Template teruggezet naar standaard.",
+    wachtwoord: "Wachtwoord gewijzigd.",
   };
 
   return (
@@ -105,6 +106,30 @@ export default async function InstellingenPage({
               Profiel opslaan
             </button>
             <TourHerstartKnop />
+          </div>
+        </form>
+
+        {/* Wachtwoord wijzigen */}
+        <form action={wijzigEigenWachtwoord} className="bg-white rounded-xl shadow-sm p-6 mb-6 space-y-4">
+          <h2 className="font-bold text-gray-800 pb-2 border-b">Wachtwoord wijzigen</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Huidig wachtwoord *</label>
+              <input name="huidig_wachtwoord" type="password" required autoComplete="current-password" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Nieuw wachtwoord * (min 8 tekens)</label>
+              <input name="nieuw_wachtwoord" type="password" required minLength={8} autoComplete="new-password" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Nieuw wachtwoord (herhalen) *</label>
+              <input name="nieuw_wachtwoord2" type="password" required minLength={8} autoComplete="new-password" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button type="submit" className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-6 py-2 rounded-md text-sm">
+              Wachtwoord wijzigen
+            </button>
           </div>
         </form>
 

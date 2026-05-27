@@ -64,3 +64,45 @@ export async function updateMailConfig(formData: FormData) {
   revalidatePath("/instellingen");
   redirect("/instellingen?ok=profiel");
 }
+
+/**
+ * Wachtwoord wijzigen door de ingelogde user zelf.
+ * Vereist huidig wachtwoord (om sessie-overname te voorkomen) + nieuw wachtwoord min 8 tekens.
+ */
+export async function wijzigEigenWachtwoord(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) redirect("/login");
+
+  const huidig = (formData.get("huidig_wachtwoord") as string) ?? "";
+  const nieuw  = (formData.get("nieuw_wachtwoord")  as string) ?? "";
+  const nieuw2 = (formData.get("nieuw_wachtwoord2") as string) ?? "";
+
+  if (!huidig || !nieuw) {
+    redirect("/instellingen?error=" + encodeURIComponent("Vul huidig + nieuw wachtwoord in"));
+  }
+  if (nieuw.length < 8) {
+    redirect("/instellingen?error=" + encodeURIComponent("Nieuw wachtwoord min. 8 tekens"));
+  }
+  if (nieuw !== nieuw2) {
+    redirect("/instellingen?error=" + encodeURIComponent("Nieuwe wachtwoorden komen niet overeen"));
+  }
+
+  // Check huidig wachtwoord met re-login (geeft fout als verkeerd)
+  const { error: loginErr } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: huidig,
+  });
+  if (loginErr) {
+    redirect("/instellingen?error=" + encodeURIComponent("Huidig wachtwoord klopt niet"));
+  }
+
+  // Update naar nieuw wachtwoord
+  const { error: updErr } = await supabase.auth.updateUser({ password: nieuw });
+  if (updErr) {
+    redirect("/instellingen?error=" + encodeURIComponent(updErr.message));
+  }
+
+  revalidatePath("/instellingen");
+  redirect("/instellingen?ok=wachtwoord");
+}
