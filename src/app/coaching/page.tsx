@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
 import { CheckCircle2, XCircle, Trophy, AlertTriangle, Phone, CalendarCheck, Briefcase, Coins, Sparkles, Battery, ListTodo } from "lucide-react";
 import { EodForm } from "./EodForm";
@@ -75,16 +77,43 @@ export default async function CoachingPage({
   const { periode = "week", ok, error, setter: setterFilter, filter } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("tenant_id, rol, is_coach, voornaam, achternaam, doel_calls_dag, doel_voorgesteld_week, doel_afspraken_week, doel_plaatsingen_maand, doel_omzet_maand")
     .eq("id", user.id)
     .single();
-  if (!profile?.tenant_id) return null;
 
-  const isAdmin = profile.rol === "admin";
+  const superAdmin = isSuperAdminEmail(user.email);
+
+  // Super-admin zonder profile/tenant: toon nette herstel-melding i.p.v. witte pagina
+  if (!profile?.tenant_id) {
+    return (
+      <main className="min-h-screen bg-[#f4f4f7] pl-16">
+        <TopBar active="coaching" />
+        <div className="p-8 max-w-3xl mx-auto">
+          <h1 className="text-2xl font-bold text-gray-800 mb-3">Coaching</h1>
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-5 text-sm space-y-3">
+            <p><b>Geen tenant gekoppeld aan je account.</b> Daardoor is er geen coaching-data om te tonen.</p>
+            {superAdmin ? (
+              <p>
+                Herstel je super-admin profiel via{" "}
+                <a href="/api/debug/herstel-superadmin" className="text-[#333399] font-semibold underline">
+                  /api/debug/herstel-superadmin
+                </a>{" "}
+                en laad de pagina opnieuw.
+              </p>
+            ) : (
+              <p>Vraag je beheerder om je profiel aan een bureau te koppelen.</p>
+            )}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const isAdmin = profile.rol === "admin" || superAdmin;
   const isCoach = profile.is_coach;
   const isSetter = profile.rol === "setter";
   const tenantId = profile.tenant_id;
