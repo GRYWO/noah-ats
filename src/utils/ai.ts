@@ -53,51 +53,65 @@ export type RodeVlag = {
 };
 
 /**
- * Bepaal welk content-block we naar Claude sturen op basis van bestandstype.
- * Ondersteunt PDF, DOCX, TXT, MD via document-type; JPG/PNG/WEBP/GIF als image.
+ * Bepaal welke content-blocks we naar Claude sturen op basis van bestandstype.
+ * - PDF → document type (Anthropic verplicht hier media_type=application/pdf)
+ * - Afbeeldingen → image type (vision)
+ * - DOCX → server-side text extractie via mammoth → text-block
+ * - TXT / MD / RTF → buffer naar utf-8 → text-block (RTF-codes worden genegeerd)
  */
-type ClaudeBijlage =
-  | { type: "document"; source: { type: "base64"; media_type: string; data: string } }
-  | { type: "image"; source: { type: "base64"; media_type: string; data: string } };
+type ClaudeContentBlock =
+  | { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } }
+  | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+  | { type: "text"; text: string };
 
-function bijlageVoorBestand(buffer: Buffer, fileName?: string, mimeHint?: string): ClaudeBijlage {
-  const base64 = buffer.toString("base64");
+function stripRtf(rtf: string): string {
+  // Heel simpele RTF-stripper: weghalen van control words, accolades en escape-codes.
+  return rtf
+    .replace(/\\par[d]?/g, "\n")
+    .replace(/\{\\\*?\\[^{}]+}/g, "")
+    .replace(/\\[a-z]+\d* ?/gi, "")
+    .replace(/[{}]/g, "")
+    .replace(/\\'[0-9a-fA-F]{2}/g, "")
+    .trim();
+}
+
+async function bestandNaarContentBlocks(
+  buffer: Buffer,
+  fileName?: string,
+  mimeHint?: string,
+): Promise<ClaudeContentBlock[]> {
   const ext = (fileName ?? "").toLowerCase().split(".").pop() ?? "";
   const mime = (mimeHint ?? "").toLowerCase();
 
-  // Image-types → Claude vision
-  if (
-    ext === "jpg" || ext === "jpeg" || mime === "image/jpeg"
-  ) return { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } };
+  // Images → Claude vision
+  if (ext === "jpg" || ext === "jpeg" || mime === "image/jpeg")
+    return [{ type: "image", source: { type: "base64", media_type: "image/jpeg", data: buffer.toString("base64") } }];
   if (ext === "png" || mime === "image/png")
-    return { type: "image", source: { type: "base64", media_type: "image/png", data: base64 } };
+    return [{ type: "image", source: { type: "base64", media_type: "image/png", data: buffer.toString("base64") } }];
   if (ext === "webp" || mime === "image/webp")
-    return { type: "image", source: { type: "base64", media_type: "image/webp", data: base64 } };
+    return [{ type: "image", source: { type: "base64", media_type: "image/webp", data: buffer.toString("base64") } }];
   if (ext === "gif" || mime === "image/gif")
-    return { type: "image", source: { type: "base64", media_type: "image/gif", data: base64 } };
+    return [{ type: "image", source: { type: "base64", media_type: "image/gif", data: buffer.toString("base64") } }];
 
-  // Document-types
-  if (ext === "docx" || mime.includes("officedocument.wordprocessingml"))
-    return {
-      type: "document",
-      source: {
-        type: "base64",
-        media_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        data: base64,
-      },
-    };
-  if (ext === "txt" || mime === "text/plain")
-    return { type: "document", source: { type: "base64", media_type: "text/plain", data: base64 } };
-  if (ext === "md" || mime === "text/markdown")
-    return { type: "document", source: { type: "base64", media_type: "text/markdown", data: base64 } };
-  // RTF: officieel niet door Claude ondersteund, maar de tekstinhoud is
-  // leesbaar genoeg om als text/plain door te sturen (codes als \par, \b
-  // worden door het model genegeerd).
-  if (ext === "rtf" || mime === "application/rtf" || mime === "text/rtf")
-    return { type: "document", source: { type: "base64", media_type: "text/plain", data: base64 } };
+  // DOCX → mammoth tekst-extractie
+  if (ext === "docx" || mime.includes("officedocument.wordprocessingml")) {
+    const mammoth = (await import("mammoth")).default;
+    const r = await mammoth.extractRawText({ buffer });
+    return [{ type: "text", text: `CV-inhoud (uit DOCX):\n\n${r.value}` }];
+  }
 
-  // Default: PDF
-  return { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } };
+  // RTF → strippen naar plain text
+  if (ext === "rtf" || mime === "application/rtf" || mime === "text/rtf") {
+    return [{ type: "text", text: `CV-inhoud (uit RTF):\n\n${stripRtf(buffer.toString("utf8"))}` }];
+  }
+
+  // TXT / MD → direct als utf-8 string
+  if (ext === "txt" || ext === "md" || mime === "text/plain" || mime === "text/markdown") {
+    return [{ type: "text", text: `CV-inhoud (${ext.toUpperCase()}):\n\n${buffer.toString("utf8")}` }];
+  }
+
+  // Default: PDF (Anthropic accepteert hier alleen application/pdf)
+  return [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: buffer.toString("base64") } }];
 }
 
 /**
@@ -109,7 +123,7 @@ export async function parseCV(
   fileName?: string,
   mimeType?: string,
 ): Promise<GeparseerdCV> {
-  const bijlage = bijlageVoorBestand(fileBuffer, fileName, mimeType);
+  const blocks = await bestandNaarContentBlocks(fileBuffer, fileName, mimeType);
 
   const res = await client().messages.create({
     model: MODEL,
@@ -119,7 +133,7 @@ export async function parseCV(
         role: "user",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content: [
-          bijlage as any,
+          ...(blocks as any[]),
           {
             type: "text",
             text: `Je bent een Nederlandse recruiter-assistent. Lees dit CV en geef de gegevens terug als JSON.
