@@ -53,11 +53,58 @@ export type RodeVlag = {
 };
 
 /**
- * Parse een CV (PDF) met Claude. Stuurt PDF rechtstreeks naar Claude
- * en vraagt om gestructureerde JSON terug.
+ * Bepaal welk content-block we naar Claude sturen op basis van bestandstype.
+ * Ondersteunt PDF, DOCX, TXT, MD via document-type; JPG/PNG/WEBP/GIF als image.
  */
-export async function parseCV(pdfBuffer: Buffer): Promise<GeparseerdCV> {
-  const base64 = pdfBuffer.toString("base64");
+type ClaudeBijlage =
+  | { type: "document"; source: { type: "base64"; media_type: string; data: string } }
+  | { type: "image"; source: { type: "base64"; media_type: string; data: string } };
+
+function bijlageVoorBestand(buffer: Buffer, fileName?: string, mimeHint?: string): ClaudeBijlage {
+  const base64 = buffer.toString("base64");
+  const ext = (fileName ?? "").toLowerCase().split(".").pop() ?? "";
+  const mime = (mimeHint ?? "").toLowerCase();
+
+  // Image-types → Claude vision
+  if (
+    ext === "jpg" || ext === "jpeg" || mime === "image/jpeg"
+  ) return { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } };
+  if (ext === "png" || mime === "image/png")
+    return { type: "image", source: { type: "base64", media_type: "image/png", data: base64 } };
+  if (ext === "webp" || mime === "image/webp")
+    return { type: "image", source: { type: "base64", media_type: "image/webp", data: base64 } };
+  if (ext === "gif" || mime === "image/gif")
+    return { type: "image", source: { type: "base64", media_type: "image/gif", data: base64 } };
+
+  // Document-types
+  if (ext === "docx" || mime.includes("officedocument.wordprocessingml"))
+    return {
+      type: "document",
+      source: {
+        type: "base64",
+        media_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        data: base64,
+      },
+    };
+  if (ext === "txt" || mime === "text/plain")
+    return { type: "document", source: { type: "base64", media_type: "text/plain", data: base64 } };
+  if (ext === "md" || mime === "text/markdown")
+    return { type: "document", source: { type: "base64", media_type: "text/markdown", data: base64 } };
+
+  // Default: PDF
+  return { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } };
+}
+
+/**
+ * Parse een CV met Claude. Accepteert PDF, DOCX, TXT, MD, of afbeelding (JPG/PNG/WEBP/GIF).
+ * Stuurt het bestand rechtstreeks naar Claude en vraagt om gestructureerde JSON terug.
+ */
+export async function parseCV(
+  fileBuffer: Buffer,
+  fileName?: string,
+  mimeType?: string,
+): Promise<GeparseerdCV> {
+  const bijlage = bijlageVoorBestand(fileBuffer, fileName, mimeType);
 
   const res = await client().messages.create({
     model: MODEL,
@@ -65,11 +112,9 @@ export async function parseCV(pdfBuffer: Buffer): Promise<GeparseerdCV> {
     messages: [
       {
         role: "user",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content: [
-          {
-            type: "document",
-            source: { type: "base64", media_type: "application/pdf", data: base64 },
-          },
+          bijlage as any,
           {
             type: "text",
             text: `Je bent een Nederlandse recruiter-assistent. Lees dit CV en geef de gegevens terug als JSON.

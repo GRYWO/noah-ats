@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
   const buf = Buffer.from(await file.arrayBuffer());
   try {
-    const parsed = await parseCV(buf);
+    const parsed = await parseCV(buf, file.name, file.type);
     return NextResponse.json({ ok: true, parsed });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

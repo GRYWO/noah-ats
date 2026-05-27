@@ -52,11 +52,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Kon CV niet downloaden" }, { status: 502 });
   }
   const buf = Buffer.from(await pdfRes.arrayBuffer());
+  const fileName = k.cv_url.split("/").pop()?.split("?")[0] ?? "";
+  const mimeType = pdfRes.headers.get("content-type") ?? undefined;
 
-  // Parse met Claude
+  // Parse met Claude (PDF / DOCX / TXT / MD / afbeelding)
   let parsed;
   try {
-    parsed = await parseCV(buf);
+    parsed = await parseCV(buf, fileName, mimeType);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }

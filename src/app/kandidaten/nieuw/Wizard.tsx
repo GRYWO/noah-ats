@@ -146,11 +146,11 @@ export function Wizard() {
             <Upload size={32} className="text-[#333399]" />
           </div>
           <h2 className="text-xl font-bold text-gray-800 mb-1">Sleep het CV hierop</h2>
-          <p className="text-sm text-gray-500">PDF — AI leest 'm automatisch uit en stelt daarna ontbrekende vragen</p>
+          <p className="text-sm text-gray-500">PDF, Word (.docx), tekst (.txt/.md) of foto (JPG/PNG) — AI leest 'm uit en stelt daarna ontbrekende vragen</p>
           <input
             ref={inputRef}
             type="file"
-            accept=".pdf"
+            accept=".pdf,.docx,.txt,.md,.jpg,.jpeg,.png,.webp,.gif,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
           />
