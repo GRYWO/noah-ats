@@ -1,26 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
-import { nieuweSetter, verwijderSetter } from "./actions";
-import { DeleteSetterButton } from "./DeleteSetterButton";
-import { InlineVoysEdit } from "./InlineVoysEdit";
-import { CoachToggle } from "./CoachToggle";
-import { ResetWachtwoordKnop } from "./ResetWachtwoordKnop";
-import { BewerkUserKnop } from "./BewerkUserKnop";
+import { nieuweSetter } from "./actions";
+import { UserRij } from "./UserRij";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_SETTERS } from "@/utils/pagina-tours";
-
-const ROL_LABELS: Record<string, string> = {
-  admin: "Admin",
-  recruiter: "Recruiter",
-  setter: "Setter",
-};
-
-const ROL_KLEUREN: Record<string, string> = {
-  admin: "bg-purple-100 text-purple-800",
-  recruiter: "bg-amber-100 text-amber-800",
-  setter: "bg-blue-100 text-blue-800",
-};
 
 export default async function SettersPage({
   searchParams,
@@ -158,48 +142,13 @@ export default async function SettersPage({
               </thead>
               <tbody>
                 {setters.map((s) => (
-                  <tr key={s.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3 font-semibold text-gray-800">
-                      {s.voornaam} {s.achternaam}
-                      {s.id === user?.id && <span className="ml-2 text-xs text-gray-400">(jij)</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${ROL_KLEUREN[s.rol] ?? "bg-gray-100 text-gray-700"}`}>
-                        {ROL_LABELS[s.rol] ?? s.rol}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{s.telefoon ?? "—"}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <InlineVoysEdit setterId={s.id} huidig={s.voys_nummer ?? null} kanBewerken={isAdmin} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <CoachToggle userId={s.id} isCoach={!!s.is_coach} disabled={!isAdmin} />
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      {s.created_at ? new Date(s.created_at).toLocaleDateString("nl-NL") : "—"}
-                    </td>
-                    {isAdmin && (
-                      <td className="px-4 py-3 text-right">
-                        <div className="inline-flex items-center gap-2">
-                          <BewerkUserKnop
-                            user={{
-                              id: s.id,
-                              voornaam: s.voornaam,
-                              achternaam: s.achternaam,
-                              telefoon: s.telefoon,
-                              voys_nummer: s.voys_nummer,
-                              mail_adres: s.mail_adres,
-                              functie_titel: s.functie_titel,
-                              rol: s.rol,
-                            }}
-                            magRolWijzigen={magAlleRollen}
-                          />
-                          {s.id !== user?.id && <ResetWachtwoordKnop userId={s.id} naam={`${s.voornaam} ${s.achternaam}`} />}
-                          {s.id !== user?.id && <DeleteSetterButton id={s.id} naam={`${s.voornaam} ${s.achternaam}`} />}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
+                  <UserRij
+                    key={s.id}
+                    setter={s}
+                    isHuidigeUser={s.id === user?.id}
+                    isAdmin={isAdmin}
+                    magAlleRollen={magAlleRollen}
+                  />
                 ))}
               </tbody>
             </table>
