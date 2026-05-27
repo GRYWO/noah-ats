@@ -19,15 +19,45 @@ export async function GET() {
 
   const admin = createAdminClient();
 
-  // Zoek GRYWO-tenant
-  const { data: tenant } = await admin
+  // 1) Zoek of maak GRYWO-pool tenant
+  let { data: tenant } = await admin
     .from("tenants")
     .select("id")
     .eq("is_grywo_pool", true)
     .maybeSingle();
-  const tenantId = tenant?.id ?? null;
 
-  // Check huidige profile
+  // Fallback: tenant met naam/handelsnaam GRYWO (case-insensitive) en upgrade naar pool
+  if (!tenant) {
+    const { data: byNaam } = await admin
+      .from("tenants")
+      .select("id")
+      .or("naam.ilike.grywo,handelsnaam.ilike.grywo")
+      .maybeSingle();
+    if (byNaam) {
+      await admin.from("tenants").update({ is_grywo_pool: true }).eq("id", byNaam.id);
+      tenant = byNaam;
+    }
+  }
+
+  // Anders aanmaken
+  if (!tenant) {
+    const { data: nieuwe, error: tErr } = await admin
+      .from("tenants")
+      .insert({
+        naam: "GRYWO",
+        handelsnaam: "GRYWO",
+        is_grywo_pool: true,
+        is_active: true,
+      })
+      .select("id")
+      .single();
+    if (tErr) return NextResponse.json({ error: `tenants insert: ${tErr.message}` }, { status: 500 });
+    tenant = nieuwe;
+  }
+
+  const tenantId = tenant!.id;
+
+  // 2) Check huidige profile
   const { data: bestaand } = await admin
     .from("profiles")
     .select("id, rol, tenant_id")
@@ -35,7 +65,6 @@ export async function GET() {
     .maybeSingle();
 
   if (!bestaand) {
-    // Maak profile aan
     const naamUitEmail = user.email!.split("@")[0];
     const { error } = await admin.from("profiles").insert({
       id: user.id,
@@ -50,16 +79,13 @@ export async function GET() {
     return NextResponse.json({ ok: true, actie: "profile aangemaakt", tenant_id: tenantId });
   }
 
-  // Profile bestaat — zorg dat rol=admin
-  if (bestaand.rol !== "admin" || (tenantId && bestaand.tenant_id !== tenantId)) {
+  // 3) Profile bestaat — zorg dat rol=admin én tenant_id gekoppeld
+  if (bestaand.rol !== "admin" || bestaand.tenant_id !== tenantId) {
     const { error } = await admin.from("profiles")
-      .update({
-        rol: "admin",
-        ...(tenantId ? { tenant_id: tenantId } : {}),
-      })
+      .update({ rol: "admin", tenant_id: tenantId })
       .eq("id", user.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true, actie: "profile bijgewerkt naar admin", tenant_id: tenantId });
+    return NextResponse.json({ ok: true, actie: "profile bijgewerkt", tenant_id: tenantId });
   }
 
   return NextResponse.json({ ok: true, actie: "geen wijziging nodig", profile: bestaand });
