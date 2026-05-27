@@ -90,6 +90,11 @@ function bijlageVoorBestand(buffer: Buffer, fileName?: string, mimeHint?: string
     return { type: "document", source: { type: "base64", media_type: "text/plain", data: base64 } };
   if (ext === "md" || mime === "text/markdown")
     return { type: "document", source: { type: "base64", media_type: "text/markdown", data: base64 } };
+  // RTF: officieel niet door Claude ondersteund, maar de tekstinhoud is
+  // leesbaar genoeg om als text/plain door te sturen (codes als \par, \b
+  // worden door het model genegeerd).
+  if (ext === "rtf" || mime === "application/rtf" || mime === "text/rtf")
+    return { type: "document", source: { type: "base64", media_type: "text/plain", data: base64 } };
 
   // Default: PDF
   return { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } };
