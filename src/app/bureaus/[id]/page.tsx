@@ -50,20 +50,29 @@ export default async function BureauDetail({
           ← Terug naar bureaus
         </Link>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6 flex items-center justify-between">
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6 flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">{b.naam}</h1>
             <p className="text-sm text-gray-500 mt-1">
               {userCount ?? 0} users · {kandidaatCount ?? 0} kandidaten
             </p>
           </div>
-          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-            b.status === "actief" ? "bg-emerald-100 text-emerald-800" :
-            b.status === "setup" ? "bg-amber-100 text-amber-800" :
-            "bg-gray-100 text-gray-600"
-          }`}>
-            {b.status}
-          </span>
+          <div className="inline-flex items-center gap-3">
+            <Link
+              href={`/bureaus/${id}/dpa`}
+              target="_blank"
+              className="text-sm bg-white border border-[#333399] text-[#333399] hover:bg-[#333399]/5 font-semibold px-4 py-2 rounded-md inline-flex items-center gap-1.5"
+            >
+              📄 DPA genereren
+            </Link>
+            <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+              b.status === "actief" ? "bg-emerald-100 text-emerald-800" :
+              b.status === "setup" ? "bg-amber-100 text-amber-800" :
+              "bg-gray-100 text-gray-600"
+            }`}>
+              {b.status}
+            </span>
+          </div>
         </div>
 
         {ok && (

@@ -4,7 +4,9 @@ Conform AVG art. 30. Versie 1.0 — laatst bijgewerkt: 27 mei 2026.
 
 ## Verwerkingsverantwoordelijke
 
-**GRYWO** · Woerden · KvK _[invullen]_ · yorith@grywo.nl · 085-4016082
+**OneTwoStart NL B.V.** (handelsnaam: GRYWO)
+Raasdorperweg 191 A, 1175 KV Lijnden
+KvK 96738782 · yorith@grywo.nl · 085-4016082
 
 Functionaris Gegevensbescherming: _Niet aangewezen — niet verplicht (geen bijzondere categorieën op grote schaal)_
 
@@ -40,7 +42,7 @@ Functionaris Gegevensbescherming: _Niet aangewezen — niet verplicht (geen bijz
 
 | Veld | Inhoud |
 |---|---|
-| **Doel** | Toegang tot Noah ATS verlenen + coaching + prestatiebeheer |
+| **Doel** | Toegang tot Noah ATS verlenen. Coaching + prestatiebeheer uitsluitend voor setters (recruiters/admins worden hier niet voor verwerkt). |
 | **Rechtsgrond** | Uitvoering overeenkomst (art. 6 lid 1 sub b) |
 | **Categorieën betrokkenen** | Medewerkers van aangesloten bureaus |
 | **Categorieën gegevens** | NAW, e-mail, telefoon, Voys-nummer, mailbox-credentials (versleuteld), rol, prestatiedata (EOD-rapporten, doelen), Discord-ID |

@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Verwerkingsverantwoordelijke** | _[Naam bureau]_, gevestigd te _[adres]_, KvK _[nummer]_, vertegenwoordigd door _[naam contactpersoon]_ — hierna te noemen "**Bureau**" |
-| **Verwerker** | **GRYWO**, gevestigd te Woerden, KvK _[GRYWO KvK-nummer]_, vertegenwoordigd door Yorith Hulzebosch — hierna te noemen "**GRYWO**" |
+| **Verwerker** | **OneTwoStart NL B.V.** (handelsnaam: GRYWO), gevestigd aan Raasdorperweg 191 A, 1175 KV Lijnden, KvK 96738782, vertegenwoordigd door Yorith Hulzebosch — hierna te noemen "**GRYWO**" |
 
 Datum: _[datum]_
 
