@@ -47,7 +47,6 @@ export async function GET() {
         naam: "GRYWO",
         handelsnaam: "GRYWO",
         is_grywo_pool: true,
-        is_active: true,
       })
       .select("id")
       .single();
