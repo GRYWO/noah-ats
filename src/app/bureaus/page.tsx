@@ -205,10 +205,6 @@ export default async function BureausPage({
               </div>
             </div>
 
-            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 text-sm text-amber-900">
-              <b>Stap 4 (documenten):</b> upload van KvK-uittreksel, contract, ID-UBO — toevoegen in volgende update.
-            </div>
-
             <div className="flex justify-end pt-4 border-t">
               <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-2 rounded-md text-sm">
                 Bureau activeren
