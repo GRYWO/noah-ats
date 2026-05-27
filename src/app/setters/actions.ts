@@ -122,6 +122,62 @@ export async function nieuweSetter(formData: FormData) {
   redirect("/setters?ok=1");
 }
 
+export async function bewerkUser(formData: FormData) {
+  const id            = formData.get("id") as string;
+  const voornaam      = (formData.get("voornaam") as string)?.trim();
+  const achternaam    = (formData.get("achternaam") as string)?.trim();
+  const telefoon      = (formData.get("telefoon") as string)?.trim() || null;
+  const voys_nummer   = (formData.get("voys_nummer") as string)?.trim() || null;
+  const mail_adres    = (formData.get("mail_adres") as string)?.trim().toLowerCase() || null;
+  const functie_titel = (formData.get("functie_titel") as string)?.trim() || null;
+  const nieuweRol     = (formData.get("rol") as string)?.trim() || null;
+
+  if (!id || !voornaam || !achternaam) {
+    return { error: "Voornaam + achternaam verplicht" };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: myProfile } = await supabase
+    .from("profiles")
+    .select("rol, tenant_id")
+    .eq("id", user.id)
+    .single();
+
+  const isSuperAdmin = isSuperAdminEmail(user.email);
+  if (!isSuperAdmin && myProfile?.rol !== "admin") {
+    return { error: "Alleen admins kunnen users bewerken" };
+  }
+
+  const admin = createAdminClient();
+
+  const update: Record<string, unknown> = {
+    voornaam,
+    achternaam,
+    telefoon,
+    voys_nummer,
+    mail_adres,
+    functie_titel,
+  };
+  // Alleen super-admin mag rol wijzigen
+  if (isSuperAdmin && nieuweRol && ["admin", "recruiter", "setter"].includes(nieuweRol)) {
+    update.rol = nieuweRol;
+  }
+
+  // Bureau-admin mag alleen users in eigen tenant bewerken
+  let q = admin.from("profiles").update(update).eq("id", id);
+  if (!isSuperAdmin && myProfile?.tenant_id) {
+    q = q.eq("tenant_id", myProfile.tenant_id);
+  }
+  const { error } = await q;
+  if (error) return { error: error.message };
+
+  revalidatePath("/setters");
+  return { ok: true };
+}
+
 export async function updateSetterVoysNummer(formData: FormData) {
   const id = formData.get("id") as string;
   const voys_nummer = (formData.get("voys_nummer") as string)?.trim() || null;

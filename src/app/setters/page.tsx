@@ -6,6 +6,7 @@ import { DeleteSetterButton } from "./DeleteSetterButton";
 import { InlineVoysEdit } from "./InlineVoysEdit";
 import { CoachToggle } from "./CoachToggle";
 import { ResetWachtwoordKnop } from "./ResetWachtwoordKnop";
+import { BewerkUserKnop } from "./BewerkUserKnop";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_SETTERS } from "@/utils/pagina-tours";
 
@@ -150,7 +151,6 @@ export default async function SettersPage({
                   <th className="text-left px-4 py-3 font-semibold">Rol</th>
                   <th className="text-left px-4 py-3 font-semibold">Telefoon</th>
                   <th className="text-left px-4 py-3 font-semibold">Voys</th>
-                  <th className="text-left px-4 py-3 font-semibold">Discord</th>
                   <th className="text-left px-4 py-3 font-semibold">Coach</th>
                   <th className="text-left px-4 py-3 font-semibold">Aangemaakt</th>
                   {isAdmin && <th className="text-right px-4 py-3 font-semibold">Acties</th>}
@@ -172,7 +172,6 @@ export default async function SettersPage({
                     <td className="px-4 py-3 text-sm">
                       <InlineVoysEdit setterId={s.id} huidig={s.voys_nummer ?? null} kanBewerken={isAdmin} />
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{s.discord_id ?? "—"}</td>
                     <td className="px-4 py-3">
                       <CoachToggle userId={s.id} isCoach={!!s.is_coach} disabled={!isAdmin} />
                     </td>
@@ -182,6 +181,19 @@ export default async function SettersPage({
                     {isAdmin && (
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex items-center gap-2">
+                          <BewerkUserKnop
+                            user={{
+                              id: s.id,
+                              voornaam: s.voornaam,
+                              achternaam: s.achternaam,
+                              telefoon: s.telefoon,
+                              voys_nummer: s.voys_nummer,
+                              mail_adres: s.mail_adres,
+                              functie_titel: s.functie_titel,
+                              rol: s.rol,
+                            }}
+                            magRolWijzigen={magAlleRollen}
+                          />
                           {s.id !== user?.id && <ResetWachtwoordKnop userId={s.id} naam={`${s.voornaam} ${s.achternaam}`} />}
                           {s.id !== user?.id && <DeleteSetterButton id={s.id} naam={`${s.voornaam} ${s.achternaam}`} />}
                         </div>
