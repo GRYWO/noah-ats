@@ -1,35 +1,38 @@
 import fs from "fs";
 import path from "path";
 
-let cachedBase64: string | null = null;
+const cache: Record<string, string> = {};
 
-/**
- * Lees het GRYWO logo van public/ en geef de base64 versie terug.
- * Voor gebruik in HTML emails (inline data URI).
- */
-export function getGrywoLogoBase64(): string {
-  if (cachedBase64) return cachedBase64;
+function leesPubliek(bestand: string): string {
+  if (cache[bestand]) return cache[bestand];
   try {
-    // PNG eerst (beter ondersteund door mail clients), webp als fallback
-    const pngPath = path.join(process.cwd(), "public", "grywo-logo.png");
-    if (fs.existsSync(pngPath)) {
-      cachedBase64 = fs.readFileSync(pngPath).toString("base64");
-      return cachedBase64;
-    }
-    const webpPath = path.join(process.cwd(), "public", "grywo-logo.webp");
-    cachedBase64 = fs.readFileSync(webpPath).toString("base64");
-    return cachedBase64;
+    const p = path.join(process.cwd(), "public", bestand);
+    if (!fs.existsSync(p)) return "";
+    cache[bestand] = fs.readFileSync(p).toString("base64");
+    return cache[bestand];
   } catch {
     return "";
   }
 }
 
+/** Paarse GRYWO-wordmark als base64 (voor witte achtergrond). */
+export function getGrywoLogoBase64(): string {
+  return leesPubliek("grywo-logo.png");
+}
+
+/** Witte GRYWO-wordmark als base64 (voor paarse e-mail header). */
+export function getGrywoLogoWitBase64(): string {
+  return leesPubliek("grywo-logo-wit.png");
+}
+
+/** Paarse versie als data URI — direct te gebruiken in <img src="..."> */
 export function getGrywoLogoDataUri(): string {
   const b64 = getGrywoLogoBase64();
-  if (!b64) return "";
-  try {
-    const pngPath = path.join(process.cwd(), "public", "grywo-logo.png");
-    if (fs.existsSync(pngPath)) return `data:image/png;base64,${b64}`;
-  } catch {}
-  return `data:image/webp;base64,${b64}`;
+  return b64 ? `data:image/png;base64,${b64}` : "";
+}
+
+/** Witte versie als data URI — voor e-mail header op paarse achtergrond */
+export function getGrywoLogoWitDataUri(): string {
+  const b64 = getGrywoLogoWitBase64();
+  return b64 ? `data:image/png;base64,${b64}` : "";
 }

@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { renderMailTemplate } from "@/utils/mail-templates";
+import { getGrywoLogoWitDataUri } from "@/utils/grywo-logo";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
@@ -30,9 +31,16 @@ function brandedLayout({
   afzenderNaam?: string;
   afzenderEmail?: string;
 }) {
+  // Logo INLINE als base64 data-URI embedden, zodat het ook werkt
+  // wanneer Gmail/Outlook externe images blokkeert en ongeacht of
+  // NEXT_PUBLIC_APP_URL correct is gezet.
+  const grywoWit = getGrywoLogoWitDataUri();
   const header = merk === "noah"
     ? `<span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">noah</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>`
-    : `<img src="${APP_URL}/grywo-logo-wit.png" alt="GRYWO" width="160" style="display:inline-block;border:0;outline:none;text-decoration:none;height:auto;">`;
+    : grywoWit
+      ? `<img src="${grywoWit}" alt="GRYWO" width="180" style="display:inline-block;border:0;outline:none;text-decoration:none;height:auto;max-width:180px;">`
+      // Tekst-fallback als het logo-bestand niet leesbaar is
+      : `<span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">grywo</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>`;
   const footer = merk === "noah"
     ? `Noah ATS · het ATS-platform voor recruitment bureaus`
     : afzenderEmail
