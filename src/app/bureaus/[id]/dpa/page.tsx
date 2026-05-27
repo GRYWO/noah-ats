@@ -123,8 +123,8 @@ export default async function DpaPage({
             </tr>
             <tr>
               <td className="p-2 border border-gray-200"><b>Medewerkers Bureau</b></td>
-              <td className="p-2 border border-gray-200">Naam, e-mail, telefoon, rol, mailbox-credentials (versleuteld), prestatiedata (EOD-rapporten, doelen) — uitsluitend voor setters</td>
-              <td className="p-2 border border-gray-200">Toegang tot platform. Coaching + prestatiebeheer alleen voor setters.</td>
+              <td className="p-2 border border-gray-200">Naam, e-mail, telefoon, rol, mailbox-credentials (versleuteld)</td>
+              <td className="p-2 border border-gray-200">Toegang tot het platform</td>
             </tr>
           </tbody>
         </table>

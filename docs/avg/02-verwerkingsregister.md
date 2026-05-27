@@ -42,10 +42,10 @@ Functionaris Gegevensbescherming: _Niet aangewezen — niet verplicht (geen bijz
 
 | Veld | Inhoud |
 |---|---|
-| **Doel** | Toegang tot Noah ATS verlenen. Coaching + prestatiebeheer uitsluitend voor setters (recruiters/admins worden hier niet voor verwerkt). |
+| **Doel** | Toegang tot Noah ATS verlenen |
 | **Rechtsgrond** | Uitvoering overeenkomst (art. 6 lid 1 sub b) |
 | **Categorieën betrokkenen** | Medewerkers van aangesloten bureaus |
-| **Categorieën gegevens** | NAW, e-mail, telefoon, Voys-nummer, mailbox-credentials (versleuteld), rol, prestatiedata (EOD-rapporten, doelen), Discord-ID |
+| **Categorieën gegevens** | NAW, e-mail, telefoon, Voys-nummer, mailbox-credentials (versleuteld), rol |
 | **Ontvangers** | Bureau-admin + super-admin (Yorith) |
 | **Doorgifte buiten EER** | Nee |
 | **Bewaartermijn** | Verwijderd zodra dienstverband eindigt |
