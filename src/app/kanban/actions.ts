@@ -5,12 +5,17 @@ import { createClient } from "@/utils/supabase/server";
 import { triggerKanbanMails } from "@/utils/kanban-mails";
 
 export async function setKanbanStap(id: string, stap: string) {
+  // "geplaatst" wordt NIET via deze action gezet — die loopt via de PlaatsingModal
+  // (plaatsViaKanban) die ook de mail-trigger en plaatsings-record afhandelt.
+  if (stap === "geplaatst") {
+    return { error: "Gebruik de plaatsings-dialoog (sleep naar Geplaatst opent een formulier)." };
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   // Status-mapping voor eindkolommen
   const statusMap: Record<string, string> = {
-    geplaatst: "geplaatst",
     afgewezen: "afgewezen",
   };
   const newStatus = statusMap[stap];

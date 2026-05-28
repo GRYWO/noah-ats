@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { setKanbanStap } from "./actions";
 import { KANBAN_STAPPEN } from "@/utils/kanban";
+import { PlaatsingModal } from "./PlaatsingModal";
 
 type Kandidaat = {
   id: string;
@@ -18,10 +20,12 @@ type Kandidaat = {
 const KOLOMMEN = KANBAN_STAPPEN.map(s => ({ key: s.key, titel: s.kortLabel, kleur: s.rand }));
 
 export function KanbanBoard({ initialKandidaten }: { initialKandidaten: Kandidaat[] }) {
+  const router = useRouter();
   const [kandidaten, setKandidaten] = useState(initialKandidaten);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const [plaatsModal, setPlaatsModal] = useState<{ id: string; naam: string; oudeStap: string } | null>(null);
 
   const handleDragStart = (id: string) => setDraggedId(id);
   const handleDragEnd = () => { setDraggedId(null); setDragOverCol(null); };
@@ -31,6 +35,14 @@ export function KanbanBoard({ initialKandidaten }: { initialKandidaten: Kandidaa
     const kandidaat = kandidaten.find(k => k.id === draggedId);
     if (!kandidaat || kandidaat.kanban_stap === kolomKey) {
       setDraggedId(null); setDragOverCol(null); return;
+    }
+
+    // Speciale flow: sleep naar "geplaatst" → open modal
+    if (kolomKey === "geplaatst") {
+      const naam = `${kandidaat.voornaam}${kandidaat.tussenvoegsel ? " " + kandidaat.tussenvoegsel : ""} ${kandidaat.achternaam}`.trim();
+      setPlaatsModal({ id: kandidaat.id, naam, oudeStap: kandidaat.kanban_stap });
+      setDraggedId(null); setDragOverCol(null);
+      return;
     }
 
     // Optimistic update
@@ -53,6 +65,23 @@ export function KanbanBoard({ initialKandidaten }: { initialKandidaten: Kandidaa
     s >= 50 ? "text-amber-600" : "text-red-500";
 
   return (
+    <>
+    <PlaatsingModal
+      open={plaatsModal !== null}
+      kandidaatId={plaatsModal?.id ?? ""}
+      kandidaatNaam={plaatsModal?.naam ?? ""}
+      onAnnuleer={() => setPlaatsModal(null)}
+      onSucces={() => {
+        // Update lokale state zodat kaart in "geplaatst"-kolom verschijnt
+        if (plaatsModal) {
+          setKandidaten(prev =>
+            prev.map(k => k.id === plaatsModal.id ? { ...k, kanban_stap: "geplaatst" } : k)
+          );
+        }
+        setPlaatsModal(null);
+        router.refresh();
+      }}
+    />
     <div className="flex gap-3 overflow-x-auto pb-4" data-tour="kanban-board">
       {KOLOMMEN.map(kolom => {
         const items = kandidaten.filter(k => k.kanban_stap === kolom.key);
@@ -99,5 +128,6 @@ export function KanbanBoard({ initialKandidaten }: { initialKandidaten: Kandidaa
         );
       })}
     </div>
+    </>
   );
 }
