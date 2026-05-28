@@ -379,6 +379,11 @@ export default async function KandidaatDetail({
             </summary>
             <form action={stuurVoorstel} className="mt-3 space-y-3">
               <input type="hidden" name="kandidaat_id" value={k.id} />
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Bedrijfsnaam *</label>
+                <input name="bedrijf" required placeholder="TechCorp B.V." className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <small className="text-gray-400 text-xs">Wordt zichtbaar in de voorstellen-lijst zodat je weet bij welk bedrijf is voorgesteld</small>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">E-mail opdrachtgever *</label>

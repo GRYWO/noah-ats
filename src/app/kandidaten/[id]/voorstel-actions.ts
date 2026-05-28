@@ -120,6 +120,7 @@ export async function stuurVoorstel(formData: FormData) {
   const kandidaatId = formData.get("kandidaat_id") as string;
   const opdrachtgeverEmail = (formData.get("opdrachtgever_email") as string)?.trim().toLowerCase();
   const opdrachtgeverNaam = (formData.get("opdrachtgever_naam") as string)?.trim() || null;
+  const bedrijf = (formData.get("bedrijf") as string)?.trim() || null;
   const bericht = (formData.get("bericht") as string)?.trim() || null;
 
   const supabase = await createClient();
@@ -147,6 +148,7 @@ export async function stuurVoorstel(formData: FormData) {
     setter_id: user.id,
     opdrachtgever_email: opdrachtgeverEmail,
     opdrachtgever_naam: opdrachtgeverNaam,
+    bedrijf,
     bericht,
   }).select("id, token").single();
 
