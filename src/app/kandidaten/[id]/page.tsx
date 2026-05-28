@@ -374,7 +374,7 @@ export default async function KandidaatDetail({
           {!isRecruiter && (
           <details className="mb-4 group">
             <summary className="list-none cursor-pointer inline-flex items-center gap-2 bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-4 py-2 rounded-md text-sm transition-colors mb-3">
-              <span className="group-open:hidden">+ Deze kandidaat voorstellen</span>
+              <span className="group-open:hidden">Deze kandidaat voorstellen</span>
               <span className="hidden group-open:inline">Sluiten ↑</span>
             </summary>
             <form action={stuurVoorstel} className="mt-3 space-y-3">
