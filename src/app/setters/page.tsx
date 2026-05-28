@@ -38,17 +38,12 @@ export default async function SettersPage({
   // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken
   const magAlleRollen = isSuperAdmin;
 
-  // Email-map ophalen via admin-client zodat we per setter kunnen checken
-  // of het de super-admin is (alleen Yorith) — voor de "Super admin" badge.
-  const emailById = new Map<string, string>();
+  // Email-map gebruikt nu de denormalized profiles.email kolom (gesynced via trigger).
+  // Voorheen riepen we auth.admin.listUsers({perPage:200}) per request — traag.
   const adminCli = createAdminClient();
-  try {
-    const { data: lijst } = await adminCli.auth.admin.listUsers({ perPage: 200 });
-    for (const u of lijst?.users ?? []) {
-      if (u.email) emailById.set(u.id, u.email);
-    }
-  } catch (e) {
-    console.error("[setters] auth.admin.listUsers mislukt:", e);
+  const emailById = new Map<string, string>();
+  for (const s of setters ?? []) {
+    if (s.email) emailById.set(s.id, s.email);
   }
 
   // Laatste akkoord-status per user — voor de "Akkoord"-kolom

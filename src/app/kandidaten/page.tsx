@@ -15,14 +15,18 @@ const STATUS_COLORS: Record<string, string> = {
   geplaatst: "bg-sky-100 text-sky-800",
 };
 
+const PAGE_SIZE = 50;
+
 export default async function KandidatenPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; page?: string }>;
 }) {
-  const { error } = await searchParams;
-  const supabase = await createClient();
+  const { error, page } = await searchParams;
+  const pageNum = Math.max(1, parseInt(page ?? "1") || 1);
+  const offset = (pageNum - 1) * PAGE_SIZE;
 
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: myProfile } = await supabase
@@ -42,10 +46,14 @@ export default async function KandidatenPage({
     .select("*")
     .order("created_at", { ascending: false });
 
-  const { data: kandidaten } = await supabase
+  // Paginated query — alleen de huidige pagina laden + totaal aantal
+  const { data: kandidaten, count: kandidaatTotaal } = await supabase
     .from("kandidaten")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1);
+
+  const totalPages = Math.ceil((kandidaatTotaal ?? 0) / PAGE_SIZE);
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -56,7 +64,10 @@ export default async function KandidatenPage({
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Kandidaten</h1>
-            <p className="text-gray-500 text-sm mt-1">{kandidaten?.length ?? 0} totaal</p>
+            <p className="text-gray-500 text-sm mt-1">
+              {kandidaatTotaal ?? 0} totaal
+              {totalPages > 1 && ` · pagina ${pageNum} van ${totalPages}`}
+            </p>
           </div>
         </div>
 
@@ -123,6 +134,33 @@ export default async function KandidatenPage({
             </div>
           )}
         </div>
+
+        {/* Paginatie */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between text-sm">
+            <div className="text-gray-500">
+              Pagina {pageNum} van {totalPages} · {kandidaatTotaal} kandidaten totaal
+            </div>
+            <div className="inline-flex items-center gap-1">
+              {pageNum > 1 && (
+                <Link
+                  href={`/kandidaten?page=${pageNum - 1}`}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  ← Vorige
+                </Link>
+              )}
+              {pageNum < totalPages && (
+                <Link
+                  href={`/kandidaten?page=${pageNum + 1}`}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Volgende →
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
