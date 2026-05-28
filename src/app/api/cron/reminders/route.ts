@@ -3,6 +3,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { sendReminderMail, sendKennismakingReminder } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent, werkdagenSinds, isWerkdag } from "@/utils/voorstel-log";
+import { runCron } from "@/utils/cron-log";
 
 export async function GET(request: Request) {
   // Beveilig: alleen Vercel cron of met secret header
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const run = await runCron("reminders", async () => {
   const admin = createAdminClient();
   const nu = new Date();
   const isWeekend = !isWerkdag(nu);
@@ -151,12 +153,13 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({
-    ok: true,
+  return {
     werkdag: !isWeekend,
     reminders_verstuurd: verstuurd,
     verlopen,
     kennismaking_reminders: kennismakingReminders,
     timestamp: nu.toISOString(),
+  };
   });
+  return NextResponse.json({ ok: run.ok, ...(run.resultaat ?? {}), fout: run.fout });
 }

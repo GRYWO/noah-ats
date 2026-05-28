@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { runCron } from "@/utils/cron-log";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -24,6 +25,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const run = await runCron("cleanup-avg", async () => {
   const admin = createAdminClient();
   const nu = new Date();
   const vierWekenGeleden = new Date(nu.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString();
@@ -35,8 +37,21 @@ export async function GET(req: Request) {
     mijn_data_tokens_opgeruimd: 0,
     oude_uitnodigingen_ingetrokken: 0,
     contract_originelen_verwijderd: 0,
+    cron_runs_opgeruimd: 0,
     fouten: [] as string[],
   };
+
+  // 0) Oude cron_runs ouder dan 30 dagen verwijderen
+  try {
+    const dertigDagen = new Date(nu.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await admin
+      .from("cron_runs")
+      .delete({ count: "exact" })
+      .lt("gestart_op", dertigDagen);
+    resultaat.cron_runs_opgeruimd = count ?? 0;
+  } catch (e) {
+    resultaat.fouten.push(`cron-runs-cleanup: ${(e as Error).message}`);
+  }
 
   // 1) Afgewezen kandidaten ouder dan 4 weken → verwijderen
   try {
@@ -122,5 +137,7 @@ export async function GET(req: Request) {
     resultaat.fouten.push(`contract-cleanup: ${(e as Error).message}`);
   }
 
-  return NextResponse.json({ ok: true, tijdstip: nu.toISOString(), ...resultaat });
+  return { tijdstip: nu.toISOString(), ...resultaat };
+  });
+  return NextResponse.json({ ok: run.ok, ...(run.resultaat ?? {}), fout: run.fout });
 }

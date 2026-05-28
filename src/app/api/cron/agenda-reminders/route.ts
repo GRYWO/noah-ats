@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { maakNotificatie } from "@/utils/notificaties";
+import { runCron } from "@/utils/cron-log";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const run = await runCron("agenda-reminders", async () => {
   const admin = createAdminClient();
   const nu = new Date();
   // Venster: nu .. nu+35min. Wat al voorbij is filteren we client-side.
@@ -131,5 +133,7 @@ export async function GET(request: Request) {
     verstuurd.push(`team:${e.id}`);
   }
 
-  return NextResponse.json({ ok: true, verstuurd });
+  return { verstuurd };
+  });
+  return NextResponse.json({ ok: run.ok, ...(run.resultaat ?? {}), fout: run.fout });
 }

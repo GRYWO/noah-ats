@@ -8,6 +8,7 @@ import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_DASHBOARD } from "@/utils/pagina-tours";
 import { RondleidingStarter } from "@/components/RondleidingStarter";
 import { BureauAdminDashboard } from "./BureauAdminDashboard";
+import { BotsStatus } from "./BotsStatus";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
 function geldigePeriode(p: string | undefined): Periode {
@@ -96,6 +97,9 @@ export default async function Dashboard({
             <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-md">Live</span>
           </div>
         </div>
+
+        {/* Super-admin: Bots/Crons monitoring widget (alleen voor Yorith) */}
+        {isSuperAdmin && <BotsStatus />}
 
         {isSetter
           ? <SetterDashboard userId={user!.id} />
