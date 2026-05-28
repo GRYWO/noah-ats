@@ -10,7 +10,6 @@ import { TourHerstartKnop } from "./TourHerstartKnop";
 import { MfaSectie } from "./MfaSectie";
 import { ThemaSectie } from "./ThemaSectie";
 import { SidebarSectie } from "./SidebarSectie";
-import { AvatarSectie } from "./AvatarSectie";
 import { VoorkeurenSectie } from "./VoorkeurenSectie";
 
 export default async function InstellingenPage({
@@ -80,13 +79,6 @@ export default async function InstellingenPage({
             {error}
           </div>
         )}
-
-        {/* Profielfoto */}
-        <AvatarSectie
-          huidigeUrl={profile?.avatar_url ?? null}
-          voornaam={profile?.voornaam ?? null}
-          achternaam={profile?.achternaam ?? null}
-        />
 
         {/* Voorkeuren: desktop-notif + auto-refresh */}
         <VoorkeurenSectie />

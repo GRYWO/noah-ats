@@ -16,7 +16,7 @@ export async function TopBar({ active }: Props) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("rol, menu_permissions, avatar_url, voornaam, achternaam")
+    .select("rol, menu_permissions")
     .eq("id", user?.id ?? "")
     .single();
 
@@ -35,9 +35,6 @@ export async function TopBar({ active }: Props) {
         isSetter={isSetter}
         menuPermissions={menuPermissions}
         logoutAction={logout}
-        avatarUrl={profile?.avatar_url ?? null}
-        voornaam={profile?.voornaam ?? null}
-        achternaam={profile?.achternaam ?? null}
       />
       <SnelZoeken />
       <AutoRefresh />
