@@ -9,6 +9,8 @@ import { TOUR_DASHBOARD } from "@/utils/pagina-tours";
 import { RondleidingStarter } from "@/components/RondleidingStarter";
 import { BureauAdminDashboard } from "./BureauAdminDashboard";
 import { BotsStatus } from "./BotsStatus";
+import { DemoKnoppen } from "./DemoKnoppen";
+import { leesViewAs, effectieveRol } from "@/utils/view-as";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
 function geldigePeriode(p: string | undefined): Periode {
@@ -74,9 +76,14 @@ export default async function Dashboard({
     .eq("id", myProfile?.tenant_id ?? "")
     .single();
 
-  const isSetter = myProfile?.rol === "setter";
-  const isSuperAdmin = isSuperAdminEmail(user?.email);
-  const isBureauAdmin = myProfile?.rol === "admin" && !isSuperAdmin;
+  const echteIsSuperAdmin = isSuperAdminEmail(user?.email);
+  // Demo-modus override
+  const viewAs = await leesViewAs();
+  const { rol: actieveRol, demoActief } = effectieveRol(myProfile?.rol, echteIsSuperAdmin, viewAs);
+
+  const isSetter = actieveRol === "setter";
+  const isSuperAdmin = echteIsSuperAdmin && !demoActief;
+  const isBureauAdmin = actieveRol === "admin" && !isSuperAdmin;
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -98,8 +105,13 @@ export default async function Dashboard({
           </div>
         </div>
 
-        {/* Super-admin: Bots/Crons monitoring widget (alleen voor Yorith) */}
-        {isSuperAdmin && <BotsStatus />}
+        {/* Super-admin: Demo-modus knoppen + Bots/Crons monitoring */}
+        {isSuperAdmin && (
+          <>
+            <DemoKnoppen />
+            <BotsStatus />
+          </>
+        )}
 
         {isSetter
           ? <SetterDashboard userId={user!.id} />

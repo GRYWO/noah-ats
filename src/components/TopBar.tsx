@@ -5,6 +5,8 @@ import { SideBar } from "./SideBar";
 import { EodHerinneringBanner } from "./EodHerinneringBanner";
 import { SnelZoeken } from "./SnelZoeken";
 import { AutoRefresh } from "./AutoRefresh";
+import { DemoModusBanner } from "./DemoModusBanner";
+import { leesViewAs, effectieveRol } from "@/utils/view-as";
 
 type Props = {
   active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "agenda" | "voorstellen" | "opdrachtgevers" | "robin" | "jobdigger" | "inbox" | "setters" | "coaching" | "instellingen";
@@ -20,12 +22,20 @@ export async function TopBar({ active }: Props) {
     .eq("id", user?.id ?? "")
     .single();
 
-  const isSuperAdmin = isSuperAdminEmail(user?.email);
-  const isSetter = profile?.rol === "setter";
+  const echteIsSuperAdmin = isSuperAdminEmail(user?.email);
+
+  // Demo-modus override: super-admin mag zich voordoen als admin/setter/recruiter
+  const viewAs = await leesViewAs();
+  const { rol: actieveRol, demoActief } = effectieveRol(profile?.rol, echteIsSuperAdmin, viewAs);
+
+  // Effectief: in demo-modus is de user geen super-admin meer voor UI
+  const isSuperAdmin = echteIsSuperAdmin && !demoActief;
+  const isSetter = actieveRol === "setter";
   const menuPermissions = (profile?.menu_permissions ?? null) as Record<string, boolean> | null;
 
   return (
     <>
+      <DemoModusBanner />
       <EodHerinneringBanner />
       <SideBar
         active={active}
