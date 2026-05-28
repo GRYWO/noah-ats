@@ -275,17 +275,15 @@ export async function sendKandidaatBevestiging({
     bedrijf,
   });
 
-  // Klikbare datum-knoppen: kandidaat kiest 1 → backend slaat keuze op + stuurt bevestiging
-  const datumKnop = (label: string, datum: string | null, index: 1 | 2 | 3) => {
+  // Compacte datum-lijst + 3 kleine klikknopjes ("Datum 1/2/3") — werkt ook prima op mobiel
+  const datumRegel = (nr: number, datum: string | null) => {
+    if (!datum) return "";
+    return `<tr><td style="padding:4px 0;color:#666;width:80px;font-weight:600;">Datum ${nr}</td><td style="padding:4px 0;font-weight:600;">${fmtDatum(datum)}</td></tr>`;
+  };
+  const kleinKnopje = (nr: 1 | 2 | 3, datum: string | null) => {
     if (!datum || !voorstelToken) return "";
-    const url = `${APP_URL}/kies-datum/${voorstelToken}/${index}`;
-    return `
-      <tr><td style="padding:6px 0;">
-        <a href="${url}" style="display:block;background:#ffffff;border:2px solid ${GRYWO_KLEUR};color:${GRYWO_KLEUR};text-decoration:none;padding:14px 18px;border-radius:8px;font-weight:bold;text-align:center;">
-          <span style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.5px;">${label}</span><br>
-          <span style="font-size:15px;">${fmtDatum(datum)}</span>
-        </a>
-      </td></tr>`;
+    const url = `${APP_URL}/kies-datum/${voorstelToken}/${nr}`;
+    return `<a href="${url}" style="display:inline-block;background:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:bold;font-size:14px;margin:0 4px 4px 0;">Datum ${nr}</a>`;
   };
 
   const body = `
@@ -299,13 +297,17 @@ ${intro}
   <tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;"><a href="${locatie_url}" style="color:${GRYWO_KLEUR};">Bekijk op Google Maps</a></td></tr>
 </table>
 
-<p style="margin:16px 0 8px 0;font-weight:600;font-size:15px;">Kies een datum die je past:</p>
-<p style="margin:0 0 12px 0;font-size:13px;color:#666;">Klik op de gewenste datum — je krijgt direct een bevestiging per mail.</p>
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:separate;">
-  ${datumKnop("Optie 1", datum_1, 1)}
-  ${datumKnop("Optie 2", datum_2, 2)}
-  ${datumKnop("Optie 3", datum_3, 3)}
+<p style="margin:16px 0 8px 0;font-weight:600;font-size:15px;">Voorgestelde datums:</p>
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:separate;margin:0 0 12px 0;">
+  ${datumRegel(1, datum_1)}
+  ${datumRegel(2, datum_2)}
+  ${datumRegel(3, datum_3)}
 </table>
+
+<p style="margin:0 0 8px 0;font-size:13px;color:#666;">Klik hieronder op je voorkeur — je krijgt direct een bevestiging:</p>
+<p style="margin:0 0 16px 0;">
+  ${kleinKnopje(1, datum_1)}${kleinKnopje(2, datum_2)}${kleinKnopje(3, datum_3)}
+</p>
 
 ${opmerking ? `<p style="padding:12px;background:#fff8e1;border-left:3px solid #ffb84d;margin:16px 0;color:#444;"><b>Opmerking:</b> ${opmerking}</p>` : ""}
 
