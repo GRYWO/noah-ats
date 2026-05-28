@@ -28,10 +28,9 @@ create index if not exists idx_voorstellen_created_at    on public.voorstellen(c
 create index if not exists idx_logs_kandidaat_created    on public.voorstel_logs(kandidaat_id, created_at desc);
 create index if not exists idx_logs_tenant_created       on public.voorstel_logs(tenant_id, created_at desc);
 
--- Agenda-events
-create index if not exists idx_agenda_setter_id          on public.agenda_events(setter_id);
-create index if not exists idx_agenda_kandidaat_id       on public.agenda_events(kandidaat_id);
-create index if not exists idx_agenda_start_at           on public.agenda_events(start_at);
+-- Agenda-events (kolommen: tenant_id, aangemaakt_door, start_op)
+create index if not exists idx_agenda_aangemaakt_door    on public.agenda_events(aangemaakt_door);
+create index if not exists idx_agenda_start_op           on public.agenda_events(start_op);
 
 -- Plaatsingen
 create index if not exists idx_plaatsingen_tenant_id     on public.plaatsingen(tenant_id);
