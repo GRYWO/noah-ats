@@ -9,6 +9,7 @@ import { TEMPLATE_META, DEFAULT_BODIES, type TemplateSleutel } from "@/utils/mai
 import { TourHerstartKnop } from "./TourHerstartKnop";
 import { MfaSectie } from "./MfaSectie";
 import { ThemaSectie } from "./ThemaSectie";
+import { SidebarSectie } from "./SidebarSectie";
 
 export default async function InstellingenPage({
   searchParams,
@@ -123,6 +124,9 @@ export default async function InstellingenPage({
 
         {/* Thema / weergave */}
         <ThemaSectie />
+
+        {/* Zijbalk-gedrag */}
+        <SidebarSectie />
 
         {/* Tweestapsverificatie */}
         <MfaSectie actieveFactor={actieveMfaFactor} />

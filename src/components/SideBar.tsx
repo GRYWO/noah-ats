@@ -42,18 +42,43 @@ type Props = {
   logoutAction: () => Promise<void>;
 };
 
+type SidebarModus = "handmatig" | "hover" | "altijd-open";
+
 export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, menuPermissions, logoutAction }: Props) {
   const [open, setOpen] = useState(false);
+  const [modus, setModus] = useState<SidebarModus>("handmatig");
 
-  // localStorage persist
+  // localStorage: modus + open-state inlezen
   useEffect(() => {
-    const saved = localStorage.getItem("noah-sidebar-open");
-    if (saved === "1") setOpen(true);
+    const savedModus = (localStorage.getItem("noah-sidebar-modus") as SidebarModus | null) ?? "handmatig";
+    setModus(savedModus);
+    if (savedModus === "altijd-open") {
+      setOpen(true);
+    } else {
+      const savedOpen = localStorage.getItem("noah-sidebar-open");
+      if (savedOpen === "1") setOpen(true);
+    }
+    // Luister naar wijzigingen vanuit /instellingen
+    function onChange(e: Event) {
+      const detail = (e as CustomEvent).detail as SidebarModus;
+      setModus(detail);
+      if (detail === "altijd-open") setOpen(true);
+      if (detail === "handmatig" || detail === "hover") {
+        const savedOpen = localStorage.getItem("noah-sidebar-open");
+        setOpen(savedOpen === "1");
+      }
+    }
+    window.addEventListener("noah-sidebar-modus-change", onChange);
+    return () => window.removeEventListener("noah-sidebar-modus-change", onChange);
   }, []);
+
   useEffect(() => {
-    localStorage.setItem("noah-sidebar-open", open ? "1" : "0");
+    // Alleen in handmatige modus persisten — anders dicteert de modus zelf
+    if (modus === "handmatig") {
+      localStorage.setItem("noah-sidebar-open", open ? "1" : "0");
+    }
     document.documentElement.setAttribute("data-sidebar", open ? "open" : "closed");
-  }, [open]);
+  }, [open, modus]);
 
   const alleItems: Item[] = [
     // Sectie 1: Overzicht
@@ -94,6 +119,12 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, men
 
   return (
     <aside
+      onMouseEnter={() => {
+        if (modus === "hover") setOpen(true);
+      }}
+      onMouseLeave={() => {
+        if (modus === "hover") setOpen(false);
+      }}
       className={`fixed left-0 top-0 h-screen flex flex-col z-30 transition-all duration-200 overflow-hidden ${
         open ? "w-60" : "w-16"
       }`}
@@ -193,17 +224,19 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, men
             {open && <span className="text-sm">Uitloggen</span>}
           </button>
         </form>
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          title={open ? "Inklappen" : "Uitklappen"}
-          className={`w-full flex items-center gap-3 rounded-lg text-white/50 hover:bg-white/5 hover:text-white mt-1 transition-colors ${
-            open ? "px-3 py-2" : "p-2 justify-center"
-          }`}
-        >
-          {open ? <ChevronsLeft size={18} /> : <ChevronsRight size={18} />}
-          {open && <span className="text-sm">Inklappen</span>}
-        </button>
+        {modus === "handmatig" && (
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            title={open ? "Inklappen" : "Uitklappen"}
+            className={`w-full flex items-center gap-3 rounded-lg text-white/50 hover:bg-white/5 hover:text-white mt-1 transition-colors ${
+              open ? "px-3 py-2" : "p-2 justify-center"
+            }`}
+          >
+            {open ? <ChevronsLeft size={18} /> : <ChevronsRight size={18} />}
+            {open && <span className="text-sm">Inklappen</span>}
+          </button>
+        )}
       </div>
     </aside>
   );
