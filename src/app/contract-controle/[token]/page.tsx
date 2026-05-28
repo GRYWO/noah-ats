@@ -4,6 +4,7 @@ import { ContractUploadForm } from "./ContractUploadForm";
 import { ShieldCheck, Lock, Trash2, Eye } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export default async function ContractControlePage({
   params,

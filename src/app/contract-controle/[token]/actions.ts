@@ -10,8 +10,6 @@ import {
 import { redacteerContract } from "@/utils/contract-redactie";
 import { revalidatePath } from "next/cache";
 
-export const maxDuration = 60;
-
 /**
  * Maakt een contract-verzoek aan + stuurt mail naar opdrachtgever.
  * Gebruikt vanuit de plaatsing-flow of als losse actie op de kandidaat-pagina.
