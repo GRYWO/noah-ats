@@ -1328,15 +1328,23 @@ ${verschilWaarschuwing}
 </p>
 <p style="font-size:12px;color:#888;">Origineel contract is binnen 24u automatisch verwijderd conform AVG art. 5.</p>`;
 
+  const attachments: Array<{ filename: string; content: Buffer }> = [
+    { filename: "samenvatting.pdf", content: Buffer.from(samenvattingPdf) },
+  ];
+  // Optioneel geredacteerd contract bijvoegen indien aanwezig (skip bij snelle flow)
+  if (geredacteerdePdf && geredacteerdePdf.length > 100) {
+    attachments.push({
+      filename: "geredacteerd-contract.pdf",
+      content: Buffer.from(geredacteerdePdf),
+    });
+  }
+
   const result = await resend.emails.send({
     from: FROM,
     to: "backoffice@grywo.nl",
     subject: `📄 Contract geverifieerd: ${kandidaatNaam} — bruto ${eur(totaal)}`,
     html: brandedLayout({ titel: "Contract klaar voor facturatie", body }),
-    attachments: [
-      { filename: "samenvatting.pdf", content: Buffer.from(samenvattingPdf) },
-      { filename: "geredacteerd-contract.pdf", content: Buffer.from(geredacteerdePdf) },
-    ],
+    attachments,
   });
   if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
   return result;

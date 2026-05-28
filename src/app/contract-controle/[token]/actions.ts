@@ -135,17 +135,13 @@ export async function verwerkContractUpload(formData: FormData) {
     return { ok: false, error: `Verwerking mislukt: ${msg.slice(0, 200)}. Mail backoffice@grywo.nl voor handmatige verwerking.` };
   }
 
-  // 3) Geredacteerde + samenvattings-PDF opslaan
-  const geredPad = `${verzoek.id}/geredacteerd-${ts}.pdf`;
+  // 3) Samenvattings-PDF opslaan (geredacteerd skippen — duurt te lang)
   const samPad = `${verzoek.id}/samenvatting-${ts}.pdf`;
-  await admin.storage.from("contracten").upload(geredPad, redactie.geredacteerdePdf, {
-    contentType: "application/pdf",
-    upsert: false,
-  });
   await admin.storage.from("contracten").upload(samPad, redactie.samenvattingPdf, {
     contentType: "application/pdf",
     upsert: false,
   });
+  const geredPad = null;
 
   const jaarsalaris = redactie.salaris.brutoJaarsalarisBerekend ?? redactie.salaris.brutoJaarsalarisLetterlijk ?? null;
 

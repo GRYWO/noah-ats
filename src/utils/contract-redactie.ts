@@ -45,11 +45,11 @@ export type RedactieResultaat = {
   samenvattingPdf: Uint8Array;
 };
 
-const REDACT_PROMPT = `Je bent een AVG/GDPR-redactie-expert die arbeidscontracten verwerkt voor een Nederlands recruitment bureau.
+const REDACT_PROMPT = `Je bent een AVG/GDPR-expert die arbeidscontracten analyseert voor een Nederlands recruitment bureau (GRYWO).
 
-Je krijgt een arbeidscontract als PDF. Doe TWEE dingen:
+Je krijgt een arbeidscontract als PDF. Extract de volgende velden — GEEN volledige tekst-redactie nodig.
 
-1. EXTRACT — Lees deze velden uit:
+EXTRACT — Lees deze velden uit:
    - kandidaatnaam (volledige naam werknemer)
    - werkgever (bedrijfsnaam)
    - functie (jobtitle)
@@ -68,27 +68,10 @@ Je krijgt een arbeidscontract als PDF. Doe TWEE dingen:
    - brutoJaarsalarisBerekend = (brutoMaandsalaris × 12) + (brutoMaandsalaris × 12 × vakantiegeldPct / 100) + (13e maand bedrag of maandsalaris als dertiendeMaand=true) + (eindejaarsuitkeringBedrag) + (vasteBonus)
      → bereken dit zelf en rond af op hele euro's
 
-2. REDACTEER — Geef de volledige contracttekst terug met alle PII vervangen door "███".
-   PII categorieën (zwart maken):
-   - BSN / sofinummer (alle 9-cijfer reeksen die als BSN kunnen functioneren)
-   - IBAN / bankrekeningnummers
-   - Privé-adres (straat, huisnummer, postcode, plaats van WERKNEMER — NIET van werkgever)
-   - Geboortedatum + geboorteplaats
-   - Privé-telefoonnummer + privé-email werknemer
-   - Burgerlijke staat, partner-/kindgegevens
-   - Nationaliteit, paspoort/ID-nummers
-   - Bijzondere persoonsgegevens (gezondheid, geloof, etc.)
+Tel ook hoeveel PII-elementen je in het contract zag (zonder ze terug te geven):
+- bsn, iban, adres, geboortedatum, telefoon, email, burgerlijke_staat
 
-   BEHOUD onaangetast:
-   - Naam werknemer (alleen in salaris-context, eerste vermelding mag, daarna afkorten)
-   - Functietitel, salaris, werkuren, startdatum, contractduur
-   - Werkgever-gegevens (adres bedrijf is publiek)
-   - Standaard arbeidsvoorwaarden (vakantiedagen, pensioen, etc.)
-   - Handtekeningen-tekst ("getekend te X op Y")
-
-   Voor elke categorie: tel hoe vaak je iets hebt geredacteerd.
-
-GEEF TERUG als JSON, exact dit schema (geen markdown, geen uitleg):
+GEEF TERUG als JSON, exact dit schema (geen markdown, geen uitleg, geen extra tekst):
 {
   "kandidaatnaam": "string|null",
   "werkgever": "string|null",
@@ -106,7 +89,6 @@ GEEF TERUG als JSON, exact dit schema (geen markdown, geen uitleg):
   "vasteBonus": "number|null",
   "brutoJaarsalarisLetterlijk": "number|null",
   "brutoJaarsalarisBerekend": "number|null",
-  "geredacteerdeTekst": "volledige tekst met ███ ipv PII",
   "redactieCounts": {
     "bsn": 0,
     "iban": 0,
@@ -114,17 +96,16 @@ GEEF TERUG als JSON, exact dit schema (geen markdown, geen uitleg):
     "geboortedatum": 0,
     "telefoon": 0,
     "email": 0,
-    "burgerlijke_staat": 0,
-    "overig": 0
+    "burgerlijke_staat": 0
   }
 }`;
 
 export async function redacteerContract(pdfBytes: Uint8Array): Promise<RedactieResultaat> {
-  // 1) Claude analyseert + redacteert
+  // 1) Claude analyseert (alleen extract, geen volledige tekst-redactie — veel sneller)
   const base64 = Buffer.from(pdfBytes).toString("base64");
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-5",
-    max_tokens: 16000,
+    max_tokens: 2000,
     messages: [
       {
         role: "user",
@@ -164,7 +145,6 @@ export async function redacteerContract(pdfBytes: Uint8Array): Promise<RedactieR
     vasteBonus: number | null;
     brutoJaarsalarisLetterlijk: number | null;
     brutoJaarsalarisBerekend: number | null;
-    geredacteerdeTekst: string;
     redactieCounts: Record<string, number>;
   };
   let raw: RawAiResponse;
@@ -184,7 +164,6 @@ export async function redacteerContract(pdfBytes: Uint8Array): Promise<RedactieR
 
   // Defensief: zorg dat alle vereiste velden bestaan (AI kan ze missen)
   raw.redactieCounts = raw.redactieCounts ?? {};
-  raw.geredacteerdeTekst = raw.geredacteerdeTekst ?? "(geen geredacteerde tekst ontvangen)";
 
   const salaris: SalarisComponenten = {
     brutoMaandsalaris: raw.brutoMaandsalaris,
@@ -200,10 +179,9 @@ export async function redacteerContract(pdfBytes: Uint8Array): Promise<RedactieR
     brutoJaarsalarisLetterlijk: raw.brutoJaarsalarisLetterlijk,
   };
 
-  // 2) Genereer geredacteerde PDF
-  const geredacteerdePdf = await genereerGeredacteerdePdf(raw.geredacteerdeTekst);
-
-  // 3) Genereer samenvattings-PDF met salaris-breakdown
+  // 2) Genereer alleen de samenvattings-PDF met salaris-breakdown
+  //    (volledige tekst-redactie van origineel skippen — duurt te lang en is
+  //     overbodig: backoffice heeft enkel de geverifieerde feiten nodig)
   const samenvattingPdf = await genereerSamenvattingsPdf({
     kandidaatnaam: raw.kandidaatnaam,
     werkgever: raw.werkgever,
@@ -221,9 +199,9 @@ export async function redacteerContract(pdfBytes: Uint8Array): Promise<RedactieR
     startdatum: raw.startdatum,
     contractduur: raw.contractduur,
     salaris,
-    geredacteerdeTekst: raw.geredacteerdeTekst,
+    geredacteerdeTekst: "",
     redactieCounts: raw.redactieCounts,
-    geredacteerdePdf,
+    geredacteerdePdf: new Uint8Array(),
     samenvattingPdf,
   };
 }
