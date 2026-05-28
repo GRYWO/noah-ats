@@ -52,9 +52,8 @@ export default function Home() {
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white text-center mb-3">
           Recruitment op autopilot
         </h1>
-        <p className="text-white/60 text-sm md:text-base text-center max-w-lg mb-10">
-          AI doet het zware werk — CV&apos;s parsen, profielen schrijven,
-          kandidaten matchen. Jouw team focust op plaatsen.
+        <p className="text-white/70 text-base md:text-lg text-center max-w-lg mb-10 font-light tracking-wide">
+          De toekomst zit hier. <span className="text-white font-medium">AI-gedreven ATS.</span>
         </p>
 
         {/* CTA */}
