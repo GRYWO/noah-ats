@@ -169,11 +169,22 @@ export async function redacteerContract(pdfBytes: Uint8Array): Promise<RedactieR
   };
   let raw: RawAiResponse;
   try {
-    const schoon = tekstBlok.text.replace(/^```json\s*|\s*```$/g, "").trim();
+    // Strip eventuele markdown code-fences en zoek het eerste { ... laatste }
+    let schoon = tekstBlok.text.replace(/^```json\s*|\s*```$/g, "").trim();
+    const eersteBracket = schoon.indexOf("{");
+    const laatsteBracket = schoon.lastIndexOf("}");
+    if (eersteBracket !== -1 && laatsteBracket !== -1) {
+      schoon = schoon.slice(eersteBracket, laatsteBracket + 1);
+    }
     raw = JSON.parse(schoon) as RawAiResponse;
   } catch (e) {
-    throw new Error("AI-response is geen valide JSON: " + String(e));
+    console.error("[redactie] AI response was:", tekstBlok.text.slice(0, 500));
+    throw new Error("AI kon geen gestructureerde data uit deze PDF halen. Is dit een echt arbeidscontract? " + String(e));
   }
+
+  // Defensief: zorg dat alle vereiste velden bestaan (AI kan ze missen)
+  raw.redactieCounts = raw.redactieCounts ?? {};
+  raw.geredacteerdeTekst = raw.geredacteerdeTekst ?? "(geen geredacteerde tekst ontvangen)";
 
   const salaris: SalarisComponenten = {
     brutoMaandsalaris: raw.brutoMaandsalaris,

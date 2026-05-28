@@ -10,6 +10,8 @@ import {
 import { redacteerContract } from "@/utils/contract-redactie";
 import { revalidatePath } from "next/cache";
 
+export const maxDuration = 60;
+
 /**
  * Maakt een contract-verzoek aan + stuurt mail naar opdrachtgever.
  * Gebruikt vanuit de plaatsing-flow of als losse actie op de kandidaat-pagina.
@@ -107,7 +109,13 @@ export async function verwerkContractUpload(formData: FormData) {
     contentType: "application/pdf",
     upsert: false,
   });
-  if (upR.error) return { ok: false, error: "Upload mislukt: " + upR.error.message };
+  if (upR.error) {
+    console.error("[contract] storage upload mislukt:", upR.error);
+    if (upR.error.message?.toLowerCase().includes("bucket")) {
+      return { ok: false, error: "Storage-bucket 'contracten' ontbreekt. Admin: run sql/049_contract_controle.sql in Supabase." };
+    }
+    return { ok: false, error: "Upload mislukt: " + upR.error.message };
+  }
 
   // 2) AI-redactie
   let redactie;
@@ -115,7 +123,18 @@ export async function verwerkContractUpload(formData: FormData) {
     redactie = await redacteerContract(bytes);
   } catch (e) {
     console.error("[contract] redactie mislukt:", e);
-    return { ok: false, error: "Verwerking mislukt — probeer opnieuw of mail backoffice@grywo.nl" };
+    const msg = (e as Error).message ?? "onbekend";
+    // Probeer specifieker te zijn
+    if (msg.includes("JSON")) {
+      return { ok: false, error: "AI kon geen contract-info uit deze PDF halen. Is dit echt een arbeidscontract? Anders: mail backoffice@grywo.nl." };
+    }
+    if (msg.toLowerCase().includes("rate") || msg.toLowerCase().includes("429")) {
+      return { ok: false, error: "AI is tijdelijk druk — probeer over een minuut opnieuw." };
+    }
+    if (msg.toLowerCase().includes("timeout")) {
+      return { ok: false, error: "PDF te groot of complex (timeout). Probeer een eenvoudigere/kleinere PDF." };
+    }
+    return { ok: false, error: `Verwerking mislukt: ${msg.slice(0, 200)}. Mail backoffice@grywo.nl voor handmatige verwerking.` };
   }
 
   // 3) Geredacteerde + samenvattings-PDF opslaan
