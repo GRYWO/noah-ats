@@ -124,7 +124,7 @@ export default async function TekenPage({
           </Section>
 
           <p className="text-xs text-gray-500 mt-4">
-            Vragen vooraf? Mail noreply@grywo.nl of bel 085-4016082.
+            Vragen vooraf? Mail info@grywo.nl of bel 085-4016082.
           </p>
         </div>
 
@@ -172,7 +172,7 @@ export default async function TekenPage({
         )}
 
         <div className="text-center py-5 text-xs text-gray-500">
-          Vragen? Mail <a href="mailto:noreply@grywo.nl" className="text-[#333399] font-semibold">noreply@grywo.nl</a> of bel 085-4016082
+          Vragen? Mail <a href="mailto:info@grywo.nl" className="text-[#333399] font-semibold">info@grywo.nl</a> of bel 085-4016082
         </div>
       </div>
     </main>

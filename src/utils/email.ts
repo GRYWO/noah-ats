@@ -934,7 +934,7 @@ Of kopieer deze link in je browser:<br>
 <a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
 </p>
 
-<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail noreply@grywo.nl of bel 085-4016082.</p>`;
+<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail info@grywo.nl of bel 085-4016082.</p>`;
 
   const result = await resend.emails.send({
     from: FROM,
@@ -972,7 +972,7 @@ export async function sendDpaGetekendBevestiging({
   </a>
 </div>
 
-<p style="font-size:12px;color:#888;margin-top:18px;">Bij vragen: noreply@grywo.nl · 085-4016082.</p>`;
+<p style="font-size:12px;color:#888;margin-top:18px;">Bij vragen: info@grywo.nl · 085-4016082.</p>`;
 
   return resend.emails.send({
     from: FROM,
@@ -1058,7 +1058,7 @@ Of kopieer deze link in je browser:<br>
 <a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
 </p>
 
-<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail noreply@grywo.nl of bel 085-4016082.</p>`;
+<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail info@grywo.nl of bel 085-4016082.</p>`;
 
   const result = await resend.emails.send({
     from: FROM,
@@ -1096,7 +1096,7 @@ export async function sendAkkoordBevestiging({
   </a>
 </div>
 
-<p style="font-size:12px;color:#888;margin-top:18px;">Bewaar deze mail. Bij vragen: noreply@grywo.nl.</p>`;
+<p style="font-size:12px;color:#888;margin-top:18px;">Bewaar deze mail. Bij vragen: info@grywo.nl.</p>`;
 
   return resend.emails.send({
     from: FROM,

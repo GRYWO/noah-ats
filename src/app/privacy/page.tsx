@@ -26,7 +26,7 @@ export default function PrivacyPage() {
 
           <h2 className="text-xl font-bold text-gray-800 mt-8 mb-2">1. Wie verwerkt jouw gegevens?</h2>
           <p>
-            <b>GRYWO</b> · Woerden, Nederland · <a href="mailto:noreply@grywo.nl" className="text-[#333399] underline">noreply@grywo.nl</a> · 085-4016082
+            <b>GRYWO</b> · Woerden, Nederland · <a href="mailto:info@grywo.nl" className="text-[#333399] underline">info@grywo.nl</a> · 085-4016082
           </p>
 
           <h2 className="text-xl font-bold text-gray-800 mt-8 mb-2">2. Chrome-extensie — Noah ATS Embed Helper</h2>
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
           <p>
             Je hebt het recht op inzage, correctie en verwijdering van je gegevens, plus dataportabiliteit.
             Stuur een verzoek naar{" "}
-            <a href="mailto:noreply@grywo.nl" className="text-[#333399] underline">noreply@grywo.nl</a>{" "}
+            <a href="mailto:info@grywo.nl" className="text-[#333399] underline">info@grywo.nl</a>{" "}
             — we reageren binnen 30 dagen.
           </p>
 
@@ -77,7 +77,7 @@ export default function PrivacyPage() {
           <p>
             Bureaus die Noah ATS gebruiken sluiten met GRYWO een verwerkersovereenkomst (DPA) conform art. 28 AVG.
             Vraag de template-DPA op via{" "}
-            <a href="mailto:noreply@grywo.nl?subject=DPA Noah ATS" className="text-[#333399] underline">noreply@grywo.nl</a>{" "}
+            <a href="mailto:info@grywo.nl?subject=DPA Noah ATS" className="text-[#333399] underline">info@grywo.nl</a>{" "}
             (we sturen 'm direct retour).
           </p>
         </div>

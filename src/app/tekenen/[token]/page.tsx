@@ -102,7 +102,7 @@ export default async function TekenAkkoordPage({
         )}
 
         <div className="text-center py-5 text-xs text-gray-500">
-          Vragen? Mail <a href="mailto:noreply@grywo.nl" className="text-[#333399] font-semibold">noreply@grywo.nl</a> of bel 085-4016082
+          Vragen? Mail <a href="mailto:info@grywo.nl" className="text-[#333399] font-semibold">info@grywo.nl</a> of bel 085-4016082
         </div>
       </div>
     </main>
@@ -252,7 +252,7 @@ function GebruiksvoorwaardenTekst({ naam, rol, bureau, datum }: { naam: string; 
       <ul className="list-disc pl-6 space-y-1 text-sm text-gray-700">
         <li>Wachtwoord direct na eerste login wijzigen (via Instellingen)</li>
         <li>2FA aanzetten zodra dit beschikbaar is op je account</li>
-        <li>Verdachte activiteit (vreemde mails, ongebruikelijke logins) direct melden aan je bureau-admin of aan noreply@grywo.nl</li>
+        <li>Verdachte activiteit (vreemde mails, ongebruikelijke logins) direct melden aan je bureau-admin of aan info@grywo.nl</li>
         <li>Kandidaten respectvol behandelen — je werkt met persoonlijke data</li>
       </ul>
 
