@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { getViewerRol } from "@/utils/view-as";
 import { updateMailConfig, wijzigEigenWachtwoord } from "./actions";
 import { nieuwMailAccount, verwijderMailAccount, maakPrimair } from "./mail-actions";
 import { updateMailTemplate, resetMailTemplate } from "./template-actions";
@@ -44,7 +45,8 @@ export default async function InstellingenPage({
     console.error("MFA-factors ophalen mislukt:", e);
   }
 
-  const isSuperAdmin = isSuperAdminEmail(user?.email);
+  // Demo-modus respecteren: super-admin functies verbergen in demo
+  const { isSuperAdmin } = await getViewerRol();
   let templates: Record<string, string> = {};
   if (isSuperAdmin) {
     const admin = createAdminClient();

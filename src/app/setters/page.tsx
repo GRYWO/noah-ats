@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { getViewerRol } from "@/utils/view-as";
 import { TopBar } from "@/components/TopBar";
 import { nieuweSetter } from "./actions";
 import { UserRij } from "./UserRij";
@@ -18,7 +19,9 @@ export default async function SettersPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isSuperAdmin = isSuperAdminEmail(user?.email);
+  // Demo-modus respecteren — in demo zien we als die rol
+  const viewerRol = await getViewerRol();
+  const isSuperAdmin = viewerRol.isSuperAdmin;
 
   // Super-admin gebruikt admin-client zodat RLS niets uitfiltert
   // (anders zou de lijst leeg blijven als de eigen tenant geen users heeft).
@@ -28,13 +31,7 @@ export default async function SettersPage({
     .select("*")
     .order("created_at", { ascending: true });
 
-  const { data: myProfile } = await supabase
-    .from("profiles")
-    .select("rol")
-    .eq("id", user!.id)
-    .single();
-
-  const isAdmin = myProfile?.rol === "admin" || isSuperAdmin;
+  const isAdmin = viewerRol.isAdmin || isSuperAdmin;
   // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken
   const magAlleRollen = isSuperAdmin;
 
