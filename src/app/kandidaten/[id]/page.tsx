@@ -14,6 +14,7 @@ import { ContactRecruiterKnop } from "./ContactRecruiter";
 import { KennismakingDatumEdit } from "./KennismakingDatumEdit";
 import { TweedeGesprekEdit } from "./TweedeGesprekEdit";
 import { PlaatsingTrigger } from "./PlaatsingTrigger";
+import { PlaatsingKnop } from "./PlaatsingKnop";
 import { KANBAN_OPTIES } from "@/utils/kanban";
 import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
 
@@ -158,11 +159,20 @@ export default async function KandidaatDetail({
               {k.woonplaats && <span>{k.woonplaats}</span>}
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-gray-500 uppercase font-semibold">Score</div>
-            <div className={`text-4xl font-bold ${scoreColor}`}>
-              {k.score ?? "—"}{k.score != null && <span className="text-base text-gray-400">/100</span>}
+          <div className="flex flex-col items-end gap-3">
+            <div className="text-right">
+              <div className="text-xs text-gray-500 uppercase font-semibold">Score</div>
+              <div className={`text-4xl font-bold ${scoreColor}`}>
+                {k.score ?? "—"}{k.score != null && <span className="text-base text-gray-400">/100</span>}
+              </div>
             </div>
+            {!isSetter && k.status !== "afgewezen" && (
+              <PlaatsingKnop
+                kandidaatId={k.id}
+                kandidaatNaam={`${k.voornaam ?? ""}${k.tussenvoegsel ? " " + k.tussenvoegsel : ""} ${k.achternaam ?? ""}`.trim()}
+                alGeplaatst={k.status === "geplaatst"}
+              />
+            )}
           </div>
         </div>
 
