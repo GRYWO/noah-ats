@@ -130,14 +130,17 @@ export async function verwerkContractUpload(formData: FormData) {
     upsert: false,
   });
 
+  const jaarsalaris = redactie.salaris.brutoJaarsalarisBerekend ?? redactie.salaris.brutoJaarsalarisLetterlijk ?? null;
+
   // 4) Mail naar GRYWO backoffice met beide attachments
   try {
     await sendContractNaarBackoffice({
       kandidaatNaam: verzoek.kandidaat_naam,
       werkgever: redactie.werkgever,
-      brutoJaarsalaris: redactie.brutoJaarsalaris,
+      brutoJaarsalaris: jaarsalaris,
       startdatum: redactie.startdatum,
       functie: redactie.functie,
+      salaris: redactie.salaris,
       geredacteerdePdf: redactie.geredacteerdePdf,
       samenvattingPdf: redactie.samenvattingPdf,
     });
@@ -153,12 +156,12 @@ export async function verwerkContractUpload(formData: FormData) {
       origineel_pad: origPad,
       geredacteerd_pad: geredPad,
       samenvatting_pad: samPad,
-      contract_salaris: redactie.brutoJaarsalaris,
+      contract_salaris: jaarsalaris,
       contract_functie: redactie.functie,
       contract_startdatum: redactie.startdatum,
       contract_duur: redactie.contractduur,
       contract_werkgever: redactie.werkgever,
-      redactie_log: redactie.redactieCounts as never,
+      redactie_log: { ...redactie.redactieCounts, salaris: redactie.salaris } as never,
       geupload_op: new Date().toISOString(),
       afgerond_op: new Date().toISOString(),
     })
@@ -166,7 +169,7 @@ export async function verwerkContractUpload(formData: FormData) {
 
   return {
     ok: true,
-    salaris: redactie.brutoJaarsalaris,
+    salaris: jaarsalaris,
     functie: redactie.functie,
     startdatum: redactie.startdatum,
   };

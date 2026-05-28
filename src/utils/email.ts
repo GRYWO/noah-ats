@@ -1233,13 +1233,29 @@ Of kopieer deze link in je browser:<br>
 
 /**
  * Mail naar GRYWO backoffice met de geredacteerde PDF + samenvatting als attachments.
+ * Bevat een uitgebreid salaris-overzicht met alle componenten + fee-berekening per percentage.
  */
+type SalarisInfo = {
+  brutoMaandsalaris: number | null;
+  urenPerWeek: number | null;
+  vakantiegeldPct: number | null;
+  dertiendeMaand: boolean;
+  dertiendeMaandBedrag: number | null;
+  eindejaarsuitkering: boolean;
+  eindejaarsuitkeringBedrag: number | null;
+  vasteBonus: number | null;
+  cao: string | null;
+  brutoJaarsalarisBerekend: number | null;
+  brutoJaarsalarisLetterlijk: number | null;
+};
+
 export async function sendContractNaarBackoffice({
   kandidaatNaam,
   werkgever,
   brutoJaarsalaris,
   startdatum,
   functie,
+  salaris,
   geredacteerdePdf,
   samenvattingPdf,
 }: {
@@ -1248,44 +1264,78 @@ export async function sendContractNaarBackoffice({
   brutoJaarsalaris: number | null;
   startdatum: string | null;
   functie: string | null;
+  salaris: SalarisInfo;
   geredacteerdePdf: Uint8Array;
   samenvattingPdf: Uint8Array;
 }) {
-  const fee = brutoJaarsalaris ? (brutoJaarsalaris * 0.15).toFixed(2) : null;
-  const body = `
-<p>Een opdrachtgever heeft een arbeidscontract aangeleverd voor verificatie.</p>
+  const eur = (n: number | null) => n != null ? `€ ${n.toLocaleString("nl-NL", { maximumFractionDigits: 0 })}` : "—";
+  const totaal = brutoJaarsalaris ?? 0;
 
-<h3 style="color:${GRYWO_KLEUR};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Geverifieerde gegevens</h3>
+  // Berekende breakdown
+  const maand = salaris.brutoMaandsalaris ?? 0;
+  const jaarBasis = maand * 12;
+  const vakPct = salaris.vakantiegeldPct ?? 8;
+  const vakgeld = (jaarBasis * vakPct) / 100;
+  const dertiende = salaris.dertiendeMaand ? (salaris.dertiendeMaandBedrag ?? maand) : 0;
+  const eindejaar = salaris.eindejaarsuitkering ? (salaris.eindejaarsuitkeringBedrag ?? 0) : 0;
+  const bonus = salaris.vasteBonus ?? 0;
+
+  const verschilWaarschuwing =
+    salaris.brutoJaarsalarisLetterlijk &&
+    salaris.brutoJaarsalarisBerekend &&
+    Math.abs(salaris.brutoJaarsalarisLetterlijk - salaris.brutoJaarsalarisBerekend) > 100
+      ? `<p style="margin-top:12px;padding:10px;background:#fff7ed;border-left:4px solid #f59e0b;color:#92400e;font-size:12px;">
+          ⚠ <b>Let op:</b> contract noemt letterlijk ${eur(salaris.brutoJaarsalarisLetterlijk)} maar berekening op basis van componenten komt uit op ${eur(salaris.brutoJaarsalarisBerekend)} (verschil ${eur(Math.abs(salaris.brutoJaarsalarisLetterlijk - salaris.brutoJaarsalarisBerekend))}). Even verifiëren.
+        </p>`
+      : "";
+
+  const body = `
+<p>Een opdrachtgever heeft een arbeidscontract aangeleverd. Hieronder de geverifieerde salaris-opbouw en fee-berekening.</p>
+
+<h3 style="color:${GRYWO_KLEUR};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Basisgegevens</h3>
 <table style="width:100%;font-size:13px;color:#333;">
-  <tr><td style="padding:4px 0;color:#666;">Kandidaat</td><td style="padding:4px 0;"><b>${kandidaatNaam}</b></td></tr>
-  <tr><td style="padding:4px 0;color:#666;">Werkgever</td><td style="padding:4px 0;">${werkgever ?? "—"}</td></tr>
-  <tr><td style="padding:4px 0;color:#666;">Functie</td><td style="padding:4px 0;">${functie ?? "—"}</td></tr>
-  <tr><td style="padding:4px 0;color:#666;">Bruto jaarsalaris</td><td style="padding:4px 0;"><b>€ ${brutoJaarsalaris?.toLocaleString("nl-NL") ?? "—"}</b></td></tr>
-  <tr><td style="padding:4px 0;color:#666;">Startdatum</td><td style="padding:4px 0;">${startdatum ? new Date(startdatum).toLocaleDateString("nl-NL") : "—"}</td></tr>
-  <tr><td style="padding:4px 0;color:#666;">15% fee</td><td style="padding:4px 0;color:${GRYWO_KLEUR};"><b>€ ${fee ?? "—"}</b></td></tr>
+  <tr><td style="padding:3px 0;color:#666;width:170px;">Kandidaat</td><td style="padding:3px 0;"><b>${kandidaatNaam}</b></td></tr>
+  <tr><td style="padding:3px 0;color:#666;">Werkgever</td><td style="padding:3px 0;">${werkgever ?? "—"}</td></tr>
+  <tr><td style="padding:3px 0;color:#666;">Functie</td><td style="padding:3px 0;">${functie ?? "—"}</td></tr>
+  <tr><td style="padding:3px 0;color:#666;">Startdatum</td><td style="padding:3px 0;">${startdatum ? new Date(startdatum).toLocaleDateString("nl-NL") : "—"}</td></tr>
+  <tr><td style="padding:3px 0;color:#666;">CAO</td><td style="padding:3px 0;">${salaris.cao ?? "Niet vermeld"}</td></tr>
+  <tr><td style="padding:3px 0;color:#666;">Uren/week</td><td style="padding:3px 0;">${salaris.urenPerWeek ? `${salaris.urenPerWeek} uur` : "—"}</td></tr>
+</table>
+
+<h3 style="color:${GRYWO_KLEUR};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Salaris-opbouw</h3>
+<table style="width:100%;font-size:13px;color:#333;">
+  <tr><td style="padding:3px 0;color:#666;">Bruto maandsalaris × 12</td><td style="padding:3px 0;text-align:right;">${eur(maand)} × 12 = <b>${eur(jaarBasis)}</b></td></tr>
+  <tr><td style="padding:3px 0;color:#666;">Vakantiegeld (${vakPct}%)</td><td style="padding:3px 0;text-align:right;">+ ${eur(vakgeld)}</td></tr>
+  <tr><td style="padding:3px 0;color:#666;">13e maand${salaris.dertiendeMaand ? "" : " (n.v.t.)"}</td><td style="padding:3px 0;text-align:right;">${dertiende ? "+ " + eur(dertiende) : "—"}</td></tr>
+  <tr><td style="padding:3px 0;color:#666;">Eindejaarsuitkering${salaris.eindejaarsuitkering ? "" : " (n.v.t.)"}</td><td style="padding:3px 0;text-align:right;">${eindejaar ? "+ " + eur(eindejaar) : "—"}</td></tr>
+  <tr><td style="padding:3px 0;color:#666;">Vaste jaarbonus</td><td style="padding:3px 0;text-align:right;">${bonus ? "+ " + eur(bonus) : "—"}</td></tr>
+  <tr><td colspan="2" style="padding:8px 0 0 0;"><div style="border-top:2px solid ${GRYWO_KLEUR};"></div></td></tr>
+  <tr><td style="padding:8px 0;color:${GRYWO_KLEUR};font-weight:bold;font-size:14px;">BRUTO JAARSALARIS</td><td style="padding:8px 0;text-align:right;color:${GRYWO_KLEUR};font-weight:bold;font-size:16px;">${eur(totaal)}</td></tr>
+</table>
+${verschilWaarschuwing}
+
+<h3 style="color:${GRYWO_KLEUR};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Fee-berekening</h3>
+<table style="width:100%;font-size:13px;color:#333;">
+  <tr><td style="padding:4px 0;color:#666;">15% W&S-fee</td><td style="padding:4px 0;text-align:right;color:#10b981;font-weight:bold;">${eur(totaal * 0.15)}</td></tr>
+  <tr><td style="padding:4px 0;color:#666;">16% W&S-fee</td><td style="padding:4px 0;text-align:right;color:#10b981;font-weight:bold;">${eur(totaal * 0.16)}</td></tr>
+  <tr><td style="padding:4px 0;color:#666;">17% W&S-fee</td><td style="padding:4px 0;text-align:right;color:#10b981;font-weight:bold;">${eur(totaal * 0.17)}</td></tr>
 </table>
 
 <p style="margin-top:18px;font-size:12px;color:#888;">
-Bijlagen:<br>
-• <b>samenvatting.pdf</b> — overzicht voor factuur<br>
-• <b>geredacteerd-contract.pdf</b> — origineel met PII zwart gemaakt
+<b>Bijlagen:</b><br>
+• <b>samenvatting.pdf</b> — overzicht met breakdown + fee-tabellen<br>
+• <b>geredacteerd-contract.pdf</b> — origineel met alle PII zwart gemaakt
 </p>
-<p style="font-size:12px;color:#888;">Origineel contract is binnen 24u automatisch verwijderd conform AVG.</p>`;
+<p style="font-size:12px;color:#888;">Origineel contract is binnen 24u automatisch verwijderd conform AVG art. 5.</p>`;
 
   const result = await resend.emails.send({
     from: FROM,
     to: "backoffice@grywo.nl",
-    subject: `📄 Contract geverifieerd: ${kandidaatNaam}${fee ? ` — fee € ${fee}` : ""}`,
+    subject: `📄 Contract geverifieerd: ${kandidaatNaam} — bruto ${eur(totaal)}`,
     html: brandedLayout({ titel: "Contract klaar voor facturatie", body }),
     attachments: [
-      {
-        filename: "samenvatting.pdf",
-        content: Buffer.from(samenvattingPdf),
-      },
-      {
-        filename: "geredacteerd-contract.pdf",
-        content: Buffer.from(geredacteerdePdf),
-      },
+      { filename: "samenvatting.pdf", content: Buffer.from(samenvattingPdf) },
+      { filename: "geredacteerd-contract.pdf", content: Buffer.from(geredacteerdePdf) },
     ],
   });
   if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
