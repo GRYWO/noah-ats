@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { randomBytes } from "crypto";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { sendDpaGetekendBevestiging, sendDpaGetekendIntern } from "@/utils/email";
+import { sendDpaGetekendBevestiging, sendDpaGetekendIntern, sendWelkomstmailBureau } from "@/utils/email";
 
 type Result = { ok?: boolean; error?: string };
 
@@ -81,6 +82,37 @@ export async function tekenDpa(formData: FormData): Promise<Result> {
     });
   } catch (e) {
     console.error("Interne notificatie mislukt:", e);
+  }
+
+  // Zoek de bureau-admin user en stuur nu pas de welkomstmail met inloggegevens.
+  // Reset het wachtwoord voor frisse credentials.
+  try {
+    if (row.tenant_id) {
+      const { data: adminProfile } = await admin
+        .from("profiles")
+        .select("id, voornaam")
+        .eq("tenant_id", row.tenant_id)
+        .eq("rol", "admin")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (adminProfile) {
+        const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+        await admin.auth.admin.updateUserById(adminProfile.id, { password: nieuwWachtwoord });
+
+        // Gebruik het verzonden_aan_email (waar de DPA naartoe ging) als ontvanger
+        await sendWelkomstmailBureau({
+          naar: row.verzonden_aan_email,
+          voornaam: adminProfile.voornaam ?? naam,
+          email: row.verzonden_aan_email,
+          wachtwoord: nieuwWachtwoord,
+          bedrijf: bureauNaam,
+        });
+      }
+    }
+  } catch (e) {
+    console.error("Welkomstmail bureau-admin na DPA-tekenen mislukt:", e);
   }
 
   revalidatePath(`/dpa-tekenen/${token}`);

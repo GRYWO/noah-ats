@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { randomBytes } from "crypto";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { sendAkkoordBevestiging } from "@/utils/email";
+import { sendAkkoordBevestiging, sendWelkomstmailUser } from "@/utils/email";
 
 type Result = { ok?: boolean; error?: string };
 
@@ -57,6 +58,32 @@ export async function tekenAkkoord(formData: FormData): Promise<Result> {
     });
   } catch (e) {
     console.error("Bevestiging-mail mislukt:", e);
+  }
+
+  // Reset het wachtwoord (oude is bij aanmaak gegenereerd maar niet gemaild)
+  // en stuur nu pas de welkomstmail met inloggegevens.
+  try {
+    const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+    await admin.auth.admin.updateUserById(row.user_id, { password: nieuwWachtwoord });
+
+    const { data: tenant } = row.tenant_id
+      ? await admin.from("tenants").select("naam, handelsnaam").eq("id", row.tenant_id).single()
+      : { data: null };
+    const bedrijf = tenant?.handelsnaam || tenant?.naam || "Noah ATS";
+    const rolLabel = row.user_rol === "admin" ? "Admin"
+      : row.user_rol === "recruiter" ? "Recruiter"
+      : "Setter";
+
+    await sendWelkomstmailUser({
+      naar: row.verzonden_aan_email,
+      voornaam: row.user_voornaam ?? naam,
+      email: row.verzonden_aan_email,
+      wachtwoord: nieuwWachtwoord,
+      rolLabel,
+      bedrijf,
+    });
+  } catch (e) {
+    console.error("Welkomstmail na ondertekening mislukt:", e);
   }
 
   revalidatePath(`/tekenen/${token}`);

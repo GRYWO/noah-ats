@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
-import { sendWelkomstmailBureau } from "@/utils/email";
+import { sendDpaTerOndertekening } from "@/utils/email";
+import { randomBytes } from "crypto";
 
 function genereerWachtwoord(lengte = 12) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -100,17 +101,36 @@ export async function nieuwBureau(formData: FormData) {
         telefoon: contact_tel,
         mail_status: "niet_geconfigureerd",
       });
+      // NIET direct welkomstmail. Eerst DPA tekenen.
+      // Pas na ondertekening krijgt de bureau-admin de inloggegevens
+      // (zie /dpa-tekenen/[token]/actions.ts → tekenDpa).
       try {
-        await sendWelkomstmailBureau({
+        const token = randomBytes(16).toString("hex");
+        await admin.from("dpa_signatures").insert({
+          tenant_id: nieuwTenant.id,
+          token,
+          status: "wachtend",
+          verzonden_aan_email: contact_email,
+          verzonden_aan_naam: contact_naam,
+          verzonden_door: user.id,
+          bureau_naam: naam,
+          bureau_handelsnaam: handelsnaam ?? null,
+          bureau_kvk: kvk ?? null,
+          bureau_adres: vestigingsadres ?? factuuradres ?? null,
+        });
+        await sendDpaTerOndertekening({
           naar: contact_email,
-          voornaam: cnVoornaam,
-          email: contact_email,
-          wachtwoord,
-          bedrijf: handelsnaam ?? naam,
+          contactNaam: contact_naam,
+          bureauNaam: handelsnaam ?? naam,
+          token,
         });
       } catch (e) {
-        console.error("Welkomstmail bureau mislukt:", e);
+        console.error("DPA-uitnodiging bij bureau-aanmaak mislukt:", e);
       }
+
+      // wachtwoord staat in Supabase Auth; bureau-admin krijgt de inloggegevens
+      // pas nadat hij de DPA heeft ondertekend.
+      void wachtwoord;
     } else if (createErr) {
       console.error("Bureau-admin user aanmaken mislukt:", createErr);
     }

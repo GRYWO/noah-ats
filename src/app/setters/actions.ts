@@ -6,7 +6,8 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { encrypt } from "@/utils/crypto";
 import { herverdeelKandidaten, verwerkWachtrij } from "@/utils/setter-assign";
-import { sendWelkomstmailUser } from "@/utils/email";
+import { sendAkkoordTerOndertekening } from "@/utils/email";
+import { randomBytes } from "crypto";
 import { bouwHandtekening } from "@/utils/email-signature";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { MENU_KEYS } from "@/utils/menu-permissions";
@@ -114,25 +115,47 @@ export async function nieuweSetter(formData: FormData) {
     await verwerkWachtrij(myProfile.tenant_id);
   }
 
-  // Welkomstmail met inloggegevens
+  // Stuur NIET direct welkomstmail. Eerst NDA / gebruiksvoorwaarden tekenen.
+  // Pas na ondertekening krijgt de user de inloggegevens (zie
+  // /tekenen/[token]/actions.ts → tekenAkkoord).
   try {
     const { data: tenant } = await admin.from("tenants")
       .select("naam, handelsnaam")
       .eq("id", myProfile.tenant_id)
       .single();
-    const bedrijf = tenant?.handelsnaam ?? tenant?.naam ?? "Noah ATS";
-    const rolLabel = rol === "admin" ? "Admin" : rol === "recruiter" ? "Recruiter" : "Setter";
-    await sendWelkomstmailUser({
-      naar: email,
-      voornaam,
-      email,
-      wachtwoord,
-      rolLabel,
-      bedrijf,
+    const bedrijf = tenant?.handelsnaam ?? tenant?.naam ?? null;
+
+    const type = rol === "setter" ? "nda_setter" : "gebruiksvoorwaarden";
+    const token = randomBytes(16).toString("hex");
+
+    await admin.from("user_agreements").insert({
+      user_id: created.user.id,
+      tenant_id: myProfile.tenant_id,
+      token,
+      type,
+      status: "wachtend",
+      verzonden_aan_email: mailAdres,
+      verzonden_aan_naam: `${voornaam} ${achternaam}`.trim(),
+      verzonden_door: user.id,
+      user_voornaam: voornaam,
+      user_achternaam: achternaam,
+      user_rol: rol,
+      bureau_naam: bedrijf,
+    });
+
+    await sendAkkoordTerOndertekening({
+      naar: mailAdres,
+      naam: `${voornaam} ${achternaam}`.trim(),
+      type,
+      token,
     });
   } catch (e) {
-    console.error("Welkomstmail mislukt:", e);
+    console.error("Akkoord-uitnodiging bij aanmaak mislukt:", e);
   }
+
+  // wachtwoord is opgeslagen in Supabase Auth; user logt pas in nadat hij
+  // de akkoord heeft getekend en de welkomstmail met inloggegevens ontvangt.
+  void wachtwoord;
 
   revalidatePath("/setters");
   revalidatePath("/kandidaten");
