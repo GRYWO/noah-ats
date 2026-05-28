@@ -6,6 +6,7 @@ import { TOUR_KANDIDATEN } from "@/utils/pagina-tours";
 import { WachtendOpCvSectie } from "./nieuw/WachtendOpCv";
 import { ruimOudeWachtenden } from "./nieuw/wachtend-actions";
 import { Wizard } from "./nieuw/Wizard";
+import { getViewerRol } from "@/utils/view-as";
 
 const STATUS_COLORS: Record<string, string> = {
   nieuw: "bg-blue-100 text-blue-800",
@@ -29,13 +30,8 @@ export default async function KandidatenPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: myProfile } = await supabase
-    .from("profiles")
-    .select("rol")
-    .eq("id", user!.id)
-    .single();
-
-  const isSetter = myProfile?.rol === "setter";
+  // Demo-modus respecteren — bepaalt of CV-dropzone + wachtlijst zichtbaar zijn
+  const { isSetter } = await getViewerRol();
 
   // Wachtlijst (cleanup ouder dan 7 dagen + ophalen)
   if (!isSetter) {

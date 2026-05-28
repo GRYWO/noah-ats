@@ -4,6 +4,7 @@ import { TopBar } from "@/components/TopBar";
 import { Mail, MailOpen, Check, X, Clock } from "lucide-react";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_VOORSTELLEN } from "@/utils/pagina-tours";
+import { getViewerRol } from "@/utils/view-as";
 
 const STATUS_LABELS: Record<string, string> = {
   verzonden: "Wachten op reactie",
@@ -30,12 +31,7 @@ export default async function VoorstellenPage({
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("rol")
-    .eq("id", user?.id ?? "")
-    .single();
-  const isSetter = profile?.rol === "setter";
+  const { isSetter } = await getViewerRol();
 
   let query = supabase
     .from("voorstellen")

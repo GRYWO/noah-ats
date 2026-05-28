@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { getViewerRol } from "@/utils/view-as";
 import { TopBar } from "@/components/TopBar";
 import { CheckCircle2, XCircle, Trophy, AlertTriangle, Phone, CalendarCheck, Briefcase, Coins, Sparkles, Battery, ListTodo } from "lucide-react";
 import { EodForm } from "./EodForm";
@@ -113,9 +114,11 @@ export default async function CoachingPage({
     );
   }
 
-  const isAdmin = profile.rol === "admin" || superAdmin;
-  const isCoach = profile.is_coach;
-  const isSetter = profile.rol === "setter";
+  // Demo-modus respecteren voor UI
+  const viewerRol = await getViewerRol();
+  const isAdmin = viewerRol.isAdmin || viewerRol.isSuperAdmin;
+  const isCoach = profile.is_coach && !viewerRol.demoActief;
+  const isSetter = viewerRol.isSetter;
   const tenantId = profile.tenant_id;
 
   const admin = createAdminClient();

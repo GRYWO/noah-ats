@@ -17,6 +17,7 @@ import { PlaatsingTrigger } from "./PlaatsingTrigger";
 import { PlaatsingKnop } from "./PlaatsingKnop";
 import { KANBAN_OPTIES } from "@/utils/kanban";
 import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
+import { getViewerRol } from "@/utils/view-as";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -60,8 +61,10 @@ export default async function KandidaatDetail({
     .eq("id", user!.id)
     .single();
 
-  const isRecruiter = myProfile?.rol === "recruiter";
-  const isSetter = myProfile?.rol === "setter";
+  // Demo-modus respecteren voor UI-rendering
+  const viewerRol = await getViewerRol();
+  const isRecruiter = viewerRol.isRecruiter;
+  const isSetter = viewerRol.isSetter;
 
   const { data: k } = await supabase
     .from("kandidaten")
@@ -86,7 +89,7 @@ export default async function KandidaatDetail({
     .limit(1);
   const alAangemeld = (plaatsingen?.length ?? 0) > 0;
   const huidigePlaatsingId = plaatsingen?.[0]?.id ?? null;
-  const isAdmin = myProfile?.rol === "admin";
+  const isAdmin = viewerRol.isAdmin;
   const isRecruiterOrAdmin = isAdmin || isRecruiter;
   const showPlaatsingTrigger = !isSetter && (k.status === "geplaatst" || k.kanban_stap === "geplaatst");
   // Toon de paarse 'Start intake-wizard'-banner zolang de intake niet
