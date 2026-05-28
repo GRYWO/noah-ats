@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { sendPlaatsingNaarBackoffice, sendPlaatsingAfgekeurdNaarBackoffice } from "@/utils/email";
+import { randomBytes } from "crypto";
+import { sendPlaatsingNaarBackoffice, sendPlaatsingAfgekeurdNaarBackoffice, sendContractControleUitnodiging } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 import { notifyTeam } from "@/utils/notificaties";
@@ -157,6 +158,34 @@ export async function meldPlaatsing(formData: FormData) {
     beschrijving: `Plaatsing bij ${bedrijf} (${basis === "uitzend" ? `factor ${tarief_factor}` : `${tarief_pct}%`})`,
     zichtbaarVoorKandidaat: false,
   });
+
+  // Auto-trigger contract-controle verzoek bij werving_selectie
+  // (alleen daar betalen we per fee op basis van jaarsalaris)
+  if (basis === "werving_selectie" && contact_email) {
+    try {
+      const token = randomBytes(24).toString("hex");
+      const kandidaatNaam = `${kandidaat.voornaam}${kandidaat.tussenvoegsel ? " " + kandidaat.tussenvoegsel : ""} ${kandidaat.achternaam}`.trim();
+      await admin.from("contract_verzoeken").insert({
+        plaatsing_id: plaatsing.id,
+        tenant_id: profile.tenant_id,
+        token,
+        status: "verzonden",
+        opdrachtgever_naam: contactpersoon || bedrijf,
+        opdrachtgever_email: contact_email,
+        kandidaat_naam: kandidaatNaam,
+        opgegeven_salaris: tarief_bedrag, // hier zit het opgegeven fee-bedrag
+      });
+      await sendContractControleUitnodiging({
+        naar: contact_email,
+        contactNaam: contactpersoon || "",
+        kandidaatNaam,
+        token,
+      });
+    } catch (e) {
+      console.error("[plaatsing] contract-controle verzoek mislukt:", e);
+      // niet redirecten — plaatsing is gelukt
+    }
+  }
 
   revalidatePath(`/kandidaten/${kandidaatId}`);
   revalidatePath("/kandidaten");

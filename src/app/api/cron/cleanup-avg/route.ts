@@ -34,6 +34,7 @@ export async function GET(req: Request) {
     afgewezen_verwijderd: 0,
     mijn_data_tokens_opgeruimd: 0,
     oude_uitnodigingen_ingetrokken: 0,
+    contract_originelen_verwijderd: 0,
     fouten: [] as string[],
   };
 
@@ -93,6 +94,32 @@ export async function GET(req: Request) {
     resultaat.oude_uitnodigingen_ingetrokken = (dpaCount ?? 0) + (uaCount ?? 0);
   } catch (e) {
     resultaat.fouten.push(`uitnodigingen-cleanup: ${(e as Error).message}`);
+  }
+
+  // 4) Contract-originelen ouder dan 24 uur verwijderen (AVG dataminimalisatie)
+  //    De geredacteerde versie + samenvatting blijven bewaard (fiscaal 7j).
+  try {
+    const { data: oudeContracten } = await admin
+      .from("contract_verzoeken")
+      .select("id, origineel_pad")
+      .not("origineel_pad", "is", null)
+      .lt("afgerond_op", eenDagGeleden);
+
+    if (oudeContracten && oudeContracten.length > 0) {
+      const paden = oudeContracten
+        .map((c) => c.origineel_pad)
+        .filter((p): p is string => !!p);
+      if (paden.length > 0) {
+        await admin.storage.from("contracten").remove(paden);
+        await admin
+          .from("contract_verzoeken")
+          .update({ origineel_pad: null })
+          .in("id", oudeContracten.map((c) => c.id));
+        resultaat.contract_originelen_verwijderd = paden.length;
+      }
+    }
+  } catch (e) {
+    resultaat.fouten.push(`contract-cleanup: ${(e as Error).message}`);
   }
 
   return NextResponse.json({ ok: true, tijdstip: nu.toISOString(), ...resultaat });

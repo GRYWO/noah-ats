@@ -1174,3 +1174,120 @@ export async function sendKandidaatStatusAfwijzing({
     html: brandedLayout({ titel: "Bedankt voor je tijd", body }),
   });
 }
+
+/**
+ * Vraag aan opdrachtgever om arbeidscontract aan te leveren voor verificatie.
+ * Magic-link naar /contract-controle/[token].
+ */
+export async function sendContractControleUitnodiging({
+  naar,
+  contactNaam,
+  kandidaatNaam,
+  token,
+}: {
+  naar: string;
+  contactNaam: string;
+  kandidaatNaam: string;
+  token: string;
+}) {
+  const url = `${APP_URL}/contract-controle/${token}`;
+  const body = `
+<p>Hallo ${contactNaam || ""},</p>
+<p>Bedankt voor de plaatsing van <b>${kandidaatNaam}</b>! Voor het opmaken van de factuur (15% van het bruto jaarsalaris) hebben we een kopie van het arbeidscontract nodig ter verificatie van het overeengekomen salaris.</p>
+
+<div style="background:#f4f4f7;border-left:4px solid ${GRYWO_KLEUR};padding:14px 16px;margin:18px 0;font-size:13px;color:#333;">
+  <b style="color:${GRYWO_KLEUR};">⚖ Strenge AVG-regels</b><br>
+  Wij hanteren strikte privacy-waarborgen conform de AVG:
+  <ul style="margin:8px 0 0 18px;padding:0;color:#444;font-size:12.5px;">
+    <li>Het contract wordt geautomatiseerd geanalyseerd; <b>alle PII wordt zwart gemaakt</b> (BSN, IBAN, privé-adres, geboortedatum, telefoon, etc.).</li>
+    <li>Het <b>origineel wordt binnen 24 uur verwijderd</b> (AVG art. 5 — dataminimalisatie).</li>
+    <li>Wij bewaren <b>alleen de geredacteerde versie + samenvatting</b>, 7 jaar lang (fiscale bewaarplicht).</li>
+    <li>Toegang is gelogd en beperkt tot geautoriseerde GRYWO-medewerkers.</li>
+  </ul>
+</div>
+
+<p>Klik op de knop hieronder om het contract veilig te uploaden — duurt minder dan 2 minuten.</p>
+
+<div style="margin:20px 0;text-align:center;">
+  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+    Upload contract veilig
+  </a>
+</div>
+
+<p style="font-size:13px;color:#666;">
+Of kopieer deze link in je browser:<br>
+<a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
+</p>
+
+<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail backoffice@grywo.nl of bel 085-4016082.</p>`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `Contract-verificatie voor ${kandidaatNaam} — GRYWO`,
+    html: brandedLayout({ titel: "Verzoek tot contract-aanlevering", body }),
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}
+
+/**
+ * Mail naar GRYWO backoffice met de geredacteerde PDF + samenvatting als attachments.
+ */
+export async function sendContractNaarBackoffice({
+  kandidaatNaam,
+  werkgever,
+  brutoJaarsalaris,
+  startdatum,
+  functie,
+  geredacteerdePdf,
+  samenvattingPdf,
+}: {
+  kandidaatNaam: string;
+  werkgever: string | null;
+  brutoJaarsalaris: number | null;
+  startdatum: string | null;
+  functie: string | null;
+  geredacteerdePdf: Uint8Array;
+  samenvattingPdf: Uint8Array;
+}) {
+  const fee = brutoJaarsalaris ? (brutoJaarsalaris * 0.15).toFixed(2) : null;
+  const body = `
+<p>Een opdrachtgever heeft een arbeidscontract aangeleverd voor verificatie.</p>
+
+<h3 style="color:${GRYWO_KLEUR};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Geverifieerde gegevens</h3>
+<table style="width:100%;font-size:13px;color:#333;">
+  <tr><td style="padding:4px 0;color:#666;">Kandidaat</td><td style="padding:4px 0;"><b>${kandidaatNaam}</b></td></tr>
+  <tr><td style="padding:4px 0;color:#666;">Werkgever</td><td style="padding:4px 0;">${werkgever ?? "—"}</td></tr>
+  <tr><td style="padding:4px 0;color:#666;">Functie</td><td style="padding:4px 0;">${functie ?? "—"}</td></tr>
+  <tr><td style="padding:4px 0;color:#666;">Bruto jaarsalaris</td><td style="padding:4px 0;"><b>€ ${brutoJaarsalaris?.toLocaleString("nl-NL") ?? "—"}</b></td></tr>
+  <tr><td style="padding:4px 0;color:#666;">Startdatum</td><td style="padding:4px 0;">${startdatum ? new Date(startdatum).toLocaleDateString("nl-NL") : "—"}</td></tr>
+  <tr><td style="padding:4px 0;color:#666;">15% fee</td><td style="padding:4px 0;color:${GRYWO_KLEUR};"><b>€ ${fee ?? "—"}</b></td></tr>
+</table>
+
+<p style="margin-top:18px;font-size:12px;color:#888;">
+Bijlagen:<br>
+• <b>samenvatting.pdf</b> — overzicht voor factuur<br>
+• <b>geredacteerd-contract.pdf</b> — origineel met PII zwart gemaakt
+</p>
+<p style="font-size:12px;color:#888;">Origineel contract is binnen 24u automatisch verwijderd conform AVG.</p>`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: "backoffice@grywo.nl",
+    subject: `📄 Contract geverifieerd: ${kandidaatNaam}${fee ? ` — fee € ${fee}` : ""}`,
+    html: brandedLayout({ titel: "Contract klaar voor facturatie", body }),
+    attachments: [
+      {
+        filename: "samenvatting.pdf",
+        content: Buffer.from(samenvattingPdf),
+      },
+      {
+        filename: "geredacteerd-contract.pdf",
+        content: Buffer.from(geredacteerdePdf),
+      },
+    ],
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}
