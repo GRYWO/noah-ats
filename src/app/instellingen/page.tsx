@@ -8,6 +8,7 @@ import { updateMailTemplate, resetMailTemplate } from "./template-actions";
 import { TEMPLATE_META, DEFAULT_BODIES, type TemplateSleutel } from "@/utils/mail-templates";
 import { TourHerstartKnop } from "./TourHerstartKnop";
 import { MfaSectie } from "./MfaSectie";
+import { ThemaSectie } from "./ThemaSectie";
 
 export default async function InstellingenPage({
   searchParams,
@@ -119,6 +120,9 @@ export default async function InstellingenPage({
             <TourHerstartKnop />
           </div>
         </form>
+
+        {/* Thema / weergave */}
+        <ThemaSectie />
 
         {/* Tweestapsverificatie */}
         <MfaSectie actieveFactor={actieveMfaFactor} />

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -34,13 +33,12 @@ export default function RootLayout({
         {/* Pas vóór de body de saved theme toe om flicker te voorkomen */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('noah-theme');if(t==='dark'){document.documentElement.classList.add('dark')}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('noah-theme');if(t==='dark'){document.documentElement.classList.add('dark')}else if(t==='system'){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark')}}}catch(e){}})()`,
           }}
         />
       </head>
       <body className="min-h-full flex flex-col">
         {children}
-        <ThemeToggle />
       </body>
     </html>
   );
