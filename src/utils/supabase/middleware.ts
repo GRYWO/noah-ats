@@ -41,6 +41,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/dpa-voorbeeld") || // tijdelijke DPA-preview
     path.startsWith("/dpa-tekenen") ||   // publieke DPA-tekenflow per token
     path.startsWith("/tekenen") ||       // publieke NDA / gebruiksvoorwaarden teken-flow
+    path.startsWith("/mijn-data") ||     // publieke inzage/wis-flow voor kandidaten (AVG art. 15+17)
     path.startsWith("/api/cron");   // cron jobs (eigen secret)
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

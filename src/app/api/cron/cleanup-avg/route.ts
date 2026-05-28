@@ -1,0 +1,99 @@
+import { NextResponse } from "next/server";
+import { createAdminClient } from "@/utils/supabase/admin";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+/**
+ * AVG-bewaartermijnen afdwingen (draait dagelijks).
+ *
+ * 1. Afgewezen kandidaten (status='afgewezen') > 4 weken oud → verwijderen
+ *    (DPA-belofte aan bureaus, AVG-principe van data-minimalisatie)
+ * 2. Verlopen mijn_data_tokens > 24 uur oud → verwijderen
+ *    (privacy-by-default: oude magic-links opruimen)
+ * 3. Verlopen DPA / akkoord uitnodigingen (status='wachtend') > 30 dagen → markeren als ingetrokken
+ *    (geen actieve veiligheidsrisico's met oude tokens)
+ *
+ * Authenticatie via CRON_SECRET header — Vercel Cron stuurt automatisch
+ * 'Authorization: Bearer <CRON_SECRET>'.
+ */
+export async function GET(req: Request) {
+  const auth = req.headers.get("authorization");
+  const expected = `Bearer ${process.env.CRON_SECRET ?? ""}`;
+  if (process.env.CRON_SECRET && auth !== expected) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const admin = createAdminClient();
+  const nu = new Date();
+  const vierWekenGeleden = new Date(nu.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString();
+  const dertigDagenGeleden = new Date(nu.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const eenDagGeleden = new Date(nu.getTime() - 24 * 60 * 60 * 1000).toISOString();
+
+  const resultaat = {
+    afgewezen_verwijderd: 0,
+    mijn_data_tokens_opgeruimd: 0,
+    oude_uitnodigingen_ingetrokken: 0,
+    fouten: [] as string[],
+  };
+
+  // 1) Afgewezen kandidaten ouder dan 4 weken → verwijderen
+  try {
+    const { data: oudeKandidaten } = await admin
+      .from("kandidaten")
+      .select("id, tenant_id")
+      .eq("status", "afgewezen")
+      .lt("updated_at", vierWekenGeleden);
+
+    if (oudeKandidaten && oudeKandidaten.length > 0) {
+      // Audit-log voor elke verwijdering
+      for (const k of oudeKandidaten) {
+        await admin.from("voorstel_logs").insert({
+          tenant_id: k.tenant_id,
+          kandidaat_id: k.id,
+          event: "afwijzing",
+          beschrijving: `Automatische verwijdering — bewaartermijn van 4 weken voor afgewezen kandidaten overschreden (AVG art. 5).`,
+          zichtbaar_voor_kandidaat: false,
+        });
+      }
+      const { error } = await admin
+        .from("kandidaten")
+        .delete()
+        .in("id", oudeKandidaten.map(k => k.id));
+      if (error) resultaat.fouten.push(`afgewezen-delete: ${error.message}`);
+      else resultaat.afgewezen_verwijderd = oudeKandidaten.length;
+    }
+  } catch (e) {
+    resultaat.fouten.push(`afgewezen-cleanup: ${(e as Error).message}`);
+  }
+
+  // 2) Oude mijn_data_tokens opruimen
+  try {
+    const { count } = await admin
+      .from("mijn_data_tokens")
+      .delete({ count: "exact" })
+      .lt("verloopt_op", eenDagGeleden);
+    resultaat.mijn_data_tokens_opgeruimd = count ?? 0;
+  } catch (e) {
+    resultaat.fouten.push(`tokens-cleanup: ${(e as Error).message}`);
+  }
+
+  // 3) Hangende DPA/akkoord-uitnodigingen ouder dan 30 dagen → ingetrokken
+  try {
+    const { count: dpaCount } = await admin
+      .from("dpa_signatures")
+      .update({ status: "ingetrokken" }, { count: "exact" })
+      .eq("status", "wachtend")
+      .lt("verzonden_op", dertigDagenGeleden);
+    const { count: uaCount } = await admin
+      .from("user_agreements")
+      .update({ status: "ingetrokken" }, { count: "exact" })
+      .eq("status", "wachtend")
+      .lt("verzonden_op", dertigDagenGeleden);
+    resultaat.oude_uitnodigingen_ingetrokken = (dpaCount ?? 0) + (uaCount ?? 0);
+  } catch (e) {
+    resultaat.fouten.push(`uitnodigingen-cleanup: ${(e as Error).message}`);
+  }
+
+  return NextResponse.json({ ok: true, tijdstip: nu.toISOString(), ...resultaat });
+}

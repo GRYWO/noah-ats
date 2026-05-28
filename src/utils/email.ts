@@ -1106,6 +1106,47 @@ export async function sendAkkoordBevestiging({
   });
 }
 
+/**
+ * Magic-link mail voor /mijn-data — kandidaat krijgt persoonlijke link
+ * waarmee hij/zij eigen gegevens kan bekijken of laten verwijderen.
+ */
+export async function sendMijnDataLink({
+  naar,
+  token,
+}: {
+  naar: string;
+  token: string;
+}) {
+  const url = `${APP_URL}/mijn-data/${token}`;
+  const body = `
+<p>Hallo,</p>
+<p>Je hebt een verzoek ingediend om je persoonsgegevens in te zien of te laten verwijderen uit Noah ATS.</p>
+
+<p>Klik op de knop hieronder. De link is <b>1 uur geldig</b> en kan eenmalig gebruikt worden.</p>
+
+<div style="margin:20px 0;text-align:center;">
+  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+    Bekijk mijn gegevens
+  </a>
+</div>
+
+<p style="font-size:13px;color:#666;">
+Of kopieer deze link in je browser:<br>
+<a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
+</p>
+
+<p style="font-size:12px;color:#888;margin-top:18px;">
+Geen verzoek ingediend? Negeer deze mail. Bij vragen: info@grywo.nl
+</p>`;
+
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: "Je inzage-link — Noah ATS",
+    html: brandedLayout({ titel: "Je persoonlijke inzage-link", body, merk: "noah" }),
+  });
+}
+
 function inlogBlok(email: string, wachtwoord: string) {
   return `
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">

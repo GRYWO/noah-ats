@@ -57,7 +57,8 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-bold text-gray-800 mt-8 mb-2">5. Jouw rechten</h2>
           <p>
             Je hebt het recht op inzage, correctie en verwijdering van je gegevens, plus dataportabiliteit.
-            Stuur een verzoek naar{" "}
+            Gebruik onze <a href="/mijn-data" className="text-[#333399] underline font-semibold">Mijn gegevens-pagina</a>{" "}
+            voor directe inzage of verwijdering, of mail naar{" "}
             <a href="mailto:info@grywo.nl" className="text-[#333399] underline">info@grywo.nl</a>{" "}
             — we reageren binnen 30 dagen.
           </p>

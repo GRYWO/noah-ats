@@ -7,6 +7,7 @@ import { nieuwMailAccount, verwijderMailAccount, maakPrimair } from "./mail-acti
 import { updateMailTemplate, resetMailTemplate } from "./template-actions";
 import { TEMPLATE_META, DEFAULT_BODIES, type TemplateSleutel } from "@/utils/mail-templates";
 import { TourHerstartKnop } from "./TourHerstartKnop";
+import { MfaSectie } from "./MfaSectie";
 
 export default async function InstellingenPage({
   searchParams,
@@ -29,6 +30,16 @@ export default async function InstellingenPage({
 
   const profile = profileRes.data;
   const accounts = accountsRes.data ?? [];
+
+  // Actieve MFA-factor ophalen (TOTP)
+  let actieveMfaFactor: { id: string; friendly_name: string | null; created_at: string } | null = null;
+  try {
+    const { data: factors } = await supabase.auth.mfa.listFactors();
+    const totp = (factors?.totp ?? []).find(f => f.status === "verified");
+    if (totp) actieveMfaFactor = { id: totp.id, friendly_name: totp.friendly_name ?? null, created_at: totp.created_at };
+  } catch (e) {
+    console.error("MFA-factors ophalen mislukt:", e);
+  }
 
   const isSuperAdmin = isSuperAdminEmail(user?.email);
   let templates: Record<string, string> = {};
@@ -108,6 +119,9 @@ export default async function InstellingenPage({
             <TourHerstartKnop />
           </div>
         </form>
+
+        {/* Tweestapsverificatie */}
+        <MfaSectie actieveFactor={actieveMfaFactor} />
 
         {/* Wachtwoord wijzigen */}
         <form action={wijzigEigenWachtwoord} className="bg-white rounded-xl shadow-sm p-6 mb-6 space-y-4">
