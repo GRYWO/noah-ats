@@ -94,40 +94,58 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, men
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col z-30 transition-all duration-200 ${
+      className={`fixed left-0 top-0 h-screen flex flex-col z-30 transition-all duration-200 overflow-hidden ${
         open ? "w-60" : "w-16"
       }`}
+      style={{
+        background:
+          "linear-gradient(180deg, #333399 0%, #1f1f5c 50%, #0f0f23 100%)",
+      }}
     >
+      {/* Subtiele radial highlight bovenin */}
+      <div
+        aria-hidden
+        className="absolute -top-20 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full opacity-20 blur-3xl pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(255,216,77,0.4) 0%, rgba(51,51,153,0) 70%)",
+        }}
+      />
+
       {/* Logo */}
-      <div className={`h-16 flex items-center border-b border-gray-100 ${open ? "px-4" : "justify-center"}`}>
+      <div className={`relative h-16 flex items-center border-b border-white/10 ${open ? "px-4" : "justify-center"}`}>
         <Link href="/dashboard" className="flex items-baseline">
-          <span className="text-[#333399] text-2xl font-black tracking-tighter">{open ? "noah" : "n"}</span>
+          <span className="text-white text-2xl font-black tracking-tighter">{open ? "noah" : "n"}</span>
           <span className="ml-1 w-2 h-2 rounded-full bg-[#ffd84d] inline-block"></span>
         </Link>
       </div>
 
       {/* Items */}
-      <nav className="flex-1 overflow-y-auto py-3">
+      <nav className="relative flex-1 overflow-y-auto py-3">
         {items.map((it) => {
           const isActive = active === it.key;
           const separator = it.sectie !== vorigeSectie && vorigeSectie !== 0;
           vorigeSectie = it.sectie ?? vorigeSectie;
-          const className = `flex items-center gap-3 mx-2 my-0.5 rounded-lg transition-colors ${
+          const className = `flex items-center gap-3 mx-2 my-0.5 rounded-lg transition-all ${
             open ? "px-3 py-2" : "p-2 justify-center"
           } ${
             isActive
-              ? "bg-[#eef0ff] text-[#333399] font-semibold"
-              : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+              ? "bg-white/15 text-white font-semibold shadow-sm backdrop-blur-sm border border-white/10"
+              : "text-white/60 hover:bg-white/5 hover:text-white"
           }`;
           const inner = (
             <>
-              <it.Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
+              <it.Icon
+                size={20}
+                strokeWidth={isActive ? 2.4 : 1.8}
+                className={isActive ? "text-[#ffd84d]" : ""}
+              />
               {open && <span className="text-sm">{it.label}</span>}
             </>
           );
           return (
             <div key={it.key}>
-              {separator && <div className="my-2 mx-3 border-t border-gray-100" />}
+              {separator && <div className="my-2 mx-3 border-t border-white/10" />}
               {it.extern ? (
                 <a
                   href={it.href}
@@ -149,7 +167,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, men
       </nav>
 
       {/* Footer: notificaties + user + logout + collapse-toggle */}
-      <div className="border-t border-gray-100 p-2">
+      <div className="relative border-t border-white/10 p-2">
         {/* Notificatie-bel */}
         <div className={open ? "px-1 mb-1" : "flex justify-center mb-1"}>
           <NotificatieBel userId={userId} />
@@ -159,7 +177,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, men
           <HelpKnop />
         </div>
         {open && (
-          <div className="px-2 py-1.5 text-xs text-gray-500 truncate" title={userEmail}>
+          <div className="px-2 py-1.5 text-xs text-white/50 truncate" title={userEmail}>
             {userEmail}
           </div>
         )}
@@ -167,7 +185,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, men
           <button
             type="submit"
             title={open ? undefined : "Uitloggen"}
-            className={`w-full flex items-center gap-3 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 ${
+            className={`w-full flex items-center gap-3 rounded-lg text-white/60 hover:bg-red-500/15 hover:text-red-300 transition-colors ${
               open ? "px-3 py-2" : "p-2 justify-center"
             }`}
           >
@@ -179,7 +197,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, men
           type="button"
           onClick={() => setOpen(!open)}
           title={open ? "Inklappen" : "Uitklappen"}
-          className={`w-full flex items-center gap-3 rounded-lg text-gray-500 hover:bg-gray-50 mt-1 ${
+          className={`w-full flex items-center gap-3 rounded-lg text-white/50 hover:bg-white/5 hover:text-white mt-1 transition-colors ${
             open ? "px-3 py-2" : "p-2 justify-center"
           }`}
         >
