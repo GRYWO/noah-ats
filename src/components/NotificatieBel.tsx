@@ -88,7 +88,31 @@ export function NotificatieBel({ userId }: { userId: string }) {
       const lijst = data ?? [];
       if (!eersteLaadRef.current) {
         const nieuwe = lijst.filter(n => !huidigeIds.has(n.id));
-        if (nieuwe.length > 0) pingAfspelen();
+        if (nieuwe.length > 0) {
+          pingAfspelen();
+          // Desktop-notificatie (als gebruiker dat aan heeft staan)
+          try {
+            if (
+              localStorage.getItem("noah-desktop-notif") === "1" &&
+              typeof Notification !== "undefined" &&
+              Notification.permission === "granted" &&
+              document.visibilityState !== "visible"
+            ) {
+              const eerste = nieuwe[0];
+              const notif = new Notification(eerste.titel, {
+                body: eerste.bericht ?? "Nieuwe melding in Noah",
+                icon: "/grywo-icoon.jpg",
+                tag: "noah-" + eerste.id,
+              });
+              if (eerste.link_url) {
+                notif.onclick = () => {
+                  window.focus();
+                  window.location.href = eerste.link_url!;
+                };
+              }
+            }
+          } catch {}
+        }
       }
       huidigeIds = new Set(lijst.map(n => n.id));
       setItems(lijst);

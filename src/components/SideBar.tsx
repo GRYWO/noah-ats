@@ -40,11 +40,15 @@ type Props = {
   isSetter: boolean;
   menuPermissions: Record<string, boolean> | null;
   logoutAction: () => Promise<void>;
+  avatarUrl?: string | null;
+  voornaam?: string | null;
+  achternaam?: string | null;
 };
 
 type SidebarModus = "handmatig" | "hover" | "altijd-open";
 
-export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, menuPermissions, logoutAction }: Props) {
+export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, menuPermissions, logoutAction, avatarUrl, voornaam, achternaam }: Props) {
+  const initialen = `${voornaam?.[0] ?? ""}${achternaam?.[0] ?? ""}`.toUpperCase() || (userEmail[0]?.toUpperCase() ?? "?");
   const [open, setOpen] = useState(false);
   const [modus, setModus] = useState<SidebarModus>("handmatig");
 
@@ -189,11 +193,26 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, men
         <div className={open ? "px-1 mb-1" : "flex justify-center mb-1"}>
           <HelpKnop />
         </div>
-        {open && (
-          <div className="px-2 py-1.5 text-xs text-gray-500 truncate" title={userEmail}>
-            {userEmail}
-          </div>
-        )}
+        {/* Avatar + email */}
+        <div className={`flex items-center gap-2 px-1 py-1.5 ${open ? "" : "justify-center"}`}>
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-7 h-7 rounded-full object-cover border border-gray-200"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-[#333399] text-white text-[10px] font-bold flex items-center justify-center">
+              {initialen}
+            </div>
+          )}
+          {open && (
+            <div className="text-xs text-gray-500 truncate flex-1" title={userEmail}>
+              {userEmail}
+            </div>
+          )}
+        </div>
         <form action={logoutAction}>
           <button
             type="submit"

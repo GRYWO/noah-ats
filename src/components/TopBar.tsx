@@ -3,6 +3,8 @@ import { isSuperAdminEmail } from "@/utils/auth";
 import { logout } from "@/app/login/actions";
 import { SideBar } from "./SideBar";
 import { EodHerinneringBanner } from "./EodHerinneringBanner";
+import { SnelZoeken } from "./SnelZoeken";
+import { AutoRefresh } from "./AutoRefresh";
 
 type Props = {
   active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "agenda" | "voorstellen" | "opdrachtgevers" | "robin" | "jobdigger" | "inbox" | "setters" | "coaching" | "instellingen";
@@ -14,7 +16,7 @@ export async function TopBar({ active }: Props) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("rol, menu_permissions")
+    .select("rol, menu_permissions, avatar_url, voornaam, achternaam")
     .eq("id", user?.id ?? "")
     .single();
 
@@ -33,7 +35,12 @@ export async function TopBar({ active }: Props) {
         isSetter={isSetter}
         menuPermissions={menuPermissions}
         logoutAction={logout}
+        avatarUrl={profile?.avatar_url ?? null}
+        voornaam={profile?.voornaam ?? null}
+        achternaam={profile?.achternaam ?? null}
       />
+      <SnelZoeken />
+      <AutoRefresh />
     </>
   );
 }
