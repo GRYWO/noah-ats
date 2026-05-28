@@ -6,6 +6,7 @@ import { maakAgendaEvent, verwijderAgendaEvent } from "./actions";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_AGENDA } from "@/utils/pagina-tours";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { getViewerRol } from "@/utils/view-as";
 
 type AgendaItem = {
   id: string;
@@ -56,8 +57,10 @@ export default async function AgendaPage({
     .single();
   if (!profile?.tenant_id) return null;
 
-  const isAdmin = profile.rol === "admin" || isSuperAdminEmail(user.email);
-  const rol = profile.rol;
+  // Demo-modus respecteren — Yorith in "bekijk als Setter" wordt rol="setter"
+  const viewerRol = await getViewerRol();
+  const isAdmin = viewerRol.isAdmin || viewerRol.isSuperAdmin;
+  const rol = viewerRol.rol;
   const tenantId = profile.tenant_id;
 
   // 1e + 2e gesprekken uit voorstellen
