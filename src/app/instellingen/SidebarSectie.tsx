@@ -6,10 +6,10 @@ import { PanelLeftOpen, MousePointer2, Lock } from "lucide-react";
 type SidebarModus = "handmatig" | "hover" | "altijd-open";
 
 export function SidebarSectie() {
-  const [modus, setModus] = useState<SidebarModus>("handmatig");
+  const [modus, setModus] = useState<SidebarModus>("hover");
 
   useEffect(() => {
-    const saved = (localStorage.getItem("noah-sidebar-modus") as SidebarModus | null) ?? "handmatig";
+    const saved = (localStorage.getItem("noah-sidebar-modus") as SidebarModus | null) ?? "hover";
     setModus(saved);
   }, []);
 

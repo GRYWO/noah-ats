@@ -93,7 +93,7 @@ export function NotificatieBel({ userId }: { userId: string }) {
           // Desktop-notificatie (als gebruiker dat aan heeft staan)
           try {
             if (
-              localStorage.getItem("noah-desktop-notif") === "1" &&
+              localStorage.getItem("noah-desktop-notif") !== "0" &&
               typeof Notification !== "undefined" &&
               Notification.permission === "granted" &&
               document.visibilityState !== "visible"

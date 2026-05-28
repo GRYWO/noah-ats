@@ -17,7 +17,8 @@ export function AutoRefresh() {
 
     function start() {
       stop();
-      const sec = parseInt(localStorage.getItem(KEY) ?? "0");
+      const raw = localStorage.getItem(KEY);
+      const sec = raw === null ? 30 : parseInt(raw); // default 30s
       if (!sec || sec < 10) return;
       timer = setInterval(() => {
         // Niet refreshen als tab onzichtbaar is — bandbreedte sparen

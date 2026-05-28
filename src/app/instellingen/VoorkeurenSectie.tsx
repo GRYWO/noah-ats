@@ -7,14 +7,16 @@ const AUTO_REFRESH_KEY = "noah-auto-refresh-sec";
 const DESKTOP_NOTIF_KEY = "noah-desktop-notif";
 
 export function VoorkeurenSectie() {
-  const [refreshSec, setRefreshSec] = useState<number>(0); // 0 = uit
-  const [desktopAan, setDesktopAan] = useState(false);
+  const [refreshSec, setRefreshSec] = useState<number>(30); // default 30s
+  const [desktopAan, setDesktopAan] = useState(true); // default aan
   const [permission, setPermission] = useState<NotificationPermission>("default");
 
   useEffect(() => {
-    const r = parseInt(localStorage.getItem(AUTO_REFRESH_KEY) ?? "0");
-    setRefreshSec(isNaN(r) ? 0 : r);
-    setDesktopAan(localStorage.getItem(DESKTOP_NOTIF_KEY) === "1");
+    const rRaw = localStorage.getItem(AUTO_REFRESH_KEY);
+    const r = rRaw === null ? 30 : parseInt(rRaw); // default 30s
+    setRefreshSec(isNaN(r) ? 30 : r);
+    const dRaw = localStorage.getItem(DESKTOP_NOTIF_KEY);
+    setDesktopAan(dRaw === null ? true : dRaw === "1"); // default aan
     if (typeof Notification !== "undefined") {
       setPermission(Notification.permission);
     }

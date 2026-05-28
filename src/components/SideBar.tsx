@@ -50,11 +50,11 @@ type SidebarModus = "handmatig" | "hover" | "altijd-open";
 export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, menuPermissions, logoutAction, avatarUrl, voornaam, achternaam }: Props) {
   const initialen = `${voornaam?.[0] ?? ""}${achternaam?.[0] ?? ""}`.toUpperCase() || (userEmail[0]?.toUpperCase() ?? "?");
   const [open, setOpen] = useState(false);
-  const [modus, setModus] = useState<SidebarModus>("handmatig");
+  const [modus, setModus] = useState<SidebarModus>("hover");
 
   // localStorage: modus + open-state inlezen
   useEffect(() => {
-    const savedModus = (localStorage.getItem("noah-sidebar-modus") as SidebarModus | null) ?? "handmatig";
+    const savedModus = (localStorage.getItem("noah-sidebar-modus") as SidebarModus | null) ?? "hover";
     setModus(savedModus);
     if (savedModus === "altijd-open") {
       setOpen(true);
