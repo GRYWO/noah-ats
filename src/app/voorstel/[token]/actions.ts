@@ -26,9 +26,7 @@ export async function uitnodigen(formData: FormData) {
   const datum_2_iso = datum_2 ? new Date(datum_2).toISOString() : null;
   const datum_3_iso = datum_3 ? new Date(datum_3).toISOString() : null;
 
-  // Eerste datum = voorlopige kennismakings-datum (setter kan later aanpassen)
-  const kennismakingOp = datum_1_iso ?? datum_2_iso ?? datum_3_iso;
-
+  // Geen automatische kennismaking_op meer — wacht op kandidaat-keuze via mail-knoppen
   const { error } = await admin.from("voorstellen").update({
     status: "uitnodigen",
     reactie_op: new Date().toISOString(),
@@ -40,7 +38,7 @@ export async function uitnodigen(formData: FormData) {
     datum_1: datum_1_iso,
     datum_2: datum_2_iso,
     datum_3: datum_3_iso,
-    kennismaking_op: kennismakingOp,
+    kennismaking_op: null,
     opmerking,
   }).eq("token", token);
 
@@ -135,20 +133,9 @@ export async function uitnodigen(formData: FormData) {
       zichtbaarVoorKandidaat: true,
       metadata: { bedrijf, contactpersoon, datum_1: datum_1_iso, datum_2: datum_2_iso, datum_3: datum_3_iso },
     });
-    if (kennismakingOp) {
-      await logVoorstelEvent({
-        tenantId: voorstel.tenant_id,
-        voorstelId: voorstel.id,
-        kandidaatId: voorstel.kandidaat_id,
-        event: "kennismaking_gepland",
-        beschrijving: `Kennismaking gepland: ${new Date(kennismakingOp).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })}`,
-        zichtbaarVoorKandidaat: true,
-      });
-    }
-
     // Notificatie naar setter + team
     const titel = `🟢 ${bedrijf} wil kennismaken`;
-    const bericht = `Voorstel groen — kennismaking ${kennismakingOp ? `op ${new Date(kennismakingOp).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })}` : "gepland"}.`;
+    const bericht = `Voorstel groen — kandidaat krijgt 3 datums per mail en kiest zelf.`;
     const link = `/kandidaten/${voorstel.kandidaat_id}`;
     if (voorstel.setter_id) {
       await maakNotificatie({
@@ -182,6 +169,7 @@ export async function uitnodigen(formData: FormData) {
         datum_2: datum_2_iso,
         datum_3: datum_3_iso,
         opmerking,
+        voorstelToken: token, // → klikbare datum-knoppen in mail
         from: setterFrom,
       });
       await admin.from("voorstellen")
