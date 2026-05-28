@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getSetterFrom } from "@/utils/email-helpers";
 import {
@@ -5,6 +6,7 @@ import {
   sendGesprek1Bevestiging,
   sendGesprek2Succes,
   sendInProcesGestart,
+  sendContractControleUitnodiging,
 } from "@/utils/email";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 
@@ -30,10 +32,12 @@ export async function triggerKanbanMails(opts: {
   const admin = createAdminClient();
   const { data: k } = await admin
     .from("kandidaten")
-    .select("voornaam, email, tenant_id, voorgesteld_mail_sent, gesprek1_mail_sent, gesprek2_mail_sent, in_proces_mail_sent")
+    .select("voornaam, tussenvoegsel, achternaam, email, tenant_id, voorgesteld_mail_sent, gesprek1_mail_sent, gesprek2_mail_sent, in_proces_mail_sent")
     .eq("id", opts.kandidaatId)
     .single();
-  if (!k?.email || !k.tenant_id) return;
+  if (!k?.tenant_id) return;
+  // Voor "geplaatst" mag k.email leeg zijn — we mailen alleen de opdrachtgever
+  if (opts.nieuweStap !== "geplaatst" && !k.email) return;
 
   const setterFrom = await getSetterFrom(opts.vanUserId);
 
@@ -129,7 +133,7 @@ export async function triggerKanbanMails(opts: {
       .maybeSingle();
     try {
       await sendGesprek2Succes({
-        naar: k.email,
+        naar: k.email ?? "",
         kandidaatVoornaam: k.voornaam ?? "",
         bedrijf: voorstel?.bedrijf ?? voorstel?.opdrachtgever_naam ?? null,
         from: setterFrom,
@@ -139,6 +143,72 @@ export async function triggerKanbanMails(opts: {
         .eq("id", opts.kandidaatId);
     } catch (e) {
       console.error("Mail 2e_gesprek mislukt:", e);
+    }
+  }
+
+  // Bij overgang naar "geplaatst": automatisch contract-controle verzoek
+  // naar de opdrachtgever (waar kandidaat is geplaatst). Voorkomt dubbel
+  // versturen via een check op bestaand verzoek per kandidaat.
+  if (opts.nieuweStap === "geplaatst") {
+    try {
+      // Bestaat er al een verzoek voor deze kandidaat? → skip
+      const { data: bestaand } = await admin
+        .from("contract_verzoeken")
+        .select("id")
+        .eq("kandidaat_naam", `${k.voornaam ?? ""}${k.tussenvoegsel ? " " + k.tussenvoegsel : ""} ${k.achternaam ?? ""}`.trim())
+        .eq("tenant_id", k.tenant_id)
+        .limit(1)
+        .maybeSingle();
+      if (bestaand) {
+        console.log("[contract-controle] verzoek bestaat al, skip");
+        return;
+      }
+
+      // Haal opdrachtgever-info uit het meest recente voorstel waar deze kandidaat naartoe ging
+      const { data: voorstel } = await admin
+        .from("voorstellen")
+        .select("bedrijf, opdrachtgever_naam, contactpersoon, contact_email, opdrachtgever_email")
+        .eq("kandidaat_id", opts.kandidaatId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const opdrachtgeverEmail = voorstel?.contact_email ?? voorstel?.opdrachtgever_email ?? null;
+      const opdrachtgeverNaam = voorstel?.contactpersoon ?? voorstel?.opdrachtgever_naam ?? voorstel?.bedrijf ?? "Opdrachtgever";
+
+      if (!opdrachtgeverEmail) {
+        console.warn("[contract-controle] geen opdrachtgever-email gevonden voor kandidaat", opts.kandidaatId);
+        return;
+      }
+
+      const token = randomBytes(24).toString("hex");
+      const kandidaatNaam = `${k.voornaam ?? ""}${k.tussenvoegsel ? " " + k.tussenvoegsel : ""} ${k.achternaam ?? ""}`.trim();
+
+      await admin.from("contract_verzoeken").insert({
+        tenant_id: k.tenant_id,
+        token,
+        status: "verzonden",
+        opdrachtgever_naam: opdrachtgeverNaam,
+        opdrachtgever_email: opdrachtgeverEmail,
+        kandidaat_naam: kandidaatNaam,
+      });
+
+      await sendContractControleUitnodiging({
+        naar: opdrachtgeverEmail,
+        contactNaam: opdrachtgeverNaam,
+        kandidaatNaam,
+        token,
+      });
+
+      await logVoorstelEvent({
+        tenantId: k.tenant_id,
+        kandidaatId: opts.kandidaatId,
+        event: "plaatsing",
+        beschrijving: `Contract-verificatie mail verstuurd naar ${opdrachtgeverEmail} (via backoffice@grywo.nl)`,
+        zichtbaarVoorKandidaat: false,
+      });
+    } catch (e) {
+      console.error("[contract-controle] auto-trigger mislukt:", e);
     }
   }
 }
