@@ -372,9 +372,10 @@ export default async function KandidaatDetail({
           <h2 className="font-bold text-gray-800 mb-4 pb-2 border-b">Voorstellen naar opdrachtgevers</h2>
 
           {!isRecruiter && (
-          <details className="mb-4">
-            <summary className="cursor-pointer text-[#333399] font-semibold text-sm py-2">
-              Nieuw voorstel versturen
+          <details className="mb-4 group">
+            <summary className="list-none cursor-pointer inline-flex items-center gap-2 bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-4 py-2 rounded-md text-sm transition-colors mb-3">
+              <span className="group-open:hidden">+ Deze kandidaat voorstellen</span>
+              <span className="hidden group-open:inline">Sluiten ↑</span>
             </summary>
             <form action={stuurVoorstel} className="mt-3 space-y-3">
               <input type="hidden" name="kandidaat_id" value={k.id} />
