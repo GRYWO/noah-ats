@@ -70,10 +70,10 @@ function DemoKnop({
   kleur: string;
 }) {
   return (
-    <form action={startDemoModus.bind(null, rol)}>
+    <form action={startDemoModus.bind(null, rol)} className="h-full">
       <button
         type="submit"
-        className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${kleur}`}
+        className={`w-full h-full text-left p-4 rounded-lg border-2 transition-colors flex flex-col ${kleur}`}
       >
         <div className="flex items-center gap-2 mb-1.5">
           {icoon}
