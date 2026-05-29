@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<title>Noah × Jobdigger — promo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #f4f4f7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+  /* Chrome Web Store standaard screenshot-formaat */
+  .canvas {
+    width: 1280px;
+    height: 800px;
+    background: #ffffff;
+    margin: 0 auto;
+    padding: 70px 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decoratieve gradiant blob */
+  .canvas::before {
+    content: "";
+    position: absolute;
+    top: -200px;
+    right: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, #eef0ff 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 40px;
+    position: relative;
+  }
+  .merk-noah {
+    background: #333399;
+    color: #fff;
+    font-weight: 800;
+    font-size: 32px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    letter-spacing: -0.5px;
+  }
+  .merk-noah::after { content: "·"; margin-left: 2px; color: #a5acff; }
+  .kruis {
+    font-size: 28px;
+    color: #c8cad6;
+    font-weight: 300;
+  }
+  .merk-jd {
+    background: #f3f4f8;
+    color: #333399;
+    font-weight: 700;
+    font-size: 28px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    letter-spacing: -0.3px;
+  }
+
+  h1 {
+    font-size: 64px;
+    font-weight: 800;
+    color: #1a1a3a;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  h1 .accent { color: #333399; }
+
+  .ondertitel {
+    font-size: 22px;
+    color: #555a72;
+    line-height: 1.5;
+    max-width: 900px;
+    margin-bottom: 50px;
+    position: relative;
+  }
+  .ondertitel b { color: #1a1a3a; font-weight: 700; }
+
+  .stappen {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    position: relative;
+  }
+  .stap {
+    background: #f8f9ff;
+    border: 1px solid #e4e6f5;
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .stap-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #333399;
+    color: #fff;
+    font-weight: 800;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .stap-tekst {
+    font-size: 14.5px;
+    color: #2d2f4a;
+    line-height: 1.45;
+    font-weight: 500;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: 30px;
+    left: 90px;
+    font-size: 13px;
+    color: #9aa0b8;
+    letter-spacing: 0.5px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #eef9f1;
+    color: #1d8a48;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-bottom: 22px;
+    position: relative;
+  }
+</style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="header">
+      <div class="merk-noah">noah</div>
+      <div class="kruis">×</div>
+      <div class="merk-jd">Jobdigger</div>
+    </div>
+
+    <span class="badge">⚡ Eén klik. Geen kopiëren en plakken.</span>
+
+    <h1>Jobdigger-vacatures<br/><span class="accent">automatisch in je bellijst</span></h1>
+
+    <p class="ondertitel">
+      Klik <b>downloaden</b> in Jobdigger — de vacature-export verschijnt
+      direct als nieuwe bellijst in Noah ATS. Geen tussenstap, geen exporteren, geen fouten.
+    </p>
+
+    <div class="stappen">
+      <div class="stap">
+        <div class="stap-num">1</div>
+        <div class="stap-tekst">Open Jobdigger in Noah ATS</div>
+      </div>
+      <div class="stap">
+        <div class="stap-num">2</div>
+        <div class="stap-tekst">Selecteer je vacature-zoekopdracht</div>
+      </div>
+      <div class="stap">
+        <div class="stap-num">3</div>
+        <div class="stap-tekst">Download de export (xlsx/csv)</div>
+      </div>
+      <div class="stap">
+        <div class="stap-num">4</div>
+        <div class="stap-tekst">Bellijst staat klaar in Noah</div>
+      </div>
+    </div>
+
+    <div class="footer">grywo.nl &nbsp;·&nbsp; v1.3.1</div>
+  </div>
+</body>
+</html>

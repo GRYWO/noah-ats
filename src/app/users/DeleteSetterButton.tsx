@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { verwijderSetter } from "./actions";
 
 export function DeleteSetterButton({ id, naam }: { id: string; naam: string }) {
@@ -13,8 +14,12 @@ export function DeleteSetterButton({ id, naam }: { id: string; naam: string }) {
       }}
     >
       <input type="hidden" name="id" value={id} />
-      <button type="submit" className="text-red-600 hover:text-red-700 text-sm">
-        Verwijderen
+      <button
+        type="submit"
+        title={`${naam} verwijderen`}
+        className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+      >
+        <Trash2 size={14} />
       </button>
     </form>
   );
