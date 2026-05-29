@@ -21,6 +21,7 @@ import {
   Send,
   Calendar,
   Sparkles as SparklesIcon,
+  FileSignature,
 } from "lucide-react";
 
 type Item = {
@@ -104,6 +105,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isR
     // Sectie 5: Team & beheer
     ...(!isRecruiter && !isBureauAdmin ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: SparklesIcon, sectie: 5 } as Item] : []),
     ...(!isSetter && !isRecruiter ? [{ key: "setters", href: "/setters", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
+    ...(isSuperAdmin ? [{ key: "documenten", href: "/documenten", label: "Documenten", Icon: FileSignature, sectie: 5 } as Item] : []),
     { key: "instellingen",   href: "/instellingen",   label: "Instellingen", Icon: Settings,      sectie: 5 },
   ];
 
