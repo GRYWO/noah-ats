@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { isSuperAdminEmail } from "@/utils/auth";
 
-export type DemoRol = "admin" | "recruiter" | "setter";
+export type DemoRol = "admin" | "bureau_admin" | "recruiter" | "setter";
 
 export const COOKIE_NAAM = "noah-view-as";
 
@@ -16,7 +16,7 @@ export const COOKIE_NAAM = "noah-view-as";
 export async function leesViewAs(): Promise<DemoRol | null> {
   const c = await cookies();
   const waarde = c.get(COOKIE_NAAM)?.value;
-  if (waarde === "admin" || waarde === "recruiter" || waarde === "setter") {
+  if (waarde === "admin" || waarde === "bureau_admin" || waarde === "recruiter" || waarde === "setter") {
     return waarde;
   }
   return null;
@@ -79,11 +79,15 @@ export async function getViewerRol(): Promise<{
   const viewAs = await leesViewAs();
   const { rol, demoActief } = effectieveRol(profile?.rol, echteIsSuperAdmin, viewAs);
 
+  // bureau_admin telt voor UI/permissions als "admin", maar krijgt simpel dashboard
+  const isBureauAdminDemo = rol === "bureau_admin";
+
   return {
-    rol,
+    rol: isBureauAdminDemo ? "admin" : rol,
     isSetter: rol === "setter",
     isRecruiter: rol === "recruiter",
-    isAdmin: rol === "admin",
+    isAdmin: rol === "admin" || rol === "bureau_admin",
+    isBureauAdminDemo,
     isSuperAdmin: echteIsSuperAdmin && !demoActief,
     demoActief,
     echteIsSuperAdmin,

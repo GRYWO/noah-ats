@@ -1,4 +1,4 @@
-import { Eye, UserCog, Send, Phone } from "lucide-react";
+import { Eye, UserCog, Send, Phone, Building2 } from "lucide-react";
 import { startDemoModus } from "./view-as-actions";
 
 /**
@@ -17,7 +17,7 @@ export function DemoKnoppen() {
         UI-changes te testen zonder uit te loggen.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <DemoKnop
           rol="admin"
           icoon={<UserCog size={18} />}
@@ -26,17 +26,24 @@ export function DemoKnoppen() {
           kleur="bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
         />
         <DemoKnop
+          rol="bureau_admin"
+          icoon={<Building2 size={18} />}
+          label="Bekijk als Bureau-admin"
+          uitleg="Eigenaar van een aangesloten bureau"
+          kleur="bg-purple-50 border-purple-200 hover:bg-purple-100 text-purple-700"
+        />
+        <DemoKnop
           rol="recruiter"
           icoon={<Send size={18} />}
           label="Bekijk als Recruiter"
-          uitleg="Kandidaten + voorstellen, geen team-beheer"
+          uitleg="Eigen kandidaten + voorstellen"
           kleur="bg-emerald-50 border-emerald-200 hover:bg-emerald-100 text-emerald-700"
         />
         <DemoKnop
           rol="setter"
           icoon={<Phone size={18} />}
           label="Bekijk als Setter"
-          uitleg="Alleen eigen kandidaten + kanban + agenda"
+          uitleg="Alleen eigen kandidaten + kanban"
           kleur="bg-amber-50 border-amber-200 hover:bg-amber-100 text-amber-700"
         />
       </div>
@@ -56,7 +63,7 @@ function DemoKnop({
   uitleg,
   kleur,
 }: {
-  rol: "admin" | "recruiter" | "setter";
+  rol: "admin" | "bureau_admin" | "recruiter" | "setter";
   icoon: React.ReactNode;
   label: string;
   uitleg: string;

@@ -6,6 +6,7 @@ import { stopDemoModus } from "@/app/dashboard/view-as-actions";
 
 const LABELS: Record<string, string> = {
   admin: "Admin",
+  bureau_admin: "Bureau-admin",
   recruiter: "Recruiter",
   setter: "Setter",
 };

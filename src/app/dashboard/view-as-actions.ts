@@ -17,7 +17,7 @@ export async function startDemoModus(rol: DemoRol) {
   if (!user || !isSuperAdminEmail(user.email)) {
     return; // silent fail — alleen super-admin
   }
-  if (!["admin", "recruiter", "setter"].includes(rol)) return;
+  if (!["admin", "bureau_admin", "recruiter", "setter"].includes(rol)) return;
 
   const c = await cookies();
   c.set(COOKIE_NAAM, rol, {
