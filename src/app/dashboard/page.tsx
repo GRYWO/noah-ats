@@ -11,6 +11,7 @@ import { BureauAdminDashboard } from "./BureauAdminDashboard";
 import { BotsStatus } from "./BotsStatus";
 import { DemoKnoppen } from "./DemoKnoppen";
 import { RecruiterDashboard } from "./RecruiterDashboard";
+import { SuperAdminMonitor } from "./SuperAdminMonitor";
 import { leesViewAs, effectieveRol } from "@/utils/view-as";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
@@ -109,11 +110,12 @@ export default async function Dashboard({
           </div>
         </div>
 
-        {/* Super-admin: Demo-modus knoppen + Bots/Crons monitoring */}
+        {/* Super-admin: Demo-modus knoppen + Bots/Crons + uitgebreide monitor */}
         {isSuperAdmin && (
           <>
             <DemoKnoppen />
             <BotsStatus />
+            <SuperAdminMonitor />
           </>
         )}
 

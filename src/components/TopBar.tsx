@@ -19,9 +19,21 @@ export async function TopBar({ active }: Props) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("rol, menu_permissions")
+    .select("rol, menu_permissions, laatst_actief_op")
     .eq("id", user?.id ?? "")
     .single();
+
+  // Throttled "wie-is-online" tracking — max 1 update per minuut per user
+  if (user && profile) {
+    const laatste = profile.laatst_actief_op ? new Date(profile.laatst_actief_op).getTime() : 0;
+    if (Date.now() - laatste > 60 * 1000) {
+      // Fire-and-forget — geen await zodat page load niet vertraagd
+      supabase.from("profiles")
+        .update({ laatst_actief_op: new Date().toISOString() })
+        .eq("id", user.id)
+        .then(() => {});
+    }
+  }
 
   const echteIsSuperAdmin = isSuperAdminEmail(user?.email);
 
