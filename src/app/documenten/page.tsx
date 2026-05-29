@@ -125,7 +125,7 @@ export default async function DocumentenPage() {
       beschrijving: p?.email ?? null,
       status: a.status,
       datum: a.getekend_op ?? a.verzonden_op,
-      detail_link: a.user_id ? `/users` : "#",
+      detail_link: `/documenten/akkoord/${a.id}`,
       ondertekenaars: a.status === "getekend" ? "1/1 getekend" : "0/1 getekend",
     });
   }
@@ -139,7 +139,7 @@ export default async function DocumentenPage() {
       beschrijving: `Voor ${c.opdrachtgever_naam}`,
       status,
       datum: c.afgerond_op ?? c.geupload_op ?? c.verzonden_op,
-      detail_link: "#",
+      detail_link: `/documenten/contract/${c.id}`,
       ondertekenaars: c.status === "afgerond" ? "Verwerkt" : "Wachtend",
     });
   }
@@ -185,6 +185,7 @@ export default async function DocumentenPage() {
                   <th className="text-left px-4 py-3 font-semibold">Status</th>
                   <th className="text-left px-4 py-3 font-semibold">Voortgang</th>
                   <th className="text-left px-4 py-3 font-semibold">Datum</th>
+                  <th className="text-right px-4 py-3 font-semibold">Actie</th>
                 </tr>
               </thead>
               <tbody>
@@ -199,12 +200,10 @@ export default async function DocumentenPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Link href={d.detail_link} className="block">
-                          <div className="font-semibold text-gray-800">{d.titel}</div>
-                          {d.beschrijving && (
-                            <div className="text-xs text-gray-500 truncate max-w-md">{d.beschrijving}</div>
-                          )}
-                        </Link>
+                        <div className="font-semibold text-gray-800">{d.titel}</div>
+                        {d.beschrijving && (
+                          <div className="text-xs text-gray-500 truncate max-w-md">{d.beschrijving}</div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-xs font-semibold inline-flex items-center gap-1 px-2 py-1 rounded-full ${s.kleur}`}>
@@ -214,6 +213,14 @@ export default async function DocumentenPage() {
                       <td className="px-4 py-3 text-sm text-gray-600">{d.ondertekenaars}</td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {d.datum ? new Date(d.datum).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" }) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Link
+                          href={d.detail_link}
+                          className="inline-flex items-center gap-1 bg-[#333399] hover:bg-[#2a2a80] text-white text-xs font-semibold px-3 py-1.5 rounded-md"
+                        >
+                          Bekijken →
+                        </Link>
                       </td>
                     </tr>
                   );
