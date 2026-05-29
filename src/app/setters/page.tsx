@@ -28,10 +28,31 @@ export default async function SettersPage({
   // Super-admin gebruikt admin-client zodat RLS niets uitfiltert
   // (anders zou de lijst leeg blijven als de eigen tenant geen users heeft).
   const settersClient = isSuperAdmin ? createAdminClient() : supabase;
-  const { data: setters } = await settersClient
+  let settersQuery = settersClient
     .from("profiles")
     .select("*")
     .order("created_at", { ascending: true });
+
+  // Niet-super-admin (bureau-admin etc) ziet ALLEEN eigen tenant
+  // (RLS doet dit ook, maar we maken het expliciet voor zekerheid)
+  if (!isSuperAdmin) {
+    const { data: eigenProfile } = await supabase
+      .from("profiles")
+      .select("tenant_id")
+      .eq("id", user!.id)
+      .single();
+    if (eigenProfile?.tenant_id) {
+      settersQuery = settersQuery.eq("tenant_id", eigenProfile.tenant_id);
+    }
+  }
+
+  const { data: settersRuw } = await settersQuery;
+
+  // Filter super-admin emails uit de lijst voor non-super-admins
+  // (bureau-admins mogen geen GRYWO-staff zien)
+  const setters = isSuperAdmin
+    ? settersRuw
+    : (settersRuw ?? []).filter((s) => !isSuperAdminEmail(s.email));
 
   const isAdmin = viewerRol.isAdmin || isSuperAdmin;
   // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken
