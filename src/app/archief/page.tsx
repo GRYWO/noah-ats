@@ -6,6 +6,7 @@ import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
 import { Archive, FileCheck2, Calendar, Search } from "lucide-react";
 import { DownloadKnop } from "./DownloadKnop";
+import { ToevoegenKnop } from "./ToevoegenKnop";
 
 export const dynamic = "force-dynamic";
 
@@ -87,12 +88,15 @@ export default async function ArchiefPage({
               {totaal} ondertekende document{totaal === 1 ? "" : "en"} — automatisch gerangschikt per maand
             </p>
           </div>
-          <Link
-            href="/documenten"
-            className="text-sm text-[#333399] hover:underline"
-          >
-            ← Naar documenten-overzicht
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/documenten"
+              className="text-sm text-[#333399] hover:underline"
+            >
+              ← Documenten
+            </Link>
+            <ToevoegenKnop />
+          </div>
         </div>
 
         {/* Search */}
