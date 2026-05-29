@@ -39,13 +39,14 @@ type Props = {
   isSuperAdmin: boolean;
   isSetter: boolean;
   isRecruiter?: boolean;
+  isBureauAdmin?: boolean;
   menuPermissions: Record<string, boolean> | null;
   logoutAction: () => Promise<void>;
 };
 
 type SidebarModus = "handmatig" | "hover" | "altijd-open";
 
-export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isRecruiter, menuPermissions, logoutAction }: Props) {
+export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isRecruiter, isBureauAdmin, menuPermissions, logoutAction }: Props) {
   const [open, setOpen] = useState(false);
   const [modus, setModus] = useState<SidebarModus>("hover");
 
@@ -94,14 +95,14 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isR
 
     // Sectie 3: Relaties & tools
     { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",          Icon: Contact,       sectie: 3 },
-    ...(!isRecruiter ? [{ key: "jobdigger", href: "/jobdigger", label: "Jobdigger", Icon: PhoneCall, sectie: 3 } as Item] : []),
-    ...(!isSetter ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 3 } as Item] : []),
+    ...(!isRecruiter && !isBureauAdmin ? [{ key: "jobdigger", href: "/jobdigger", label: "Jobdigger", Icon: PhoneCall, sectie: 3 } as Item] : []),
+    ...(!isSetter && !isBureauAdmin ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 3 } as Item] : []),
 
     // Sectie 4: Communicatie
     { key: "inbox",          href: "/inbox",          label: "E-mail",       Icon: Mail,          sectie: 4 },
 
     // Sectie 5: Team & beheer
-    ...(!isRecruiter ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: SparklesIcon, sectie: 5 } as Item] : []),
+    ...(!isRecruiter && !isBureauAdmin ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: SparklesIcon, sectie: 5 } as Item] : []),
     ...(!isSetter && !isRecruiter ? [{ key: "setters", href: "/setters", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
     { key: "instellingen",   href: "/instellingen",   label: "Instellingen", Icon: Settings,      sectie: 5 },
   ];

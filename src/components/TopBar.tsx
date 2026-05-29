@@ -32,6 +32,8 @@ export async function TopBar({ active }: Props) {
   const isSuperAdmin = echteIsSuperAdmin && !demoActief;
   const isSetter = actieveRol === "setter";
   const isRecruiter = actieveRol === "recruiter";
+  // Bureau-admin = admin rol zonder super-admin, of demo "bureau_admin"
+  const isBureauAdmin = viewAs === "bureau_admin" || (actieveRol === "admin" && !isSuperAdmin && !demoActief);
   // In demo-modus negeren we eigen menu_permissions — anders worden Yorith's
   // persoonlijke menu-toggles toegepast op de demo-rol (= incorrecte preview).
   const menuPermissions = demoActief
@@ -49,6 +51,7 @@ export async function TopBar({ active }: Props) {
         isSuperAdmin={isSuperAdmin}
         isSetter={isSetter}
         isRecruiter={isRecruiter}
+        isBureauAdmin={isBureauAdmin}
         menuPermissions={menuPermissions}
         logoutAction={logout}
       />
