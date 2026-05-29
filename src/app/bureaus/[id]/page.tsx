@@ -12,7 +12,6 @@ import { TopBar } from "@/components/TopBar";
 import { updateBureau } from "./actions";
 import { stuurDpaUit, trekDpaIn } from "./dpa-actions";
 import { DeleteBureauButton } from "./DeleteBureauButton";
-import { BetaaldSelect } from "../BetaaldSelect";
 import { ShieldCheck, Send, RefreshCw, X, FileSignature } from "lucide-react";
 
 export default async function BureauDetail({
@@ -297,11 +296,7 @@ export default async function BureauDetail({
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Tenaamstelling rekening</label>
                 <input name="tenaamstelling" defaultValue={b.tenaamstelling ?? ""} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Betaling</label>
-                <BetaaldSelect defaultBetaald={!!b.setup_fee_paid} />
-              </div>
-              <div>
+              <div className="col-span-2">
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Finance mailadres</label>
                 <input name="finance_email" type="email" defaultValue={b.finance_email ?? ""} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </div>

@@ -6,7 +6,6 @@ import { isSuperAdminEmail } from "@/utils/auth";
 import { isSalesAdmin } from "@/utils/sales-admin";
 import { TopBar } from "@/components/TopBar";
 import { nieuwBureau } from "./actions";
-import { BetaaldSelect } from "./BetaaldSelect";
 import { ResetWachtwoordKnop } from "@/app/users/ResetWachtwoordKnop";
 import { InloggegevensKnop } from "./InloggegevensKnop";
 
@@ -162,11 +161,7 @@ export default async function BureausPage({
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Tenaamstelling rekening</label>
                   <input name="tenaamstelling" placeholder="BureauX B.V." className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Betaling</label>
-                  <BetaaldSelect defaultBetaald={false} />
-                </div>
-                <div>
+                <div className="col-span-2">
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Mail finance (voor marge-overzicht)</label>
                   <input name="finance_email" type="email" placeholder="finance@bureaux.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                 </div>
@@ -226,7 +221,6 @@ export default async function BureausPage({
                   <th className="text-left px-4 py-3 font-semibold">KvK</th>
                   <th className="text-left px-4 py-3 font-semibold">BTW</th>
                   <th className="text-left px-4 py-3 font-semibold">IBAN</th>
-                  <th className="text-left px-4 py-3 font-semibold">Betaling</th>
                   <th className="text-left px-4 py-3 font-semibold">Status</th>
                   <th className="text-right px-4 py-3 font-semibold">Acties</th>
                 </tr>
@@ -238,17 +232,6 @@ export default async function BureausPage({
                     <td className="px-4 py-3 text-sm text-gray-600"><Link href={`/bureaus/${b.id}`} className="block">{b.kvk ?? "—"}</Link></td>
                     <td className="px-4 py-3 text-sm text-gray-600"><Link href={`/bureaus/${b.id}`} className="block">{b.btw_nummer ?? "—"}</Link></td>
                     <td className="px-4 py-3 text-sm text-gray-600"><Link href={`/bureaus/${b.id}`} className="block">{b.iban ?? "—"}</Link></td>
-                    <td className="px-4 py-3 text-sm">
-                      <Link href={`/bureaus/${b.id}`} className="block">
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                          b.setup_fee_paid
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-red-100 text-red-800"
-                        }`}>
-                          {b.setup_fee_paid ? "Betaald" : "Niet betaald"}
-                        </span>
-                      </Link>
-                    </td>
                     <td className="px-4 py-3">
                       <Link href={`/bureaus/${b.id}`} className="block">
                         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
