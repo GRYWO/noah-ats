@@ -84,13 +84,13 @@ export function HuisstijlSectie({
                 style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }}
               />
             ) : (
-              <div className="text-white font-black text-3xl tracking-tighter">
-                {bureauNaam.slice(0, 6).toLowerCase()}
-                <span
-                  className="ml-1 inline-block w-3 h-3 rounded-full align-baseline"
-                  style={{ background: accent }}
-                />
-              </div>
+              // Default: GRYWO logo wit (vervangen door upload)
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/grywo-logo-wit.png"
+                alt="GRYWO logo (standaard)"
+                className="h-12 max-w-[180px] object-contain opacity-90"
+              />
             )}
             <div className="text-white/80 text-sm ml-auto">
               <span style={{ color: accent }}>●</span> Voorbeeld accent-kleur
