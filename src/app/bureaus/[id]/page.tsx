@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { isSalesAdmin } from "@/utils/sales-admin";
 import { HuisstijlSectie } from "./HuisstijlSectie";
 import { AbonnementSectie } from "./AbonnementSectie";
 import { stripeBeschikbaar } from "@/utils/stripe";
@@ -26,7 +27,8 @@ export default async function BureauDetail({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!isSuperAdminEmail(user?.email)) redirect("/dashboard");
+  if (!(await isSalesAdmin(user))) redirect("/dashboard");
+  const echtSuperAdmin = isSuperAdminEmail(user?.email);
 
   const admin = createAdminClient();
   const { data: b } = await admin

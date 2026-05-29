@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { isSalesAdmin } from "@/utils/sales-admin";
 import { TopBar } from "@/components/TopBar";
 import { nieuwBureau } from "./actions";
 import { BetaaldSelect } from "./BetaaldSelect";
@@ -18,9 +19,11 @@ export default async function BureausPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!isSuperAdminEmail(user?.email)) {
+  // Super-admin OF sales-admin (Pepijn) mag bureaus zien
+  if (!(await isSalesAdmin(user))) {
     redirect("/dashboard");
   }
+  const echtSuperAdmin = isSuperAdminEmail(user?.email);
 
   // Super admin: gebruik admin client om alle tenants te zien (RLS bypass)
   const admin = createAdminClient();

@@ -8,6 +8,7 @@ import { AutoRefresh } from "./AutoRefresh";
 import { DemoModusBanner } from "./DemoModusBanner";
 import { HuisstijlInjector } from "./HuisstijlInjector";
 import { leesViewAs, effectieveRol } from "@/utils/view-as";
+import { isSalesAdmin } from "@/utils/sales-admin";
 
 type Props = {
   active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "agenda" | "voorstellen" | "opdrachtgevers" | "robin" | "jobdigger" | "inbox" | "setters" | "coaching" | "instellingen";
@@ -47,6 +48,8 @@ export async function TopBar({ active }: Props) {
   const isRecruiter = actieveRol === "recruiter";
   // Bureau-admin = admin rol zonder super-admin, of demo "bureau_admin"
   const isBureauAdmin = viewAs === "bureau_admin" || (actieveRol === "admin" && !isSuperAdmin && !demoActief);
+  // Sales-admin (Pepijn): mag bureaus + abonnementen aanmaken
+  const isSalesAdminFlag = !demoActief && (await isSalesAdmin(user));
   // In demo-modus negeren we eigen menu_permissions — anders worden Yorith's
   // persoonlijke menu-toggles toegepast op de demo-rol (= incorrecte preview).
   const menuPermissions = demoActief
@@ -63,6 +66,7 @@ export async function TopBar({ active }: Props) {
         userEmail={user?.email ?? ""}
         userId={user?.id ?? ""}
         isSuperAdmin={isSuperAdmin}
+        isSalesAdmin={isSalesAdminFlag}
         isSetter={isSetter}
         isRecruiter={isRecruiter}
         isBureauAdmin={isBureauAdmin}

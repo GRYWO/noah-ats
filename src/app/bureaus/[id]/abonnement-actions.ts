@@ -5,12 +5,20 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { getStripe, stripeBeschikbaar } from "@/utils/stripe";
 import { getPlan, getSetupFeeCent, type PlanKey } from "@/utils/plans";
+import { isSalesAdmin } from "@/utils/sales-admin";
 import { revalidatePath } from "next/cache";
 
 async function vereisSuper() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !isSuperAdminEmail(user.email)) return null;
+  return user;
+}
+
+async function vereisSalesAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !(await isSalesAdmin(user))) return null;
   return user;
 }
 
@@ -28,7 +36,8 @@ export async function startAbonnement({
   contactEmail: string;
   contactNaam: string;
 }): Promise<{ ok: boolean; error?: string }> {
-  const user = await vereisSuper();
+  // Sales-admin mag ook abonnementen activeren (niet alleen Yorith)
+  const user = await vereisSalesAdmin();
   if (!user) return { ok: false, error: "Geen toegang" };
   if (!stripeBeschikbaar()) {
     return { ok: false, error: "Stripe is niet geconfigureerd (STRIPE_SECRET_KEY ontbreekt in env)" };

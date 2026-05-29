@@ -40,6 +40,7 @@ type Props = {
   userEmail: string;
   userId: string;
   isSuperAdmin: boolean;
+  isSalesAdmin?: boolean;
   isSetter: boolean;
   isRecruiter?: boolean;
   isBureauAdmin?: boolean;
@@ -49,7 +50,7 @@ type Props = {
 
 type SidebarModus = "handmatig" | "hover" | "altijd-open";
 
-export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isRecruiter, isBureauAdmin, menuPermissions, logoutAction }: Props) {
+export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin, isSetter, isRecruiter, isBureauAdmin, menuPermissions, logoutAction }: Props) {
   const [open, setOpen] = useState(false);
   const [modus, setModus] = useState<SidebarModus>("hover");
 
@@ -88,7 +89,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isR
   const alleItems: Item[] = [
     // Sectie 1: Overzicht
     { key: "dashboard",    href: "/dashboard",    label: "Dashboard",   Icon: LayoutDashboard, sectie: 1 },
-    ...(isSuperAdmin ? [{ key: "bureaus", href: "/bureaus", label: "Bureaus", Icon: Building2, sectie: 1 } as Item] : []),
+    ...(isSuperAdmin || isSalesAdmin ? [{ key: "bureaus", href: "/bureaus", label: "Bureaus", Icon: Building2, sectie: 1 } as Item] : []),
 
     // Sectie 2: Werkstroom — recruitment
     ...(!isBureauAdmin ? [{ key: "kandidaten", href: "/kandidaten", label: "Kandidaten", Icon: Users, sectie: 2 } as Item] : []),

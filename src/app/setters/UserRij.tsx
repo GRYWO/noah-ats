@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, X, Loader2, ShieldCheck, Send, CheckCircle2, Clock, RefreshCw } from "lucide-react";
 import { InlineVoysEdit } from "./InlineVoysEdit";
 import { CoachToggle } from "./CoachToggle";
+import { SalesAdminToggle } from "./SalesAdminToggle";
 import { ResetWachtwoordKnop } from "./ResetWachtwoordKnop";
 import { DeleteSetterButton } from "./DeleteSetterButton";
 import { bewerkUser } from "./actions";
@@ -33,6 +34,7 @@ type SetterRecord = {
   mail_adres: string | null;
   functie_titel: string | null;
   is_coach: boolean | null;
+  kan_abonnementen_beheren?: boolean | null;
   created_at: string | null;
   menu_permissions: Record<string, boolean> | null;
 };
@@ -142,6 +144,9 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSu
         {isAdmin && (
           <td className="px-4 py-3 text-right" onClick={stop}>
             <div className="inline-flex items-center gap-2">
+              {viewerIsSuperAdmin && !isSuperAdmin && (
+                <SalesAdminToggle userId={s.id} actief={!!s.kan_abonnementen_beheren} />
+              )}
               <button
                 type="button"
                 onClick={() => setOpen(true)}

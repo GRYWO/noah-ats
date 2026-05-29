@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { isSalesAdmin } from "@/utils/sales-admin";
 import { sendDpaTerOndertekening } from "@/utils/email";
 import { randomBytes } from "crypto";
 
@@ -19,7 +20,8 @@ export async function nieuwBureau(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  if (!isSuperAdminEmail(user.email)) redirect("/bureaus?error=Geen+toegang");
+  // Super-admin OF sales-admin (Pepijn) mag bureaus aanmaken
+  if (!(await isSalesAdmin(user))) redirect("/bureaus?error=Geen+toegang");
 
   const naam              = (formData.get("naam") as string)?.trim();
   const handelsnaam       = (formData.get("handelsnaam") as string)?.trim() || null;
