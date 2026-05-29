@@ -6,6 +6,7 @@ import { isSuperAdminEmail } from "@/utils/auth";
 import { HuisstijlSectie } from "./HuisstijlSectie";
 import { AbonnementSectie } from "./AbonnementSectie";
 import { stripeBeschikbaar } from "@/utils/stripe";
+import { getPlans, getSetupFeeCent } from "@/utils/plans";
 import { TopBar } from "@/components/TopBar";
 import { updateBureau } from "./actions";
 import { stuurDpaUit, trekDpaIn } from "./dpa-actions";
@@ -371,11 +372,14 @@ export default async function BureauDetail({
 
 async function renderAbonnementSectie(b: { id: string; naam: string | null; contact_email: string | null; contact_naam: string | null }, _id: string) {
   const admin = createAdminClient();
-  const { data: ab } = await admin
-    .from("abonnementen")
-    .select("plan, status, max_users, prijs_per_maand_cent, setup_fee_betaald, huidige_periode_einde, gestart_op, stripe_customer_id")
-    .eq("tenant_id", b.id)
-    .maybeSingle();
+  const [{ data: ab }, plans, setupFeeCent] = await Promise.all([
+    admin.from("abonnementen")
+      .select("plan, status, max_users, prijs_per_maand_cent, setup_fee_betaald, huidige_periode_einde, gestart_op, stripe_customer_id")
+      .eq("tenant_id", b.id)
+      .maybeSingle(),
+    getPlans(),
+    getSetupFeeCent(),
+  ]);
   return (
     <AbonnementSectie
       tenantId={b.id}
@@ -384,6 +388,8 @@ async function renderAbonnementSectie(b: { id: string; naam: string | null; cont
       contactNaam={b.contact_naam ?? ""}
       abonnement={ab ?? null}
       stripeBeschikbaar={stripeBeschikbaar()}
+      plans={plans}
+      setupFeeCent={setupFeeCent}
     />
   );
 }

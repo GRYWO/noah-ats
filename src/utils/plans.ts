@@ -1,71 +1,75 @@
 /**
- * Abonnements-plan definities.
- * Prijzen in centen (Stripe-conventie).
+ * Abonnements-plannen — DB-driven (beheerbaar via /abonnementen-beheer).
+ * Server-only — voor client gebruik plans-shared.ts.
  */
+import { createAdminClient } from "@/utils/supabase/admin";
+export { eur } from "./plans-shared";
+export type { Plan, PlanKey } from "./plans-shared";
+import type { Plan, PlanKey } from "./plans-shared";
 
-export type PlanKey = "starter" | "pro" | "enterprise";
-
-export type Plan = {
-  key: PlanKey;
-  label: string;
-  prijs_per_maand_cent: number;
-  max_users: number | null; // null = unlimited
-  features: string[];
-  populair?: boolean;
-};
-
-export const SETUP_FEE_CENT = 49500; // €495 eenmalig
-
-export const PLANS: Record<PlanKey, Plan> = {
-  starter: {
-    key: "starter",
-    label: "Starter",
-    prijs_per_maand_cent: 4900,
-    max_users: 3,
-    features: [
-      "Tot 3 recruiters/setters",
-      "Onbeperkt kandidaten",
-      "Kanban + voorstellen + agenda",
-      "AI CV-parsing + profielschets",
-      "E-mailadres + Voys via GRYWO",
-      "AVG-compliant",
-    ],
-  },
-  pro: {
-    key: "pro",
-    label: "Pro",
-    prijs_per_maand_cent: 9900,
-    max_users: 10,
-    features: [
-      "Tot 10 recruiters/setters",
-      "Alles van Starter",
-      "Coaching dashboard + EOD",
-      "Eigen huisstijl (logo + kleuren)",
-      "Contract-controle met AI redactie",
-      "Prioriteit support",
-    ],
-    populair: true,
-  },
-  enterprise: {
-    key: "enterprise",
-    label: "Enterprise",
-    prijs_per_maand_cent: 19900,
-    max_users: null,
-    features: [
-      "Onbeperkte users",
-      "Alles van Pro",
-      "Custom integraties op verzoek",
-      "Dedicated account-manager",
-      "SLA-afspraken (99.9%)",
-      "Audit-rapportage op verzoek",
-    ],
-  },
-};
-
-export function planFromKey(key: string): Plan | null {
-  return PLANS[key as PlanKey] ?? null;
+/**
+ * Haalt alle actieve plannen op uit DB, gesorteerd.
+ */
+export async function getPlans(opts?: { inclusiefInactief?: boolean }): Promise<Plan[]> {
+  const admin = createAdminClient();
+  let q = admin.from("abonnements_plannen").select("*").order("sortering", { ascending: true });
+  if (!opts?.inclusiefInactief) q = q.eq("actief", true);
+  const { data } = await q;
+  return (data ?? []).map((p) => ({
+    id: p.id,
+    sleutel: p.sleutel,
+    label: p.label,
+    prijs_per_maand_cent: p.prijs_per_maand_cent,
+    max_users: p.max_users,
+    features: Array.isArray(p.features) ? p.features : [],
+    populair: !!p.populair,
+    actief: !!p.actief,
+    sortering: p.sortering ?? 0,
+  }));
 }
 
-export function eur(cent: number): string {
-  return `€ ${(cent / 100).toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+export async function getPlan(sleutel: PlanKey): Promise<Plan | null> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("abonnements_plannen")
+    .select("*")
+    .eq("sleutel", sleutel)
+    .single();
+  if (!data) return null;
+  return {
+    id: data.id,
+    sleutel: data.sleutel,
+    label: data.label,
+    prijs_per_maand_cent: data.prijs_per_maand_cent,
+    max_users: data.max_users,
+    features: Array.isArray(data.features) ? data.features : [],
+    populair: !!data.populair,
+    actief: !!data.actief,
+    sortering: data.sortering ?? 0,
+  };
 }
+
+/**
+ * Globale instellingen (key/value). Default fallback voor setup_fee_cent.
+ */
+export async function getSetupFeeCent(): Promise<number> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("abonnements_instellingen")
+    .select("waarde")
+    .eq("sleutel", "setup_fee_cent")
+    .single();
+  if (!data?.waarde) return 49500;
+  const n = parseInt(data.waarde);
+  return isNaN(n) ? 49500 : n;
+}
+
+export async function setSetupFeeCent(cent: number): Promise<void> {
+  const admin = createAdminClient();
+  await admin.from("abonnements_instellingen").upsert({
+    sleutel: "setup_fee_cent",
+    waarde: String(cent),
+    updated_at: new Date().toISOString(),
+  });
+}
+

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Crown, CheckCircle2, AlertTriangle, XCircle, Loader2, Sparkles } from "lucide-react";
-import { PLANS, SETUP_FEE_CENT, eur, type PlanKey } from "@/utils/plans";
+import { eur, type Plan, type PlanKey } from "@/utils/plans-shared";
 import { startAbonnement, wijzigPlan, zegOp, overrideStatus } from "./abonnement-actions";
 
 type Abonnement = {
@@ -23,6 +23,8 @@ type Props = {
   contactNaam: string;
   abonnement: Abonnement;
   stripeBeschikbaar: boolean;
+  plans: Plan[];
+  setupFeeCent: number;
 };
 
 const STATUS_KLEUR: Record<string, string> = {
@@ -50,8 +52,13 @@ export function AbonnementSectie({
   contactNaam,
   abonnement,
   stripeBeschikbaar,
+  plans,
+  setupFeeCent,
 }: Props) {
-  const [gekozenPlan, setGekozenPlan] = useState<PlanKey>("pro");
+  const planMap = new Map(plans.map((p) => [p.sleutel, p]));
+  const defaultPlan = plans.find((p) => p.populair) ?? plans[0];
+  const [gekozenPlan, setGekozenPlan] = useState<PlanKey>(defaultPlan?.sleutel ?? "starter");
+  const huidigeGekozen = planMap.get(gekozenPlan) ?? defaultPlan;
   const [bezig, setBezig] = useState(false);
   const [melding, setMelding] = useState<string | null>(null);
 
@@ -69,7 +76,7 @@ export function AbonnementSectie({
   }
 
   async function wijzig(nieuwPlan: PlanKey) {
-    if (!confirm(`Plan wijzigen naar ${PLANS[nieuwPlan].label}? Prorata wordt automatisch berekend.`)) return;
+    if (!confirm(`Plan wijzigen naar ${(planMap.get(nieuwPlan)?.label ?? nieuwPlan)}? Prorata wordt automatisch berekend.`)) return;
     setBezig(true);
     const r = await wijzigPlan({ tenantId, nieuwPlan });
     setBezig(false);
@@ -105,7 +112,7 @@ export function AbonnementSectie({
         </div>
         <p className="text-sm text-gray-500 mb-5">
           {bureauNaam} heeft nog geen abonnement. Kies een plan om te activeren —
-          eenmalige setup-fee van {eur(SETUP_FEE_CENT)} + recurring maandbedrag.
+          eenmalige setup-fee van {eur(setupFeeCent)} + recurring maandbedrag.
         </p>
 
         {!stripeBeschikbaar && (
@@ -116,13 +123,13 @@ export function AbonnementSectie({
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-          {(Object.values(PLANS)).map((p) => {
-            const actief = gekozenPlan === p.key;
+          {(plans).map((p) => {
+            const actief = gekozenPlan === p.sleutel;
             return (
               <button
-                key={p.key}
+                key={p.sleutel}
                 type="button"
-                onClick={() => setGekozenPlan(p.key)}
+                onClick={() => setGekozenPlan(p.sleutel)}
                 className={`relative text-left p-4 rounded-xl border-2 transition-all ${
                   actief
                     ? "border-[#333399] bg-[#333399]/5 shadow-md"
@@ -168,8 +175,8 @@ export function AbonnementSectie({
 
         <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-4">
           <div className="text-xs text-gray-700">
-            <b>Te factureren bij start:</b> {eur(SETUP_FEE_CENT)} setup-fee +{" "}
-            {eur(PLANS[gekozenPlan].prijs_per_maand_cent)} eerste maand
+            <b>Te factureren bij start:</b> {eur(setupFeeCent)} setup-fee +{" "}
+            {eur((huidigeGekozen?.prijs_per_maand_cent ?? 0))} eerste maand
           </div>
           <button
             onClick={start}
@@ -177,7 +184,7 @@ export function AbonnementSectie({
             className="bg-[#333399] hover:bg-[#2a2a80] disabled:opacity-50 text-white font-bold px-6 py-2.5 rounded-md text-sm inline-flex items-center gap-2"
           >
             {bezig && <Loader2 size={14} className="animate-spin" />}
-            Activeer {PLANS[gekozenPlan].label}
+            Activeer {(huidigeGekozen?.label ?? gekozenPlan)}
           </button>
         </div>
       </section>
@@ -185,7 +192,7 @@ export function AbonnementSectie({
   }
 
   // ========== ACTIEF ABONNEMENT ==========
-  const huidigePlan = PLANS[abonnement.plan as PlanKey];
+  const huidigePlan = planMap.get(abonnement.plan);
   const statusKleur = STATUS_KLEUR[abonnement.status] ?? "bg-gray-100 text-gray-700";
   const statusLabel = STATUS_LABEL[abonnement.status] ?? abonnement.status;
   const isProbleem = ["achterstallig", "read_only", "geblokkeerd"].includes(abonnement.status);
@@ -234,7 +241,7 @@ export function AbonnementSectie({
           <div className="text-lg font-bold text-gray-800 mt-1">
             {abonnement.setup_fee_betaald ? "Betaald ✓" : "Open"}
           </div>
-          <div className="text-xs text-gray-500 mt-1">{eur(SETUP_FEE_CENT)}</div>
+          <div className="text-xs text-gray-500 mt-1">{eur(setupFeeCent)}</div>
         </div>
       </div>
 
@@ -242,20 +249,20 @@ export function AbonnementSectie({
       <div className="mb-5">
         <div className="text-xs uppercase text-gray-500 font-semibold mb-2">Plan wijzigen</div>
         <div className="grid grid-cols-3 gap-2">
-          {Object.values(PLANS).map((p) => (
+          {plans.map((p) => (
             <button
-              key={p.key}
-              onClick={() => wijzig(p.key)}
-              disabled={bezig || p.key === abonnement.plan}
+              key={p.sleutel}
+              onClick={() => wijzig(p.sleutel)}
+              disabled={bezig || p.sleutel === abonnement.plan}
               className={`p-3 rounded-lg border-2 transition-colors text-sm ${
-                p.key === abonnement.plan
+                p.sleutel === abonnement.plan
                   ? "border-emerald-300 bg-emerald-50 text-emerald-700 cursor-default"
                   : "border-gray-200 hover:border-[#333399] hover:bg-[#333399]/5 text-gray-700"
               }`}
             >
               <div className="font-bold">{p.label}</div>
               <div className="text-xs opacity-70">{eur(p.prijs_per_maand_cent)} /mnd</div>
-              {p.key === abonnement.plan && (
+              {p.sleutel === abonnement.plan && (
                 <div className="text-[10px] mt-1 font-semibold uppercase">Huidig</div>
               )}
             </button>

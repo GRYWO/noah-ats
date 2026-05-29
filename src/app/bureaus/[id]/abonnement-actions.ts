@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { getStripe, stripeBeschikbaar } from "@/utils/stripe";
-import { PLANS, SETUP_FEE_CENT, type PlanKey } from "@/utils/plans";
+import { getPlan, getSetupFeeCent, type PlanKey } from "@/utils/plans";
 import { revalidatePath } from "next/cache";
 
 async function vereisSuper() {
@@ -33,14 +33,15 @@ export async function startAbonnement({
   if (!stripeBeschikbaar()) {
     return { ok: false, error: "Stripe is niet geconfigureerd (STRIPE_SECRET_KEY ontbreekt in env)" };
   }
-  if (!PLANS[plan]) return { ok: false, error: "Ongeldig plan" };
+  const planDef = await getPlan(plan);
+  if (!planDef) return { ok: false, error: "Ongeldig plan" };
+  const SETUP_FEE_CENT = await getSetupFeeCent();
 
   const admin = createAdminClient();
   const { data: tenant } = await admin.from("tenants").select("naam, btw_nummer").eq("id", tenantId).single();
   if (!tenant) return { ok: false, error: "Bureau niet gevonden" };
 
   const stripe = getStripe();
-  const planDef = PLANS[plan];
 
   try {
     // 1) Stripe customer aanmaken
@@ -123,7 +124,8 @@ export async function wijzigPlan({
 }): Promise<{ ok: boolean; error?: string }> {
   const user = await vereisSuper();
   if (!user) return { ok: false, error: "Geen toegang" };
-  if (!PLANS[nieuwPlan]) return { ok: false, error: "Ongeldig plan" };
+  const planDef = await getPlan(nieuwPlan);
+  if (!planDef) return { ok: false, error: "Ongeldig plan" };
   if (!stripeBeschikbaar()) return { ok: false, error: "Stripe niet beschikbaar" };
 
   const admin = createAdminClient();
@@ -136,7 +138,6 @@ export async function wijzigPlan({
   if (!ab.stripe_subscription_id) return { ok: false, error: "Geen Stripe-koppeling" };
 
   const stripe = getStripe();
-  const planDef = PLANS[nieuwPlan];
 
   try {
     const sub = await stripe.subscriptions.retrieve(ab.stripe_subscription_id);
