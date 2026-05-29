@@ -17,16 +17,23 @@ function bepaalFrom(): string {
 const FROM = bepaalFrom();
 // Productie-URL bepalen voor links in mails.
 // Volgorde:
-// 1. NEXT_PUBLIC_APP_URL — MAAR alleen als hij niet naar localhost wijst
-//    (oude env-var kan nog 'http://localhost:3000' bevatten in Vercel)
-// 2. VERCEL_URL (automatisch gezet door Vercel)
-// 3. https://noah-ats.nl (hard productie-fallback)
+// 1. NEXT_PUBLIC_APP_URL — MAAR alleen als hij naar de productie-domein wijst
+//    (geen localhost, geen vercel.app preview-URL)
+// 2. https://noah-ats.nl (hard productie-fallback)
+//
+// LET OP: VERCEL_URL wordt NIET meer gebruikt als fallback — anders kunnen
+// externe ontvangers (opdrachtgevers, kandidaten, sales) een preview-link
+// in hun mail krijgen die ze niet kunnen openen (Deployment Protection).
 function bepaalAppUrl(): string {
   const env = process.env.NEXT_PUBLIC_APP_URL;
-  if (env && !env.includes("localhost") && !env.includes("127.0.0.1")) {
+  if (
+    env &&
+    !env.includes("localhost") &&
+    !env.includes("127.0.0.1") &&
+    !env.includes("vercel.app")
+  ) {
     return env;
   }
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return "https://noah-ats.nl";
 }
 const APP_URL = bepaalAppUrl();
