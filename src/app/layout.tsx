@@ -23,9 +23,12 @@ export const metadata: Metadata = {
     title: "Noah",
     statusBarStyle: "default",
   },
+  // Cache-busting (?v=2) zodat Chrome de favicon opnieuw download na deploy.
+  // Bump dit nummer wanneer het icoon wijzigt.
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
+    icon: "/icon-192.png?v=2",
+    apple: "/icon-192.png?v=2",
+    shortcut: "/icon-192.png?v=2",
   },
 };
 

@@ -4,7 +4,9 @@
 // 2. Web Push notificaties (mail, nieuwe kandidaat, etc.)
 // 3. Notification-click → opent juiste pagina
 
-const CACHE = "noah-shell-v1";
+// LET OP: bump dit nummer bij elke release waar PWA-assets veranderen (icons,
+// manifest, sw.js zelf). De oude cache wordt dan automatisch opgeruimd in activate.
+const CACHE = "noah-shell-v2";
 const SHELL = ["/dashboard", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
