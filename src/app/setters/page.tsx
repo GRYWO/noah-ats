@@ -10,6 +10,7 @@ import { TOUR_SETTERS } from "@/utils/pagina-tours";
 import { MENU_KEYS } from "@/utils/menu-permissions";
 import { ShieldCheck } from "lucide-react";
 import { AanvragenKnop } from "./AanvragenKnoppen";
+import { BevestigingKnop } from "./BevestigingKnop";
 
 export default async function SettersPage({
   searchParams,
@@ -112,6 +113,7 @@ export default async function SettersPage({
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Voys-nummer</label>
                 <input name="voys_nummer" placeholder="+31 85 ... (vanuit Voys-portal)" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                 <AanvragenKnop type="voys" />
+                <BevestigingKnop />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Rol *</label>
