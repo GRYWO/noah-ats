@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Upload, FileText, X, Loader2, CheckCircle2 } from "lucide-react";
+import { Upload, FileText, X, Loader2, CheckCircle2 } from "lucide-react";
 import { voegArchiefDocumentToe } from "./archief-actions";
 
 export function ToevoegenKnop() {
@@ -43,7 +43,6 @@ export function ToevoegenKnop() {
         onClick={() => setOpen(true)}
         className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-5 py-2.5 rounded-lg text-sm inline-flex items-center gap-2 shadow-sm"
       >
-        <Plus size={16} />
         Document toevoegen
       </button>
 
@@ -192,10 +191,7 @@ export function ToevoegenKnop() {
                         Opslaan…
                       </>
                     ) : (
-                      <>
-                        <Plus size={14} />
-                        Toevoegen aan archief
-                      </>
+                      <>Toevoegen aan archief</>
                     )}
                   </button>
                 </div>

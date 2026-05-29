@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, Plus, Trash2, Send, Loader2, FileText } from "lucide-react";
+import { Upload, Trash2, Send, Loader2, FileText } from "lucide-react";
 import { verstuurDocument } from "../actions";
 
 type Ondertekenaar = { voornaam: string; achternaam: string; email: string };
@@ -177,7 +177,6 @@ export function NieuwDocumentForm() {
           onClick={voegToe}
           className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#333399] bg-[#333399]/10 hover:bg-[#333399]/20 rounded-md"
         >
-          <Plus size={14} />
           Ondertekenaar toevoegen
         </button>
 

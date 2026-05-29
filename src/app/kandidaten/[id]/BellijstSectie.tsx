@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Phone, Globe, Trash2, Plus, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2, PhoneOutgoing, Search, Pencil, Check, X } from "lucide-react";
+import { Phone, Globe, Trash2, Upload, ChevronDown, ChevronUp, PhoneCall, Loader2, PhoneOutgoing, Search, Pencil, Check, X } from "lucide-react";
 import Link from "next/link";
 import { telLink } from "@/utils/tel";
 import {
@@ -78,7 +78,7 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
             onClick={() => setShowUpload(!showUpload)}
             className="text-xs text-[#333399] hover:underline font-semibold inline-flex items-center gap-1"
           >
-            <Plus size={14} /> Nieuwe bellijst
+            Nieuwe bellijst
           </button>
         </div>
       </div>

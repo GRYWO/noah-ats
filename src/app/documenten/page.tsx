@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { TopBar } from "@/components/TopBar";
-import { FileText, Plus, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { FileText, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +61,6 @@ export default async function DocumentenPage() {
             href="/documenten/nieuw"
             className="bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-5 py-2.5 rounded-lg text-sm inline-flex items-center gap-2 shadow-sm"
           >
-            <Plus size={16} />
             Nieuw document
           </Link>
         </div>
