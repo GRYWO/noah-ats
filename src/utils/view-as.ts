@@ -52,6 +52,7 @@ export async function getViewerRol(): Promise<{
   isSetter: boolean;
   isRecruiter: boolean;
   isAdmin: boolean;
+  isBureauAdminDemo: boolean;
   isSuperAdmin: boolean;
   demoActief: boolean;
   echteIsSuperAdmin: boolean;
@@ -64,6 +65,7 @@ export async function getViewerRol(): Promise<{
       isSetter: true,
       isRecruiter: false,
       isAdmin: false,
+      isBureauAdminDemo: false,
       isSuperAdmin: false,
       demoActief: false,
       echteIsSuperAdmin: false,
