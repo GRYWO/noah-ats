@@ -110,7 +110,7 @@ export default async function SettersPage({
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Voys-nummer</label>
                 <input name="voys_nummer" placeholder="+31 85 ... (vanuit Voys-portal)" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
-                <small className="text-gray-400 text-xs">Wordt gebruikt voor click-to-call. Bestel een nummer in Voys en plak hier.</small>
+                <small className="text-amber-700 text-xs mt-1 block">⚠ Let op: Voys-nummer aanvragen bij <a href="mailto:info@grywo.nl" className="underline font-semibold">info@grywo.nl</a></small>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Rol *</label>
