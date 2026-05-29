@@ -48,11 +48,14 @@ export default async function SettersPage({
 
   const { data: settersRuw } = await settersQuery;
 
-  // Filter super-admin emails uit de lijst voor non-super-admins
-  // (bureau-admins mogen geen GRYWO-staff zien)
+  // Filter voor niet-super-admin: alleen recruiters tonen
+  // (setters worden centraal door GRYWO geregeld, bureau-admin
+  // beheert alleen zijn eigen recruiters. Super-admin emails ook eruit.)
   const setters = isSuperAdmin
     ? settersRuw
-    : (settersRuw ?? []).filter((s) => !isSuperAdminEmail(s.email));
+    : (settersRuw ?? []).filter(
+        (s) => s.rol === "recruiter" && !isSuperAdminEmail(s.email),
+      );
 
   const isAdmin = viewerRol.isAdmin || isSuperAdmin;
   // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken
@@ -88,7 +91,9 @@ export default async function SettersPage({
       <div className="p-8 max-w-6xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Users</h1>
-          <p className="text-gray-500 text-sm mt-1">{setters?.length ?? 0} users in dit bureau</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {setters?.length ?? 0} {isSuperAdmin ? "users" : "recruiters"} in dit bureau
+          </p>
         </div>
 
         {ok && (
