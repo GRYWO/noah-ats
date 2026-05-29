@@ -85,7 +85,9 @@ export default async function Dashboard({
   const isSetter = actieveRol === "setter";
   const isRecruiter = actieveRol === "recruiter";
   const isSuperAdmin = echteIsSuperAdmin && !demoActief;
-  const isBureauAdmin = actieveRol === "admin" && !isSuperAdmin;
+  // In demo-modus "Bekijk als Admin" willen we de volledige AdminDashboard
+  // tonen — niet de simpele BureauAdminDashboard die voor echte bureau-admins is.
+  const isBureauAdmin = actieveRol === "admin" && !isSuperAdmin && !demoActief;
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
