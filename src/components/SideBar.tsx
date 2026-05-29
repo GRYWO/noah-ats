@@ -22,6 +22,7 @@ import {
   Calendar,
   Sparkles as SparklesIcon,
   FileSignature,
+  Archive,
 } from "lucide-react";
 
 type Item = {
@@ -106,6 +107,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isR
     ...(!isRecruiter && !isBureauAdmin ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: SparklesIcon, sectie: 5 } as Item] : []),
     ...(!isSetter && !isRecruiter ? [{ key: "setters", href: "/setters", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "documenten", href: "/documenten", label: "Documenten", Icon: FileSignature, sectie: 5 } as Item] : []),
+    ...(isSuperAdmin ? [{ key: "archief", href: "/archief", label: "Archief", Icon: Archive, sectie: 5 } as Item] : []),
     { key: "instellingen",   href: "/instellingen",   label: "Instellingen", Icon: Settings,      sectie: 5 },
   ];
 
