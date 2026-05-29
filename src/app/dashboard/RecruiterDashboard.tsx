@@ -28,9 +28,11 @@ const STATUS_LABEL: Record<string, string> = {
  */
 export async function RecruiterDashboard() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const { data: kandidaten } = await supabase
     .from("kandidaten")
     .select("id, voornaam, achternaam, status, created_at, updated_at")
+    .eq("eigenaar_id", user?.id ?? "")
     .order("updated_at", { ascending: false });
 
   const lijst = kandidaten ?? [];

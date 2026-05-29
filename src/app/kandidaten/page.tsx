@@ -31,7 +31,7 @@ export default async function KandidatenPage({
   const { data: { user } } = await supabase.auth.getUser();
 
   // Demo-modus respecteren — bepaalt of CV-dropzone + wachtlijst zichtbaar zijn
-  const { isSetter } = await getViewerRol();
+  const { isSetter, isRecruiter } = await getViewerRol();
 
   // Wachtlijst (cleanup ouder dan 7 dagen + ophalen)
   if (!isSetter) {
@@ -42,12 +42,18 @@ export default async function KandidatenPage({
     .select("*")
     .order("created_at", { ascending: false });
 
-  // Paginated query — alleen de huidige pagina laden + totaal aantal
-  const { data: kandidaten, count: kandidaatTotaal } = await supabase
+  // Paginated query — recruiters en setters zien alleen eigen kandidaten
+  let kandidatenQuery = supabase
     .from("kandidaten")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
+
+  if ((isRecruiter || isSetter) && user?.id) {
+    kandidatenQuery = kandidatenQuery.eq("eigenaar_id", user.id);
+  }
+
+  const { data: kandidaten, count: kandidaatTotaal } = await kandidatenQuery;
 
   const totalPages = Math.ceil((kandidaatTotaal ?? 0) / PAGE_SIZE);
 
