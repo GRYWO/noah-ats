@@ -32,7 +32,11 @@ export async function TopBar({ active }: Props) {
   const isSuperAdmin = echteIsSuperAdmin && !demoActief;
   const isSetter = actieveRol === "setter";
   const isRecruiter = actieveRol === "recruiter";
-  const menuPermissions = (profile?.menu_permissions ?? null) as Record<string, boolean> | null;
+  // In demo-modus negeren we eigen menu_permissions — anders worden Yorith's
+  // persoonlijke menu-toggles toegepast op de demo-rol (= incorrecte preview).
+  const menuPermissions = demoActief
+    ? null
+    : (profile?.menu_permissions ?? null) as Record<string, boolean> | null;
 
   return (
     <>
