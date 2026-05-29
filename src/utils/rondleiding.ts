@@ -13,7 +13,7 @@ export const RONDLEIDING_PADEN = [
   "/opdrachtgevers",
   "/jobdigger",
   "/coaching",
-  "/setters",
+  "/users",
 ];
 
 export const RONDLEIDING_KEY = "noah-rondleiding-actief";

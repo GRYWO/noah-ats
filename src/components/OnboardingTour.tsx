@@ -97,7 +97,7 @@ const STAPPEN_TOOLS: Step[] = [
 
 const STAPPEN_BEHEER_ADMIN: Step[] = [
   {
-    target: 'a[href="/setters"]',
+    target: 'a[href="/users"]',
     title: "Setters & users",
     content:
       "Hier voeg je nieuwe setters, recruiters en admins toe. Ze krijgen automatisch een welkomstmail met inloggegevens.",

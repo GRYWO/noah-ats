@@ -21,6 +21,6 @@ export async function toggleSalesAdmin(userId: string) {
     .from("profiles")
     .update({ kan_abonnementen_beheren: !huidig?.kan_abonnementen_beheren })
     .eq("id", userId);
-  revalidatePath("/setters");
+  revalidatePath("/users");
   return { ok: true };
 }

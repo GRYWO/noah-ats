@@ -86,7 +86,7 @@ export default async function SettersPage({
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="setters" />
-      <PaginaTour pad="/setters" naam="Setters" stappen={TOUR_SETTERS} />
+      <PaginaTour pad="/users" naam="Setters" stappen={TOUR_SETTERS} />
 
       <div className="p-8 max-w-6xl mx-auto">
         <div className="mb-6">

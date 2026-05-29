@@ -46,7 +46,7 @@ export async function setCoachStatus(formData: FormData) {
     .eq("id", userId);
   if (error) return { error: error.message };
 
-  revalidatePath("/setters");
+  revalidatePath("/users");
   revalidatePath("/coaching");
   return { ok: true };
 }

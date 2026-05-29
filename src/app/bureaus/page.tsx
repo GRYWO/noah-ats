@@ -7,7 +7,7 @@ import { isSalesAdmin } from "@/utils/sales-admin";
 import { TopBar } from "@/components/TopBar";
 import { nieuwBureau } from "./actions";
 import { BetaaldSelect } from "./BetaaldSelect";
-import { ResetWachtwoordKnop } from "@/app/setters/ResetWachtwoordKnop";
+import { ResetWachtwoordKnop } from "@/app/users/ResetWachtwoordKnop";
 import { InloggegevensKnop } from "./InloggegevensKnop";
 
 export default async function BureausPage({

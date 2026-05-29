@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, X, Loader2, Check, UserPlus } from "lucide-react";
-import { setCoachStatus } from "@/app/setters/coach-actions";
+import { setCoachStatus } from "@/app/users/coach-actions";
 
 type User = { id: string; voornaam: string | null; achternaam: string | null; rol: string; is_coach: boolean };
 
@@ -96,7 +96,7 @@ export function CoachToevoegenKnop({ users }: { users: User[] }) {
               )}
 
               <Link
-                href="/setters"
+                href="/users"
                 className="block text-center text-xs text-[#333399] hover:underline mt-2"
               >
                 Nieuwe user aanmaken → ga naar Users

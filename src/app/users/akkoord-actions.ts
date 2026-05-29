@@ -15,7 +15,7 @@ import { sendAkkoordTerOndertekening } from "@/utils/email";
  */
 export async function stuurAkkoordUit(formData: FormData) {
   const userId = formData.get("user_id") as string;
-  if (!userId) redirect("/setters?error=User+ontbreekt");
+  if (!userId) redirect("/users?error=User+ontbreekt");
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -28,7 +28,7 @@ export async function stuurAkkoordUit(formData: FormData) {
     .eq("id", user.id)
     .single();
   if (!isSuperAdmin && myProfile?.rol !== "admin") {
-    redirect("/setters?error=Geen+rechten");
+    redirect("/users?error=Geen+rechten");
   }
 
   const admin = createAdminClient();
@@ -39,12 +39,12 @@ export async function stuurAkkoordUit(formData: FormData) {
     .select("id, voornaam, achternaam, mail_adres, rol, tenant_id")
     .eq("id", userId)
     .single();
-  if (!doel) redirect("/setters?error=User+niet+gevonden");
+  if (!doel) redirect("/users?error=User+niet+gevonden");
 
   // E-mail van auth.users ophalen voor verzending
   const { data: authData } = await admin.auth.admin.getUserById(userId);
   const mailNaar = doel.mail_adres || authData.user?.email;
-  if (!mailNaar) redirect("/setters?error=Geen+mailadres+voor+deze+user");
+  if (!mailNaar) redirect("/users?error=Geen+mailadres+voor+deze+user");
 
   // Bureau-naam (snapshot)
   const { data: tenant } = await admin
@@ -70,7 +70,7 @@ export async function stuurAkkoordUit(formData: FormData) {
     user_rol: doel.rol,
     bureau_naam: tenant?.handelsnaam || tenant?.naam || null,
   });
-  if (insErr) redirect(`/setters?error=${encodeURIComponent(insErr.message)}`);
+  if (insErr) redirect(`/users?error=${encodeURIComponent(insErr.message)}`);
 
   try {
     await sendAkkoordTerOndertekening({
@@ -81,11 +81,11 @@ export async function stuurAkkoordUit(formData: FormData) {
     });
   } catch (e) {
     console.error("Akkoord-mail mislukt:", e);
-    redirect(`/setters?error=${encodeURIComponent("Mail kon niet verstuurd worden")}`);
+    redirect(`/users?error=${encodeURIComponent("Mail kon niet verstuurd worden")}`);
   }
 
-  revalidatePath("/setters");
-  redirect("/setters?ok=akkoord_verzonden");
+  revalidatePath("/users");
+  redirect("/users?ok=akkoord_verzonden");
 }
 
 /**
@@ -110,5 +110,5 @@ export async function trekAkkoordIn(formData: FormData) {
   const { data: row } = await admin.from("user_agreements").select("status").eq("id", id).single();
   if (!row || row.status === "getekend") return;
   await admin.from("user_agreements").update({ status: "ingetrokken" }).eq("id", id);
-  revalidatePath("/setters");
+  revalidatePath("/users");
 }

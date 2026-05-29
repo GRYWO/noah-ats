@@ -62,7 +62,7 @@ type Props = {
 };
 
 /**
- * Klikbare rij in /setters. Klik op de rij opent de bewerk-modal,
+ * Klikbare rij in /users. Klik op de rij opent de bewerk-modal,
  * behalve op de interactieve cellen (Voys-edit, coach-toggle, acties)
  * — die hebben hun eigen click-stop in een wrapper-div.
  */

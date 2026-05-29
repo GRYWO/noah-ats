@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Send, Loader2, CheckCircle2 } from "lucide-react";
-import { verstuurReply } from "@/app/setters/aanvragen-actions";
+import { verstuurReply } from "@/app/users/aanvragen-actions";
 
 type Props = {
   token: string;

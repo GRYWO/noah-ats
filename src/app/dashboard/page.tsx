@@ -209,7 +209,7 @@ async function AdminDashboard() {
           <div className="text-3xl font-bold text-emerald-600">{geplaatst}</div>
           <div className="text-xs text-gray-400 mt-1">Succesvolle plaatsingen</div>
         </div>
-        <Link href="/setters" className="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition group">
+        <Link href="/users" className="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition group">
           <div className="text-xs uppercase text-gray-500 font-semibold mb-2">Setters</div>
           <div className="text-3xl font-bold text-purple-600">{totaalSetters}</div>
           <div className="text-xs text-gray-400 mt-1 group-hover:text-purple-600">Beheer team</div>

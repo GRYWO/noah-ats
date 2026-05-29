@@ -188,7 +188,7 @@ export async function BureauAdminDashboard({ tenantId, bureauNaam }: { tenantId:
       {/* Snelkoppelingen */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <SnelLink
-          href="/setters"
+          href="/users"
           titel="Recruiters beheren"
           beschrijving="Voeg recruiters toe en beheer hun gegevens. Setters worden centraal door GRYWO geregeld."
           icoon={<UserPlus size={20} />}

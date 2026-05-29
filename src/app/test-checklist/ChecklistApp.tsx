@@ -33,7 +33,7 @@ const CHECKLIST: Categorie[] = [
     naam: "3. Bureau-admin flow",
     tests: [
       { id: "bedrijfsgegevens", titel: "Bedrijfsgegevens opslaan", instructie: "Op dashboard: vul contactpersoon/telefoon/adres in → Opslaan. Blijft staan na refresh?", pad: "/dashboard" },
-      { id: "recruiter-toevoegen", titel: "Recruiter toevoegen", instructie: "/setters → Nieuwe user toevoegen. Zie je alleen 'Recruiter' als rol (geen dropdown)?", pad: "/setters" },
+      { id: "recruiter-toevoegen", titel: "Recruiter toevoegen", instructie: "/setters → Nieuwe user toevoegen. Zie je alleen 'Recruiter' als rol (geen dropdown)?", pad: "/users" },
       { id: "recruiter-mail", titel: "Recruiter krijgt welkomstmail", instructie: "Check inbox van die recruiter. Welkomstmail met inloggegevens?" },
     ],
   },
@@ -76,7 +76,7 @@ const CHECKLIST: Categorie[] = [
   {
     naam: "8. Extra checks",
     tests: [
-      { id: "reset-setters", titel: "Wachtwoord reset", instructie: "/setters → klik 'Wachtwoord resetten' bij een user. Mail komt aan met nieuw wachtwoord?", pad: "/setters" },
+      { id: "reset-setters", titel: "Wachtwoord reset", instructie: "/setters → klik 'Wachtwoord resetten' bij een user. Mail komt aan met nieuw wachtwoord?", pad: "/users" },
       { id: "reset-bureau", titel: "Inloggegevens bureau", instructie: "/bureaus → bij bureau zonder admin: 'Inloggegevens sturen'. Mail komt aan?", pad: "/bureaus" },
       { id: "notificatie", titel: "Notificatie + pieptoon", instructie: "Stuur een setter-reactie of help-vraag. Krijgt de ontvanger een melding in de bel met pieptoon?" },
     ],

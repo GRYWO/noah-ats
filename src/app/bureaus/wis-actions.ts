@@ -88,6 +88,6 @@ export async function wisAlleTestdata(): Promise<{ ok?: boolean; error?: string;
 
   revalidatePath("/bureaus");
   revalidatePath("/kandidaten");
-  revalidatePath("/setters");
+  revalidatePath("/users");
   return { ok: true, samenvatting: samenvatting.join(" · ") };
 }

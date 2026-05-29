@@ -85,7 +85,7 @@ export async function resetUserWachtwoord(formData: FormData): Promise<{ ok?: bo
     return { error: "Wachtwoord gereset, maar mail mislukt: " + msg };
   }
 
-  revalidatePath("/setters");
+  revalidatePath("/users");
   revalidatePath("/bureaus");
   return { ok: true };
 }

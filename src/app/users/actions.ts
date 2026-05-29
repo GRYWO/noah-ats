@@ -25,7 +25,7 @@ export async function nieuweSetter(formData: FormData) {
     .single();
 
   if (!myProfile || myProfile.rol !== "admin") {
-    redirect("/setters?error=Alleen+admins+kunnen+users+toevoegen");
+    redirect("/users?error=Alleen+admins+kunnen+users+toevoegen");
   }
 
   const email           = (formData.get("email") as string)?.trim().toLowerCase();
@@ -45,7 +45,7 @@ export async function nieuweSetter(formData: FormData) {
   }
 
   if (!email || !wachtwoord || wachtwoord.length < 8) {
-    redirect(`/setters?error=${encodeURIComponent("E-mail + wachtwoord (min 8 tekens) verplicht")}`);
+    redirect(`/users?error=${encodeURIComponent("E-mail + wachtwoord (min 8 tekens) verplicht")}`);
   }
 
   const admin = createAdminClient();
@@ -58,7 +58,7 @@ export async function nieuweSetter(formData: FormData) {
   });
 
   if (createErr || !created.user) {
-    redirect(`/setters?error=${encodeURIComponent(createErr?.message ?? "Aanmaken mislukt")}`);
+    redirect(`/users?error=${encodeURIComponent(createErr?.message ?? "Aanmaken mislukt")}`);
   }
 
   // Auto handtekening bouwen via centrale helper
@@ -107,7 +107,7 @@ export async function nieuweSetter(formData: FormData) {
   if (profileErr) {
     // Cleanup user als profile mislukt
     await admin.auth.admin.deleteUser(created.user.id);
-    redirect(`/setters?error=${encodeURIComponent(profileErr.message)}`);
+    redirect(`/users?error=${encodeURIComponent(profileErr.message)}`);
   }
 
   // Nieuwe setter? → verwerk wachtrij (kandidaten zonder eigenaar)
@@ -157,9 +157,9 @@ export async function nieuweSetter(formData: FormData) {
   // de akkoord heeft getekend en de welkomstmail met inloggegevens ontvangt.
   void wachtwoord;
 
-  revalidatePath("/setters");
+  revalidatePath("/users");
   revalidatePath("/kandidaten");
-  redirect("/setters?ok=1");
+  redirect("/users?ok=1");
 }
 
 export async function bewerkUser(formData: FormData) {
@@ -226,7 +226,7 @@ export async function bewerkUser(formData: FormData) {
   const { error } = await q;
   if (error) return { error: error.message };
 
-  revalidatePath("/setters");
+  revalidatePath("/users");
   return { ok: true };
 }
 
@@ -252,7 +252,7 @@ export async function updateSetterVoysNummer(formData: FormData) {
     .eq("id", id)
     .eq("tenant_id", myProfile.tenant_id);
 
-  revalidatePath("/setters");
+  revalidatePath("/users");
 }
 
 export async function verwijderSetter(formData: FormData) {
@@ -263,7 +263,7 @@ export async function verwijderSetter(formData: FormData) {
   if (!user) redirect("/login");
 
   if (user.id === id) {
-    redirect("/setters?error=Je+kunt+jezelf+niet+verwijderen");
+    redirect("/users?error=Je+kunt+jezelf+niet+verwijderen");
   }
 
   const { data: myProfile } = await supabase
@@ -273,7 +273,7 @@ export async function verwijderSetter(formData: FormData) {
     .single();
 
   if (myProfile?.rol !== "admin") {
-    redirect("/setters?error=Alleen+admins");
+    redirect("/users?error=Alleen+admins");
   }
 
   const admin = createAdminClient();
@@ -293,7 +293,7 @@ export async function verwijderSetter(formData: FormData) {
   await admin.from("profiles").delete().eq("id", id);
   await admin.auth.admin.deleteUser(id);
 
-  revalidatePath("/setters");
+  revalidatePath("/users");
   revalidatePath("/kandidaten");
-  redirect("/setters?ok=verwijderd");
+  redirect("/users?ok=verwijderd");
 }
