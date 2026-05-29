@@ -10,6 +10,7 @@ import { RondleidingStarter } from "@/components/RondleidingStarter";
 import { BureauAdminDashboard } from "./BureauAdminDashboard";
 import { BotsStatus } from "./BotsStatus";
 import { DemoKnoppen } from "./DemoKnoppen";
+import { RecruiterDashboard } from "./RecruiterDashboard";
 import { leesViewAs, effectieveRol } from "@/utils/view-as";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
@@ -82,6 +83,7 @@ export default async function Dashboard({
   const { rol: actieveRol, demoActief } = effectieveRol(myProfile?.rol, echteIsSuperAdmin, viewAs);
 
   const isSetter = actieveRol === "setter";
+  const isRecruiter = actieveRol === "recruiter";
   const isSuperAdmin = echteIsSuperAdmin && !demoActief;
   const isBureauAdmin = actieveRol === "admin" && !isSuperAdmin;
 
@@ -115,13 +117,15 @@ export default async function Dashboard({
 
         {isSetter
           ? <SetterDashboard userId={user!.id} />
-          : isBureauAdmin
-            ? <BureauAdminDashboard tenantId={myProfile!.tenant_id!} bureauNaam={tenant?.naam ?? "jouw bureau"} />
-            : <AdminDashboard />
+          : isRecruiter
+            ? <RecruiterDashboard />
+            : isBureauAdmin
+              ? <BureauAdminDashboard tenantId={myProfile!.tenant_id!} bureauNaam={tenant?.naam ?? "jouw bureau"} />
+              : <AdminDashboard />
         }
 
-        {/* Performance / leaderboard — niet voor bureau-admin (zij krijgen simpel dashboard) */}
-        {!isBureauAdmin && (
+        {/* Performance / leaderboard — niet voor bureau-admin of recruiter */}
+        {!isBureauAdmin && !isRecruiter && (
           <SetterPerformance
             periode={periode}
             beperkTotUserId={isSetter ? user!.id : undefined}
