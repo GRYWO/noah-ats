@@ -688,46 +688,107 @@ async function AdminVandaagOverzicht({ tenantId, vandaag }: { tenantId: string; 
   const admin = createAdminClient();
   const { data: setters } = await admin
     .from("profiles")
-    .select("id, voornaam, achternaam")
+    .select("id, voornaam, achternaam, rol")
     .eq("tenant_id", tenantId)
-    .eq("rol", "setter")
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .in("rol", ["setter", "recruiter"]);
   const { data: eodVandaag } = await admin
     .from("eod_rapporten")
     .select("*")
     .eq("tenant_id", tenantId)
     .eq("rapport_datum", vandaag);
 
-  const map = new Map((eodVandaag ?? []).map(r => [r.setter_id, r as EodLight]));
+  const map = new Map((eodVandaag ?? []).map((r) => [r.setter_id, r as EodLight]));
+
+  if (!setters || setters.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
+        <Sparkles size={28} className="mx-auto mb-2 text-gray-300" />
+        <p className="text-sm font-semibold">Geen actieve setters/recruiters</p>
+        <p className="text-xs mt-1">Zodra er setters worden toegevoegd, verschijnen ze hier met hun EOD vandaag.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm divide-y">
-      {(setters ?? []).map((s) => {
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {setters.map((s) => {
         const r = map.get(s.id);
-        const naam = `${s.voornaam ?? ""} ${s.achternaam ?? ""}`.trim();
+        const naam = `${s.voornaam ?? ""} ${s.achternaam ?? ""}`.trim() || "—";
+        const initialen = `${(s.voornaam ?? "?")[0]}${(s.achternaam ?? "")[0] ?? ""}`.toUpperCase();
+        let statusBorder = "border-gray-200";
+        let statusBadge = <span className="text-[10px] font-bold uppercase text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Nog niet ingevuld</span>;
+        if (r) {
+          if (r.doel_behaald) {
+            statusBorder = "border-emerald-300";
+            statusBadge = <span className="text-[10px] font-bold uppercase text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1"><CheckCircle2 size={10} /> Doel behaald</span>;
+          } else {
+            statusBorder = "border-red-300";
+            statusBadge = <span className="text-[10px] font-bold uppercase text-red-700 bg-red-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1"><XCircle size={10} /> Niet behaald</span>;
+          }
+        }
         return (
-          <div key={s.id} className="px-5 py-3 flex items-center gap-3">
-            {!r ? (
-              <span className="w-2.5 h-2.5 rounded-full bg-gray-300" title="Nog niet ingevuld" />
-            ) : r.doel_behaald ? (
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" title="Doel behaald" />
-            ) : (
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" title="Doel niet behaald" />
-            )}
-            <div className="flex-1">
-              <div className="font-semibold text-sm text-gray-800">{naam}</div>
-              <div className="text-xs text-gray-500 truncate">
-                {!r ? "Nog geen rapport vandaag" : (r.doel_vandaag ?? "Geen doel ingevuld")}
+          <div key={s.id} className={`bg-white rounded-xl shadow-sm p-5 border-2 ${statusBorder}`}>
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-[#333399] text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
+                {initialen}
               </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-sm text-gray-800 truncate">{naam}</div>
+                <div className="text-[11px] text-gray-500 capitalize">{s.rol}</div>
+              </div>
+              {statusBadge}
             </div>
-            {r && (
-              <div className="text-xs text-gray-500 hidden md:flex gap-3">
-                <span><b>{r.aantal_calls ?? 0}</b> calls</span>
-                <span><b>{r.aantal_afspraken ?? 0}</b> afspraken</span>
-                <span><b>{r.aantal_plaatsingen ?? 0}</b> plaatsingen</span>
+
+            {/* Body */}
+            {!r ? (
+              <div className="bg-gray-50 rounded-lg p-3 text-center text-xs text-gray-500 italic">
+                Nog geen rapport vandaag
               </div>
+            ) : (
+              <>
+                <div className="space-y-2 mb-3">
+                  <div>
+                    <div className="text-[10px] uppercase font-bold text-gray-400">Doel vandaag</div>
+                    <div className="text-xs text-gray-700">{r.doel_vandaag ?? "—"}</div>
+                  </div>
+                  {r.obstakel && (
+                    <div>
+                      <div className="text-[10px] uppercase font-bold text-gray-400">Obstakel</div>
+                      <div className="text-xs text-gray-700">{r.obstakel}</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* KPIs */}
+                <div className="grid grid-cols-3 gap-2 mb-3 pt-3 border-t border-gray-100">
+                  <div className="text-center">
+                    <div className="text-base font-bold text-[#333399]">{r.aantal_calls ?? 0}</div>
+                    <div className="text-[9px] uppercase text-gray-500">Calls</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-base font-bold text-[#333399]">{r.aantal_afspraken ?? 0}</div>
+                    <div className="text-[9px] uppercase text-gray-500">Afspraken</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-base font-bold text-emerald-600">{r.aantal_plaatsingen ?? 0}</div>
+                    <div className="text-[9px] uppercase text-gray-500">Plaatsingen</div>
+                  </div>
+                </div>
+
+                {r.morgen_anders && (
+                  <div className="text-[11px] text-gray-600 pt-2 border-t border-gray-100">
+                    <b>Morgen anders:</b> {r.morgen_anders}
+                  </div>
+                )}
+              </>
             )}
-            <SetterReactieKnop setterId={s.id} setterNaam={naam} />
+
+            {/* Reactie-knop */}
+            <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
+              <SetterReactieKnop setterId={s.id} setterNaam={naam} />
+            </div>
           </div>
         );
       })}
