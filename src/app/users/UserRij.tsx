@@ -6,6 +6,7 @@ import { Pencil, X, Loader2, ShieldCheck, Send, CheckCircle2, Clock, RefreshCw }
 import { InlineVoysEdit } from "./InlineVoysEdit";
 import { CoachToggle } from "./CoachToggle";
 import { SalesAdminToggle } from "./SalesAdminToggle";
+import { InternToggle } from "./InternToggle";
 import { ResetWachtwoordKnop } from "./ResetWachtwoordKnop";
 import { DeleteSetterButton } from "./DeleteSetterButton";
 import { bewerkUser } from "./actions";
@@ -35,6 +36,7 @@ type SetterRecord = {
   functie_titel: string | null;
   is_coach: boolean | null;
   kan_abonnementen_beheren?: boolean | null;
+  is_intern_personeel?: boolean | null;
   created_at: string | null;
   menu_permissions: Record<string, boolean> | null;
 };
@@ -144,8 +146,11 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSu
         {isAdmin && (
           <td className="px-4 py-3 text-right" onClick={stop}>
             <div className="inline-flex items-center gap-2">
-              {viewerIsSuperAdmin && !isSuperAdmin && (
-                <SalesAdminToggle userId={s.id} actief={!!s.kan_abonnementen_beheren} />
+              {viewerIsSuperAdmin && !isSuperAdmin && s.rol === "admin" && (
+                <>
+                  <InternToggle userId={s.id} actief={!!s.is_intern_personeel} />
+                  <SalesAdminToggle userId={s.id} actief={!!s.kan_abonnementen_beheren} />
+                </>
               )}
               <button
                 type="button"

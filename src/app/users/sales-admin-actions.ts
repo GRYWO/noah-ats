@@ -24,3 +24,23 @@ export async function toggleSalesAdmin(userId: string) {
   revalidatePath("/users");
   return { ok: true };
 }
+
+export async function toggleInternPersoneel(userId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !isSuperAdminEmail(user.email)) {
+    return { ok: false, error: "Alleen super-admin" };
+  }
+  const admin = createAdminClient();
+  const { data: huidig } = await admin
+    .from("profiles")
+    .select("is_intern_personeel")
+    .eq("id", userId)
+    .single();
+  await admin
+    .from("profiles")
+    .update({ is_intern_personeel: !huidig?.is_intern_personeel })
+    .eq("id", userId);
+  revalidatePath("/users");
+  return { ok: true };
+}

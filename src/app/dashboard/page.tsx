@@ -68,7 +68,7 @@ export default async function Dashboard({
 
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("voornaam, rol, tenant_id, onboarding_voltooid, onboarding_versie, kan_abonnementen_beheren")
+    .select("voornaam, rol, tenant_id, onboarding_voltooid, onboarding_versie, kan_abonnementen_beheren, is_intern_personeel")
     .eq("id", user!.id)
     .single();
 
@@ -86,11 +86,11 @@ export default async function Dashboard({
   const isSetter = actieveRol === "setter";
   const isRecruiter = actieveRol === "recruiter";
   const isSuperAdmin = echteIsSuperAdmin && !demoActief;
-  // Sales-admin (Pepijn) = intern personeel, krijgt volledige admin-view (geen bureau-view).
-  const isSalesAdmin = !!myProfile?.kan_abonnementen_beheren;
-  // Echte bureau-admin = admin rol zonder super-admin én geen sales-admin, of demo "bureau_admin" keuze.
+  // Intern personeel (Pepijn met sales-rechten, Wouter zonder) = volledige admin-view.
+  const isInternPersoneel = !!myProfile?.is_intern_personeel || !!myProfile?.kan_abonnementen_beheren;
+  // Echte bureau-admin = admin rol zonder super-admin én geen intern personeel, of demo "bureau_admin" keuze.
   // (demo "admin" = volledige admin-view, demo "bureau_admin" = simpele bureau-view)
-  const isBureauAdmin = viewAs === "bureau_admin" || (actieveRol === "admin" && !isSuperAdmin && !isSalesAdmin && !demoActief);
+  const isBureauAdmin = viewAs === "bureau_admin" || (actieveRol === "admin" && !isSuperAdmin && !isInternPersoneel && !demoActief);
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
