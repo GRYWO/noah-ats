@@ -31,6 +31,7 @@ export async function TopBar({ active }: Props) {
   // Effectief: in demo-modus is de user geen super-admin meer voor UI
   const isSuperAdmin = echteIsSuperAdmin && !demoActief;
   const isSetter = actieveRol === "setter";
+  const isRecruiter = actieveRol === "recruiter";
   const menuPermissions = (profile?.menu_permissions ?? null) as Record<string, boolean> | null;
 
   return (
@@ -43,6 +44,7 @@ export async function TopBar({ active }: Props) {
         userId={user?.id ?? ""}
         isSuperAdmin={isSuperAdmin}
         isSetter={isSetter}
+        isRecruiter={isRecruiter}
         menuPermissions={menuPermissions}
         logoutAction={logout}
       />

@@ -38,13 +38,14 @@ type Props = {
   userId: string;
   isSuperAdmin: boolean;
   isSetter: boolean;
+  isRecruiter?: boolean;
   menuPermissions: Record<string, boolean> | null;
   logoutAction: () => Promise<void>;
 };
 
 type SidebarModus = "handmatig" | "hover" | "altijd-open";
 
-export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, menuPermissions, logoutAction }: Props) {
+export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isRecruiter, menuPermissions, logoutAction }: Props) {
   const [open, setOpen] = useState(false);
   const [modus, setModus] = useState<SidebarModus>("hover");
 
@@ -93,7 +94,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, men
 
     // Sectie 3: Relaties & tools
     { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",          Icon: Contact,       sectie: 3 },
-    { key: "jobdigger",      href: "/jobdigger",      label: "Jobdigger",    Icon: PhoneCall,     sectie: 3 } as Item,
+    ...(!isRecruiter ? [{ key: "jobdigger", href: "/jobdigger", label: "Jobdigger", Icon: PhoneCall, sectie: 3 } as Item] : []),
     ...(!isSetter ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 3 } as Item] : []),
 
     // Sectie 4: Communicatie
