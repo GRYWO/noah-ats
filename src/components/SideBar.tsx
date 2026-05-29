@@ -99,8 +99,10 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
 
     // Sectie 3: Relaties & tools
     { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",          Icon: Contact,       sectie: 3 },
+    // Jobdigger: alleen voor setters + admins/super-admin (NIET recruiter, NIET bureau-admin)
     ...(!isRecruiter && !isBureauAdmin ? [{ key: "jobdigger", href: "/jobdigger", label: "Jobdigger", Icon: PhoneCall, sectie: 3 } as Item] : []),
-    ...(!isSetter && !isBureauAdmin ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 3 } as Item] : []),
+    // Robin: voor recruiters + admins (NIET setter). Bureau-admin ziet hem ook want admin moet Robin kunnen gebruiken
+    ...(!isSetter ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 3 } as Item] : []),
 
     // Sectie 4: Communicatie
     { key: "inbox",          href: "/inbox",          label: "E-mail",       Icon: Mail,          sectie: 4 },
