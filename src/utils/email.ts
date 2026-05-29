@@ -827,7 +827,7 @@ function extensieBlok(): string {
   <div style="font-size:14px;font-weight:700;color:${GRYWO_KLEUR};margin-bottom:6px;">📥 Installeer de Chrome-extensie</div>
   <p style="margin:0 0 12px 0;font-size:13px;color:#444;line-height:1.5;">
     Maakt <b>Robin</b> en <b>Jobdigger</b> direct bruikbaar binnen Noah ATS.
-    CV-downloads van Jobdigger worden automatisch toegevoegd aan de actieve kandidaat.
+    Vacature-exports uit Jobdigger worden automatisch toegevoegd aan je bellijst in Noah.
   </p>
   <a href="${CHROME_EXTENSIE_URL}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:bold;font-size:13px;">
     Installeer in Chrome

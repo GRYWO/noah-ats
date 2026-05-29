@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Noah ATS — Embed Helper",
-  "version": "1.3.0",
-  "description": "Maakt Robin en Jobdigger bruikbaar binnen Noah ATS en importeert Jobdigger-downloads automatisch naar de actieve kandidaat.",
+  "version": "1.3.1",
+  "description": "Maakt Robin en Jobdigger bruikbaar binnen Noah ATS en importeert vacature-exports uit Jobdigger automatisch in je bellijst.",
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
