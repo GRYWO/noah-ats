@@ -44,6 +44,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/mijn-data") ||     // publieke inzage/wis-flow voor kandidaten (AVG art. 15+17)
     path.startsWith("/contract-controle") || // publieke contract-upload door opdrachtgever
     path.startsWith("/kies-datum") ||         // kandidaat kiest datum uit mail
+    path.startsWith("/reageer") ||            // GRYWO reply op aanvraag (token)
     path.startsWith("/api/cron");   // cron jobs (eigen secret)
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
