@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
+import { HuisstijlSectie } from "./HuisstijlSectie";
 import { TopBar } from "@/components/TopBar";
 import { updateBureau } from "./actions";
 import { stuurDpaUit, trekDpaIn } from "./dpa-actions";
@@ -96,6 +97,16 @@ export default async function BureauDetail({
             {error}
           </div>
         )}
+
+        {/* Huisstijl (super-admin only — Yorith) */}
+        <HuisstijlSectie
+          tenantId={b.id}
+          bureauNaam={b.naam ?? "bureau"}
+          huidigeLogo={b.huisstijl_logo_url ?? null}
+          primair={b.huisstijl_primair ?? "#333399"}
+          accent={b.huisstijl_accent ?? "#ffd84d"}
+          actief={!!b.huisstijl_actief}
+        />
 
         {/* DPA-status */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">

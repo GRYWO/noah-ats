@@ -6,6 +6,7 @@ import { EodHerinneringBanner } from "./EodHerinneringBanner";
 import { SnelZoeken } from "./SnelZoeken";
 import { AutoRefresh } from "./AutoRefresh";
 import { DemoModusBanner } from "./DemoModusBanner";
+import { HuisstijlInjector } from "./HuisstijlInjector";
 import { leesViewAs, effectieveRol } from "@/utils/view-as";
 
 type Props = {
@@ -42,6 +43,7 @@ export async function TopBar({ active }: Props) {
 
   return (
     <>
+      <HuisstijlInjector />
       <DemoModusBanner />
       <EodHerinneringBanner />
       <SideBar
