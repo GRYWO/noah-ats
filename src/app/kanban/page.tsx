@@ -3,15 +3,25 @@ import { TopBar } from "@/components/TopBar";
 import { KanbanBoard } from "./KanbanBoard";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_KANBAN } from "@/utils/pagina-tours";
+import { getViewerRol } from "@/utils/view-as";
 
 export default async function KanbanPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: kandidaten } = await supabase
+  // Setters en recruiters zien alleen eigen kandidaten in kanban
+  const { isSetter, isRecruiter } = await getViewerRol();
+
+  let q = supabase
     .from("kandidaten")
     .select("id, voornaam, tussenvoegsel, achternaam, kanban_stap, score, open_voor")
     .order("created_at", { ascending: false });
+
+  if ((isSetter || isRecruiter) && user?.id) {
+    q = q.eq("eigenaar_id", user.id);
+  }
+
+  const { data: kandidaten } = await q;
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
