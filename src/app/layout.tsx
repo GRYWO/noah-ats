@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { PWARegister } from "@/components/PWARegister";
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -16,6 +17,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Noah ATS",
   description: "Het ATS-platform voor recruitment bureaus",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Noah",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#333399",
 };
 
 export default function RootLayout({
@@ -38,6 +53,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
+        <PWARegister />
         {children}
       </body>
     </html>

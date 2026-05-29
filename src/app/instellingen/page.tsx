@@ -8,6 +8,7 @@ import { nieuwMailAccount, verwijderMailAccount, maakPrimair } from "./mail-acti
 import { updateMailTemplate, resetMailTemplate } from "./template-actions";
 import { TEMPLATE_META, DEFAULT_BODIES, type TemplateSleutel } from "@/utils/mail-templates";
 import { TourHerstartKnop } from "./TourHerstartKnop";
+import { PushAanmeldKnop } from "@/components/PushAanmeldKnop";
 import { MfaSectie } from "./MfaSectie";
 import { ThemaSectie } from "./ThemaSectie";
 import { SidebarSectie } from "./SidebarSectie";
@@ -84,6 +85,16 @@ export default async function InstellingenPage({
 
         {/* Voorkeuren: desktop-notif + auto-refresh */}
         <VoorkeurenSectie />
+
+        {/* Web Push: notificaties ook als Noah-tab gesloten is */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h2 className="font-bold text-gray-800 mb-1">Notificaties op de achtergrond</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Ontvang Noah-notificaties (nieuwe mail, voorstel-update, etc.) ook als deze tab gesloten is.
+            Installeer Noah als app via je browser-menu voor de beste ervaring.
+          </p>
+          <PushAanmeldKnop />
+        </div>
 
         {/* Persoonlijk + handtekening */}
         <form action={updateMailConfig} className="space-y-6 mb-8">

@@ -153,6 +153,20 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
     await client.logout().catch(() => {});
   }
 
+  // Push notificatie als er nieuwe mail is — niet awaiten zodat sync snel blijft
+  if (totaalNieuw > 0 && account.user_id) {
+    import("@/utils/push")
+      .then(({ stuurPushNaarUser }) =>
+        stuurPushNaarUser(account.user_id, {
+          title: totaalNieuw === 1 ? "📬 1 nieuwe mail" : `📬 ${totaalNieuw} nieuwe mails`,
+          body: account.mail_adres,
+          url: "/inbox",
+          tag: "noah-mail",
+        })
+      )
+      .catch((e) => console.error("[mail-sync] push mislukt:", e));
+  }
+
   return { ok: true, nieuw: totaalNieuw };
 }
 
