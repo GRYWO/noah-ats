@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { NotificatieBel } from "./NotificatieBel";
+import { MailBadge } from "./MailBadge";
 import { HelpKnop } from "./HelpKnop";
 import {
   LayoutDashboard,
@@ -165,6 +166,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
             <>
               <it.Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
               {open && <span className="text-sm">{it.label}</span>}
+              {it.key === "inbox" && open && <MailBadge />}
             </>
           );
           return (

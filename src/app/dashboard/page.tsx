@@ -66,11 +66,16 @@ export default async function Dashboard({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: myProfile } = await supabase
-    .from("profiles")
-    .select("voornaam, rol, tenant_id, onboarding_voltooid, onboarding_versie, kan_abonnementen_beheren, is_intern_personeel")
-    .eq("id", user!.id)
-    .single();
+  // Profile + viewAs (cookie) parallel — viewAs hangt niet van profile af
+  const [profileRes, viewAs] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("voornaam, rol, tenant_id, onboarding_voltooid, onboarding_versie, kan_abonnementen_beheren, is_intern_personeel")
+      .eq("id", user!.id)
+      .single(),
+    leesViewAs(),
+  ]);
+  const myProfile = profileRes.data;
 
   const { data: tenant } = await supabase
     .from("tenants")
@@ -79,8 +84,6 @@ export default async function Dashboard({
     .single();
 
   const echteIsSuperAdmin = isSuperAdminEmail(user?.email);
-  // Demo-modus override
-  const viewAs = await leesViewAs();
   const { rol: actieveRol, demoActief } = effectieveRol(myProfile?.rol, echteIsSuperAdmin, viewAs);
 
   const isSetter = actieveRol === "setter";
