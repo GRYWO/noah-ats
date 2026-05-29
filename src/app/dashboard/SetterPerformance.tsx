@@ -81,7 +81,7 @@ export async function SetterPerformance({
   let profielQ = supabase
     .from("profiles")
     .select("id, voornaam, achternaam, rol")
-    .in("rol", ["setter", "recruiter", "admin"]);
+    .eq("rol", "setter");
   if (beperkTotUserId) profielQ = profielQ.eq("id", beperkTotUserId);
   const { data: profielen } = await profielQ;
 
