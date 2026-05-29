@@ -4,6 +4,8 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { HuisstijlSectie } from "./HuisstijlSectie";
+import { AbonnementSectie } from "./AbonnementSectie";
+import { stripeBeschikbaar } from "@/utils/stripe";
 import { TopBar } from "@/components/TopBar";
 import { updateBureau } from "./actions";
 import { stuurDpaUit, trekDpaIn } from "./dpa-actions";
@@ -97,6 +99,9 @@ export default async function BureauDetail({
             {error}
           </div>
         )}
+
+        {/* Abonnement (super-admin only) */}
+        {await renderAbonnementSectie(b, id)}
 
         {/* Huisstijl (super-admin only — Yorith) */}
         <HuisstijlSectie
@@ -361,5 +366,24 @@ export default async function BureauDetail({
         </div>
       </div>
     </main>
+  );
+}
+
+async function renderAbonnementSectie(b: { id: string; naam: string | null; contact_email: string | null; contact_naam: string | null }, _id: string) {
+  const admin = createAdminClient();
+  const { data: ab } = await admin
+    .from("abonnementen")
+    .select("plan, status, max_users, prijs_per_maand_cent, setup_fee_betaald, huidige_periode_einde, gestart_op, stripe_customer_id")
+    .eq("tenant_id", b.id)
+    .maybeSingle();
+  return (
+    <AbonnementSectie
+      tenantId={b.id}
+      bureauNaam={b.naam ?? "bureau"}
+      contactEmail={b.contact_email ?? ""}
+      contactNaam={b.contact_naam ?? ""}
+      abonnement={ab ?? null}
+      stripeBeschikbaar={stripeBeschikbaar()}
+    />
   );
 }
