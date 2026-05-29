@@ -126,10 +126,6 @@ export default async function SettersPage({
                 <AanvragenKnop type="email" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Wachtwoord * (min 8 tekens)</label>
-                <input name="wachtwoord" type="text" required minLength={8} placeholder="setter123..." autoComplete="new-password" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
-              </div>
-              <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Telefoon</label>
                 <input name="telefoon" placeholder="+31 6 12345678" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </div>

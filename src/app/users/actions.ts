@@ -29,7 +29,8 @@ export async function nieuweSetter(formData: FormData) {
   }
 
   const email           = (formData.get("email") as string)?.trim().toLowerCase();
-  const wachtwoord      = (formData.get("wachtwoord") as string)?.trim();
+  // Tijdelijk wachtwoord — wordt toch overschreven na ondertekening NDA/voorwaarden.
+  const wachtwoord      = randomBytes(12).toString("base64").replace(/[+/=]/g, "").slice(0, 14) + "1!";
   const voornaam        = (formData.get("voornaam") as string)?.trim();
   const achternaam      = (formData.get("achternaam") as string)?.trim();
   const telefoon        = (formData.get("telefoon") as string)?.trim() || null;
@@ -44,8 +45,8 @@ export async function nieuweSetter(formData: FormData) {
     rol = "recruiter";
   }
 
-  if (!email || !wachtwoord || wachtwoord.length < 8) {
-    redirect(`/users?error=${encodeURIComponent("E-mail + wachtwoord (min 8 tekens) verplicht")}`);
+  if (!email) {
+    redirect(`/users?error=${encodeURIComponent("E-mail verplicht")}`);
   }
 
   const admin = createAdminClient();
