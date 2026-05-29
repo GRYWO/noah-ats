@@ -101,8 +101,8 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isR
     { key: "inbox",          href: "/inbox",          label: "E-mail",       Icon: Mail,          sectie: 4 },
 
     // Sectie 5: Team & beheer
-    { key: "coaching",       href: "/coaching",       label: "Coaching",     Icon: SparklesIcon,  sectie: 5 } as Item,
-    ...(!isSetter ? [{ key: "setters", href: "/setters", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
+    ...(!isRecruiter ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: SparklesIcon, sectie: 5 } as Item] : []),
+    ...(!isSetter && !isRecruiter ? [{ key: "setters", href: "/setters", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
     { key: "instellingen",   href: "/instellingen",   label: "Instellingen", Icon: Settings,      sectie: 5 },
   ];
 
