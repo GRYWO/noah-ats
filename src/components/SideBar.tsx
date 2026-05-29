@@ -88,7 +88,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSetter, isR
     ...(isSuperAdmin ? [{ key: "bureaus", href: "/bureaus", label: "Bureaus", Icon: Building2, sectie: 1 } as Item] : []),
 
     // Sectie 2: Werkstroom — recruitment
-    { key: "kandidaten",     href: "/kandidaten",     label: "Kandidaten",   Icon: Users,         sectie: 2 },
+    ...(!isBureauAdmin ? [{ key: "kandidaten", href: "/kandidaten", label: "Kandidaten", Icon: Users, sectie: 2 } as Item] : []),
     { key: "kanban",         href: "/kanban",         label: "Kanban",       Icon: KanbanSquare,  sectie: 2 },
     { key: "voorstellen",    href: "/voorstellen",    label: "Voorstellen",  Icon: Send,          sectie: 2 } as Item,
     { key: "agenda",         href: "/agenda",         label: "Agenda",       Icon: Calendar,      sectie: 2 },
