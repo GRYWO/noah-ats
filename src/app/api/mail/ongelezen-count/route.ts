@@ -22,11 +22,11 @@ export async function GET() {
 
   const accountIds = accounts.map((a) => a.id);
 
-  const { data: mailboxen } = await supabase
-    .from("mailboxen")
+  const { data: mappen } = await supabase
+    .from("mail_mappen")
     .select("ongelezen")
     .in("account_id", accountIds);
 
-  const totaal = (mailboxen ?? []).reduce((s, m) => s + (m.ongelezen ?? 0), 0);
+  const totaal = (mappen ?? []).reduce((s, m) => s + (m.ongelezen ?? 0), 0);
   return NextResponse.json({ totaal });
 }

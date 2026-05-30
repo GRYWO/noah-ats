@@ -40,8 +40,8 @@ create index if not exists idx_voorstellen_status on public.voorstellen (status)
 create index if not exists idx_mail_berichten_account_datum
   on public.mail_berichten (account_id, datum desc nulls last);
 
--- Mailboxen: ongelezen count per account_id
-create index if not exists idx_mailboxen_account on public.mailboxen (account_id);
+-- Mail-mappen: ongelezen count per account_id
+create index if not exists idx_mail_mappen_account on public.mail_mappen (account_id);
 
 -- Profiles: setter-leaderboard filtert op rol + tenant
 create index if not exists idx_profiles_rol_tenant on public.profiles (rol, tenant_id);
