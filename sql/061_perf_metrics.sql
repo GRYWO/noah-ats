@@ -46,16 +46,15 @@ create index if not exists idx_mail_mappen_account on public.mail_mappen (accoun
 -- Profiles: setter-leaderboard filtert op rol + tenant
 create index if not exists idx_profiles_rol_tenant on public.profiles (rol, tenant_id);
 
--- Plaatsingen: dashboard telt per setter binnen periode
-create index if not exists idx_plaatsingen_setter_datum
-  on public.plaatsingen (setter_id, geplaatst_op desc);
+-- Plaatsingen: dashboard telt per aangemelde user binnen periode
+create index if not exists idx_plaatsingen_aangemeld_datum
+  on public.plaatsingen (aangemeld_door, created_at desc);
 
--- Notificaties: per user, gesorteerd op aangemaakt
-create index if not exists idx_bericht_threads_user_tijd
-  on public.bericht_threads (user_id, aangemaakt_op desc);
+-- (geen extra index op notificaties — bestaande indexes uit 023_notificaties.sql dekken alles)
 
--- EOD: per setter per dag (admin overzicht)
-create index if not exists idx_eod_setter_dag on public.eod_rapporten (setter_id, datum desc);
+-- EOD: index op (setter_id, rapport_datum desc) bestaat al uit 037_coaching.sql,
+-- dus we voegen hier alleen een extra voor tenant-brede admin queries toe.
+create index if not exists idx_eod_tenant_datum on public.eod_rapporten (tenant_id, rapport_datum desc);
 
 comment on table public.perf_metrics is
   'Latency-log per pageload. Alleen super-admin leest. 30 dagen bewaard.';
