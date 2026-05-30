@@ -38,6 +38,7 @@ export async function GET(req: Request) {
     oude_uitnodigingen_ingetrokken: 0,
     contract_originelen_verwijderd: 0,
     cron_runs_opgeruimd: 0,
+    perf_metrics_opgeruimd: 0,
     fouten: [] as string[],
   };
 
@@ -51,6 +52,18 @@ export async function GET(req: Request) {
     resultaat.cron_runs_opgeruimd = count ?? 0;
   } catch (e) {
     resultaat.fouten.push(`cron-runs-cleanup: ${(e as Error).message}`);
+  }
+
+  // 0b) Oude perf_metrics ouder dan 30 dagen verwijderen
+  try {
+    const dertigDagen = new Date(nu.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await admin
+      .from("perf_metrics")
+      .delete({ count: "exact" })
+      .lt("occurred_at", dertigDagen);
+    resultaat.perf_metrics_opgeruimd = count ?? 0;
+  } catch (e) {
+    resultaat.fouten.push(`perf-metrics-cleanup: ${(e as Error).message}`);
   }
 
   // 1) Afgewezen kandidaten ouder dan 4 weken → verwijderen

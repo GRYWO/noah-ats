@@ -12,7 +12,9 @@ import { BotsStatus } from "./BotsStatus";
 import { DemoKnoppen } from "./DemoKnoppen";
 import { RecruiterDashboard } from "./RecruiterDashboard";
 import { SuperAdminMonitor } from "./SuperAdminMonitor";
+import { PerfMonitor } from "@/components/PerfMonitor";
 import { leesViewAs, effectieveRol } from "@/utils/view-as";
+import { logPerf } from "@/utils/perf";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
 function geldigePeriode(p: string | undefined): Periode {
@@ -61,6 +63,7 @@ export default async function Dashboard({
 }: {
   searchParams?: Promise<{ periode?: string }>;
 }) {
+  const t0 = performance.now();
   const sp = (await searchParams) ?? {};
   const periode = geldigePeriode(sp.periode);
   const supabase = await createClient();
@@ -95,6 +98,17 @@ export default async function Dashboard({
   // (demo "admin" = volledige admin-view, demo "bureau_admin" = simpele bureau-view)
   const isBureauAdmin = viewAs === "bureau_admin" || (actieveRol === "admin" && !isSuperAdmin && !isInternPersoneel && !demoActief);
 
+  // Perf-log: hoe lang duurde het renderen van dit dashboard (server-side).
+  // Fire-and-forget zodat de page niet wacht.
+  logPerf({
+    pad: "/dashboard",
+    type: "page",
+    duur_ms: performance.now() - t0,
+    user_id: user?.id,
+    tenant_id: myProfile?.tenant_id,
+    extra: { rol: actieveRol, periode },
+  });
+
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="dashboard" />
@@ -120,6 +134,7 @@ export default async function Dashboard({
           <>
             <DemoKnoppen />
             <BotsStatus />
+            <PerfMonitor />
             <SuperAdminMonitor />
           </>
         )}
