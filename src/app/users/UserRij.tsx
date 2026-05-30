@@ -172,14 +172,14 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSu
         <tr>
           <td colSpan={isAdmin ? 7 : 6} className="p-0">
             <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setOpen(false)}>
-              <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-                <div className="px-5 py-4 border-b flex items-center justify-between">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="px-5 py-4 border-b flex items-center justify-between flex-shrink-0">
                   <h3 className="font-bold text-gray-800">User bewerken</h3>
                   <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-700">
                     <X size={16} />
                   </button>
                 </div>
-                <form action={onSubmit} className="p-5 grid grid-cols-2 gap-4">
+                <form action={onSubmit} className="p-5 grid grid-cols-2 gap-4 overflow-y-auto">
                   <input type="hidden" name="id" value={s.id} />
 
                   <div>
@@ -215,31 +215,6 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSu
                         <option value="recruiter">Recruiter</option>
                         <option value="admin">Admin</option>
                       </select>
-                    </div>
-                  )}
-
-                  {/* Menu-rechten: alleen super-admin viewer mag dit zetten,
-                      en niet voor zichzelf of een andere super-admin (die hebben altijd alles). */}
-                  {viewerIsSuperAdmin && !isSuperAdmin && (
-                    <div className="col-span-2 pt-3 border-t">
-                      <div className="text-xs font-semibold text-gray-700 mb-2 inline-flex items-center gap-1.5">
-                        <ShieldCheck size={12} className="text-[#333399]" />
-                        Menu-rechten — alleen aangevinkte items verschijnen in het menu
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {MENU_KEYS.map((m) => (
-                          <label key={m.key} className="flex items-center gap-2 text-sm text-gray-700 px-2 py-1 rounded hover:bg-gray-50 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={!!perms[m.key]}
-                              onChange={() => togglePerm(m.key)}
-                              className="accent-[#333399]"
-                            />
-                            <span>{m.label}</span>
-                            {m.uitleg && <span className="text-[10px] text-gray-400 ml-auto">{m.uitleg}</span>}
-                          </label>
-                        ))}
-                      </div>
                     </div>
                   )}
 
