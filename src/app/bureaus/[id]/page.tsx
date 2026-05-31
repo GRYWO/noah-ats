@@ -385,7 +385,7 @@ async function renderAbonnementSectie(b: { id: string; naam: string | null; cont
       contactNaam={b.contact_naam ?? ""}
       abonnement={ab ?? null}
       stripeBeschikbaar={stripeBeschikbaar()}
-      plans={plans}
+      plans={plans.filter((p) => p.sleutel !== "setter_stoel")}
       setupFeeCent={setupFeeCent}
     />
   );
