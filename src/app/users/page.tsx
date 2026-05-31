@@ -9,6 +9,7 @@ import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_SETTERS } from "@/utils/pagina-tours";
 import { AanvragenKnop } from "./AanvragenKnoppen";
 import { SetterAbonnementMelding } from "./SetterAbonnementMelding";
+import { RecruiterAbonnementMelding } from "./RecruiterAbonnementMelding";
 import { BevestigingKnop } from "./BevestigingKnop";
 
 export default async function SettersPage({
@@ -157,6 +158,9 @@ export default async function SettersPage({
 
               {/* Dynamisch: alleen tonen als rol=setter geselecteerd is */}
               <SetterAbonnementMelding />
+
+              {/* Dynamisch: alleen tonen als rol=recruiter geselecteerd is */}
+              <RecruiterAbonnementMelding />
 
               <div className="col-span-2 pt-3 mt-2 border-t">
                 <h4 className="text-xs uppercase text-gray-500 font-semibold mb-2">Mailbox (Hostnet)</h4>

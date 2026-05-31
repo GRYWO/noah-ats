@@ -116,6 +116,20 @@ export async function nieuweSetter(formData: FormData) {
     await verwerkWachtrij(myProfile.tenant_id);
   }
 
+  // Nieuwe recruiter? → check of bureau-abonnement automatisch moet upgraden.
+  // 1 recruiter = Starter, 2 = Pro, 3+ = Enterprise. Stripe past prorata toe.
+  // Fire-and-forget zodat user-aanmaak niet vertraagt door Stripe-call.
+  if (rol === "recruiter") {
+    import("@/utils/abonnement-auto-upgrade")
+      .then(({ checkEnPasAbonnementAan }) => checkEnPasAbonnementAan(myProfile.tenant_id))
+      .then((r) => {
+        if (r.gewijzigd) {
+          console.log(`[auto-upgrade] ${myProfile.tenant_id}: ${r.vorigPlan} → ${r.nieuwPlan} (${r.aantalRecruiters} recruiters)`);
+        }
+      })
+      .catch((e) => console.error("[auto-upgrade]", e));
+  }
+
   // Stuur NIET direct welkomstmail. Eerst NDA / gebruiksvoorwaarden tekenen.
   // Pas na ondertekening krijgt de user de inloggegevens (zie
   // /tekenen/[token]/actions.ts → tekenAkkoord).
@@ -279,10 +293,10 @@ export async function verwijderSetter(formData: FormData) {
 
   const admin = createAdminClient();
 
-  // Haal tenant van verwijderde user op vóór delete
+  // Haal tenant + rol van verwijderde user op vóór delete
   const { data: teVerwijderen } = await admin
     .from("profiles")
-    .select("tenant_id")
+    .select("tenant_id, rol")
     .eq("id", id)
     .single();
 
@@ -293,6 +307,18 @@ export async function verwijderSetter(formData: FormData) {
 
   await admin.from("profiles").delete().eq("id", id);
   await admin.auth.admin.deleteUser(id);
+
+  // Was het een recruiter? → check downgrade van bureau-abonnement
+  if (teVerwijderen?.rol === "recruiter" && teVerwijderen.tenant_id) {
+    import("@/utils/abonnement-auto-upgrade")
+      .then(({ checkEnPasAbonnementAan }) => checkEnPasAbonnementAan(teVerwijderen.tenant_id!))
+      .then((r) => {
+        if (r.gewijzigd) {
+          console.log(`[auto-downgrade] ${teVerwijderen.tenant_id}: ${r.vorigPlan} → ${r.nieuwPlan} (${r.aantalRecruiters} recruiters)`);
+        }
+      })
+      .catch((e) => console.error("[auto-downgrade]", e));
+  }
 
   revalidatePath("/users");
   revalidatePath("/kandidaten");
