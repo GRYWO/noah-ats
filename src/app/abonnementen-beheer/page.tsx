@@ -25,18 +25,30 @@ export default async function AbonnementenBeheerPage({
   const sp = (await searchParams) ?? {};
   const tab = sp.tab === "plannen" ? "plannen" : "overzicht";
 
+  // Notities veilig ophalen — tabel kan nog niet bestaan (SQL 064 niet gerund).
+  // In dat geval geven we lege maps door zodat de UI niet crashed.
+  async function veiligNotitiesOphalen() {
+    try {
+      const { data, error } = await createAdminClient()
+        .from("abonnement_notities")
+        .select("tenant_id, user_id, notitie");
+      if (error) return { data: [] as Array<{ tenant_id: string | null; user_id: string | null; notitie: string }> };
+      return { data: data ?? [] };
+    } catch {
+      return { data: [] as Array<{ tenant_id: string | null; user_id: string | null; notitie: string }> };
+    }
+  }
+
   const [plans, setupFeeCent, overzicht, notitiesRes] = await Promise.all([
     getPlans({ inclusiefInactief: true }),
     getSetupFeeCent(),
     getAbonnementenOverzicht(),
-    createAdminClient()
-      .from("abonnement_notities")
-      .select("tenant_id, user_id, notitie"),
+    veiligNotitiesOphalen(),
   ]);
 
   const notitiesBureau: Record<string, string> = {};
   const notitiesSetter: Record<string, string> = {};
-  for (const n of (notitiesRes.data ?? [])) {
+  for (const n of notitiesRes.data) {
     if (n.tenant_id) notitiesBureau[n.tenant_id] = n.notitie;
     if (n.user_id) notitiesSetter[n.user_id] = n.notitie;
   }
