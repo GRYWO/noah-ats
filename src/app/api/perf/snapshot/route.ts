@@ -12,15 +12,19 @@ export const dynamic = "force-dynamic";
  *
  * Output: ~1-3KB JSON, hooguit 50ms query-tijd dankzij idx_perf_time.
  */
-export async function GET() {
+export async function GET(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !isSuperAdminEmail(user.email)) {
     return NextResponse.json({ error: "Niet toegestaan" }, { status: 403 });
   }
 
+  // Periode: ?u=1 (1 uur) | ?u=24 (default, 24 uur) | ?u=168 (1 week)
+  const url = new URL(req.url);
+  const uren = Math.max(1, Math.min(168, parseInt(url.searchParams.get("u") ?? "24")));
+
   const admin = createAdminClient();
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const since = new Date(Date.now() - uren * 60 * 60 * 1000).toISOString();
 
   // Alle samples van afgelopen 24u — kappen op 20k anders te traag
   const { data: samples } = await admin

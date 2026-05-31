@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Gauge, TrendingUp, AlertTriangle, RefreshCw } from "lucide-react";
+import { Gauge, TrendingUp, AlertTriangle, RefreshCw, Trash2 } from "lucide-react";
 
 type Bucket = {
   pad: string;
@@ -40,16 +40,21 @@ function fmt(ms: number): string {
  * Toont p50/p95/p99 per pad over laatste 24u.
  * Refresh elke 30 sec.
  */
+type Periode = "1u" | "24u" | "1w";
+
 export function PerfMonitor() {
   const [data, setData] = useState<Snapshot | null>(null);
   const [bezig, setBezig] = useState(false);
+  const [periode, setPeriode] = useState<Periode>("24u");
   const [fout, setFout] = useState<string | null>(null);
 
-  async function laden() {
+  const urenVoor = (p: Periode) => (p === "1u" ? 1 : p === "1w" ? 168 : 24);
+
+  async function laden(p: Periode = periode) {
     setBezig(true);
     setFout(null);
     try {
-      const r = await fetch("/api/perf/snapshot", { cache: "no-store" });
+      const r = await fetch(`/api/perf/snapshot?u=${urenVoor(p)}`, { cache: "no-store" });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const j = await r.json();
       setData(j);
@@ -60,11 +65,23 @@ export function PerfMonitor() {
     }
   }
 
+  async function wis() {
+    if (!confirm("Alle perf-metingen wissen? Hierna meet je vanaf nul.")) return;
+    try {
+      const r = await fetch("/api/perf/reset", { method: "POST" });
+      if (!r.ok) throw new Error("Wissen mislukt");
+      await laden();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Onbekende fout");
+    }
+  }
+
   useEffect(() => {
-    laden();
-    const t = setInterval(laden, 30_000);
+    laden(periode);
+    const t = setInterval(() => laden(periode), 30_000);
     return () => clearInterval(t);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periode]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
@@ -78,15 +95,39 @@ export function PerfMonitor() {
             Latency-metingen laatste 24 uur. P50 = mediaan, P95 = 95% sneller dan dit, P99 = worst-case.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={laden}
-          disabled={bezig}
-          className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50"
-          title="Ververs"
-        >
-          <RefreshCw size={14} className={bezig ? "animate-spin" : ""} />
-        </button>
+        <div className="flex items-center gap-1">
+          {(["1u", "24u", "1w"] as Periode[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPeriode(p)}
+              className={`px-2 py-1 text-xs font-semibold rounded-md transition-colors ${
+                periode === p
+                  ? "bg-[#333399] text-white"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => laden()}
+            disabled={bezig}
+            className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50 ml-1"
+            title="Ververs"
+          >
+            <RefreshCw size={14} className={bezig ? "animate-spin" : ""} />
+          </button>
+          <button
+            type="button"
+            onClick={wis}
+            className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"
+            title="Wis alle metingen (na een fix om vanaf nul te meten)"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
 
       {fout && (
