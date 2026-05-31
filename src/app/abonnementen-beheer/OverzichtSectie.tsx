@@ -36,6 +36,9 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function MrrGrafiek({ data }: { data: { maand: string; mrr_cent: number }[] }) {
+  if (!data || data.length === 0) {
+    return <p className="text-xs text-gray-400 text-center py-6">Nog geen meetdata beschikbaar.</p>;
+  }
   const max = Math.max(...data.map((d) => d.mrr_cent), 1);
   const W = 600;
   const H = 140;
@@ -51,7 +54,9 @@ function MrrGrafiek({ data }: { data: { maand: string; mrr_cent: number }[] }) {
     return [x, y] as const;
   });
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ");
-  const fillPath = `${path} L ${points[points.length - 1][0]} ${padY + innerH} L ${points[0][0]} ${padY + innerH} Z`;
+  const laatste = points[points.length - 1];
+  const eerste = points[0];
+  const fillPath = `${path} L ${laatste[0]} ${padY + innerH} L ${eerste[0]} ${padY + innerH} Z`;
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-32" preserveAspectRatio="none">
