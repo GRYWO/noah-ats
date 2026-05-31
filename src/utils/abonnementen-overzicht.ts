@@ -67,30 +67,63 @@ const PLAN_LABELS: Record<string, string> = {
 export async function getAbonnementenOverzicht(): Promise<AbonnementenOverzicht> {
   const admin = createAdminClient();
 
-  // Parallel ophalen
-  const [
-    bureauAbosRes,
-    settersRes,
-    tenantsRes,
-    plannenRes,
-  ] = await Promise.all([
+  // Parallel ophalen — alle queries in try/catch zodat een missende kolom
+  // (bv. nieuwe SQL 062 niet gerund) de hele page niet sloopt.
+  async function veiligQuery<T>(promise: PromiseLike<{ data: unknown; error: unknown }>): Promise<T[]> {
+    try {
+      const res = await promise;
+      if (res.error) {
+        console.error("[overzicht] query-fout:", res.error);
+        return [];
+      }
+      return (res.data ?? []) as T[];
+    } catch (e) {
+      console.error("[overzicht] query-throw:", e);
+      return [];
+    }
+  }
+
+  type BureauRow = {
+    id: string; tenant_id: string; plan: string; status: string;
+    setup_fee_betaald: boolean | null; setup_fee_cent: number | null;
+    prijs_per_maand_cent: number | null; stripe_customer_id: string | null;
+    stripe_subscription_id: string | null; huidige_periode_einde: string | null;
+    gestart_op: string | null; beeindigd_op: string | null;
+  };
+  type SetterRow = {
+    id: string; voornaam: string | null; achternaam: string | null;
+    rol: string; abonnement_status: string | null;
+    abonnement_actief_sinds: string | null; abonnement_opgezegd_op: string | null;
+    stripe_customer_id: string | null; stripe_subscription_id: string | null;
+    tenant_id: string | null;
+  };
+  type TenantRow = { id: string; naam: string; contact_email: string | null };
+  type PlanRow = { sleutel: string; label: string };
+
+  const bureauAbosData = await veiligQuery<BureauRow>(
     admin
       .from("abonnementen")
       .select("id, tenant_id, plan, status, setup_fee_betaald, setup_fee_cent, prijs_per_maand_cent, stripe_customer_id, stripe_subscription_id, huidige_periode_einde, gestart_op, beeindigd_op")
-      .order("gestart_op", { ascending: false }),
+      .order("gestart_op", { ascending: false })
+  );
+  const settersData = await veiligQuery<SetterRow>(
     admin
       .from("profiles")
       .select("id, voornaam, achternaam, rol, abonnement_status, abonnement_actief_sinds, abonnement_opgezegd_op, stripe_customer_id, stripe_subscription_id, tenant_id")
       .eq("rol", "setter")
       .not("stripe_customer_id", "is", null)
-      .order("abonnement_actief_sinds", { ascending: false }),
-    admin
-      .from("tenants")
-      .select("id, naam, contact_email"),
-    admin
-      .from("abonnements_plannen")
-      .select("sleutel, label"),
-  ]);
+  );
+  const tenantsData = await veiligQuery<TenantRow>(
+    admin.from("tenants").select("id, naam, contact_email")
+  );
+  const plannenData = await veiligQuery<PlanRow>(
+    admin.from("abonnements_plannen").select("sleutel, label")
+  );
+
+  const bureauAbosRes = { data: bureauAbosData };
+  const settersRes = { data: settersData };
+  const tenantsRes = { data: tenantsData };
+  const plannenRes = { data: plannenData };
 
   const tenantMap = new Map<string, { naam: string; contact_email: string | null }>();
   for (const t of tenantsRes.data ?? []) {
@@ -101,15 +134,17 @@ export async function getAbonnementenOverzicht(): Promise<AbonnementenOverzicht>
     planLabelMap.set(p.sleutel, p.label);
   }
 
-  // Auth users → email lookup voor setters
-  const setterIds = (settersRes.data ?? []).map((s) => s.id);
+  // Auth users → email lookup voor setters (max 25 om timeout te vermijden)
+  const setterIds = (settersRes.data ?? []).slice(0, 25).map((s) => s.id);
   const emailMap = new Map<string, string>();
-  for (const id of setterIds) {
-    try {
-      const { data } = await admin.auth.admin.getUserById(id);
-      if (data?.user?.email) emailMap.set(id, data.user.email);
-    } catch {}
-  }
+  await Promise.allSettled(
+    setterIds.map(async (id) => {
+      try {
+        const { data } = await admin.auth.admin.getUserById(id);
+        if (data?.user?.email) emailMap.set(id, data.user.email);
+      } catch {}
+    })
+  );
 
   // Bureau-rijen mappen
   const bureauRijen: BureauRij[] = (bureauAbosRes.data ?? []).map((a) => {

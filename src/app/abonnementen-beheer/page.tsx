@@ -39,10 +39,26 @@ export default async function AbonnementenBeheerPage({
     }
   }
 
+  // getAbonnementenOverzicht zelf is al defensief, maar wrap voor extra zekerheid
+  async function veiligOverzicht() {
+    try {
+      return await getAbonnementenOverzicht();
+    } catch (e) {
+      console.error("[abonnementen-beheer] overzicht-fout:", e);
+      return {
+        bureauActief: [], bureauOpgezegd: [],
+        setterActief: [], setterOpgezegd: [],
+        mrr: { bureau_cent: 0, setter_cent: 0, totaal_cent: 0, arr_projectie_cent: 0 },
+        trend: [],
+        churn: { bureau_deze_maand: 0, setter_deze_maand: 0, bureau_total_opgezegd: 0, setter_total_opgezegd: 0 },
+      };
+    }
+  }
+
   const [plans, setupFeeCent, overzicht, notitiesRes] = await Promise.all([
     getPlans({ inclusiefInactief: true }),
     getSetupFeeCent(),
-    getAbonnementenOverzicht(),
+    veiligOverzicht(),
     veiligNotitiesOphalen(),
   ]);
 
