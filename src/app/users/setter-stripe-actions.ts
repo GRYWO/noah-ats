@@ -61,10 +61,13 @@ export async function startSetterAbonnement(userId: string): Promise<{ ok: boole
       ? process.env.NEXT_PUBLIC_APP_URL
       : "https://noah-ats.nl";
 
+    // Alleen betaalmethoden die maandelijks AUTOMATISCH kunnen incasseren:
+    // card (charge-on-file) + sepa_debit (machtiging). iDEAL is eenmalig.
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: price.id, quantity: 1 }],
+      payment_method_types: ["card", "sepa_debit"],
       success_url: `${baseUrl}/login?setter_abonnement=actief`,
       cancel_url: `${baseUrl}/login?setter_abonnement=geannuleerd`,
       metadata: { user_id: userId, type: "setter_stoel" },

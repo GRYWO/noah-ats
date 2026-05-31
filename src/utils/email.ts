@@ -1189,7 +1189,7 @@ export async function sendSetterStripeMail({
 <div style="background:#f8f9ff;border:1px solid #d4d7f5;border-radius:8px;padding:18px 20px;margin:18px 0;">
   <div style="font-size:14px;color:#333;margin-bottom:4px;">Setter-stoel — maandelijks</div>
   <div style="font-size:28px;font-weight:800;color:${GRYWO_KLEUR};">${prijs}<span style="font-size:14px;font-weight:400;color:#666;"> / mnd</span></div>
-  <div style="font-size:12px;color:#888;margin-top:6px;">Maandelijks opzegbaar · Stripe verwerkt de betaling</div>
+  <div style="font-size:12px;color:#888;margin-top:6px;">Automatisch maandelijks geïncasseerd · Maandelijks opzegbaar</div>
 </div>
 
 <div style="text-align:center;margin:22px 0;">
@@ -1197,6 +1197,10 @@ export async function sendSetterStripeMail({
     Abonnement afsluiten
   </a>
 </div>
+
+<p style="font-size:13px;color:#555;">
+Betalen via <b>SEPA Direct Debit</b> (automatische maandelijkse incasso van je bankrekening) of <b>creditcard</b> (maandelijks afgeschreven). Na de eerste maand wordt het bedrag automatisch elke maand afgeschreven. Maandelijks opzegbaar via Stripe.
+</p>
 
 <p style="font-size:13px;color:#555;">
 Wat krijg je voor je abonnement?
