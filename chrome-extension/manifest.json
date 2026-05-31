@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Noah ATS — Embed Helper",
   "version": "1.4.0",
-  "description": "Noah ATS koppeling: vult Jobdigger-zoekvelden automatisch in vanuit de kandidaat-pagina, importeert vacature-exports in je bellijst, en maakt Robin bruikbaar binnen Noah.",
+  "description": "Noah ATS: auto-fill Jobdigger-zoekvelden vanuit kandidaat, importeer vacatures in je bellijst en gebruik Robin direct in Noah.",
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",

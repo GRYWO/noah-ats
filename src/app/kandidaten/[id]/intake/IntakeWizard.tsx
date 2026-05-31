@@ -89,8 +89,8 @@ export function IntakeWizard({ kandidaat: kInit }: { kandidaat: Kandidaat }) {
   const finaleScore = Math.max(0, aiScore - aftrek);
   const advies: "door" | "afkeuren" = finaleScore >= 50 ? "door" : "afkeuren";
 
-  function setVlag(code: string, patch: Partial<RodeVlag>) {
-    setVlaggen((vs) => vs.map((v) => (v.code === code ? { ...v, ...patch } : v)));
+  function setVlag(index: number, patch: Partial<RodeVlag>) {
+    setVlaggen((vs) => vs.map((v, i) => (i === index ? { ...v, ...patch } : v)));
   }
 
   // STAP 1 → 2
@@ -211,8 +211,8 @@ export function IntakeWizard({ kandidaat: kInit }: { kandidaat: Kandidaat }) {
                 Per vlag: geef een toelichting en klik <b>Logisch</b> (geen punten-aftrek) of <b>Niet logisch</b> (punten worden afgetrokken).
               </p>
               <div className="space-y-3">
-                {vlaggen.map((v) => (
-                  <div key={v.code} className="bg-red-50/50 border border-red-200 rounded-lg p-3">
+                {vlaggen.map((v, idx) => (
+                  <div key={idx} className="bg-red-50/50 border border-red-200 rounded-lg p-3">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-start gap-2 flex-1">
                         <AlertTriangle size={14} className="text-red-700 mt-0.5 shrink-0" />
@@ -228,7 +228,7 @@ export function IntakeWizard({ kandidaat: kInit }: { kandidaat: Kandidaat }) {
                     <textarea
                       name={`vlag_toelichting_${v.code}`}
                       value={v.toelichting ?? ""}
-                      onChange={(e) => setVlag(v.code, { toelichting: e.target.value })}
+                      onChange={(e) => setVlag(idx, { toelichting: e.target.value })}
                       rows={2}
                       placeholder="Antwoord van kandidaat / jouw beoordeling..."
                       className="w-full px-2 py-1.5 border border-red-200 rounded-md text-xs bg-white"
@@ -237,14 +237,14 @@ export function IntakeWizard({ kandidaat: kInit }: { kandidaat: Kandidaat }) {
                     <div className="mt-2 inline-flex rounded-md overflow-hidden border border-red-200 bg-white text-xs font-semibold">
                       <button
                         type="button"
-                        onClick={() => setVlag(v.code, { logisch: true })}
+                        onClick={() => setVlag(idx, { logisch: true })}
                         className={`px-3 py-1 ${v.logisch ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-50"}`}
                       >
                         Logisch
                       </button>
                       <button
                         type="button"
-                        onClick={() => setVlag(v.code, { logisch: false })}
+                        onClick={() => setVlag(idx, { logisch: false })}
                         className={`px-3 py-1 ${v.logisch === false ? "bg-red-500 text-white" : "text-gray-600 hover:bg-gray-50"}`}
                       >
                         Niet logisch
