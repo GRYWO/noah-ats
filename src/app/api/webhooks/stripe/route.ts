@@ -93,6 +93,19 @@ export async function POST(req: Request) {
           huidige_periode_einde: new Date(sub.current_period_end * 1000).toISOString(),
           updated_at: new Date().toISOString(),
         }).eq("stripe_subscription_id", sub.id);
+
+        // Setter-abonnement update (type=setter_stoel in metadata)
+        const isSetterStoel = (sub.metadata as Record<string, string> | undefined)?.type === "setter_stoel";
+        if (isSetterStoel && sub.metadata?.user_id) {
+          await admin.from("profiles").update({
+            abonnement_status: sub.status === "active" ? "actief"
+              : sub.status === "past_due" ? "achterstallig"
+              : sub.status === "canceled" ? "opgezegd"
+              : "wachtend_betaling",
+            stripe_subscription_id: sub.id,
+            abonnement_actief_sinds: sub.status === "active" ? new Date().toISOString() : null,
+          }).eq("id", sub.metadata.user_id);
+        }
         break;
       }
 
@@ -103,6 +116,61 @@ export async function POST(req: Request) {
           beeindigd_op: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }).eq("stripe_subscription_id", sub.id);
+
+        // Setter-abonnement opgezegd
+        const isSetterStoel = (sub.metadata as Record<string, string> | undefined)?.type === "setter_stoel";
+        if (isSetterStoel && sub.metadata?.user_id) {
+          await admin.from("profiles").update({
+            abonnement_status: "opgezegd",
+            abonnement_opgezegd_op: new Date().toISOString(),
+          }).eq("id", sub.metadata.user_id);
+        }
+        break;
+      }
+
+      // Setter heeft betaald in Stripe Checkout → unlock + welkomstmail
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const meta = (session.metadata ?? {}) as Record<string, string>;
+        if (meta.type === "setter_stoel" && meta.user_id) {
+          // Setter-stoel betaald → activeer + welkomstmail met inloggegevens
+          const { randomBytes } = await import("crypto");
+          const { sendWelkomstmailUser } = await import("@/utils/email");
+          const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+
+          // Wachtwoord resetten en activeren
+          await admin.auth.admin.updateUserById(meta.user_id, { password: nieuwWachtwoord });
+          await admin.from("profiles").update({
+            abonnement_status: "actief",
+            abonnement_actief_sinds: new Date().toISOString(),
+            stripe_subscription_id: typeof session.subscription === "string" ? session.subscription : null,
+          }).eq("id", meta.user_id);
+
+          // Welkomstmail met inloggegevens
+          const { data: profile } = await admin
+            .from("profiles")
+            .select("voornaam, mail_adres, tenants(naam)")
+            .eq("id", meta.user_id)
+            .single();
+          const { data: authUser } = await admin.auth.admin.getUserById(meta.user_id);
+          const email = authUser?.user?.email ?? profile?.mail_adres;
+          const tenants = Array.isArray(profile?.tenants) ? profile?.tenants[0] : profile?.tenants;
+
+          if (email) {
+            try {
+              await sendWelkomstmailUser({
+                naar: email,
+                voornaam: profile?.voornaam ?? "",
+                email,
+                wachtwoord: nieuwWachtwoord,
+                rolLabel: "Setter",
+                bedrijf: tenants?.naam ?? "Noah ATS",
+              });
+            } catch (e) {
+              console.error("Welkomstmail setter mislukt:", e);
+            }
+          }
+        }
         break;
       }
     }

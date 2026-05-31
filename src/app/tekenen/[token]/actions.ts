@@ -60,30 +60,40 @@ export async function tekenAkkoord(formData: FormData): Promise<Result> {
     console.error("Bevestiging-mail mislukt:", e);
   }
 
-  // Reset het wachtwoord (oude is bij aanmaak gegenereerd maar niet gemaild)
-  // en stuur nu pas de welkomstmail met inloggegevens.
-  try {
-    const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
-    await admin.auth.admin.updateUserById(row.user_id, { password: nieuwWachtwoord });
+  // Setters krijgen NIET direct welkomstmail — eerst Stripe checkout.
+  // De welkomstmail volgt vanuit de Stripe-webhook nadat de betaling binnen is.
+  // Admins en recruiters krijgen wel meteen toegang.
+  if (row.user_rol === "setter") {
+    try {
+      const { startSetterAbonnement } = await import("@/app/users/setter-stripe-actions");
+      const r = await startSetterAbonnement(row.user_id);
+      if (!r.ok) console.error("Setter-abonnement starten mislukt:", r.error);
+    } catch (e) {
+      console.error("Setter Stripe-flow mislukt:", e);
+    }
+  } else {
+    // Admin/recruiter: gewone welkomstmail (oude flow)
+    try {
+      const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+      await admin.auth.admin.updateUserById(row.user_id, { password: nieuwWachtwoord });
 
-    const { data: tenant } = row.tenant_id
-      ? await admin.from("tenants").select("naam, handelsnaam").eq("id", row.tenant_id).single()
-      : { data: null };
-    const bedrijf = tenant?.handelsnaam || tenant?.naam || "Noah ATS";
-    const rolLabel = row.user_rol === "admin" ? "Admin"
-      : row.user_rol === "recruiter" ? "Recruiter"
-      : "Setter";
+      const { data: tenant } = row.tenant_id
+        ? await admin.from("tenants").select("naam, handelsnaam").eq("id", row.tenant_id).single()
+        : { data: null };
+      const bedrijf = tenant?.handelsnaam || tenant?.naam || "Noah ATS";
+      const rolLabel = row.user_rol === "admin" ? "Admin" : "Recruiter";
 
-    await sendWelkomstmailUser({
-      naar: row.verzonden_aan_email,
-      voornaam: row.user_voornaam ?? naam,
-      email: row.verzonden_aan_email,
-      wachtwoord: nieuwWachtwoord,
-      rolLabel,
-      bedrijf,
-    });
-  } catch (e) {
-    console.error("Welkomstmail na ondertekening mislukt:", e);
+      await sendWelkomstmailUser({
+        naar: row.verzonden_aan_email,
+        voornaam: row.user_voornaam ?? naam,
+        email: row.verzonden_aan_email,
+        wachtwoord: nieuwWachtwoord,
+        rolLabel,
+        bedrijf,
+      });
+    } catch (e) {
+      console.error("Welkomstmail na ondertekening mislukt:", e);
+    }
   }
 
   revalidatePath(`/tekenen/${token}`);

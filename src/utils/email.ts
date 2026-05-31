@@ -1096,6 +1096,64 @@ Of kopieer deze link in je browser:<br>
 }
 
 /**
+ * Setter-stoel: Stripe betaal-link mailen aan nieuwe setter.
+ * Setter kan pas inloggen nadat hij betaald heeft.
+ */
+export async function sendSetterStripeMail({
+  naar,
+  voornaam,
+  betaalUrl,
+  prijsCent,
+}: {
+  naar: string;
+  voornaam: string;
+  betaalUrl: string;
+  prijsCent: number;
+}) {
+  const prijs = `€ ${(prijsCent / 100).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}`;
+  const body = `
+<p>Hallo ${voornaam || ""},</p>
+<p>Welkom bij Noah ATS. Voordat je toegang krijgt, sluiten we eenmalig je <b>setter-stoel</b> abonnement af.</p>
+
+<div style="background:#f8f9ff;border:1px solid #d4d7f5;border-radius:8px;padding:18px 20px;margin:18px 0;">
+  <div style="font-size:14px;color:#333;margin-bottom:4px;">Setter-stoel — maandelijks</div>
+  <div style="font-size:28px;font-weight:800;color:${GRYWO_KLEUR};">${prijs}<span style="font-size:14px;font-weight:400;color:#666;"> / mnd</span></div>
+  <div style="font-size:12px;color:#888;margin-top:6px;">Maandelijks opzegbaar · Stripe verwerkt de betaling</div>
+</div>
+
+<div style="text-align:center;margin:22px 0;">
+  <a href="${betaalUrl}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:bold;font-size:15px;">
+    Abonnement afsluiten
+  </a>
+</div>
+
+<p style="font-size:13px;color:#555;">
+Wat krijg je voor je abonnement?
+</p>
+<ul style="font-size:13px;color:#555;padding-left:20px;">
+  <li>Volledige toegang tot Noah ATS</li>
+  <li>Eigen kandidaten + voorstellen</li>
+  <li>Robin AI + Jobdigger</li>
+  <li>Inbox-koppeling (Hostnet)</li>
+  <li>Coaching dashboard</li>
+</ul>
+
+<p style="font-size:12px;color:#888;margin-top:18px;">
+Zodra de betaling is verwerkt, krijg je een mail met je inloggegevens.<br>
+Vragen? Mail <a href="mailto:info@grywo.nl">info@grywo.nl</a> of bel 085-4016082.
+</p>`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: "Noah ATS — sluit je setter-abonnement af",
+    html: brandedLayout({ titel: "Setter-abonnement", body, merk: "noah" }),
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}
+
+/**
  * Bevestiging na ondertekening individuele NDA / gebruiksvoorwaarden.
  */
 export async function sendAkkoordBevestiging({

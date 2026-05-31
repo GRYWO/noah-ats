@@ -54,5 +54,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Setter zonder actief abonnement → block en redirect naar /login met melding.
+  // Public routes blijven toegankelijk (anders kan setter niet bij /login komen).
+  if (user && !isPublic && !path.startsWith("/api/")) {
+    // Inline lookup: lees rol + abonnement-status uit zelfde sessie
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("rol, abonnement_status")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.rol === "setter" && profile.abonnement_status !== "actief") {
+      // Tenzij admin/super-admin: tijdelijke override-cookies hier niet relevant
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("setter_abonnement", profile.abonnement_status ?? "geen");
+      await supabase.auth.signOut();
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }

@@ -6,9 +6,21 @@ import { ShieldCheck, MapPin, BadgeCheck } from "lucide-react";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; setter_abonnement?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, setter_abonnement } = await searchParams;
+
+  const setterMelding = setter_abonnement === "actief"
+    ? { kleur: "emerald", tekst: "✅ Je abonnement is actief! Check je mail voor je inloggegevens." }
+    : setter_abonnement === "geannuleerd"
+    ? { kleur: "amber", tekst: "⚠ Betaling geannuleerd. Je kan pas inloggen na een actief abonnement — check je mail voor de betaallink." }
+    : setter_abonnement === "wachtend_betaling"
+    ? { kleur: "amber", tekst: "⚠ Je abonnement is nog niet betaald. Check je mail voor de Stripe-betaallink." }
+    : setter_abonnement === "achterstallig"
+    ? { kleur: "red", tekst: "⚠ Je abonnement heeft een achterstallige betaling. Werk je betaalmethode bij via Stripe." }
+    : setter_abonnement === "opgezegd"
+    ? { kleur: "red", tekst: "Je abonnement is opgezegd. Neem contact op met info@grywo.nl om opnieuw te starten." }
+    : null;
 
   return (
     <main className="min-h-screen relative overflow-hidden bg-[#0f0f23] text-white flex flex-col">
@@ -63,6 +75,16 @@ export default async function LoginPage({
           {error && (
             <div className="bg-red-500/10 border border-red-400/40 text-red-200 text-sm rounded-lg p-3 mb-4">
               {error}
+            </div>
+          )}
+
+          {setterMelding && (
+            <div className={`text-sm rounded-lg p-3 mb-4 border ${
+              setterMelding.kleur === "emerald" ? "bg-emerald-500/10 border-emerald-400/40 text-emerald-200" :
+              setterMelding.kleur === "amber" ? "bg-amber-500/10 border-amber-400/40 text-amber-200" :
+              "bg-red-500/10 border-red-400/40 text-red-200"
+            }`}>
+              {setterMelding.tekst}
             </div>
           )}
 
