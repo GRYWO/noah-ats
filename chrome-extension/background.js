@@ -47,6 +47,10 @@ chrome.runtime.onMessage.addListener((msg) => {
     chrome.storage.local.set({ kandidaatId: msg.kandidaatId, kandidaatTs: Date.now() });
     console.log("[Noah] Kandidaat onthouden:", msg.kandidaatId);
   }
+  if (msg?.type === "noah-set-jobdigger-filters" && msg.filters) {
+    chrome.storage.local.set({ noah_jobdigger_filters: msg.filters });
+    console.log("[Noah] Jobdigger-filters opgeslagen:", msg.filters);
+  }
 });
 
 async function fetchMetTimeout(url, opts = {}, ms = 15000) {

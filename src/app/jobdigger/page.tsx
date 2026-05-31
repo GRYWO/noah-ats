@@ -65,6 +65,22 @@ export default async function JobdiggerPage({
           <>
             <Zoekfilters kandidaat={kandidaat} />
             <DropZone kandidaatId={kandidaatId} kandidaatNaam={kandidaatNaam ?? ""} />
+            {/* Filter-payload voor Chrome-extensie — auto-fills Jobdigger
+                zoekvelden. "inclusief_onbekend" altijd true zodat Jobdigger
+                ook vacatures zonder volledige locatie meeneemt. */}
+            <script
+              type="application/json"
+              id="noah-jobdigger-filters"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  kandidaat_id: kandidaatId,
+                  functies: (kandidaat.open_voor ?? "").split(/[,;]/).map(s => s.trim()).filter(Boolean),
+                  woonplaats: kandidaat.woonplaats ?? "",
+                  reisafstand_km: kandidaat.max_reisafstand_km ?? null,
+                  inclusief_onbekend: true,
+                }),
+              }}
+            />
           </>
         )}
 
