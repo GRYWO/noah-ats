@@ -139,15 +139,48 @@ export async function deleteKandidaat(formData: FormData) {
   const id = formData.get("id") as string;
   const supabase = await createClient();
 
-  const { error } = await supabase
-    .from("kandidaten")
-    .delete()
-    .eq("id", id);
+  // Check wie er ingelogd is en welk tenant
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect(`/kandidaten/${id}?error=${encodeURIComponent("Niet ingelogd")}`);
+  }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id, rol")
+    .eq("id", user!.id)
+    .single();
+
+  if (!profile?.tenant_id) {
+    redirect(`/kandidaten/${id}?error=${encodeURIComponent("Geen tenant gekoppeld")}`);
+  }
+
+  // Gebruik admin-client + expliciete tenant-check.
+  // (kandidaten-tabel mist DELETE RLS-policy, dus anon delete faalt stilletjes.)
+  const admin = createAdminClient();
+  const { data: kandidaat } = await admin
+    .from("kandidaten")
+    .select("tenant_id, eigenaar_id")
+    .eq("id", id)
+    .single();
+
+  if (!kandidaat) {
+    redirect(`/kandidaten?error=${encodeURIComponent("Kandidaat niet gevonden")}`);
+  }
+
+  // Setter mag alleen eigen kandidaten verwijderen; admin alle kandidaten in z'n tenant
+  if (kandidaat!.tenant_id !== profile!.tenant_id) {
+    redirect(`/kandidaten/${id}?error=${encodeURIComponent("Geen rechten — andere tenant")}`);
+  }
+  if (profile!.rol === "setter" && kandidaat!.eigenaar_id !== user!.id) {
+    redirect(`/kandidaten/${id}?error=${encodeURIComponent("Geen rechten — niet jouw kandidaat")}`);
+  }
+
+  const { error } = await admin.from("kandidaten").delete().eq("id", id);
   if (error) {
     redirect(`/kandidaten/${id}?error=${encodeURIComponent(error.message)}`);
   }
 
   revalidatePath("/kandidaten");
-  redirect("/kandidaten");
+  redirect("/kandidaten?ok=verwijderd");
 }
