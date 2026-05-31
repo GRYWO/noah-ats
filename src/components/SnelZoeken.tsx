@@ -65,15 +65,20 @@ export function SnelZoeken() {
     }
   }, [open]);
 
-  // Debounced search
+  // Debounced search met race-condition guard:
+  // bij snel typen kan een trage oudere request resultaten OVER nieuwere
+  // schrijven. Daarom checken we of de query nog steeds actueel is.
   useEffect(() => {
-    if (!zoekterm.trim()) {
+    const term = zoekterm.trim();
+    if (term.length < 2) {
+      // Minimum 2 tekens — voorkomt zoeken op "a" (té veel hits, traag)
       setHits([]);
+      setBezig(false);
       return;
     }
     setBezig(true);
+    let geannuleerd = false;
     const handle = setTimeout(async () => {
-      const term = zoekterm.trim();
       const like = `%${term}%`;
       const [k, b, o] = await Promise.all([
         supabase
@@ -122,12 +127,16 @@ export function SnelZoeken() {
         });
       });
 
+      if (geannuleerd) return; // race-condition guard
       setHits(resultaat);
       setActief(0);
       setBezig(false);
     }, 200);
 
-    return () => clearTimeout(handle);
+    return () => {
+      geannuleerd = true;
+      clearTimeout(handle);
+    };
   }, [zoekterm, supabase]);
 
   function navigeer(h: Hit) {
