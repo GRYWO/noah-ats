@@ -29,70 +29,102 @@ export async function SuperAdminMonitor() {
   const vijfMin = new Date(nu - 5 * 60 * 1000).toISOString();
   const dagGeleden = new Date(nu - 24 * 60 * 60 * 1000).toISOString();
 
-  // ----- ONLINE NU -----
-  const { data: onlineUsers } = await admin
-    .from("profiles")
-    .select("id, voornaam, achternaam, email, rol, laatst_actief_op")
-    .gte("laatst_actief_op", vijfMin)
-    .order("laatst_actief_op", { ascending: false })
-    .limit(20);
-
-  const { count: totaalActief24u } = await admin
-    .from("profiles")
-    .select("*", { count: "exact", head: true })
-    .gte("laatst_actief_op", dagGeleden);
-
-  // ----- DATABASE STATS -----
-  const [kandidatenC, voorstellenC, plaatsingenC, contractenC, usersC, bureausC] = await Promise.all([
+  // ----- ALLES IN 1 PARALLELLE WAVE -----
+  // Was: ~10 sequentiële queries (~50ms × 10 = 500ms+).
+  // Nu: alles tegelijk (~max van de individuele queries = 50-100ms totaal).
+  const [
+    onlineUsersRes,
+    totaalActief24uRes,
+    kandidatenC,
+    voorstellenC,
+    plaatsingenC,
+    contractenC,
+    usersC,
+    bureausC,
+    bureausLijstRes,
+    plaatsingenRes,
+    contractenRes,
+    dpasRes,
+    akkoordenRes,
+    cleanupsRes,
+  ] = await Promise.all([
+    admin
+      .from("profiles")
+      .select("id, voornaam, achternaam, email, rol, laatst_actief_op")
+      .gte("laatst_actief_op", vijfMin)
+      .order("laatst_actief_op", { ascending: false })
+      .limit(20),
+    admin
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("laatst_actief_op", dagGeleden),
     admin.from("kandidaten").select("*", { count: "exact", head: true }),
     admin.from("voorstellen").select("*", { count: "exact", head: true }),
     admin.from("plaatsingen").select("*", { count: "exact", head: true }),
     admin.from("contract_verzoeken").select("*", { count: "exact", head: true }),
     admin.from("profiles").select("*", { count: "exact", head: true }),
     admin.from("tenants").select("*", { count: "exact", head: true }),
+    admin.from("tenants").select("id, naam").order("created_at", { ascending: false }).limit(50),
+    admin
+      .from("plaatsingen")
+      .select("id, bedrijf, startdatum, created_at, kandidaat:kandidaten(voornaam, achternaam), tenant:tenants(naam)")
+      .order("created_at", { ascending: false })
+      .limit(15),
+    admin
+      .from("contract_verzoeken")
+      .select("id, kandidaat_naam, status, contract_salaris, geupload_op, created_at, tenant:tenants(naam)")
+      .order("created_at", { ascending: false })
+      .limit(15),
+    admin
+      .from("dpa_signatures")
+      .select("id, status, getekend_op, bureau:tenants(naam)")
+      .order("created_at", { ascending: false })
+      .limit(10),
+    admin
+      .from("user_agreements")
+      .select("id, type, status, getekend_op, profile:profiles(voornaam, achternaam, tenant_id)")
+      .eq("status", "getekend")
+      .order("getekend_op", { ascending: false })
+      .limit(10),
+    admin
+      .from("cron_runs")
+      .select("id, cron_naam, status, resultaat, gestart_op")
+      .eq("cron_naam", "cleanup-avg")
+      .order("gestart_op", { ascending: false })
+      .limit(5),
   ]);
 
-  // Per bureau: aantal kandidaten + recente activiteit
-  const { data: bureausLijst } = await admin
-    .from("tenants")
-    .select("id, naam")
-    .order("created_at", { ascending: false });
+  const onlineUsers = onlineUsersRes.data;
+  const totaalActief24u = totaalActief24uRes.count;
+  const bureausLijst = bureausLijstRes.data;
 
-  const bureauStats: Array<{
-    id: string;
-    naam: string;
-    aantalKandidaten: number;
-    laatsteActiviteit: string | null;
-  }> = [];
-  for (const b of bureausLijst ?? []) {
-    const { count } = await admin
-      .from("kandidaten")
-      .select("*", { count: "exact", head: true })
-      .eq("tenant_id", b.id);
-    const { data: laatste } = await admin
-      .from("kandidaten")
-      .select("updated_at")
-      .eq("tenant_id", b.id)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    bureauStats.push({
-      id: b.id,
-      naam: b.naam,
-      aantalKandidaten: count ?? 0,
-      laatsteActiviteit: laatste?.updated_at ?? null,
-    });
-  }
+  // Per bureau stats — parallel ophalen ipv sequentieel.
+  // Was: N bureaus × 2 queries sequentieel (~100ms per bureau).
+  // Nu: alle bureaus parallel — ~max van 1 query (~50ms totaal).
+  const bureauStats = await Promise.all(
+    (bureausLijst ?? []).map(async (b) => {
+      const [{ count }, { data: laatste }] = await Promise.all([
+        admin.from("kandidaten").select("*", { count: "exact", head: true }).eq("tenant_id", b.id),
+        admin
+          .from("kandidaten")
+          .select("updated_at")
+          .eq("tenant_id", b.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      return {
+        id: b.id,
+        naam: b.naam,
+        aantalKandidaten: count ?? 0,
+        laatsteActiviteit: laatste?.updated_at ?? null,
+      };
+    })
+  );
 
   // ----- SYSTEM EVENTS LOG -----
   const events: Event[] = [];
-
-  // Plaatsingen
-  const { data: plaatsingen } = await admin
-    .from("plaatsingen")
-    .select("id, bedrijf, startdatum, created_at, kandidaat:kandidaten(voornaam, achternaam), tenant:tenants(naam)")
-    .order("created_at", { ascending: false })
-    .limit(15);
+  const plaatsingen = plaatsingenRes.data;
   for (const p of plaatsingen ?? []) {
     const k = Array.isArray(p.kandidaat) ? p.kandidaat[0] : p.kandidaat;
     const t = Array.isArray(p.tenant) ? p.tenant[0] : p.tenant;
@@ -105,12 +137,8 @@ export async function SuperAdminMonitor() {
     });
   }
 
-  // Contract-verzoeken
-  const { data: contracten } = await admin
-    .from("contract_verzoeken")
-    .select("id, kandidaat_naam, status, contract_salaris, geupload_op, created_at, tenant:tenants(naam)")
-    .order("created_at", { ascending: false })
-    .limit(15);
+  // Contract-verzoeken (al in Promise.all hierboven)
+  const contracten = contractenRes.data;
   for (const c of contracten ?? []) {
     const t = Array.isArray(c.tenant) ? c.tenant[0] : c.tenant;
     const status = c.status === "afgerond"
@@ -125,12 +153,8 @@ export async function SuperAdminMonitor() {
     });
   }
 
-  // DPA-ondertekeningen
-  const { data: dpas } = await admin
-    .from("dpa_signatures")
-    .select("id, status, getekend_op, bureau:tenants(naam)")
-    .order("created_at", { ascending: false })
-    .limit(10);
+  // DPA-ondertekeningen (al opgehaald in Promise.all)
+  const dpas = dpasRes.data;
   for (const d of dpas ?? []) {
     const b = Array.isArray(d.bureau) ? d.bureau[0] : d.bureau;
     events.push({
@@ -142,13 +166,8 @@ export async function SuperAdminMonitor() {
     });
   }
 
-  // Akkoord (NDA / gebruiksvoorwaarden)
-  const { data: akkoorden } = await admin
-    .from("user_agreements")
-    .select("id, type, status, getekend_op, profile:profiles(voornaam, achternaam, tenant_id)")
-    .eq("status", "getekend")
-    .order("getekend_op", { ascending: false })
-    .limit(10);
+  // Akkoord (NDA / gebruiksvoorwaarden) — al opgehaald
+  const akkoorden = akkoordenRes.data;
   for (const a of akkoorden ?? []) {
     const p = Array.isArray(a.profile) ? a.profile[0] : a.profile;
     events.push({
@@ -160,13 +179,8 @@ export async function SuperAdminMonitor() {
     });
   }
 
-  // AVG cleanup runs
-  const { data: cleanups } = await admin
-    .from("cron_runs")
-    .select("id, cron_naam, status, resultaat, gestart_op")
-    .eq("cron_naam", "cleanup-avg")
-    .order("gestart_op", { ascending: false })
-    .limit(5);
+  // AVG cleanup runs — al opgehaald
+  const cleanups = cleanupsRes.data;
   for (const c of cleanups ?? []) {
     const r = (c.resultaat ?? {}) as Record<string, number>;
     const samen = [
