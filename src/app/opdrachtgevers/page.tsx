@@ -4,6 +4,7 @@ import { TopBar } from "@/components/TopBar";
 import { nieuweOpdrachtgever } from "./actions";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_OPDRACHTGEVERS } from "@/utils/pagina-tours";
+import { logPerf } from "@/utils/perf";
 
 const STATUS_KLEUREN: Record<string, string> = {
   lead:      "bg-blue-100 text-blue-800",
@@ -26,6 +27,7 @@ export default async function OpdrachtgeversPage({
 }: {
   searchParams: Promise<{ ok?: string; error?: string; status?: string }>;
 }) {
+  const t0 = performance.now();
   const { ok, error, status } = await searchParams;
   const supabase = await createClient();
 
@@ -36,13 +38,24 @@ export default async function OpdrachtgeversPage({
 
   if (status) query = query.eq("status", status);
 
-  const { data: opdrachtgevers } = await query;
+  // Lijst + counts parallel ophalen (was sequentieel — bespaart ~30-80ms)
+  const [lijstRes, alleRes] = await Promise.all([
+    query,
+    supabase.from("opdrachtgevers").select("status"),
+  ]);
+  const opdrachtgevers = lijstRes.data;
+  const alle = alleRes.data;
   const totaal = opdrachtgevers?.length ?? 0;
 
-  // Counts per status
-  const { data: alle } = await supabase.from("opdrachtgevers").select("status");
   const counts: Record<string, number> = { lead: 0, prospect: 0, klant: 0, ex_klant: 0, partner: 0 };
   (alle ?? []).forEach(o => { counts[o.status] = (counts[o.status] ?? 0) + 1; });
+
+  logPerf({
+    pad: "/opdrachtgevers",
+    type: "page",
+    duur_ms: performance.now() - t0,
+    extra: { filter: status ?? "alle", totaal },
+  });
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">

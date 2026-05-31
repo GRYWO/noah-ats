@@ -5,6 +5,7 @@ import { Mail, MailOpen, Check, X, Clock } from "lucide-react";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_VOORSTELLEN } from "@/utils/pagina-tours";
 import { getViewerRol } from "@/utils/view-as";
+import { logPerf } from "@/utils/perf";
 
 const STATUS_LABELS: Record<string, string> = {
   verzonden: "Wachten op reactie",
@@ -27,11 +28,15 @@ export default async function VoorstellenPage({
 }: {
   searchParams: Promise<{ status?: string; q?: string }>;
 }) {
+  const t0 = performance.now();
   const { status, q } = await searchParams;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const { isSetter } = await getViewerRol();
+  // user + viewerRol parallel
+  const [{ data: { user } }, { isSetter }] = await Promise.all([
+    supabase.auth.getUser(),
+    getViewerRol(),
+  ]);
 
   let query = supabase
     .from("voorstellen")
@@ -104,6 +109,14 @@ export default async function VoorstellenPage({
   ];
 
   const huidigFilter = status ?? "alle";
+
+  logPerf({
+    pad: "/voorstellen",
+    type: "page",
+    duur_ms: performance.now() - t0,
+    user_id: user?.id,
+    extra: { filter: huidigFilter, q: q ?? "", count: voorstellen.length },
+  });
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">

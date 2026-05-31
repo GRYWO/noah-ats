@@ -5,6 +5,10 @@ export const metadata = {
   description: "Privacybeleid van Noah ATS en de Chrome-extensie Noah ATS — Embed Helper.",
 };
 
+// ISR: pagina is statisch (geen DB-data) — herrender 1× per dag.
+// Voorkomt re-render bij elke request → schaalt naar oneindig veel hits.
+export const revalidate = 86400;
+
 export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-[#f4f4f7] py-12 px-6">

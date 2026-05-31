@@ -133,8 +133,9 @@ export function NotificatieBel({ userId }: { userId: string }) {
         console.log("[Noah Notif] realtime status:", status);
       });
 
-    // Polling-fallback: elke 10s opnieuw laden — overlapt realtime maar vangt missers op
-    const poll = setInterval(() => { laadMetPing(); }, 10000);
+    // Polling-fallback: 60s ipv 10s. Supabase realtime is primair; polling vangt
+    // alleen missers op (bv. herstartte connectie). Bespaart ~85% van de requests.
+    const poll = setInterval(() => { laadMetPing(); }, 60000);
 
     // Tab weer zichtbaar → meteen verversen
     const onVisible = () => { if (document.visibilityState === "visible") laadMetPing(); };
