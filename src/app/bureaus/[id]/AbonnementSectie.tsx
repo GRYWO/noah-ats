@@ -72,7 +72,15 @@ export function AbonnementSectie({
       contactNaam,
     });
     setBezig(false);
-    setMelding(r.ok ? "Abonnement gestart ✓" : r.error ?? "Fout");
+    if (r.ok && "checkoutUrl" in r && r.checkoutUrl) {
+      // Open Stripe Checkout in nieuwe tab — bureau betaalt direct
+      window.open(r.checkoutUrl, "_blank");
+      setMelding("Stripe Checkout geopend in nieuwe tab — bureau kan nu betalen ✓");
+    } else if (r.ok) {
+      setMelding("Abonnement gestart ✓");
+    } else {
+      setMelding(r.error ?? "Fout");
+    }
   }
 
   async function wijzig(nieuwPlan: PlanKey) {

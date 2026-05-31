@@ -178,6 +178,22 @@ export async function POST(req: Request) {
             }
           }
         }
+
+        // Bureau-abonnement betaald via Checkout → activeer
+        if (meta.type === "bureau_abonnement" && meta.tenant_id) {
+          const subId = typeof session.subscription === "string" ? session.subscription : null;
+          await admin.from("abonnementen").update({
+            status: "actief",
+            stripe_subscription_id: subId,
+            setup_fee_betaald: true,
+            updated_at: new Date().toISOString(),
+          }).eq("tenant_id", meta.tenant_id);
+
+          // Markeer bureau ook als setup_fee_paid (legacy veld)
+          await admin.from("tenants").update({
+            setup_fee_paid: true,
+          }).eq("id", meta.tenant_id);
+        }
         break;
       }
     }

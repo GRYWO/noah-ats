@@ -35,7 +35,7 @@ export async function startAbonnement({
   plan: PlanKey;
   contactEmail: string;
   contactNaam: string;
-}): Promise<{ ok: boolean; error?: string }> {
+}): Promise<{ ok: boolean; error?: string; checkoutUrl?: string | null }> {
   // Sales-admin mag ook abonnementen activeren (niet alleen Yorith)
   const user = await vereisSalesAdmin();
   if (!user) return { ok: false, error: "Geen toegang" };
@@ -53,79 +53,77 @@ export async function startAbonnement({
   const stripe = getStripe();
 
   try {
-    // 1) Stripe customer aanmaken
-    const customer = await stripe.customers.create({
-      name: tenant.naam,
-      email: contactEmail,
-      metadata: { tenant_id: tenantId, contact_naam: contactNaam },
-      tax_id_data: tenant.btw_nummer ? [{ type: "eu_vat", value: tenant.btw_nummer }] : undefined,
-    });
+    // 1) Stripe customer aanmaken (of hergebruiken als al bestaat)
+    const { data: bestaand } = await admin
+      .from("abonnementen")
+      .select("stripe_customer_id")
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+    let customerId = bestaand?.stripe_customer_id;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        name: tenant.naam,
+        email: contactEmail,
+        metadata: { tenant_id: tenantId, contact_naam: contactNaam },
+        tax_id_data: tenant.btw_nummer ? [{ type: "eu_vat", value: tenant.btw_nummer }] : undefined,
+      });
+      customerId = customer.id;
+    }
 
-    // 2) Setup-fee invoice eenmalig
-    await stripe.invoiceItems.create({
-      customer: customer.id,
-      amount: SETUP_FEE_CENT,
+    // 2) Prices: setup-fee (one-time) + maandelijks (recurring)
+    const setupPrice = await stripe.prices.create({
       currency: "eur",
-      description: `Setup-fee Noah ATS — ${planDef.label}`,
+      unit_amount: SETUP_FEE_CENT,
+      product_data: { name: `Setup-fee Noah ATS — ${planDef.label}` },
     });
-    const setupInvoice = await stripe.invoices.create({
-      customer: customer.id,
-      collection_method: "send_invoice",
-      days_until_due: 14,
-      description: "Eenmalige setup-fee Noah ATS",
-    });
-    await stripe.invoices.finalizeInvoice(setupInvoice.id);
-
-    // 3) Subscription (recurring monthly)
-    // Eerst price aanmaken on-the-fly per plan
-    const price = await stripe.prices.create({
+    const recurringPrice = await stripe.prices.create({
       currency: "eur",
       unit_amount: planDef.prijs_per_maand_cent,
       recurring: { interval: "month" },
-      product_data: {
-        name: `Noah ATS — ${planDef.label}`,
-      },
+      product_data: { name: `Noah ATS — ${planDef.label}` },
     });
 
-    const subscription = await stripe.subscriptions.create({
-      customer: customer.id,
-      items: [{ price: price.id }],
-      collection_method: "send_invoice",
-      days_until_due: 14,
-      proration_behavior: "create_prorations",
-      metadata: { tenant_id: tenantId },
-    }) as unknown as {
-      id: string;
-      current_period_start?: number;
-      current_period_end?: number;
-      items?: { data?: { current_period_start?: number; current_period_end?: number }[] };
-    };
+    // 3) Stripe Checkout Session — bureau klikt link, betaalt setup + maand 1
+    //    in 1 transactie via iDEAL/SEPA/CC, daarna pas actief.
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("vercel.app")
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : "https://noah-ats.nl";
 
-    // In nieuwere Stripe-API versies staan current_period_* op de items, niet
-    // op de subscription zelf. Probeer beide, val terug op null als afwezig.
-    const item0 = subscription.items?.data?.[0];
-    const periodeStart = subscription.current_period_start ?? item0?.current_period_start;
-    const periodeEinde = subscription.current_period_end ?? item0?.current_period_end;
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
+      line_items: [
+        { price: setupPrice.id, quantity: 1 },     // eenmalig — setup-fee
+        { price: recurringPrice.id, quantity: 1 }, // maandelijks
+      ],
+      payment_method_types: ["card", "ideal", "sepa_debit"],
+      success_url: `${baseUrl}/bureaus/${tenantId}?abonnement=actief`,
+      cancel_url: `${baseUrl}/bureaus/${tenantId}?abonnement=geannuleerd`,
+      metadata: { tenant_id: tenantId, type: "bureau_abonnement", plan },
+      subscription_data: {
+        metadata: { tenant_id: tenantId, type: "bureau_abonnement", plan },
+      },
+      locale: "nl",
+    });
 
-    // 4) Lokaal opslaan
+    // 4) Lokaal opslaan — status "wachtend_betaling" tot bureau heeft betaald
     await admin.from("abonnementen").upsert({
       tenant_id: tenantId,
       plan,
-      status: "actief",
+      status: "wachtend_betaling",
       max_users: planDef.max_users,
       prijs_per_maand_cent: planDef.prijs_per_maand_cent,
-      stripe_customer_id: customer.id,
-      stripe_subscription_id: subscription.id,
-      stripe_price_id: price.id,
+      stripe_customer_id: customerId,
+      stripe_price_id: recurringPrice.id,
       setup_fee_cent: SETUP_FEE_CENT,
-      setup_fee_invoice_id: setupInvoice.id,
       gestart_op: new Date().toISOString(),
-      huidige_periode_start: periodeStart ? new Date(periodeStart * 1000).toISOString() : null,
-      huidige_periode_einde: periodeEinde ? new Date(periodeEinde * 1000).toISOString() : null,
+      huidige_periode_start: null,
+      huidige_periode_einde: null,
     }, { onConflict: "tenant_id" });
 
     revalidatePath(`/bureaus/${tenantId}`);
-    return { ok: true };
+    // Geef de Stripe Checkout URL terug — UI opent die voor het bureau
+    return { ok: true, checkoutUrl: session.url ?? null };
   } catch (e) {
     console.error("[abonnement] start mislukt:", e);
     return { ok: false, error: (e as Error).message };
