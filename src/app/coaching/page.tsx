@@ -13,6 +13,7 @@ import { DoelenSectie, type Doelen, type Voortgang } from "./DoelenSectie";
 import { RecordsSectie, type Records } from "./RecordsSectie";
 import { AdminFilterBar } from "./AdminFilterBar";
 import { SetterReactieKnop } from "./SetterReactieKnop";
+import { logPerf } from "@/utils/perf";
 import { CoachToevoegenKnop } from "./CoachToevoegenKnop";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_COACHING } from "@/utils/pagina-tours";
@@ -75,16 +76,23 @@ export default async function CoachingPage({
 }: {
   searchParams: Promise<{ periode?: string; ok?: string; error?: string; setter?: string; filter?: string }>;
 }) {
+  const t0 = performance.now();
   const { periode = "week", ok, error, setter: setterFilter, filter } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("tenant_id, rol, is_coach, voornaam, achternaam, doel_calls_dag, doel_voorgesteld_week, doel_afspraken_week, doel_plaatsingen_maand, doel_omzet_maand")
-    .eq("id", user.id)
-    .single();
+  // profile + viewerRol parallel — viewerRol doet ook profile-call, maar
+  // beide pakken een ander stuk van het profile dus we hebben beide nodig
+  const [profileRes, viewerRolPre] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("tenant_id, rol, is_coach, voornaam, achternaam, doel_calls_dag, doel_voorgesteld_week, doel_afspraken_week, doel_plaatsingen_maand, doel_omzet_maand")
+      .eq("id", user.id)
+      .single(),
+    getViewerRol(),
+  ]);
+  const profile = profileRes.data;
 
   const superAdmin = isSuperAdminEmail(user.email);
 
@@ -114,8 +122,8 @@ export default async function CoachingPage({
     );
   }
 
-  // Demo-modus respecteren voor UI
-  const viewerRol = await getViewerRol();
+  // Demo-modus respecteren voor UI — viewerRol al opgehaald in Promise.all hierboven
+  const viewerRol = viewerRolPre;
   const isAdmin = viewerRol.isAdmin || viewerRol.isSuperAdmin;
   const isCoach = profile.is_coach && !viewerRol.demoActief;
   const isSetter = viewerRol.isSetter;
@@ -430,6 +438,15 @@ export default async function CoachingPage({
   }
 
   const periodeLabel = periode === "maand" ? "Deze maand" : periode === "jaar" ? "Dit jaar" : "Deze week";
+
+  logPerf({
+    pad: "/coaching",
+    type: "page",
+    duur_ms: performance.now() - t0,
+    user_id: user.id,
+    tenant_id: tenantId,
+    extra: { periode, isAdmin, isCoach, isSetter },
+  });
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">

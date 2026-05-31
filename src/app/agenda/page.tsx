@@ -7,6 +7,7 @@ import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_AGENDA } from "@/utils/pagina-tours";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { getViewerRol } from "@/utils/view-as";
+import { logPerf } from "@/utils/perf";
 
 type AgendaItem = {
   id: string;
@@ -44,21 +45,21 @@ export default async function AgendaPage({
 }: {
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
+  const t0 = performance.now();
   const { ok, error } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const userId = user.id;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("tenant_id, rol")
-    .eq("id", userId)
-    .single();
+  // profile + viewerRol parallel
+  const [profileRes, viewerRol] = await Promise.all([
+    supabase.from("profiles").select("tenant_id, rol").eq("id", userId).single(),
+    getViewerRol(),
+  ]);
+  const profile = profileRes.data;
   if (!profile?.tenant_id) return null;
 
-  // Demo-modus respecteren — Yorith in "bekijk als Setter" wordt rol="setter"
-  const viewerRol = await getViewerRol();
   const isAdmin = viewerRol.isAdmin || viewerRol.isSuperAdmin;
   const rol = viewerRol.rol;
   const tenantId = profile.tenant_id;
@@ -72,7 +73,6 @@ export default async function AgendaPage({
   if (!isAdmin && rol === "setter") {
     voorstellenQ = voorstellenQ.eq("setter_id", userId);
   }
-  const { data: voorstellen } = await voorstellenQ;
 
   // Plaatsingen (eerste werkdag)
   let plaatsingenQ = supabase
@@ -83,18 +83,24 @@ export default async function AgendaPage({
     .not("startdatum", "is", null)
     .gte("startdatum", new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10));
   if (!isAdmin) {
-    // setter/recruiter alleen eigen
     plaatsingenQ = plaatsingenQ.eq("aangemeld_door", userId);
   }
-  const { data: plaatsingen } = await plaatsingenQ;
 
-  // Team-events (alle tenant-leden zien)
-  const { data: teamEvents } = await supabase
-    .from("agenda_events")
-    .select("id, titel, beschrijving, start_op, eind_op, locatie, meet_url, aangemaakt_door")
-    .eq("tenant_id", tenantId)
-    .gte("start_op", new Date(Date.now() - 7 * 86400000).toISOString())
-    .order("start_op", { ascending: true });
+  // Team-events + voorstellen + plaatsingen parallel ophalen
+  // Bespaart ~2x round-trip latency (3 queries → 1 wave)
+  const [voorstellenRes, plaatsingenRes, teamEventsRes] = await Promise.all([
+    voorstellenQ,
+    plaatsingenQ,
+    supabase
+      .from("agenda_events")
+      .select("id, titel, beschrijving, start_op, eind_op, locatie, meet_url, aangemaakt_door")
+      .eq("tenant_id", tenantId)
+      .gte("start_op", new Date(Date.now() - 7 * 86400000).toISOString())
+      .order("start_op", { ascending: true }),
+  ]);
+  const voorstellen = voorstellenRes.data;
+  const plaatsingen = plaatsingenRes.data;
+  const teamEvents = teamEventsRes.data;
 
   // Recruiter-filter handmatig (eigen kandidaten): toon alleen items waar user = setter_id of cv_controle_door of eigenaar_id
   function userMagZienVoorstel(v: { setter_id: string | null; kandidaat: { eigenaar_id: string | null } | null }): boolean {
@@ -176,6 +182,15 @@ export default async function AgendaPage({
   items.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
   const groepen = groepeerPerDag(items);
   const sortedDays = Array.from(groepen.keys()).sort();
+
+  logPerf({
+    pad: "/agenda",
+    type: "page",
+    duur_ms: performance.now() - t0,
+    user_id: userId,
+    tenant_id: tenantId,
+    extra: { items: items.length, dagen: sortedDays.length, isAdmin },
+  });
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
