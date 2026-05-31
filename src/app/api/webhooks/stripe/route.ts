@@ -87,10 +87,17 @@ export async function POST(req: Request) {
       }
 
       case "customer.subscription.updated": {
-        const sub = event.data.object as Stripe.Subscription & { current_period_start: number; current_period_end: number };
+        const sub = event.data.object as Stripe.Subscription & {
+          current_period_start?: number;
+          current_period_end?: number;
+          items?: { data?: { current_period_start?: number; current_period_end?: number }[] };
+        };
+        const item0 = sub.items?.data?.[0];
+        const pStart = sub.current_period_start ?? item0?.current_period_start;
+        const pEinde = sub.current_period_end ?? item0?.current_period_end;
         await admin.from("abonnementen").update({
-          huidige_periode_start: new Date(sub.current_period_start * 1000).toISOString(),
-          huidige_periode_einde: new Date(sub.current_period_end * 1000).toISOString(),
+          huidige_periode_start: pStart ? new Date(pStart * 1000).toISOString() : null,
+          huidige_periode_einde: pEinde ? new Date(pEinde * 1000).toISOString() : null,
           updated_at: new Date().toISOString(),
         }).eq("stripe_subscription_id", sub.id);
 

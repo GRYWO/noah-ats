@@ -94,7 +94,18 @@ export async function startAbonnement({
       days_until_due: 14,
       proration_behavior: "create_prorations",
       metadata: { tenant_id: tenantId },
-    }) as unknown as { id: string; current_period_start: number; current_period_end: number };
+    }) as unknown as {
+      id: string;
+      current_period_start?: number;
+      current_period_end?: number;
+      items?: { data?: { current_period_start?: number; current_period_end?: number }[] };
+    };
+
+    // In nieuwere Stripe-API versies staan current_period_* op de items, niet
+    // op de subscription zelf. Probeer beide, val terug op null als afwezig.
+    const item0 = subscription.items?.data?.[0];
+    const periodeStart = subscription.current_period_start ?? item0?.current_period_start;
+    const periodeEinde = subscription.current_period_end ?? item0?.current_period_end;
 
     // 4) Lokaal opslaan
     await admin.from("abonnementen").upsert({
@@ -109,8 +120,8 @@ export async function startAbonnement({
       setup_fee_cent: SETUP_FEE_CENT,
       setup_fee_invoice_id: setupInvoice.id,
       gestart_op: new Date().toISOString(),
-      huidige_periode_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      huidige_periode_einde: new Date(subscription.current_period_end * 1000).toISOString(),
+      huidige_periode_start: periodeStart ? new Date(periodeStart * 1000).toISOString() : null,
+      huidige_periode_einde: periodeEinde ? new Date(periodeEinde * 1000).toISOString() : null,
     }, { onConflict: "tenant_id" });
 
     revalidatePath(`/bureaus/${tenantId}`);
