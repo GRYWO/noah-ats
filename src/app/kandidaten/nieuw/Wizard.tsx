@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
-import { Upload, Loader2, FileText, AlertTriangle, Sparkles, Check } from "lucide-react";
+import { useState, useRef, useTransition, useEffect } from "react";
+import { Upload, Loader2, FileText, AlertTriangle, Sparkles, Check, Send, User } from "lucide-react";
 import { maakKandidaatVanWizard } from "./actions";
+
+type UserInTenant = { id: string; voornaam: string | null; achternaam: string | null; rol: string };
 
 type Geparseerd = {
   voornaam?: string;
@@ -57,6 +59,15 @@ export function Wizard() {
   // Per rode vlag: toelichting + logisch ja/nee (default = logisch zodat geen punten worden afgetrokken)
   const [vlagToelichting, setVlagToelichting] = useState<Record<string, string>>({});
   const [vlagLogisch, setVlagLogisch] = useState<Record<string, boolean>>({});
+  // Handmatig doorzetten: dropdown met users in tenant
+  const [toonDoorzetten, setToonDoorzetten] = useState(false);
+  const [users, setUsers] = useState<UserInTenant[]>([]);
+  const [gekozenUserId, setGekozenUserId] = useState<string>("");
+
+  useEffect(() => {
+    if (!toonDoorzetten || users.length > 0) return;
+    fetch("/api/users/in-tenant").then(r => r.json()).then(d => setUsers(d.users ?? []));
+  }, [toonDoorzetten, users.length]);
 
   async function onFile(f: File) {
     setFile(f);
@@ -99,6 +110,9 @@ export function Wizard() {
     }
     const fd = new FormData();
     fd.append("cv_file", file);
+    if (gekozenUserId) {
+      fd.append("handmatige_eigenaar_id", gekozenUserId);
+    }
     if (parsed) {
       // Merge form fields + vragen-antwoorden
       const merged = { ...parsed, ...formData, ...vragen };
@@ -318,22 +332,60 @@ export function Wizard() {
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-2">
+          {/* Handmatig doorzetten — collapsible dropdown */}
+          {toonDoorzetten && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2">
+              <label className="block text-xs font-semibold text-amber-900">Doorzetten naar specifieke user</label>
+              <select
+                value={gekozenUserId}
+                onChange={(e) => setGekozenUserId(e.target.value)}
+                className="w-full px-3 py-2 border border-amber-300 rounded-md text-sm bg-white"
+              >
+                <option value="">— Kies een setter of recruiter —</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {[u.voornaam, u.achternaam].filter(Boolean).join(" ")} ({u.rol})
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-amber-700">
+                Als je niemand kiest, gaat de kandidaat alsnog automatisch naar een beschikbare setter.
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3 pt-2 flex-wrap">
             <button
               type="button"
-              onClick={() => { setFile(null); setParsed(null); setFormData({}); setVragen({}); }}
+              onClick={() => { setFile(null); setParsed(null); setFormData({}); setVragen({}); setToonDoorzetten(false); setGekozenUserId(""); }}
               className="text-sm text-gray-600 hover:underline"
             >
               Opnieuw beginnen
             </button>
-            <button
-              type="submit"
-              disabled={pending || !formData.voornaam || !formData.achternaam}
-              className="inline-flex items-center gap-2 bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-6 py-2.5 rounded-lg text-sm disabled:opacity-50"
-            >
-              {pending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-              Kandidaat aanmaken
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setToonDoorzetten(!toonDoorzetten)}
+                className={`inline-flex items-center gap-1.5 font-semibold px-4 py-2.5 rounded-lg text-sm border transition-colors ${
+                  toonDoorzetten
+                    ? "bg-amber-100 text-amber-900 border-amber-300"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <User size={14} />
+                {toonDoorzetten ? "Sluiten" : "Handmatig doorzetten"}
+              </button>
+              <button
+                type="submit"
+                disabled={pending || !formData.voornaam || !formData.achternaam}
+                className="inline-flex items-center gap-2 bg-[#333399] hover:bg-[#2a2a80] text-white font-semibold px-6 py-2.5 rounded-lg text-sm disabled:opacity-50"
+              >
+                {pending ? <Loader2 size={14} className="animate-spin" /> :
+                  gekozenUserId ? <Send size={14} /> : <Check size={14} />}
+                {gekozenUserId ? "Doorzetten naar gekozen user" : "Verzenden (auto-toewijzen)"}
+              </button>
+            </div>
           </div>
         </>
       )}

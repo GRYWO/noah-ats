@@ -49,6 +49,21 @@ export async function maakKandidaatVanWizard(formData: FormData) {
     kanban_stap: "interne_intake",
   };
 
+  // Handmatige eigenaar (optioneel) — wanneer admin "Doorzetten naar..." kiest
+  const handmatigeEigenaar = (formData.get("handmatige_eigenaar_id") as string)?.trim();
+  if (handmatigeEigenaar) {
+    // Verifieer dat deze user in dezelfde tenant zit
+    const adminCheck = createAdminClient();
+    const { data: doel } = await adminCheck
+      .from("profiles")
+      .select("tenant_id, rol")
+      .eq("id", handmatigeEigenaar)
+      .single();
+    if (doel && doel.tenant_id === profile.tenant_id && (doel.rol === "setter" || doel.rol === "recruiter")) {
+      data.eigenaar_id = handmatigeEigenaar;
+    }
+  }
+
   const leeftijdStr = formData.get("leeftijd") as string;
   if (leeftijdStr) {
     const n = parseInt(leeftijdStr);
