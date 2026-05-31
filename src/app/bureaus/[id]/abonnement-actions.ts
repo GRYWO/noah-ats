@@ -89,14 +89,18 @@ export async function startAbonnement({
       ? process.env.NEXT_PUBLIC_APP_URL
       : "https://noah-ats.nl";
 
+    // Alleen betaalmethoden die maandelijks AUTOMATISCH kunnen incasseren:
+    // - card: charge-on-file, maandelijks automatisch afgeschreven
+    // - sepa_debit: Europese automatische incasso (machtiging)
+    // iDEAL is uitgesloten — dat is eenmalig en kan niet recurring.
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [
         { price: setupPrice.id, quantity: 1 },     // eenmalig — setup-fee
-        { price: recurringPrice.id, quantity: 1 }, // maandelijks
+        { price: recurringPrice.id, quantity: 1 }, // maandelijks recurring
       ],
-      payment_method_types: ["card", "ideal", "sepa_debit"],
+      payment_method_types: ["card", "sepa_debit"],
       success_url: `${baseUrl}/bureaus/${tenantId}?abonnement=actief`,
       cancel_url: `${baseUrl}/bureaus/${tenantId}?abonnement=geannuleerd`,
       metadata: { tenant_id: tenantId, type: "bureau_abonnement", plan },

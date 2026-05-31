@@ -1132,7 +1132,7 @@ export async function sendBureauStripeMail({
     <tr><td colspan="2" style="border-top:1px solid #ccc;padding-top:8px;"></td></tr>
     <tr><td style="padding:4px 0;font-weight:700;">Te betalen nu</td><td style="padding:4px 0;text-align:right;font-weight:700;color:${GRYWO_KLEUR};">${totaal}</td></tr>
   </table>
-  <div style="font-size:11px;color:#888;margin-top:10px;">Daarna ${maand} per maand. Maandelijks opzegbaar.</div>
+  <div style="font-size:11px;color:#888;margin-top:10px;">Daarna ${maand} per maand — automatisch geïncasseerd. Maandelijks opzegbaar.</div>
 </div>
 
 <div style="text-align:center;margin:24px 0;">
@@ -1142,7 +1142,14 @@ export async function sendBureauStripeMail({
 </div>
 
 <p style="font-size:13px;color:#555;">
-Je kunt betalen met <b>iDEAL</b>, <b>SEPA Direct Debit</b> of <b>creditcard</b>. Zodra de betaling is verwerkt, ontvang je de inloggegevens.
+Je kunt betalen via:
+</p>
+<ul style="font-size:13px;color:#555;padding-left:20px;margin:6px 0;">
+  <li><b>SEPA Direct Debit</b> (automatische maandelijkse incasso van je zakelijke rekening)</li>
+  <li><b>Creditcard</b> (maandelijks automatisch afgeschreven)</li>
+</ul>
+<p style="font-size:13px;color:#555;">
+Na de eenmalige betaling wordt het maandbedrag <b>automatisch elke maand</b> van je rekening of card afgeschreven. <b>Maandelijks opzegbaar</b> — je kan via Stripe altijd op- en afzeggen of je betaalmethode wijzigen. Zodra betaald, ontvang je de inloggegevens.
 </p>
 
 <p style="font-size:12px;color:#888;margin-top:18px;">
