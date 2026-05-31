@@ -7,6 +7,7 @@ import { WachtendOpCvSectie } from "./nieuw/WachtendOpCv";
 import { ruimOudeWachtenden } from "./nieuw/wachtend-actions";
 import { Wizard } from "./nieuw/Wizard";
 import { getViewerRol } from "@/utils/view-as";
+import { logPerf } from "@/utils/perf";
 
 const STATUS_COLORS: Record<string, string> = {
   nieuw: "bg-blue-100 text-blue-800",
@@ -23,29 +24,29 @@ export default async function KandidatenPage({
 }: {
   searchParams: Promise<{ error?: string; page?: string }>;
 }) {
+  const t0 = performance.now();
   const { error, page } = await searchParams;
   const pageNum = Math.max(1, parseInt(page ?? "1") || 1);
   const offset = (pageNum - 1) * PAGE_SIZE;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  // Demo-modus respecteren — bepaalt of CV-dropzone + wachtlijst zichtbaar zijn
-  const { isSetter, isRecruiter } = await getViewerRol();
+  // user + viewerRol parallel — viewerRol leest cookies + profile en is onafhankelijk
+  const [{ data: { user } }, { isSetter, isRecruiter }] = await Promise.all([
+    supabase.auth.getUser(),
+    getViewerRol(),
+  ]);
 
-  // Wachtlijst (cleanup ouder dan 7 dagen + ophalen)
+  // Cleanup wachtlijst non-blocking: fire-and-forget zodat pageload niet wacht
+  // op 7-dagen cleanup query (was 30-100ms latency vroeger).
   if (!isSetter) {
-    await ruimOudeWachtenden();
+    void ruimOudeWachtenden();
   }
-  const { data: wachtenden } = await supabase
-    .from("wachtend_op_cv")
-    .select("*")
-    .order("created_at", { ascending: false });
 
-  // Paginated query — recruiters en setters zien alleen eigen kandidaten
+  // Wachtlijst + kandidaten parallel ipv sequentieel
   let kandidatenQuery = supabase
     .from("kandidaten")
-    .select("*", { count: "exact" })
+    .select("*", { count: "planned" })  // "planned" ipv "exact": 10-100x sneller bij grote tabellen
     .order("created_at", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
 
@@ -53,9 +54,24 @@ export default async function KandidatenPage({
     kandidatenQuery = kandidatenQuery.eq("eigenaar_id", user.id);
   }
 
-  const { data: kandidaten, count: kandidaatTotaal } = await kandidatenQuery;
+  const [wachtendenRes, kandidatenRes] = await Promise.all([
+    supabase.from("wachtend_op_cv").select("*").order("created_at", { ascending: false }),
+    kandidatenQuery,
+  ]);
+  const wachtenden = wachtendenRes.data;
+  const kandidaten = kandidatenRes.data;
+  const kandidaatTotaal = kandidatenRes.count;
 
   const totalPages = Math.ceil((kandidaatTotaal ?? 0) / PAGE_SIZE);
+
+  // Perf-log (fire-and-forget)
+  logPerf({
+    pad: "/kandidaten",
+    type: "page",
+    duur_ms: performance.now() - t0,
+    user_id: user?.id,
+    extra: { pageNum, isSetter, isRecruiter, kandidaten: kandidaten?.length ?? 0 },
+  });
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">

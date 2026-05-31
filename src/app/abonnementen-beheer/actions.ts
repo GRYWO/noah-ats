@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 async function eisSuper() {
   const supabase = await createClient();
@@ -23,6 +23,8 @@ export async function saveSetupFee(formData: FormData) {
     updated_at: new Date().toISOString(),
   });
   revalidatePath("/abonnementen-beheer");
+  revalidateTag("plans", "max");
+  revalidateTag("setup_fee", "max");
   return { ok: true };
 }
 
@@ -61,6 +63,8 @@ export async function savePlan(formData: FormData) {
     await admin.from("abonnements_plannen").insert(data);
   }
   revalidatePath("/abonnementen-beheer");
+  revalidateTag("plans", "max");
+  revalidateTag("setup_fee", "max");
   return { ok: true };
 }
 
@@ -85,6 +89,8 @@ export async function deletePlan(id: string) {
   }
   await admin.from("abonnements_plannen").delete().eq("id", id);
   revalidatePath("/abonnementen-beheer");
+  revalidateTag("plans", "max");
+  revalidateTag("setup_fee", "max");
   return { ok: true };
 }
 
@@ -98,5 +104,7 @@ export async function togglePopulair(id: string) {
     .update({ populair: !(data?.populair ?? false), updated_at: new Date().toISOString() })
     .eq("id", id);
   revalidatePath("/abonnementen-beheer");
+  revalidateTag("plans", "max");
+  revalidateTag("setup_fee", "max");
   return { ok: true };
 }
