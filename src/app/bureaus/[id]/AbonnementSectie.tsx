@@ -73,9 +73,9 @@ export function AbonnementSectie({
     });
     setBezig(false);
     if (r.ok && "checkoutUrl" in r && r.checkoutUrl) {
-      // Open Stripe Checkout in nieuwe tab — bureau betaalt direct
+      // Bureau krijgt mail + UI opent ook nieuwe tab voor directe demo
       window.open(r.checkoutUrl, "_blank");
-      setMelding("Stripe Checkout geopend in nieuwe tab — bureau kan nu betalen ✓");
+      setMelding(`Mail verstuurd naar ${contactEmail} ✓ — Stripe Checkout ook geopend in nieuwe tab`);
     } else if (r.ok) {
       setMelding("Abonnement gestart ✓");
     } else {

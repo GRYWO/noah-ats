@@ -121,8 +121,27 @@ export async function startAbonnement({
       huidige_periode_einde: null,
     }, { onConflict: "tenant_id" });
 
+    // 5) Mail de checkout-link naar het bureau zodat zij zelf kunnen betalen
+    if (session.url && contactEmail) {
+      try {
+        const { sendBureauStripeMail } = await import("@/utils/email");
+        await sendBureauStripeMail({
+          naar: contactEmail,
+          contactNaam: contactNaam || tenant.naam,
+          bureauNaam: tenant.naam,
+          planLabel: planDef.label,
+          setupFeeCent: SETUP_FEE_CENT,
+          maandPrijsCent: planDef.prijs_per_maand_cent,
+          betaalUrl: session.url,
+        });
+      } catch (e) {
+        // Mail-fout breekt de activatie niet — link is ook nog in UI beschikbaar
+        console.error("[abonnement] mail naar bureau mislukt:", e);
+      }
+    }
+
     revalidatePath(`/bureaus/${tenantId}`);
-    // Geef de Stripe Checkout URL terug — UI opent die voor het bureau
+    // Geef de Stripe Checkout URL terug — UI opent + bureau krijgt mail
     return { ok: true, checkoutUrl: session.url ?? null };
   } catch (e) {
     console.error("[abonnement] start mislukt:", e);

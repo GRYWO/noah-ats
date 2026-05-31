@@ -1096,6 +1096,70 @@ Of kopieer deze link in je browser:<br>
 }
 
 /**
+ * Bureau-abonnement: Stripe Checkout link mailen aan bureau-contact.
+ * Bureau klikt link → betaalt setup-fee + maand 1 → abonnement actief.
+ */
+export async function sendBureauStripeMail({
+  naar,
+  contactNaam,
+  bureauNaam,
+  planLabel,
+  setupFeeCent,
+  maandPrijsCent,
+  betaalUrl,
+}: {
+  naar: string;
+  contactNaam: string;
+  bureauNaam: string;
+  planLabel: string;
+  setupFeeCent: number;
+  maandPrijsCent: number;
+  betaalUrl: string;
+}) {
+  const setup = `€ ${(setupFeeCent / 100).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}`;
+  const maand = `€ ${(maandPrijsCent / 100).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}`;
+  const totaal = `€ ${((setupFeeCent + maandPrijsCent) / 100).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}`;
+
+  const body = `
+<p>Hallo ${contactNaam || ""},</p>
+<p>Top dat ${bureauNaam} aan de slag gaat met Noah ATS! Om je account te activeren rond je nu eenmalig de betaling af via Stripe.</p>
+
+<div style="background:#f8f9ff;border:1px solid #d4d7f5;border-radius:8px;padding:18px 20px;margin:18px 0;">
+  <div style="font-size:14px;color:#333;margin-bottom:8px;font-weight:600;">Noah ATS — ${planLabel}</div>
+  <table cellpadding="0" cellspacing="0" width="100%" style="font-size:14px;color:#333;">
+    <tr><td style="padding:4px 0;">Setup-fee (eenmalig)</td><td style="padding:4px 0;text-align:right;">${setup}</td></tr>
+    <tr><td style="padding:4px 0;">Maand 1 — ${planLabel}</td><td style="padding:4px 0;text-align:right;">${maand}</td></tr>
+    <tr><td colspan="2" style="border-top:1px solid #ccc;padding-top:8px;"></td></tr>
+    <tr><td style="padding:4px 0;font-weight:700;">Te betalen nu</td><td style="padding:4px 0;text-align:right;font-weight:700;color:${GRYWO_KLEUR};">${totaal}</td></tr>
+  </table>
+  <div style="font-size:11px;color:#888;margin-top:10px;">Daarna ${maand} per maand. Maandelijks opzegbaar.</div>
+</div>
+
+<div style="text-align:center;margin:24px 0;">
+  <a href="${betaalUrl}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:bold;font-size:15px;">
+    Veilig betalen via Stripe
+  </a>
+</div>
+
+<p style="font-size:13px;color:#555;">
+Je kunt betalen met <b>iDEAL</b>, <b>SEPA Direct Debit</b> of <b>creditcard</b>. Zodra de betaling is verwerkt, ontvang je de inloggegevens.
+</p>
+
+<p style="font-size:12px;color:#888;margin-top:18px;">
+Vragen? Mail <a href="mailto:info@grywo.nl">info@grywo.nl</a> of bel 085-4016082.
+</p>`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `Noah ATS — activeer je ${planLabel} abonnement (${totaal})`,
+    html: brandedLayout({ titel: "Activeer je abonnement", body, merk: "noah" }),
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}
+
+/**
  * Setter-stoel: Stripe betaal-link mailen aan nieuwe setter.
  * Setter kan pas inloggen nadat hij betaald heeft.
  */
