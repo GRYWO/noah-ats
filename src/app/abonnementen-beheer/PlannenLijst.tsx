@@ -229,7 +229,11 @@ function PlanFormulier({ plan, onKlaar }: { plan: Plan | null; onKlaar: () => vo
       </div>
       <div className="text-[11px] text-gray-400 inline-flex items-center gap-1">
         {plan?.actief ? <Eye size={11} /> : <EyeOff size={11} />}
-        {plan?.actief ? "Zichtbaar voor bureaus" : "Niet zichtbaar bij activatie"}
+        {plan?.actief
+          ? plan.sleutel === "setter_stoel"
+            ? "Zichtbaar voor setter-users (eigen Stripe)"
+            : "Zichtbaar voor bureaus"
+          : "Niet zichtbaar bij activatie"}
       </div>
     </form>
   );
