@@ -72,9 +72,15 @@ export async function updateSession(request: NextRequest) {
     }
 
     // 1b) Bureau-leden (admin/recruiter) zonder actief bureau-abonnement.
-    //     Super-admin (Yorith) wordt nooit geblokkeerd.
-    const userEmail = user.email ?? "";
-    const isSuperUser = userEmail === "yorith@grywo.nl" || userEmail === "yorith@grywo.com";
+    //     Intern GRYWO-personeel (Yorith, Pepijn, Wouter) wordt nooit geblokkeerd.
+    const userEmail = (user.email ?? "").toLowerCase();
+    const internGrywo = new Set([
+      "yorith@grywo.nl",
+      "yorith@grywo.com",
+      "pepijn@grywo.nl",
+      "wouter@grywo.nl",
+    ]);
+    const isSuperUser = internGrywo.has(userEmail);
     if (!isSuperUser && profile?.tenant_id && (profile.rol === "admin" || profile.rol === "recruiter")) {
       const { data: ab } = await supabase
         .from("abonnementen")
