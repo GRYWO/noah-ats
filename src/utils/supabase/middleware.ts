@@ -54,23 +54,47 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Setter zonder actief abonnement → block en redirect naar /login met melding.
-  // Public routes blijven toegankelijk (anders kan setter niet bij /login komen).
+  // Beveiligings-checks voor ingelogde users op niet-publieke routes
   if (user && !isPublic && !path.startsWith("/api/")) {
-    // Inline lookup: lees rol + abonnement-status uit zelfde sessie
     const { data: profile } = await supabase
       .from("profiles")
-      .select("rol, abonnement_status")
+      .select("rol, abonnement_status, actieve_device_token, laatst_actief_op")
       .eq("id", user.id)
       .single();
 
+    // 1) Setter zonder actief abonnement
     if (profile?.rol === "setter" && profile.abonnement_status !== "actief") {
-      // Tenzij admin/super-admin: tijdelijke override-cookies hier niet relevant
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("setter_abonnement", profile.abonnement_status ?? "geen");
       await supabase.auth.signOut();
       return NextResponse.redirect(url);
+    }
+
+    // 2) Single-device-policy: cookie noah_device moet matchen profile.actieve_device_token.
+    //    Als profile geen token heeft (oude sessie pre-feature) accepteren we de huidige.
+    if (profile?.actieve_device_token) {
+      const deviceCookie = request.cookies.get("noah_device")?.value;
+      if (deviceCookie !== profile.actieve_device_token) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.searchParams.set("reden", "ander_apparaat");
+        await supabase.auth.signOut();
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // 3) Inactiviteits-uitlog: > 60 minuten geen activiteit = signOut.
+    if (profile?.laatst_actief_op) {
+      const laatst = new Date(profile.laatst_actief_op).getTime();
+      const minutenInactief = (Date.now() - laatst) / (60 * 1000);
+      if (minutenInactief > 60) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.searchParams.set("reden", "inactiviteit");
+        await supabase.auth.signOut();
+        return NextResponse.redirect(url);
+      }
     }
   }
 

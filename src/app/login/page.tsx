@@ -6,9 +6,9 @@ import { ShieldCheck, MapPin, BadgeCheck } from "lucide-react";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; setter_abonnement?: string }>;
+  searchParams: Promise<{ error?: string; setter_abonnement?: string; reden?: string }>;
 }) {
-  const { error, setter_abonnement } = await searchParams;
+  const { error, setter_abonnement, reden } = await searchParams;
 
   const setterMelding = setter_abonnement === "actief"
     ? { kleur: "emerald", tekst: "✅ Je abonnement is actief! Check je mail voor je inloggegevens." }
@@ -20,6 +20,10 @@ export default async function LoginPage({
     ? { kleur: "red", tekst: "⚠ Je abonnement heeft een achterstallige betaling. Werk je betaalmethode bij via Stripe." }
     : setter_abonnement === "opgezegd"
     ? { kleur: "red", tekst: "Je abonnement is opgezegd. Neem contact op met info@grywo.nl om opnieuw te starten." }
+    : reden === "ander_apparaat"
+    ? { kleur: "amber", tekst: "🔐 Je bent uitgelogd omdat er op een ander apparaat is ingelogd met dit account." }
+    : reden === "inactiviteit"
+    ? { kleur: "amber", tekst: "⏱ Je bent automatisch uitgelogd na 60 minuten inactiviteit." }
     : null;
 
   return (
