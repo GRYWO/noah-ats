@@ -189,10 +189,46 @@ export async function POST(req: Request) {
             updated_at: new Date().toISOString(),
           }).eq("tenant_id", meta.tenant_id);
 
-          // Markeer bureau ook als setup_fee_paid (legacy veld)
           await admin.from("tenants").update({
             setup_fee_paid: true,
+            status: "actief",
           }).eq("id", meta.tenant_id);
+
+          // Bureau heeft betaald → stuur welkomstmail met inloggegevens naar admin
+          try {
+            const { randomBytes } = await import("crypto");
+            const { sendWelkomstmailBureau } = await import("@/utils/email");
+
+            const { data: tenant } = await admin
+              .from("tenants")
+              .select("naam, handelsnaam, contact_email")
+              .eq("id", meta.tenant_id)
+              .single();
+
+            const { data: adminProfile } = await admin
+              .from("profiles")
+              .select("id, voornaam")
+              .eq("tenant_id", meta.tenant_id)
+              .eq("rol", "admin")
+              .order("created_at", { ascending: true })
+              .limit(1)
+              .maybeSingle();
+
+            if (tenant && adminProfile) {
+              const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+              await admin.auth.admin.updateUserById(adminProfile.id, { password: nieuwWachtwoord });
+
+              await sendWelkomstmailBureau({
+                naar: tenant.contact_email ?? "",
+                voornaam: adminProfile.voornaam ?? "",
+                email: tenant.contact_email ?? "",
+                wachtwoord: nieuwWachtwoord,
+                bedrijf: tenant.handelsnaam ?? tenant.naam ?? "Noah ATS",
+              });
+            }
+          } catch (e) {
+            console.error("Welkomstmail bureau-admin na betaling mislukt:", e);
+          }
         }
         break;
       }

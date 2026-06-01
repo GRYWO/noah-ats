@@ -190,6 +190,19 @@ export default async function BureausPage({
                 </div>
               </div>
 
+              <h3 className="font-bold text-gray-800 mt-5 mb-3 pb-2 border-b">Abonnement</h3>
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3 text-xs text-gray-700">
+                <b className="text-[#333399]">Hoe het werkt:</b> Na het aanmaken krijgt het bureau eerst de DPA per mail. Daarna automatisch een Stripe-betaallink voor het gekozen plan. Pas na betaling krijgt het bureau inloggegevens.
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Plan kiezen *</label>
+                <select name="gekozen_plan" required defaultValue="starter" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                  <option value="starter">Starter — € 5.000 / maand (1 recruiter)</option>
+                  <option value="pro">Pro — € 10.000 / maand (2 recruiters)</option>
+                  <option value="enterprise">Enterprise — € 15.000 / maand (3+ recruiters)</option>
+                </select>
+              </div>
+
             </div>
 
             <div className="flex justify-end pt-4 border-t">

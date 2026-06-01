@@ -45,6 +45,7 @@ export async function nieuwBureau(formData: FormData) {
   const contact_email     = (formData.get("contact_email") as string)?.trim() || null;
   const ubo_naam          = (formData.get("ubo_naam") as string)?.trim() || null;
   const ubo_geboortedatum = (formData.get("ubo_geboortedatum") as string) || null;
+  const gekozen_plan      = ((formData.get("gekozen_plan") as string) || "starter").trim();
 
   if (!naam || !kvk) {
     redirect("/bureaus?error=Bedrijfsnaam+en+KvK+verplicht");
@@ -74,6 +75,7 @@ export async function nieuwBureau(formData: FormData) {
     contact_email,
     ubo_naam,
     ubo_geboortedatum: ubo_geboortedatum || null,
+    gekozen_plan,
     status: "setup",
   }).select("id").single();
 

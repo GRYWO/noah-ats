@@ -58,7 +58,7 @@ export async function updateSession(request: NextRequest) {
   if (user && !isPublic && !path.startsWith("/api/")) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("rol, abonnement_status, actieve_device_token, laatst_actief_op")
+      .select("rol, abonnement_status, actieve_device_token, laatst_actief_op, tenant_id")
       .eq("id", user.id)
       .single();
 
@@ -69,6 +69,25 @@ export async function updateSession(request: NextRequest) {
       url.searchParams.set("setter_abonnement", profile.abonnement_status ?? "geen");
       await supabase.auth.signOut();
       return NextResponse.redirect(url);
+    }
+
+    // 1b) Bureau-leden (admin/recruiter) zonder actief bureau-abonnement.
+    //     Super-admin (Yorith) wordt nooit geblokkeerd.
+    const userEmail = user.email ?? "";
+    const isSuperUser = userEmail === "yorith@grywo.nl" || userEmail === "yorith@grywo.com";
+    if (!isSuperUser && profile?.tenant_id && (profile.rol === "admin" || profile.rol === "recruiter")) {
+      const { data: ab } = await supabase
+        .from("abonnementen")
+        .select("status")
+        .eq("tenant_id", profile.tenant_id)
+        .maybeSingle();
+      if (ab && ab.status !== "actief") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.searchParams.set("bureau_abonnement", ab.status ?? "geen");
+        await supabase.auth.signOut();
+        return NextResponse.redirect(url);
+      }
     }
 
     // 2) Single-device-policy: cookie noah_device moet matchen profile.actieve_device_token.

@@ -84,35 +84,34 @@ export async function tekenDpa(formData: FormData): Promise<Result> {
     console.error("Interne notificatie mislukt:", e);
   }
 
-  // Zoek de bureau-admin user en stuur nu pas de welkomstmail met inloggegevens.
-  // Reset het wachtwoord voor frisse credentials.
+  // NIET direct welkomstmail. Eerst Stripe checkout starten — bureau betaalt
+  // het abonnement, daarna pas inloggegevens (welkomstmail wordt verstuurd
+  // vanuit Stripe webhook checkout.session.completed).
   try {
     if (row.tenant_id) {
-      const { data: adminProfile } = await admin
-        .from("profiles")
-        .select("id, voornaam")
-        .eq("tenant_id", row.tenant_id)
-        .eq("rol", "admin")
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+      const { startAbonnement } = await import("@/app/bureaus/[id]/abonnement-actions");
+      const { data: tenant } = await admin
+        .from("tenants")
+        .select("gekozen_plan, contact_email, contact_naam")
+        .eq("id", row.tenant_id)
+        .single();
 
-      if (adminProfile) {
-        const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
-        await admin.auth.admin.updateUserById(adminProfile.id, { password: nieuwWachtwoord });
-
-        // Gebruik het verzonden_aan_email (waar de DPA naartoe ging) als ontvanger
-        await sendWelkomstmailBureau({
-          naar: row.verzonden_aan_email,
-          voornaam: adminProfile.voornaam ?? naam,
-          email: row.verzonden_aan_email,
-          wachtwoord: nieuwWachtwoord,
-          bedrijf: bureauNaam,
+      if (tenant?.contact_email) {
+        // Trigger Stripe Checkout — sendBureauStripeMail wordt automatisch
+        // verstuurd vanuit startAbonnement.
+        const r = await startAbonnement({
+          tenantId: row.tenant_id,
+          plan: (tenant.gekozen_plan ?? "starter") as "starter" | "pro" | "enterprise",
+          contactEmail: tenant.contact_email,
+          contactNaam: tenant.contact_naam ?? bureauNaam,
         });
+        if (!r.ok) {
+          console.error("Bureau Stripe-checkout na DPA mislukt:", r.error);
+        }
       }
     }
   } catch (e) {
-    console.error("Welkomstmail bureau-admin na DPA-tekenen mislukt:", e);
+    console.error("Bureau Stripe-flow na DPA-tekenen mislukt:", e);
   }
 
   revalidatePath(`/dpa-tekenen/${token}`);
