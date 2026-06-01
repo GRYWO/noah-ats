@@ -54,72 +54,76 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Beveiligings-checks voor ingelogde users op niet-publieke routes
+  // Beveiligings-checks voor ingelogde users op niet-publieke routes.
+  // Alles in try/catch zodat een DB-hiccup nooit een 500 op het hele dashboard veroorzaakt.
   if (user && !isPublic && !path.startsWith("/api/")) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("rol, abonnement_status, actieve_device_token, laatst_actief_op, tenant_id")
-      .eq("id", user.id)
-      .single();
-
-    // 1) Setter zonder actief abonnement
-    if (profile?.rol === "setter" && profile.abonnement_status !== "actief") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("setter_abonnement", profile.abonnement_status ?? "geen");
-      await supabase.auth.signOut();
-      return NextResponse.redirect(url);
-    }
-
-    // 1b) Bureau-leden (admin/recruiter) zonder actief bureau-abonnement.
-    //     Intern GRYWO-personeel (Yorith, Pepijn, Wouter) wordt nooit geblokkeerd.
-    const userEmail = (user.email ?? "").toLowerCase();
-    const internGrywo = new Set([
-      "yorith@grywo.nl",
-      "yorith@grywo.com",
-      "pepijn@grywo.nl",
-      "wouter@grywo.nl",
-    ]);
-    const isSuperUser = internGrywo.has(userEmail);
-    if (!isSuperUser && profile?.tenant_id && (profile.rol === "admin" || profile.rol === "recruiter")) {
-      const { data: ab } = await supabase
-        .from("abonnementen")
-        .select("status")
-        .eq("tenant_id", profile.tenant_id)
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("rol, abonnement_status, actieve_device_token, laatst_actief_op, tenant_id")
+        .eq("id", user.id)
         .maybeSingle();
-      if (ab && ab.status !== "actief") {
-        const url = request.nextUrl.clone();
-        url.pathname = "/login";
-        url.searchParams.set("bureau_abonnement", ab.status ?? "geen");
-        await supabase.auth.signOut();
-        return NextResponse.redirect(url);
-      }
-    }
 
-    // 2) Single-device-policy: cookie noah_device moet matchen profile.actieve_device_token.
-    //    Als profile geen token heeft (oude sessie pre-feature) accepteren we de huidige.
-    if (profile?.actieve_device_token) {
-      const deviceCookie = request.cookies.get("noah_device")?.value;
-      if (deviceCookie !== profile.actieve_device_token) {
+      // Helper: redirect + cookies clearen zonder supabase.auth.signOut() in middleware
+      // (signOut faalt soms in Edge runtime — we wissen liever zelf de auth-cookies).
+      const redirectMetUitlog = (reden: { key: string; value: string }) => {
         const url = request.nextUrl.clone();
         url.pathname = "/login";
-        url.searchParams.set("reden", "ander_apparaat");
-        await supabase.auth.signOut();
-        return NextResponse.redirect(url);
-      }
-    }
+        url.searchParams.set(reden.key, reden.value);
+        const res = NextResponse.redirect(url);
+        // Alle sb-* cookies wissen
+        request.cookies.getAll().forEach((c) => {
+          if (c.name.startsWith("sb-")) res.cookies.delete(c.name);
+        });
+        res.cookies.delete("noah_device");
+        return res;
+      };
 
-    // 3) Inactiviteits-uitlog: > 60 minuten geen activiteit = signOut.
-    if (profile?.laatst_actief_op) {
-      const laatst = new Date(profile.laatst_actief_op).getTime();
-      const minutenInactief = (Date.now() - laatst) / (60 * 1000);
-      if (minutenInactief > 60) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/login";
-        url.searchParams.set("reden", "inactiviteit");
-        await supabase.auth.signOut();
-        return NextResponse.redirect(url);
+      // 1) Setter zonder actief abonnement
+      if (profile?.rol === "setter" && profile.abonnement_status !== "actief") {
+        return redirectMetUitlog({ key: "setter_abonnement", value: profile.abonnement_status ?? "geen" });
       }
+
+      // 1b) Bureau-leden (admin/recruiter) zonder actief bureau-abonnement.
+      //     Intern GRYWO-personeel (Yorith, Pepijn, Wouter) wordt nooit geblokkeerd.
+      const userEmail = (user.email ?? "").toLowerCase();
+      const internGrywo = new Set([
+        "yorith@grywo.nl",
+        "yorith@grywo.com",
+        "pepijn@grywo.nl",
+        "wouter@grywo.nl",
+      ]);
+      const isSuperUser = internGrywo.has(userEmail);
+      if (!isSuperUser && profile?.tenant_id && (profile.rol === "admin" || profile.rol === "recruiter")) {
+        const { data: ab } = await supabase
+          .from("abonnementen")
+          .select("status")
+          .eq("tenant_id", profile.tenant_id)
+          .maybeSingle();
+        if (ab && ab.status !== "actief") {
+          return redirectMetUitlog({ key: "bureau_abonnement", value: ab.status ?? "geen" });
+        }
+      }
+
+      // 2) Single-device-policy: cookie noah_device moet matchen profile.actieve_device_token.
+      if (profile?.actieve_device_token) {
+        const deviceCookie = request.cookies.get("noah_device")?.value;
+        if (deviceCookie !== profile.actieve_device_token) {
+          return redirectMetUitlog({ key: "reden", value: "ander_apparaat" });
+        }
+      }
+
+      // 3) Inactiviteits-uitlog: > 60 minuten geen activiteit
+      if (profile?.laatst_actief_op) {
+        const laatst = new Date(profile.laatst_actief_op).getTime();
+        const minutenInactief = (Date.now() - laatst) / (60 * 1000);
+        if (minutenInactief > 60) {
+          return redirectMetUitlog({ key: "reden", value: "inactiviteit" });
+        }
+      }
+    } catch (e) {
+      // Liever doorlaten dan een 500 — pagina rendert zelf bij echte auth-fouten.
+      console.error("[middleware] beveiligingscheck mislukt:", e);
     }
   }
 
