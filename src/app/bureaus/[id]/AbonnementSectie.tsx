@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Crown, CheckCircle2, AlertTriangle, XCircle, Loader2, Sparkles } from "lucide-react";
 import { eur, type Plan, type PlanKey } from "@/utils/plans-shared";
 import { startAbonnement, wijzigPlan, zegOp, overrideStatus } from "./abonnement-actions";
+import { verstuurBureauAbonnementMail } from "./bureau-mail-actions";
 
 type Abonnement = {
   plan: string;
@@ -97,6 +98,14 @@ export function AbonnementSectie({
     const r = await zegOp({ tenantId });
     setBezig(false);
     setMelding(r.ok ? "Opzegging gepland" : r.error ?? "Fout");
+  }
+
+  async function verstuurMail() {
+    if (!confirm(`Abonnement-betaallink (opnieuw) versturen naar ${contactEmail}?`)) return;
+    setBezig(true);
+    const r = await verstuurBureauAbonnementMail(tenantId);
+    setBezig(false);
+    setMelding(r.ok ? `Mail verzonden naar ${contactEmail} ✓` : r.error ?? "Versturen mislukt");
   }
 
   async function override(status: "actief" | "read_only" | "geblokkeerd") {
@@ -288,7 +297,7 @@ export function AbonnementSectie({
       )}
 
       {/* Acties */}
-      <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100">
+      <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100">
         {abonnement.stripe_customer_id && (
           <a
             href={`https://dashboard.stripe.com/customers/${abonnement.stripe_customer_id}`}
@@ -298,6 +307,17 @@ export function AbonnementSectie({
           >
             Open in Stripe →
           </a>
+        )}
+        {/* Abonnement-mail opnieuw versturen */}
+        {contactEmail && abonnement.status !== "opgezegd" && (
+          <button
+            type="button"
+            onClick={verstuurMail}
+            disabled={bezig}
+            className="text-xs text-[#333399] hover:underline inline-flex items-center gap-1 disabled:opacity-50"
+          >
+            ✉ Abonnement-mail (opnieuw) versturen
+          </button>
         )}
         {abonnement.status !== "opgezegd" && (
           <button

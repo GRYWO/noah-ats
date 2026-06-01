@@ -7,6 +7,7 @@ import { InlineVoysEdit } from "./InlineVoysEdit";
 import { CoachToggle } from "./CoachToggle";
 import { SalesAdminToggle } from "./SalesAdminToggle";
 import { InternToggle } from "./InternToggle";
+import { SetterMailKnop } from "./SetterMailKnop";
 import { ResetWachtwoordKnop } from "./ResetWachtwoordKnop";
 import { DeleteSetterButton } from "./DeleteSetterButton";
 import { bewerkUser } from "./actions";
@@ -151,6 +152,10 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSu
                   <InternToggle userId={s.id} actief={!!s.is_intern_personeel} />
                   <SalesAdminToggle userId={s.id} actief={!!s.kan_abonnementen_beheren} />
                 </>
+              )}
+              {/* Setter-stoel abonnement-mail opnieuw versturen */}
+              {s.rol === "setter" && !isHuidigeUser && (
+                <SetterMailKnop userId={s.id} naam={`${s.voornaam ?? ""} ${s.achternaam ?? ""}`.trim()} />
               )}
               <button
                 type="button"
