@@ -198,8 +198,8 @@ export default async function BureausPage({
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Plan kiezen *</label>
                 <select name="gekozen_plan" required defaultValue="starter" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
                   <option value="starter">Starter — € 5.000 / maand (1 recruiter)</option>
-                  <option value="pro">Pro — € 10.000 / maand (2 recruiters)</option>
-                  <option value="enterprise">Enterprise — € 15.000 / maand (3+ recruiters)</option>
+                  <option value="pro">Pro — € 10.000 / maand (2-3 recruiters)</option>
+                  <option value="enterprise">Enterprise — € 15.000 / maand (4+ recruiters)</option>
                 </select>
               </div>
 

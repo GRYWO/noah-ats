@@ -2,9 +2,9 @@
  * Automatische bureau-abonnement-aanpassing bij user-toevoegen/verwijderen.
  *
  * Regel:
- *   1 recruiter actief → Starter   (€5.000)
- *   2 recruiters       → Pro       (€10.000)
- *   3+ recruiters      → Enterprise (€15.000)
+ *   1 recruiter actief → Starter    (€5.000)
+ *   2-3 recruiters     → Pro        (€10.000)
+ *   4+ recruiters      → Enterprise (€15.000)
  *
  * Wordt aangeroepen ná insert/delete van een recruiter in profiles.
  * Stripe past het plan aan met prorata; bureau krijgt automatisch
@@ -18,8 +18,8 @@ import type { PlanKey } from "@/utils/plans-shared";
 
 function bepaalPlanVoorAantal(aantal: number): PlanKey {
   if (aantal <= 1) return "starter";
-  if (aantal === 2) return "pro";
-  return "enterprise"; // 3+
+  if (aantal <= 3) return "pro";
+  return "enterprise"; // 4+
 }
 
 /**

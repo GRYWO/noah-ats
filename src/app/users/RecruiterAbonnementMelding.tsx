@@ -37,8 +37,8 @@ export function RecruiterAbonnementMelding() {
         </p>
         <ul className="text-xs space-y-0.5 ml-2">
           <li>• <b>1 recruiter</b> → Starter (€ 5.000 / mnd)</li>
-          <li>• <b>2 recruiters</b> → Pro (€ 10.000 / mnd)</li>
-          <li>• <b>3+ recruiters</b> → Enterprise (€ 15.000 / mnd)</li>
+          <li>• <b>2-3 recruiters</b> → Pro (€ 10.000 / mnd)</li>
+          <li>• <b>4+ recruiters</b> → Enterprise (€ 15.000 / mnd)</li>
         </ul>
         <p className="text-[11px] text-amber-700 mt-2 italic">
           Stripe past prorata toe — bureau betaalt alleen voor de extra dagen tot de volgende factuur.
