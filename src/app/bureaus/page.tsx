@@ -190,17 +190,6 @@ export default async function BureausPage({
                 </div>
               </div>
 
-              <h3 className="font-bold text-gray-800 mb-3 mt-4 pb-2 border-b">Eigenaar (anti-witwas)</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Naam eigenaar</label>
-                  <input name="ubo_naam" placeholder="Jan van der Berg" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Geboortedatum eigenaar</label>
-                  <input name="ubo_geboortedatum" type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
-                </div>
-              </div>
             </div>
 
             <div className="flex justify-end pt-4 border-t">
