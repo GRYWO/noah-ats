@@ -79,16 +79,7 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
     return { error: `Geen e-mailadres bekend voor ${recruiter.voornaam ?? "recruiter"}. Vul dit in via /users.` };
   }
 
-  // Voorkom dubbele open verzoeken voor dezelfde kandidaat
-  const { data: bestaand } = await admin
-    .from("kandidaat_verwijder_verzoeken")
-    .select("id")
-    .eq("kandidaat_id", kandidaatId)
-    .eq("status", "open")
-    .maybeSingle();
-  if (bestaand) {
-    return { alOpen: true, error: "Er staat al een open verzoek voor deze kandidaat. Wacht op de recruiter." };
-  }
+  // Setter mag meerdere verzoeken sturen — geen blokkade meer op open verzoeken.
 
   // Maak verzoek + token
   const token = randomBytes(24).toString("hex");

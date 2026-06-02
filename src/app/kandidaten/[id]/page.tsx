@@ -90,16 +90,6 @@ export default async function KandidaatDetail({
     .in("rol", ["admin", "recruiter", "setter"])
     .order("voornaam", { ascending: true });
 
-  // Open verwijder-verzoek? (voor setter — toont status ipv knop)
-  const { data: openVerzoek } = isSetter
-    ? await supabase
-        .from("kandidaat_verwijder_verzoeken")
-        .select("id")
-        .eq("kandidaat_id", id)
-        .eq("status", "open")
-        .maybeSingle()
-    : { data: null };
-  const alOpenVerzoek = !!openVerzoek;
 
   const { data: plaatsingen } = await supabase
     .from("plaatsingen")
@@ -619,7 +609,7 @@ export default async function KandidaatDetail({
         {/* Delete button — setter ziet 'Verwijderen aanvragen', anderen normale delete */}
         <div className="mt-6 flex justify-end">
           {isSetter ? (
-            <VerwijderAanvraagKnop kandidaatId={k.id} alOpenVerzoek={alOpenVerzoek} />
+            <VerwijderAanvraagKnop kandidaatId={k.id} />
           ) : (
             <DeleteButton id={k.id} />
           )}

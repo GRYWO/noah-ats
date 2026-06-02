@@ -11,10 +11,8 @@ import { vraagVerwijderingAan } from "./verwijder-verzoek-actions";
  */
 export function VerwijderAanvraagKnop({
   kandidaatId,
-  alOpenVerzoek,
 }: {
   kandidaatId: string;
-  alOpenVerzoek: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [reden, setReden] = useState("");
@@ -22,15 +20,6 @@ export function VerwijderAanvraagKnop({
   const [resultaat, setResultaat] = useState<"ok" | string | null>(null);
   const [mailNaar, setMailNaar] = useState<string | null>(null);
   const router = useRouter();
-
-  if (alOpenVerzoek && !open) {
-    return (
-      <div className="text-sm px-4 py-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-md inline-flex items-center gap-2">
-        <AlertTriangle size={14} />
-        Verwijder-verzoek staat open bij recruiter
-      </div>
-    );
-  }
 
   function aanvragen() {
     startTransition(async () => {
