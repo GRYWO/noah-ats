@@ -15,7 +15,9 @@ export default async function LoginPage({
     : setter_abonnement === "geannuleerd"
     ? { kleur: "amber", tekst: "⚠ Betaling geannuleerd. Je kan pas inloggen na een actief abonnement — check je mail voor de betaallink." }
     : setter_abonnement === "wachtend_betaling"
-    ? { kleur: "amber", tekst: "⚠ Je abonnement is nog niet betaald. Check je mail voor de Stripe-betaallink." }
+    ? { kleur: "amber", tekst: "⚠ Je proefperiode is afgelopen. Check je mail voor de Stripe-betaallink om weer toegang te krijgen." }
+    : setter_abonnement === "proefperiode"
+    ? { kleur: "amber", tekst: "⚠ Je proefperiode is afgelopen. Wacht op de Stripe-betaallink in je mail." }
     : setter_abonnement === "achterstallig"
     ? { kleur: "red", tekst: "⚠ Je abonnement heeft een achterstallige betaling. Werk je betaalmethode bij via Stripe." }
     : setter_abonnement === "opgezegd"

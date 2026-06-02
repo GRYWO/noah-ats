@@ -62,7 +62,7 @@ export async function updateSession(request: NextRequest) {
     try {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("rol, abonnement_status, actieve_device_token, laatst_actief_op, tenant_id")
+        .select("rol, abonnement_status, actieve_device_token, laatst_actief_op, tenant_id, proefperiode_eindigt_op")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -81,9 +81,16 @@ export async function updateSession(request: NextRequest) {
         return res;
       };
 
-      // 1) Setter zonder actief abonnement
+      // 1) Setter zonder actief abonnement.
+      //    Uitzondering: tijdens proefperiode (5 werkdagen na aanmaak) mag setter
+      //    gewoon werken. Cron blokkeert hem zodra proefperiode verlopen is.
       if (profile?.rol === "setter" && profile.abonnement_status !== "actief") {
-        return redirectMetUitlog({ key: "setter_abonnement", value: profile.abonnement_status ?? "geen" });
+        const proefLoopt = profile.abonnement_status === "proefperiode"
+          && profile.proefperiode_eindigt_op
+          && new Date(profile.proefperiode_eindigt_op).getTime() > Date.now();
+        if (!proefLoopt) {
+          return redirectMetUitlog({ key: "setter_abonnement", value: profile.abonnement_status ?? "geen" });
+        }
       }
 
       // 1b) Bureau-leden (admin/recruiter) zonder actief bureau-abonnement.

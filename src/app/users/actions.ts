@@ -89,6 +89,16 @@ export async function nieuweSetter(formData: FormData) {
     if (heeftEntries) menuPermissions = perms;
   }
 
+  // Setter krijgt automatisch 5 werkdagen proefperiode (geen abonnement nodig).
+  // Daarna stuurt cron de Stripe-betalingsmail + middleware blokkeert.
+  let proefperiodeEinde: string | null = null;
+  let setterAbonnementStatus = "geen";
+  if (rol === "setter") {
+    const { werkdagenLater } = await import("@/utils/voorstel-log");
+    proefperiodeEinde = werkdagenLater(5);
+    setterAbonnementStatus = "proefperiode";
+  }
+
   // 2. Maak profile aan (gekoppeld aan zelfde tenant)
   const { error: profileErr } = await admin.from("profiles").insert({
     id: created.user.id,
@@ -103,6 +113,8 @@ export async function nieuweSetter(formData: FormData) {
     handtekening_html: handtekening,
     mail_status: mailWachtwoord ? "actief" : "niet_geconfigureerd",
     menu_permissions: menuPermissions,
+    proefperiode_eindigt_op: proefperiodeEinde,
+    abonnement_status: rol === "setter" ? setterAbonnementStatus : null,
   });
 
   if (profileErr) {

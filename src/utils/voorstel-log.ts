@@ -58,3 +58,21 @@ export function isWerkdag(d: Date = new Date()): boolean {
   const dag = d.getDay();
   return dag !== 0 && dag !== 6;
 }
+
+/**
+ * Bepaalt de einddatum van een proefperiode van N werkdagen.
+ * Slaat weekenden over. Geeft ISO-string terug.
+ *
+ * Voorbeeld: vandaag is vrijdag → na 5 werkdagen = volgende vrijdag.
+ */
+export function werkdagenLater(aantalWerkdagen: number, start: Date = new Date()): string {
+  const d = new Date(start);
+  let toegevoegd = 0;
+  while (toegevoegd < aantalWerkdagen) {
+    d.setDate(d.getDate() + 1);
+    if (isWerkdag(d)) toegevoegd++;
+  }
+  // Einde van die werkdag, 23:59:59
+  d.setHours(23, 59, 59, 999);
+  return d.toISOString();
+}

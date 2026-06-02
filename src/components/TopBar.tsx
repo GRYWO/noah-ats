@@ -6,6 +6,7 @@ import { EodHerinneringBanner } from "./EodHerinneringBanner";
 import { SnelZoeken } from "./SnelZoeken";
 import { AutoRefresh } from "./AutoRefresh";
 import { DemoModusBanner } from "./DemoModusBanner";
+import { ProefperiodeBanner } from "./ProefperiodeBanner";
 import { HuisstijlInjector } from "./HuisstijlInjector";
 import { leesViewAs, effectieveRol } from "@/utils/view-as";
 import { isSalesAdmin } from "@/utils/sales-admin";
@@ -70,6 +71,7 @@ export async function TopBar({ active }: Props) {
     <>
       <HuisstijlInjector />
       <DemoModusBanner />
+      <ProefperiodeBanner />
       <EodHerinneringBanner />
       <SideBar
         active={active}
