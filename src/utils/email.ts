@@ -179,12 +179,16 @@ ${voorstelprofielToken ? `
 <p style="font-size:12px;color:#999;text-align:center;margin:16px 0 0 0;">Bij uitnodigen vul je in 1 minuut je bedrijfsgegevens + 3 voorkeursdata in.</p>
 `;
 
-  return resend.emails.send({
+  const result = await resend.emails.send({
     from: from ?? FROM,
     to: naar,
     subject: `Kandidaat voorstel — ${naam}`,
     html: brandedLayout({ titel: "Kandidaat voorstel", body }),
   });
+  if (result.error) {
+    throw new Error(`Resend afgewezen: ${result.error.message}`);
+  }
+  return result;
 }
 
 export async function sendReminderMail({
