@@ -199,6 +199,7 @@ export async function bewerkUser(formData: FormData) {
   const telefoon      = (formData.get("telefoon") as string)?.trim() || null;
   const voys_nummer   = (formData.get("voys_nummer") as string)?.trim() || null;
   const mail_adres    = (formData.get("mail_adres") as string)?.trim().toLowerCase() || null;
+  const mail_wachtwoord = (formData.get("mail_wachtwoord") as string)?.trim() || null;
   const functie_titel = (formData.get("functie_titel") as string)?.trim() || null;
   const nieuweRol     = (formData.get("rol") as string)?.trim() || null;
   const permsRaw      = (formData.get("menu_permissions") as string)?.trim() || null;
@@ -234,6 +235,12 @@ export async function bewerkUser(formData: FormData) {
     mail_adres,
     functie_titel,
   };
+  // Mail-wachtwoord versleuteld opslaan — alleen overschrijven als ingevuld,
+  // anders blijft het huidige wachtwoord behouden (laat-leeg-pattern).
+  if (mail_wachtwoord) {
+    update.mail_wachtwoord = encrypt(mail_wachtwoord);
+    update.mail_status = "actief";
+  }
   // Super-admin (Yorith) en sales-admin (Pepijn) mogen rol wijzigen
   if ((isSuperAdmin || isSales) && nieuweRol && ["admin", "recruiter", "setter"].includes(nieuweRol)) {
     update.rol = nieuweRol;

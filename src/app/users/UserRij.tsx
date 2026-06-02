@@ -206,6 +206,21 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSu
                   <div className="col-span-2">
                     <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-adres bedrijf</label>
                     <input name="mail_adres" type="email" defaultValue={s.mail_adres ?? ""} placeholder="voorbeeld@grywo.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                    <small className="text-gray-400 text-xs">Bepaalt waar vanaf voorstellen-mails worden verzonden.</small>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-wachtwoord (Hostnet)</label>
+                    <input
+                      name="mail_wachtwoord"
+                      type="password"
+                      defaultValue=""
+                      placeholder="Laat leeg om huidige te behouden"
+                      autoComplete="new-password"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                    <small className="text-gray-400 text-xs">
+                      Wachtwoord voor IMAP/SMTP — wordt versleuteld opgeslagen. Laat leeg om huidige te behouden.
+                    </small>
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs font-semibold text-gray-600 mb-1">Functietitel</label>
