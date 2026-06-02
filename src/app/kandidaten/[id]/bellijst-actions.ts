@@ -78,12 +78,17 @@ export async function uploadBellijst(formData: FormData) {
     volgorde: idx,
   }));
 
-  // Batch insert in chunks van 100
-  for (let i = 0; i < items.length; i += 100) {
-    await admin.from("bellijst_items").insert(items.slice(i, i + 100));
+  // Parallelle batch-insert (chunks van 500). Veel sneller dan sequentieel
+  // voor grote bellijsten — voorkomt timeouts en oneindig laden.
+  const batches: PromiseLike<unknown>[] = [];
+  for (let i = 0; i < items.length; i += 500) {
+    batches.push(admin.from("bellijst_items").insert(items.slice(i, i + 500)) as unknown as PromiseLike<unknown>);
   }
+  await Promise.all(batches);
 
-  // Auto-overgang naar "in_proces" als de kandidaat nog in een eerdere stap zit
+  // Auto-overgang naar "in_proces" als de kandidaat nog in een eerdere stap zit.
+  // De kanban-mails worden FIRE-AND-FORGET gestuurd zodat trage SMTP de
+  // upload niet kan laten hangen.
   const { data: huidigeStap } = await admin
     .from("kandidaten")
     .select("kanban_stap")
@@ -94,12 +99,13 @@ export async function uploadBellijst(formData: FormData) {
       kanban_stap: "in_proces",
       status: "in_proces",
     }).eq("id", kandidaatId);
-    await triggerKanbanMails({
+    // Fire-and-forget — geen await, fouten worden gelogd maar blokkeren niet
+    triggerKanbanMails({
       kandidaatId,
       oudeStap: huidigeStap.kanban_stap,
       nieuweStap: "in_proces",
       vanUserId: user.id,
-    });
+    }).catch((e) => console.error("[bellijst] kanban-mails mislukt:", e));
   }
 
   revalidatePath(`/kandidaten/${kandidaatId}`);

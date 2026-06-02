@@ -12,6 +12,9 @@ const STAPPEN_VOOR_IN_PROCES = new Set([
 ]);
 
 export const dynamic = "force-dynamic";
+// Grote Excel-bellijsten (5000+ rijen) kunnen tot ~30s parsen+inserten.
+// Vercel default is 10s — verhoog naar 60s.
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -82,9 +85,12 @@ export async function POST(request: Request) {
     volgorde: idx,
   }));
 
-  for (let i = 0; i < items.length; i += 100) {
-    await admin.from("bellijst_items").insert(items.slice(i, i + 100));
+  // Parallelle inserts (chunks van 500) — voorkomt langzame uploads
+  const batches: PromiseLike<unknown>[] = [];
+  for (let i = 0; i < items.length; i += 500) {
+    batches.push(admin.from("bellijst_items").insert(items.slice(i, i + 500)) as unknown as PromiseLike<unknown>);
   }
+  await Promise.all(batches);
 
   // Auto-overgang naar "in_proces" als kandidaat nog in een eerdere stap zit
   const { data: huidigeStap } = await admin
@@ -97,12 +103,13 @@ export async function POST(request: Request) {
       kanban_stap: "in_proces",
       status: "in_proces",
     }).eq("id", kandidaatId);
-    await triggerKanbanMails({
+    // Fire-and-forget — trage SMTP mag de upload niet ophouden
+    triggerKanbanMails({
       kandidaatId,
       oudeStap: huidigeStap.kanban_stap,
       nieuweStap: "in_proces",
       vanUserId: user.id,
-    });
+    }).catch((e) => console.error("[bellijst/api] kanban-mails mislukt:", e));
   }
 
   return NextResponse.json({ ok: true, bellijst_id: bellijst.id, aantal: parsed.rows.length });
