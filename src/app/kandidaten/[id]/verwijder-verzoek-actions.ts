@@ -43,19 +43,33 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
   if (!kandidaat) return { error: "Kandidaat niet gevonden" };
   if (kandidaat.tenant_id !== setter.tenant_id) return { error: "Andere tenant" };
 
-  // Recruiter zoeken: 1) aangemaakt_door, 2) eigenaar_id mits NIET de setter zelf,
-  // 3) elke recruiter/admin in dezelfde tenant als laatste fallback.
-  let recruiterId: string | null = kandidaat.aangemaakt_door ?? null;
-  if (!recruiterId && kandidaat.eigenaar_id && kandidaat.eigenaar_id !== user.id) {
-    recruiterId = kandidaat.eigenaar_id;
+  // Recruiter zoeken: het mag NOOIT de setter zelf zijn.
+  // 1) aangemaakt_door (mits niet de setter, en mits de persoon een echte recruiter/admin is)
+  // 2) eigenaar_id (zelfde check)
+  // 3) eerste recruiter/admin in tenant
+  async function geefRol(id: string | null | undefined): Promise<string | null> {
+    if (!id) return null;
+    const { data } = await admin.from("profiles").select("rol").eq("id", id).maybeSingle();
+    return data?.rol ?? null;
+  }
+
+  let recruiterId: string | null = null;
+  for (const kandidaatId2 of [kandidaat.aangemaakt_door, kandidaat.eigenaar_id]) {
+    if (!kandidaatId2 || kandidaatId2 === user.id) continue;
+    const rol = await geefRol(kandidaatId2);
+    if (rol === "recruiter" || rol === "admin") {
+      recruiterId = kandidaatId2;
+      break;
+    }
   }
   if (!recruiterId) {
-    // Pak eerste recruiter/admin in deze tenant
+    // Pak eerste recruiter/admin in deze tenant (niet de setter zelf)
     const { data: fallback } = await admin
       .from("profiles")
       .select("id")
       .eq("tenant_id", setter.tenant_id)
       .in("rol", ["recruiter", "admin"])
+      .neq("id", user.id)
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
