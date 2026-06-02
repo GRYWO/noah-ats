@@ -88,17 +88,19 @@ export async function nieuweSetter(formData: FormData) {
 
   // Menu-rechten — alleen super-admin mag dit zetten bij aanmaken.
   // Lees de checkboxes uit het form (name="menu_perm_<key>").
+  // BELANGRIJK: alleen toepassen als de form daadwerkelijk menu-perm-checkboxes
+  // bevat. Anders blijft menu_permissions = null = alles aan op basis van rol.
+  // (Het form heeft die checkboxes niet meer — auto-rechten op basis van rol.)
   let menuPermissions: Record<string, boolean> | null = null;
   if (isSuperAdmin) {
-    const perms: Record<string, boolean> = {};
-    let heeftEntries = false;
-    for (const m of MENU_KEYS) {
-      // Een unchecked checkbox stuurt geen waarde — dus afwezig = false.
-      const aangevinkt = formData.get(`menu_perm_${m.key}`) === "on";
-      perms[m.key] = aangevinkt;
-      heeftEntries = true;
+    const heeftMenuFormVelden = Array.from(formData.keys()).some((k) => k.startsWith("menu_perm_"));
+    if (heeftMenuFormVelden) {
+      const perms: Record<string, boolean> = {};
+      for (const m of MENU_KEYS) {
+        perms[m.key] = formData.get(`menu_perm_${m.key}`) === "on";
+      }
+      menuPermissions = perms;
     }
-    if (heeftEntries) menuPermissions = perms;
   }
 
   // Setter krijgt automatisch 14 werkdagen proefperiode (geen abonnement nodig).
