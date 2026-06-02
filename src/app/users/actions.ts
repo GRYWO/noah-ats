@@ -89,13 +89,13 @@ export async function nieuweSetter(formData: FormData) {
     if (heeftEntries) menuPermissions = perms;
   }
 
-  // Setter krijgt automatisch 5 werkdagen proefperiode (geen abonnement nodig).
+  // Setter krijgt automatisch 14 werkdagen proefperiode (geen abonnement nodig).
   // Daarna stuurt cron de Stripe-betalingsmail + middleware blokkeert.
   let proefperiodeEinde: string | null = null;
   let setterAbonnementStatus = "geen";
   if (rol === "setter") {
     const { werkdagenLater } = await import("@/utils/voorstel-log");
-    proefperiodeEinde = werkdagenLater(5);
+    proefperiodeEinde = werkdagenLater(14);
     setterAbonnementStatus = "proefperiode";
   }
 
