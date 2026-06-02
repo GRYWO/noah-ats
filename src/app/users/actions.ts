@@ -39,9 +39,12 @@ export async function nieuweSetter(formData: FormData) {
   const mailAdres       = (formData.get("mail_adres") as string)?.trim().toLowerCase() || email;
   const mailWachtwoord  = (formData.get("mail_wachtwoord") as string)?.trim() || null;
 
-  // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken — forceer rol
+  // Bureau-admin (geen super-admin/sales-admin) mag alleen recruiters aanmaken.
+  // Super-admin (Yorith) en sales-admin (Pepijn) mogen alle rollen kiezen.
   const isSuperAdmin = isSuperAdminEmail(user.email);
-  if (!isSuperAdmin && rol !== "recruiter") {
+  const { isSalesAdmin } = await import("@/utils/sales-admin");
+  const isSales = await isSalesAdmin(user);
+  if (!isSuperAdmin && !isSales && rol !== "recruiter") {
     rol = "recruiter";
   }
 
@@ -215,7 +218,9 @@ export async function bewerkUser(formData: FormData) {
     .single();
 
   const isSuperAdmin = isSuperAdminEmail(user.email);
-  if (!isSuperAdmin && myProfile?.rol !== "admin") {
+  const { isSalesAdmin: checkSalesAdmin } = await import("@/utils/sales-admin");
+  const isSales = await checkSalesAdmin(user);
+  if (!isSuperAdmin && !isSales && myProfile?.rol !== "admin") {
     return { error: "Alleen admins kunnen users bewerken" };
   }
 
@@ -229,8 +234,8 @@ export async function bewerkUser(formData: FormData) {
     mail_adres,
     functie_titel,
   };
-  // Alleen super-admin mag rol wijzigen
-  if (isSuperAdmin && nieuweRol && ["admin", "recruiter", "setter"].includes(nieuweRol)) {
+  // Super-admin (Yorith) en sales-admin (Pepijn) mogen rol wijzigen
+  if ((isSuperAdmin || isSales) && nieuweRol && ["admin", "recruiter", "setter"].includes(nieuweRol)) {
     update.rol = nieuweRol;
   }
   // Alleen super-admin mag menu-rechten zetten

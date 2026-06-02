@@ -10,6 +10,7 @@ import { TOUR_SETTERS } from "@/utils/pagina-tours";
 import { AanvragenKnop } from "./AanvragenKnoppen";
 import { SetterAbonnementMelding } from "./SetterAbonnementMelding";
 import { BevestigingKnop } from "./BevestigingKnop";
+import { isSalesAdmin } from "@/utils/sales-admin";
 
 export default async function SettersPage({
   searchParams,
@@ -57,8 +58,10 @@ export default async function SettersPage({
       );
 
   const isAdmin = viewerRol.isAdmin || isSuperAdmin;
-  // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken
-  const magAlleRollen = isSuperAdmin;
+  // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken.
+  // Super-admin (Yorith) en sales-admin (Pepijn) mogen alle rollen kiezen.
+  const isSales = await isSalesAdmin(user);
+  const magAlleRollen = isSuperAdmin || isSales;
 
   // Email-map gebruikt nu de denormalized profiles.email kolom (gesynced via trigger).
   // Voorheen riepen we auth.admin.listUsers({perPage:200}) per request — traag.
