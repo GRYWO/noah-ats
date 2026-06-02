@@ -12,7 +12,7 @@ import { TopBar } from "@/components/TopBar";
 import { updateBureau } from "./actions";
 import { stuurDpaUit, trekDpaIn } from "./dpa-actions";
 import { DeleteBureauButton } from "./DeleteBureauButton";
-import { ShieldCheck, Send, RefreshCw, X, FileSignature } from "lucide-react";
+import { ShieldCheck, Send, RefreshCw, X, FileSignature, TrendingUp } from "lucide-react";
 
 export default async function BureauDetail({
   params,
@@ -104,6 +104,25 @@ export default async function BureauDetail({
 
         {/* Abonnement (super-admin only) */}
         {await renderAbonnementSectie(b, id)}
+
+        {/* Info-blok: abonnement schaalt automatisch mee */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6 flex items-start gap-3">
+          <TrendingUp size={18} className="text-amber-700 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-gray-700">
+            <p className="font-semibold text-amber-900 mb-1">Abonnement schaalt automatisch mee</p>
+            <p className="text-xs leading-relaxed mb-2">
+              Het bureau-abonnement wordt automatisch aangepast op basis van het aantal recruiters:
+            </p>
+            <ul className="text-xs space-y-0.5 ml-2">
+              <li>• <b>1 recruiter</b> → Starter (€ 5.000 / mnd)</li>
+              <li>• <b>2-3 recruiters</b> → Pro (€ 10.000 / mnd)</li>
+              <li>• <b>4+ recruiters</b> → Enterprise (€ 15.000 / mnd)</li>
+            </ul>
+            <p className="text-[11px] text-amber-700 mt-2 italic">
+              Stripe past prorata toe — bureau betaalt alleen voor de extra dagen tot de volgende factuur.
+            </p>
+          </div>
+        </div>
 
         {/* Huisstijl (super-admin only — Yorith) */}
         <HuisstijlSectie
