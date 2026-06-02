@@ -38,6 +38,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/voorstelprofiel") || // publiek voorstelprofiel
     path.startsWith("/wachtwoord-vergeten") ||
     path.startsWith("/privacy") ||  // privacybeleid (publiek, ook voor Chrome Web Store)
+    path.startsWith("/handleiding") ||  // publiek boekwerk over Noah-ATS — deelbare URL
     path.startsWith("/dpa-voorbeeld") || // tijdelijke DPA-preview
     path.startsWith("/dpa-tekenen") ||   // publieke DPA-tekenflow per token
     path.startsWith("/tekenen") ||       // publieke NDA / gebruiksvoorwaarden teken-flow
