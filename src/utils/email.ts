@@ -1624,3 +1624,65 @@ ${akkoord
   if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
   return result;
 }
+
+/**
+ * Bevestiging naar opdrachtgever zodra de kandidaat een van de aangeboden
+ * 1e-gesprek-momenten heeft gekozen. Bevat datum + kandidaat-naam.
+ */
+export async function sendGesprek1BevestigingOpdrachtgever({
+  naar,
+  opdrachtgeverNaam,
+  kandidaatVoornaam,
+  bedrijf,
+  kennismaking_op,
+  contactpersoon,
+  locatie_url,
+  from,
+}: {
+  naar: string;
+  opdrachtgeverNaam: string | null;
+  kandidaatVoornaam: string;
+  bedrijf: string | null;
+  kennismaking_op: string;
+  contactpersoon: string | null;
+  locatie_url: string | null;
+  from?: string;
+}) {
+  const datum = new Date(kennismaking_op).toLocaleString("nl-NL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const body = `
+<p style="margin:0 0 16px 0;">Hoi ${opdrachtgeverNaam ?? "daar"},</p>
+
+<p style="margin:0 0 16px 0;">
+  <b>${kandidaatVoornaam}</b> heeft de uitnodiging voor het kennismakingsgesprek
+  bevestigd. Je gesprek staat ingepland.
+</p>
+
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
+  <tr><td style="padding:6px 0;color:#666;width:35%;">Datum &amp; tijd</td><td style="padding:6px 0;font-weight:600;">${datum}</td></tr>
+  ${bedrijf ? `<tr><td style="padding:6px 0;color:#666;">Bedrijf</td><td style="padding:6px 0;font-weight:600;">${bedrijf}</td></tr>` : ""}
+  <tr><td style="padding:6px 0;color:#666;">Kandidaat</td><td style="padding:6px 0;font-weight:600;">${kandidaatVoornaam}</td></tr>
+  ${contactpersoon ? `<tr><td style="padding:6px 0;color:#666;">Contactpersoon</td><td style="padding:6px 0;font-weight:600;">${contactpersoon}</td></tr>` : ""}
+  ${locatie_url ? `<tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;font-weight:600;"><a href="${locatie_url}" style="color:${GRYWO_KLEUR};">Bekijk op Google Maps</a></td></tr>` : ""}
+</table>
+
+<p style="margin:16px 0;">Mocht het toch niet schikken, neem dan contact met ons op zodat we kunnen herplannen.</p>
+
+<p style="font-size:12px;color:#888;margin-top:24px;">Vragen? Mail <a href="mailto:info@grywo.nl">info@grywo.nl</a>.</p>`;
+
+  const result = await resend.emails.send({
+    from: from ?? FROM,
+    to: naar,
+    subject: `Gesprek bevestigd — ${kandidaatVoornaam} op ${new Date(kennismaking_op).toLocaleDateString("nl-NL")}`,
+    html: brandedLayout({ titel: "Je kennismaking staat gepland", body }),
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}

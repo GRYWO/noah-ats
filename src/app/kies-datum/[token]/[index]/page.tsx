@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { sendGesprek1Bevestiging } from "@/utils/email";
+import { sendGesprek1Bevestiging, sendGesprek1BevestigingOpdrachtgever } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
 import { maakNotificatie } from "@/utils/notificaties";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
@@ -58,9 +58,9 @@ export default async function KiesDatumPage({
 
     // Kandidaat krijgt bevestiging
     const kand = Array.isArray(voorstel.kandidaat) ? voorstel.kandidaat[0] : voorstel.kandidaat;
+    const setterFrom = voorstel.setter_id ? await getSetterFrom(voorstel.setter_id) : undefined;
     if (kand?.email) {
       try {
-        const setterFrom = voorstel.setter_id ? await getSetterFrom(voorstel.setter_id) : undefined;
         await sendGesprek1Bevestiging({
           naar: kand.email,
           kandidaatVoornaam: kand.voornaam ?? "",
@@ -72,7 +72,25 @@ export default async function KiesDatumPage({
           from: setterFrom,
         });
       } catch (e) {
-        console.error("[kies-datum] bevestigingsmail mislukt:", e);
+        console.error("[kies-datum] kandidaat-bevestiging mislukt:", e);
+      }
+    }
+
+    // Opdrachtgever krijgt óók een bevestiging — met datum + kandidaat-naam
+    if (voorstel.contact_email) {
+      try {
+        await sendGesprek1BevestigingOpdrachtgever({
+          naar: voorstel.contact_email,
+          opdrachtgeverNaam: voorstel.contactpersoon ?? null,
+          kandidaatVoornaam: kand?.voornaam ?? "de kandidaat",
+          bedrijf: voorstel.bedrijf ?? null,
+          kennismaking_op: gekozenDatum,
+          contactpersoon: voorstel.contactpersoon,
+          locatie_url: voorstel.locatie_url,
+          from: setterFrom,
+        });
+      } catch (e) {
+        console.error("[kies-datum] opdrachtgever-bevestiging mislukt:", e);
       }
     }
 
