@@ -109,11 +109,25 @@ export default function Website() {
           </div>
 
           {/* Trust badges */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-16">
             <Trust icon={<ShieldCheck size={14} />} label="AVG-proof" />
             <Trust icon={<MapPin size={14} />} label="Made in NL" />
             <Trust icon={<BadgeCheck size={14} />} label="eIDAS-handtekeningen" />
             <Trust icon={<Lock size={14} />} label="Multi-tenant + RLS" />
+          </div>
+
+          {/* iPhone mockup floating */}
+          <div className="relative mx-auto max-w-xs md:max-w-sm">
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[#ffd84d]/30 blur-3xl rounded-full"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/website/dashboard.png"
+              alt="Noah-ATS op iPhone"
+              className="relative w-full drop-shadow-2xl"
+            />
           </div>
         </div>
       </section>
@@ -134,24 +148,62 @@ export default function Website() {
           <div className="grid md:grid-cols-3 gap-6">
             <Persona
               kleur="#3b82f6"
-              icoon={<Users size={32} />}
+              foto="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80"
+              icoon={<Users size={28} />}
               titel="Bureau-admins"
               tekst="Beheer je hele bureau vanuit één scherm. Kandidaten, voorstellen, opdrachtgevers, plaatsingen en je team — alles binnen je eigen tenant met automatische RLS."
               punten={["Tot 4+ recruiters", "Automatische abonnement-upgrade", "Eigen huisstijl"]}
             />
             <Persona
               kleur="#10b981"
-              icoon={<Target size={32} />}
+              foto="https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&q=80"
+              icoon={<Target size={28} />}
               titel="Recruiters"
               tekst="Focus op gesprekken, niet op administratie. Robin schrijft je voorstellen, Jobdigger vult je bellijst en de kanban houdt de flow strak."
               punten={["1-klik kandidaten importeren", "AI-voorstellen", "Auto-reminders agenda"]}
             />
             <Persona
               kleur="#a855f7"
-              icoon={<PhoneCall size={32} />}
+              foto="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80"
+              icoon={<PhoneCall size={28} />}
               titel="Setters"
               tekst="Eigen abonnement (€250/mnd), eigen kandidaten, eigen coaching-dashboard. Dagelijkse EOD verhoogt je prestaties zonder dat het zwaar voelt."
-              punten={["Setter-stoel €250/mnd", "EOD-coaching", "Eigen records & doelen"]}
+              punten={["Setter-stoel €250/mnd", "EOD-coaching", "Eigen records en doelen"]}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PRODUCT IN ACTIE ─── */}
+      <section className="py-24 bg-gradient-to-b from-white to-[#f5f5f7]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="text-sm font-bold text-[#333399] uppercase tracking-wider mb-3">
+              Noah in actie
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black mb-4">
+              Zo ziet het er écht uit
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Drie schermen waar je dagelijks mee werkt — strak, snel en zonder ruis.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <ProductScherm
+              foto="/website/kanban.png"
+              titel="Kanban-flow"
+              tekst="Sleep kandidaten door de zes stappen. Elke overgang triggert automatisch de juiste mail."
+            />
+            <ProductScherm
+              foto="/website/voorstel.png"
+              titel="Voorstel versturen"
+              tekst="Eén tik naar de opdrachtgever — met of zonder tarief, met of zonder achternaam."
+            />
+            <ProductScherm
+              foto="/website/coaching.png"
+              titel="EOD-coaching"
+              tekst="Dagelijks vijf minuten reflectie. Mood, records, doelen. Coach reageert direct."
             />
           </div>
         </div>
@@ -501,35 +553,76 @@ function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
 
 function Persona({
   kleur,
+  foto,
   icoon,
   titel,
   tekst,
   punten,
 }: {
   kleur: string;
+  foto: string;
   icoon: React.ReactNode;
   titel: string;
   tekst: string;
   punten: string[];
 }) {
   return (
-    <div className="bg-white border border-gray-100 rounded-3xl p-7 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all">
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-5"
-        style={{ background: kleur }}
-      >
-        {icoon}
+    <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all">
+      <div className="relative h-52 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={foto} alt={titel} className="w-full h-full object-cover" />
+        <div
+          className="absolute inset-0 opacity-30 mix-blend-multiply"
+          style={{ background: kleur }}
+        />
+        <div
+          className="absolute top-4 left-4 w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg"
+          style={{ background: kleur }}
+        >
+          {icoon}
+        </div>
       </div>
-      <h3 className="text-xl font-black mb-3">{titel}</h3>
-      <p className="text-gray-600 leading-relaxed mb-5 text-[15px]">{tekst}</p>
-      <ul className="space-y-2">
-        {punten.map((p) => (
-          <li key={p} className="flex items-center gap-2 text-sm text-gray-700">
-            <Check size={16} className="text-emerald-500 flex-shrink-0" />
-            <span>{p}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="p-7">
+        <h3 className="text-xl font-black mb-3">{titel}</h3>
+        <p className="text-gray-600 leading-relaxed mb-5 text-[15px]">{tekst}</p>
+        <ul className="space-y-2">
+          {punten.map((p) => (
+            <li key={p} className="flex items-center gap-2 text-sm text-gray-700">
+              <Check size={16} className="text-emerald-500 flex-shrink-0" />
+              <span>{p}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function ProductScherm({
+  foto,
+  titel,
+  tekst,
+}: {
+  foto: string;
+  titel: string;
+  tekst: string;
+}) {
+  return (
+    <div className="text-center">
+      <div className="relative mb-6">
+        <div
+          aria-hidden
+          className="absolute inset-x-0 -inset-y-4 bg-[#333399]/10 blur-2xl rounded-full"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={foto}
+          alt={titel}
+          className="relative mx-auto w-full max-w-[280px] drop-shadow-2xl"
+        />
+      </div>
+      <h3 className="text-xl font-black mb-2">{titel}</h3>
+      <p className="text-gray-600 leading-relaxed text-[15px] max-w-xs mx-auto">{tekst}</p>
     </div>
   );
 }
