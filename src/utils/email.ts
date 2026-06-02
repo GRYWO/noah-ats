@@ -1511,3 +1511,116 @@ ${verschilWaarschuwing}
   if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
   return result;
 }
+
+/**
+ * Verzoek aan de recruiter om een kandidaat te verwijderen.
+ * Bevat groene 'Akkoord, verwijder' + rode 'Weigeren' knoppen met token-link.
+ */
+export async function sendKandidaatVerwijderVerzoek({
+  naar,
+  recruiterVoornaam,
+  kandidaatNaam,
+  setterNaam,
+  reden,
+  token,
+}: {
+  naar: string;
+  recruiterVoornaam: string;
+  kandidaatNaam: string;
+  setterNaam: string;
+  reden: string | null;
+  token: string;
+}) {
+  const akkoordUrl = `${APP_URL}/verwijder/${token}?actie=akkoord`;
+  const weigerUrl = `${APP_URL}/verwijder/${token}?actie=weiger`;
+
+  const body = `
+<p style="margin:0 0 16px 0;">Hoi ${recruiterVoornaam},</p>
+
+<p style="margin:0 0 16px 0;">
+  <b>${setterNaam}</b> heeft een verzoek ingediend om kandidaat
+  <b>${kandidaatNaam}</b> te verwijderen uit Noah ATS.
+</p>
+
+${reden ? `
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
+  <tr><td>
+    <div style="font-size:12px;color:#666;margin-bottom:4px;">REDEN VAN SETTER</div>
+    <div style="font-style:italic;">${reden}</div>
+  </td></tr>
+</table>
+` : ""}
+
+<p style="margin:24px 0 16px 0;font-weight:600;text-align:center;">
+  Wil je dit verzoek goedkeuren?
+</p>
+
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0;border-collapse:separate;border-spacing:8px 0;">
+  <tr>
+    <td width="50%" style="width:50%;">
+      <a href="${akkoordUrl}" style="display:block;background-color:#16a34a;color:#fff;text-decoration:none;text-align:center;padding:14px;border-radius:8px;font-weight:bold;font-size:15px;">✓ Akkoord, verwijder</a>
+    </td>
+    <td width="50%" style="width:50%;">
+      <a href="${weigerUrl}" style="display:block;background-color:#dc2626;color:#fff;text-decoration:none;text-align:center;padding:14px;border-radius:8px;font-weight:bold;font-size:15px;">✗ Weigeren</a>
+    </td>
+  </tr>
+</table>
+
+<p style="font-size:12px;color:#999;text-align:center;margin:16px 0 0 0;">
+  Het verzoek vervalt automatisch na 14 dagen.<br>
+  Alleen jij (de recruiter die deze kandidaat heeft aangemaakt) kunt dit goedkeuren.
+</p>`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `Verwijder-verzoek: ${kandidaatNaam}`,
+    html: brandedLayout({ titel: "Verzoek tot verwijderen", body }),
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}
+
+/**
+ * Bevestigingsmail naar de setter na akkoord/weigering door de recruiter.
+ */
+export async function sendVerwijderResultaatNaarSetter({
+  naar,
+  setterVoornaam,
+  kandidaatNaam,
+  akkoord,
+  recruiterNaam,
+}: {
+  naar: string;
+  setterVoornaam: string;
+  kandidaatNaam: string;
+  akkoord: boolean;
+  recruiterNaam: string;
+}) {
+  const body = `
+<p style="margin:0 0 16px 0;">Hoi ${setterVoornaam},</p>
+
+<p style="margin:0 0 16px 0;">
+  Je verzoek om <b>${kandidaatNaam}</b> te verwijderen is
+  ${akkoord
+    ? `<span style="color:#16a34a;font-weight:bold;">goedgekeurd</span> door ${recruiterNaam}.`
+    : `<span style="color:#dc2626;font-weight:bold;">geweigerd</span> door ${recruiterNaam}.`}
+</p>
+
+${akkoord
+  ? `<p style="margin:0 0 16px 0;">De kandidaat is verwijderd. Je kunt nu een nieuwe kandidaat aanvragen.</p>`
+  : `<p style="margin:0 0 16px 0;">Neem contact op met ${recruiterNaam} als je vragen hebt over deze beslissing.</p>`}
+
+<p style="font-size:12px;color:#999;margin-top:24px;">Vragen? Mail <a href="mailto:info@grywo.nl">info@grywo.nl</a>.</p>`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: akkoord
+      ? `✓ Verwijdering goedgekeurd: ${kandidaatNaam}`
+      : `Verzoek geweigerd: ${kandidaatNaam}`,
+    html: brandedLayout({ titel: akkoord ? "Verzoek goedgekeurd" : "Verzoek geweigerd", body }),
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}

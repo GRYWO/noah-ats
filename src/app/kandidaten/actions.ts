@@ -27,6 +27,7 @@ export async function nieuweKandidaat(formData: FormData) {
   const insert = {
     tenant_id: profile.tenant_id,
     eigenaar_id: user.id,
+    aangemaakt_door: user.id, // recruiter/admin die deze kandidaat aanmaakte — nodig voor verwijder-verzoek
     voornaam:     (formData.get("voornaam") as string)?.trim(),
     achternaam:   (formData.get("achternaam") as string)?.trim(),
     email:        (formData.get("email") as string)?.trim() || null,

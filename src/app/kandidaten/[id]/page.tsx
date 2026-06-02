@@ -5,6 +5,7 @@ import { TopBar } from "@/components/TopBar";
 import { updateKandidaat } from "./actions";
 import { stuurVoorstel } from "./voorstel-actions";
 import { DeleteButton } from "./DeleteButton";
+import { VerwijderAanvraagKnop } from "./VerwijderAanvraagKnop";
 import { CvUpload } from "./CvUpload";
 import { BellijstSectie } from "./BellijstSectie";
 import { IntakeFiltersBanner } from "./IntakeFiltersBanner";
@@ -88,6 +89,17 @@ export default async function KandidaatDetail({
     .eq("tenant_id", k.tenant_id)
     .in("rol", ["admin", "recruiter", "setter"])
     .order("voornaam", { ascending: true });
+
+  // Open verwijder-verzoek? (voor setter — toont status ipv knop)
+  const { data: openVerzoek } = isSetter
+    ? await supabase
+        .from("kandidaat_verwijder_verzoeken")
+        .select("id")
+        .eq("kandidaat_id", id)
+        .eq("status", "open")
+        .maybeSingle()
+    : { data: null };
+  const alOpenVerzoek = !!openVerzoek;
 
   const { data: plaatsingen } = await supabase
     .from("plaatsingen")
@@ -604,9 +616,13 @@ export default async function KandidaatDetail({
           )}
         </div>
 
-        {/* Delete button */}
+        {/* Delete button — setter ziet 'Verwijderen aanvragen', anderen normale delete */}
         <div className="mt-6 flex justify-end">
-          <DeleteButton id={k.id} />
+          {isSetter ? (
+            <VerwijderAanvraagKnop kandidaatId={k.id} alOpenVerzoek={alOpenVerzoek} />
+          ) : (
+            <DeleteButton id={k.id} />
+          )}
         </div>
 
         <div className="mt-6 text-xs text-gray-400 text-center">

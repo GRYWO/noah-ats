@@ -48,6 +48,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/kies-datum") ||         // kandidaat kiest datum uit mail
     path.startsWith("/reageer") ||            // GRYWO reply op aanvraag (token)
     path.startsWith("/teken/") ||             // publieke document-tekenflow (token)
+    path.startsWith("/verwijder/") ||         // publieke verwijder-verzoek goedkeur-link voor recruiter
     path.startsWith("/api/webhooks") ||       // Stripe webhooks
     path.startsWith("/api/cron");   // cron jobs (eigen secret)
   if (!user && !isPublic) {
