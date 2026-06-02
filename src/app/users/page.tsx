@@ -24,18 +24,20 @@ export default async function SettersPage({
   // Demo-modus respecteren — in demo zien we als die rol
   const viewerRol = await getViewerRol();
   const isSuperAdmin = viewerRol.isSuperAdmin;
+  // Sales-admin (Pepijn) krijgt dezelfde brede toegang als super-admin op /users
+  // — hij beheert alle bureaus, dus moet alle users + alle rollen kunnen zien.
+  const isSales = await isSalesAdmin(user);
+  const breedheidstoegang = isSuperAdmin || isSales;
 
-  // Super-admin gebruikt admin-client zodat RLS niets uitfiltert
-  // (anders zou de lijst leeg blijven als de eigen tenant geen users heeft).
-  const settersClient = isSuperAdmin ? createAdminClient() : supabase;
+  // Super- of sales-admin gebruikt admin-client zodat RLS niets uitfiltert.
+  const settersClient = breedheidstoegang ? createAdminClient() : supabase;
   let settersQuery = settersClient
     .from("profiles")
     .select("*")
     .order("created_at", { ascending: true });
 
-  // Niet-super-admin (bureau-admin etc) ziet ALLEEN eigen tenant
-  // (RLS doet dit ook, maar we maken het expliciet voor zekerheid)
-  if (!isSuperAdmin) {
+  // Bureau-admins zien ALLEEN eigen tenant. Super-/sales-admin zien alles.
+  if (!breedheidstoegang) {
     const { data: eigenProfile } = await supabase
       .from("profiles")
       .select("tenant_id")
@@ -48,19 +50,18 @@ export default async function SettersPage({
 
   const { data: settersRuw } = await settersQuery;
 
-  // Filter voor niet-super-admin: alleen recruiters tonen
-  // (setters worden centraal door GRYWO geregeld, bureau-admin
-  // beheert alleen zijn eigen recruiters. Super-admin emails ook eruit.)
-  const setters = isSuperAdmin
+  // Filter voor bureau-admin: alleen recruiters tonen
+  // (setters worden centraal door GRYWO geregeld).
+  // Super-/sales-admin zien iedereen.
+  const setters = breedheidstoegang
     ? settersRuw
     : (settersRuw ?? []).filter(
         (s) => s.rol === "recruiter" && !isSuperAdminEmail(s.email),
       );
 
   const isAdmin = viewerRol.isAdmin || isSuperAdmin;
-  // Bureau-admin (geen super-admin) mag alleen recruiters aanmaken.
+  // Bureau-admin (geen super-admin/sales-admin) mag alleen recruiters aanmaken.
   // Super-admin (Yorith) en sales-admin (Pepijn) mogen alle rollen kiezen.
-  const isSales = await isSalesAdmin(user);
   const magAlleRollen = isSuperAdmin || isSales;
 
   // Email-map gebruikt nu de denormalized profiles.email kolom (gesynced via trigger).
