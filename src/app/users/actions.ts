@@ -62,7 +62,16 @@ export async function nieuweSetter(formData: FormData) {
   });
 
   if (createErr || !created.user) {
-    redirect(`/users?error=${encodeURIComponent(createErr?.message ?? "Aanmaken mislukt")}`);
+    // Vertaal de meestvoorkomende Supabase-errors naar Nederlands.
+    const raw = createErr?.message ?? "Aanmaken mislukt";
+    const nl = raw.includes("already been registered")
+      ? `Dit e-mailadres (${email}) is al in gebruik door een andere user. Verwijder die eerst, of kies een ander adres.`
+      : raw.includes("Password should be at least")
+      ? "Het wachtwoord moet minimaal 6 tekens zijn."
+      : raw.includes("Unable to validate email address")
+      ? "Ongeldig e-mailadres."
+      : raw;
+    redirect(`/users?error=${encodeURIComponent(nl)}`);
   }
 
   // Auto handtekening bouwen via centrale helper
