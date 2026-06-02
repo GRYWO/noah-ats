@@ -114,11 +114,11 @@ export default function HandleidingPage() {
         {/* Quote-blok */}
         <div className="mt-16 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 md:p-12 text-center">
           <p className="text-2xl md:text-3xl font-bold leading-snug mb-3">
-            "Noah is niet zomaar software.{" "}
-            <span className="text-[#ffd84d]">Het is het hart van GRYWO.</span>"
+            "Recruitment op autopilot. De toekomst zit hier.{" "}
+            <span className="text-[#ffd84d]">AI-gedreven ATS.</span>"
           </p>
           <p className="text-white/60 text-sm">
-            — Yorith Schepers, oprichter
+            — Yorith Hulzebosch, oprichter
           </p>
         </div>
       </section>
