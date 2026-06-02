@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { runCron } from "@/utils/cron-log";
 import { startSetterAbonnement } from "@/app/users/setter-stripe-actions";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const dynamic = "force-dynamic";
 
@@ -50,12 +53,29 @@ export async function GET(req: Request) {
             .eq("id", setter.id);
           resultaat.mail_verstuurd++;
         } else {
-          resultaat.fouten.push(`${setter.id}: ${r.error ?? "onbekend"}`);
+          resultaat.fouten.push(`${setter.voornaam ?? setter.id}: ${r.error ?? "onbekend"}`);
         }
       } catch (e) {
         resultaat.fouten.push(
-          `${setter.id}: ${e instanceof Error ? e.message : "onbekend"}`
+          `${setter.voornaam ?? setter.id}: ${e instanceof Error ? e.message : "onbekend"}`
         );
+      }
+    }
+
+    // Stuur interne waarschuwing naar info@grywo.nl als er fouten zijn,
+    // zodat Yorith/Pepijn direct kan ingrijpen voordat een setter blijft hangen.
+    if (resultaat.fouten.length > 0) {
+      try {
+        await resend.emails.send({
+          from: "Noah ATS <noreply@grywo.nl>",
+          to: "info@grywo.nl",
+          subject: `⚠ Setter-proefperiode cron: ${resultaat.fouten.length} fout(en)`,
+          html: `<p>De dagelijkse cron heeft <b>${resultaat.fouten.length}</b> setter(s) niet kunnen verwerken:</p>
+<ul>${resultaat.fouten.map((f) => `<li>${f}</li>`).join("")}</ul>
+<p>Cron probeert morgen opnieuw. Voor handmatige actie: open /users, klik op de mail-knop bij de setter om de Stripe-link opnieuw te versturen.</p>`,
+        });
+      } catch (e) {
+        console.error("[setter-proefperiode] interne waarschuwing mislukt:", e);
       }
     }
 
