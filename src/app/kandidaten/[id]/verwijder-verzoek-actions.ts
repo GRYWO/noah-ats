@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendKandidaatVerwijderVerzoek } from "@/utils/email";
 
-type Result = { ok?: boolean; error?: string; alOpen?: boolean };
+type Result = { ok?: boolean; error?: string; alOpen?: boolean; mailNaar?: string };
 
 /**
  * Setter vraagt verwijdering van een kandidaat aan.
@@ -43,9 +43,26 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
   if (!kandidaat) return { error: "Kandidaat niet gevonden" };
   if (kandidaat.tenant_id !== setter.tenant_id) return { error: "Andere tenant" };
 
-  const recruiterId = kandidaat.aangemaakt_door || kandidaat.eigenaar_id;
+  // Recruiter zoeken: 1) aangemaakt_door, 2) eigenaar_id mits NIET de setter zelf,
+  // 3) elke recruiter/admin in dezelfde tenant als laatste fallback.
+  let recruiterId: string | null = kandidaat.aangemaakt_door ?? null;
+  if (!recruiterId && kandidaat.eigenaar_id && kandidaat.eigenaar_id !== user.id) {
+    recruiterId = kandidaat.eigenaar_id;
+  }
   if (!recruiterId) {
-    return { error: "Geen recruiter gevonden om verzoek naar te sturen. Vraag GRYWO om handmatig te verwijderen." };
+    // Pak eerste recruiter/admin in deze tenant
+    const { data: fallback } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("tenant_id", setter.tenant_id)
+      .in("rol", ["recruiter", "admin"])
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    recruiterId = fallback?.id ?? null;
+  }
+  if (!recruiterId) {
+    return { error: "Geen recruiter of admin in dit bureau gevonden — neem contact op met info@grywo.nl." };
   }
 
   // Recruiter-profiel + e-mailadres
@@ -58,7 +75,9 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
 
   const { data: recruiterAuth } = await admin.auth.admin.getUserById(recruiterId);
   const recruiterEmail = recruiter.mail_adres || recruiterAuth?.user?.email;
-  if (!recruiterEmail) return { error: "Geen e-mailadres van recruiter bekend" };
+  if (!recruiterEmail) {
+    return { error: `Geen e-mailadres bekend voor ${recruiter.voornaam ?? "recruiter"}. Vul dit in via /users.` };
+  }
 
   // Voorkom dubbele open verzoeken voor dezelfde kandidaat
   const { data: bestaand } = await admin
@@ -100,6 +119,21 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
     return { error: `Mail naar recruiter mislukt: ${(e as Error).message}` };
   }
 
+  // Failsafe-kopie naar info@grywo.nl zodat GRYWO altijd op de hoogte is
+  // (en kan ingrijpen als de recruiter niet reageert).
+  try {
+    await sendKandidaatVerwijderVerzoek({
+      naar: "info@grywo.nl",
+      recruiterVoornaam: "GRYWO-team",
+      kandidaatNaam: `[KOPIE] ${kandidaatNaam}`,
+      setterNaam: `${setterNaam} → recruiter: ${recruiter.voornaam ?? "?"} (${recruiterEmail})`,
+      reden,
+      token,
+    });
+  } catch (e) {
+    console.error("[verwijder-verzoek] failsafe-kopie naar info@grywo.nl mislukt:", e);
+  }
+
   revalidatePath(`/kandidaten/${kandidaatId}`);
-  return { ok: true };
+  return { ok: true, mailNaar: recruiterEmail };
 }

@@ -20,6 +20,7 @@ export function VerwijderAanvraagKnop({
   const [reden, setReden] = useState("");
   const [bezig, startTransition] = useTransition();
   const [resultaat, setResultaat] = useState<"ok" | string | null>(null);
+  const [mailNaar, setMailNaar] = useState<string | null>(null);
   const router = useRouter();
 
   if (alOpenVerzoek && !open) {
@@ -39,10 +40,11 @@ export function VerwijderAanvraagKnop({
       const r = await vraagVerwijderingAan(fd);
       if (r.ok) {
         setResultaat("ok");
+        setMailNaar(r.mailNaar ?? null);
         setTimeout(() => {
           setOpen(false);
           router.refresh();
-        }, 1500);
+        }, 4000);
       } else {
         setResultaat(r.error ?? "Onbekende fout");
       }
@@ -72,9 +74,14 @@ export function VerwijderAanvraagKnop({
                   <Check size={28} />
                 </div>
                 <h2 className="text-xl font-bold mb-2">Verzoek verstuurd</h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 mb-2">
                   De recruiter ontvangt nu een mail om goedkeuring te geven.
                 </p>
+                {mailNaar && (
+                  <p className="text-xs text-gray-500">
+                    Verstuurd naar: <b>{mailNaar}</b>
+                  </p>
+                )}
               </div>
             ) : (
               <>
