@@ -24,7 +24,7 @@ export async function TopBar({ active }: Props) {
   const [profileRes, viewAs] = await Promise.all([
     supabase
       .from("profiles")
-      .select("rol, menu_permissions, laatst_actief_op, kan_abonnementen_beheren")
+      .select("rol, menu_permissions, laatst_actief_op, kan_abonnementen_beheren, is_intern_personeel")
       .eq("id", user?.id ?? "")
       .single(),
     leesViewAs(),
@@ -50,8 +50,11 @@ export async function TopBar({ active }: Props) {
   const isSuperAdmin = echteIsSuperAdmin && !demoActief;
   const isSetter = actieveRol === "setter";
   const isRecruiter = actieveRol === "recruiter";
-  // Bureau-admin = admin rol zonder super-admin, of demo "bureau_admin"
-  const isBureauAdmin = viewAs === "bureau_admin" || (actieveRol === "admin" && !isSuperAdmin && !demoActief);
+  // Intern GRYWO-personeel (zoals Wouter): geen super-admin, maar ook geen bureau-admin
+  // — moet de volle admin-sidebar zien (Jobdigger, Robin, Kandidaten, etc.)
+  const isInternPersoneel = !!profile?.is_intern_personeel || !!profile?.kan_abonnementen_beheren;
+  // Bureau-admin = admin rol zonder super-admin én geen intern personeel, of demo "bureau_admin"
+  const isBureauAdmin = viewAs === "bureau_admin" || (actieveRol === "admin" && !isSuperAdmin && !isInternPersoneel && !demoActief);
   // Sales-admin (Pepijn): super-admin OF kan_abonnementen_beheren=true.
   // Geen aparte DB-call meer — komt uit dezelfde profile-query.
   const isSalesAdminFlag = !demoActief && (echteIsSuperAdmin || !!profile?.kan_abonnementen_beheren);
