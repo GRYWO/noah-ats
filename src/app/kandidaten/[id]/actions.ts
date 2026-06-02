@@ -184,3 +184,66 @@ export async function deleteKandidaat(formData: FormData) {
   revalidatePath("/kandidaten");
   redirect("/kandidaten?ok=verwijderd");
 }
+
+/**
+ * Wijzig de eigenaar van een kandidaat.
+ * Alleen recruiter / admin / super-admin mogen dit.
+ * Setters mogen het NIET — hun rol is uitgesloten in de UI én hier.
+ */
+export async function wijzigEigenaar(formData: FormData): Promise<{ ok?: boolean; error?: string }> {
+  const kandidaatId = formData.get("kandidaat_id") as string;
+  const nieuweEigenaarId = (formData.get("eigenaar_id") as string)?.trim() || null;
+
+  if (!kandidaatId) return { error: "Kandidaat ontbreekt" };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Niet ingelogd" };
+
+  const admin = createAdminClient();
+
+  // Lees rol van degene die de actie uitvoert
+  const { data: viewerProfile } = await supabase
+    .from("profiles")
+    .select("rol, tenant_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!viewerProfile) return { error: "Profiel niet gevonden" };
+  if (viewerProfile.rol === "setter") {
+    return { error: "Setters mogen de eigenaar niet wijzigen" };
+  }
+
+  // Kandidaat moet in dezelfde tenant zitten
+  const { data: kandidaat } = await admin
+    .from("kandidaten")
+    .select("tenant_id")
+    .eq("id", kandidaatId)
+    .single();
+  if (!kandidaat) return { error: "Kandidaat niet gevonden" };
+  if (kandidaat.tenant_id !== viewerProfile.tenant_id) {
+    return { error: "Geen rechten — andere tenant" };
+  }
+
+  // Nieuwe eigenaar moet in dezelfde tenant zitten
+  if (nieuweEigenaarId) {
+    const { data: doel } = await admin
+      .from("profiles")
+      .select("tenant_id, rol")
+      .eq("id", nieuweEigenaarId)
+      .single();
+    if (!doel) return { error: "Doel-user niet gevonden" };
+    if (doel.tenant_id !== viewerProfile.tenant_id) {
+      return { error: "Doel-user zit niet in dit bureau" };
+    }
+  }
+
+  const { error } = await admin
+    .from("kandidaten")
+    .update({ eigenaar_id: nieuweEigenaarId })
+    .eq("id", kandidaatId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/kandidaten/${kandidaatId}`);
+  return { ok: true };
+}

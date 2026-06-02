@@ -17,6 +17,7 @@ import { PlaatsingTrigger } from "./PlaatsingTrigger";
 import { PlaatsingKnop } from "./PlaatsingKnop";
 import { KANBAN_OPTIES } from "@/utils/kanban";
 import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
+import { EigenaarKnop } from "./EigenaarKnop";
 import { getViewerRol } from "@/utils/view-as";
 
 const STATUS_OPTIES = [
@@ -79,6 +80,14 @@ export default async function KandidaatDetail({
     .select("*")
     .eq("kandidaat_id", id)
     .order("created_at", { ascending: false });
+
+  // Users in dit bureau voor de Eigenaar-dropdown (alleen non-setters mogen kiezen)
+  const { data: tenantUsers } = await supabase
+    .from("profiles")
+    .select("id, voornaam, achternaam, rol")
+    .eq("tenant_id", k.tenant_id)
+    .in("rol", ["admin", "recruiter", "setter"])
+    .order("voornaam", { ascending: true });
 
   const { data: plaatsingen } = await supabase
     .from("plaatsingen")
@@ -169,6 +178,13 @@ export default async function KandidaatDetail({
                 {k.score ?? "—"}{k.score != null && <span className="text-base text-gray-400">/100</span>}
               </div>
             </div>
+            {!isSetter && (
+              <EigenaarKnop
+                kandidaatId={k.id}
+                huidigeEigenaarId={k.eigenaar_id ?? null}
+                users={tenantUsers ?? []}
+              />
+            )}
             {!isSetter && k.status !== "afgewezen" && (
               <PlaatsingKnop
                 kandidaatId={k.id}
