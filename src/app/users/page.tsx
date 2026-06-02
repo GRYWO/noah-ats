@@ -168,9 +168,9 @@ export default async function SettersPage({
                 <h4 className="text-xs uppercase text-gray-500 font-semibold mb-2">Mailbox (Hostnet)</h4>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-adres bedrijf</label>
-                <input name="mail_adres" type="email" placeholder="voorbeeld@grywo.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
-                <small className="text-gray-400 text-xs">Laat leeg = zelfde als login-mail</small>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Verzend-mailbox (Hostnet, @grywo.nl)</label>
+                <input name="mail_adres" type="email" placeholder="voornaam.achternaam@grywo.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <small className="text-gray-400 text-xs">Hier vandaan worden voorstellen verzonden. Leeg = auto voornaam@grywo.nl</small>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-wachtwoord (Hostnet)</label>

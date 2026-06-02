@@ -31,11 +31,14 @@ export async function getSetterFrom(
     .replace(/[^a-z0-9]/g, "");
   const standaardEmail = `${voornaamSchoon}@${MAIL_DOMEIN}`;
 
-  // Gebruik standaard voornaam@grywo.nl. Alleen wanneer expliciet iets
-  // ANDERS (niet @grywo.nl) staat in mail_adres, gebruik dat.
-  const email = data.mail_adres && !data.mail_adres.toLowerCase().endsWith(`@${MAIL_DOMEIN}`)
-    ? data.mail_adres
-    : standaardEmail;
+  // Resend kan alleen vanaf @grywo.nl versturen (enige geverifieerde domein).
+  // Voorkeur: mail_adres als dat een @grywo.nl-adres is — zo werkt elke
+  // Hostnet-mailbox zoals 'p.zwartenberg@grywo.nl', 'pepijn.zw@grywo.nl', etc.
+  // Anders fallback op auto-generated voornaam@grywo.nl.
+  const ingevuldGrywo = data.mail_adres?.trim().toLowerCase().endsWith(`@${MAIL_DOMEIN}`)
+    ? data.mail_adres.trim()
+    : null;
+  const email = ingevuldGrywo || standaardEmail;
 
   const naam = `${data.voornaam ?? ""} ${data.achternaam ?? ""}`.trim();
   return naam ? `${naam} <${email}>` : email;

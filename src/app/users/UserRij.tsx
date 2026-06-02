@@ -204,9 +204,11 @@ export function UserRij({ setter: s, isHuidigeUser, isAdmin, magAlleRollen, isSu
                     <input name="voys_nummer" defaultValue={s.voys_nummer ?? ""} placeholder="+31 85 ..." className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-adres bedrijf</label>
-                    <input name="mail_adres" type="email" defaultValue={s.mail_adres ?? ""} placeholder="voorbeeld@grywo.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
-                    <small className="text-gray-400 text-xs">Bepaalt waar vanaf voorstellen-mails worden verzonden.</small>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Verzend-mailbox (Hostnet, @grywo.nl)</label>
+                    <input name="mail_adres" type="email" defaultValue={s.mail_adres ?? ""} placeholder="voornaam.achternaam@grywo.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                    <small className="text-gray-400 text-xs">
+                      Vul het exacte @grywo.nl-mailadres in van de Hostnet-mailbox. Voorstellen-mails worden hier vanaf verzonden. Leeg = automatisch <code className="bg-gray-100 px-1 rounded">{`voornaam@grywo.nl`}</code>.
+                    </small>
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-wachtwoord (Hostnet)</label>
