@@ -180,6 +180,65 @@ export async function uitnodigen(formData: FormData) {
     }
   }
 
+  // Auto-toewijzing nieuwe kandidaat aan setter:
+  // Zodra deze kandidaat 2 voorstellen heeft met status="uitnodigen",
+  // krijgt zijn setter automatisch een wachtende kandidaat toegewezen.
+  // Dit gebeurt maar één keer per kandidaat (bij de 2e uitnodiging).
+  if (voorstel?.kandidaat_id && voorstel.setter_id && voorstel.tenant_id) {
+    try {
+      const { count } = await admin
+        .from("voorstellen")
+        .select("id", { count: "exact", head: true })
+        .eq("kandidaat_id", voorstel.kandidaat_id)
+        .eq("status", "uitnodigen");
+
+      if (count === 2) {
+        // Zoek een wachtende kandidaat (geen eigenaar) in dezelfde tenant
+        const { data: wachtKandidaat } = await admin
+          .from("kandidaten")
+          .select("id, kanban_stap")
+          .eq("tenant_id", voorstel.tenant_id)
+          .is("eigenaar_id", null)
+          .not("status", "in", '("geplaatst","afgewezen")')
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (wachtKandidaat) {
+          const update: Record<string, unknown> = { eigenaar_id: voorstel.setter_id };
+          if (
+            wachtKandidaat.kanban_stap === "in_wachtrij" ||
+            wachtKandidaat.kanban_stap === "in_afwachting_cv"
+          ) {
+            update.kanban_stap = "bij_setter";
+          }
+          await admin.from("kandidaten").update(update).eq("id", wachtKandidaat.id);
+
+          // Notificeer setter
+          await maakNotificatie({
+            tenantId: voorstel.tenant_id,
+            userId: voorstel.setter_id,
+            type: "voorstel_groen",
+            titel: "✨ Nieuwe kandidaat toegewezen",
+            bericht: "Je huidige kandidaat heeft 2 geïnteresseerden — je krijgt een nieuwe kandidaat erbij.",
+            linkUrl: `/kandidaten/${wachtKandidaat.id}`,
+            kandidaatId: wachtKandidaat.id,
+          });
+
+          await logVoorstelEvent({
+            tenantId: voorstel.tenant_id,
+            kandidaatId: wachtKandidaat.id,
+            event: "voorstel_groen",
+            beschrijving: "Auto-toegewezen: setter had 2e uitnodiging op vorige kandidaat",
+            zichtbaarVoorKandidaat: false,
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[uitnodigen] auto-toewijzing nieuwe kandidaat mislukt:", e);
+    }
+  }
+
   revalidatePath(`/voorstel/${token}`);
   revalidatePath("/opdrachtgevers");
   redirect(`/voorstel/${token}/bedankt`);
