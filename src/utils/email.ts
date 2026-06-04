@@ -1686,3 +1686,59 @@ export async function sendGesprek1BevestigingOpdrachtgever({
   if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
   return result;
 }
+
+/**
+ * Verzoek aan recruiter voor een nieuwe kandidaat voor een setter.
+ * Bevat directe link naar wachtrij/kanban zodat recruiter handmatig kan toewijzen.
+ */
+export async function sendNieuweKandidaatVerzoek({
+  naar,
+  recruiterVoornaam,
+  setterNaam,
+  reden,
+  aantalUitnodigingen,
+  link,
+}: {
+  naar: string;
+  recruiterVoornaam: string;
+  setterNaam: string;
+  reden: string | null;
+  aantalUitnodigingen: number;
+  link: string;
+}) {
+  const body = `
+<p style="margin:0 0 16px 0;">Hoi ${recruiterVoornaam},</p>
+
+<p style="margin:0 0 16px 0;">
+  <b>${setterNaam}</b> vraagt om een nieuwe kandidaat. Z'n huidige kandidaat heeft
+  al <b>${aantalUitnodigingen}</b> ${aantalUitnodigingen === 1 ? "uitnodiging" : "uitnodigingen"} ontvangen.
+</p>
+
+${reden ? `
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
+  <tr><td>
+    <div style="font-size:12px;color:#666;margin-bottom:4px;">REDEN VAN SETTER</div>
+    <div style="font-style:italic;">${reden}</div>
+  </td></tr>
+</table>
+` : ""}
+
+<p style="margin:24px 0 16px 0;text-align:center;">
+  <a href="${link}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:bold;font-size:15px;">
+    Open Noah om toe te wijzen
+  </a>
+</p>
+
+<p style="font-size:12px;color:#999;text-align:center;margin:16px 0 0 0;">
+  Klik op een kandidaat → 'Eigenaar wijzigen' → kies ${setterNaam}.
+</p>`;
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `${setterNaam} vraagt een nieuwe kandidaat`,
+    html: brandedLayout({ titel: "Nieuwe kandidaat aangevraagd", body }),
+  });
+  if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
+  return result;
+}

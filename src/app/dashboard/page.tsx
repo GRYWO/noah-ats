@@ -15,6 +15,7 @@ import { SuperAdminMonitor } from "./SuperAdminMonitor";
 import { PerfMonitor } from "@/components/PerfMonitor";
 import { leesViewAs, effectieveRol } from "@/utils/view-as";
 import { logPerf } from "@/utils/perf";
+import { NieuweKandidaatKnop } from "./NieuweKandidaatKnop";
 
 type Periode = "vandaag" | "week" | "maand" | "jaar" | "alles";
 function geldigePeriode(p: string | undefined): Periode {
@@ -379,7 +380,15 @@ async function SetterDashboard({ userId }: { userId: string }) {
       ) : (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
           <div className="font-bold text-amber-800 mb-1">Geen actieve kandidaat</div>
-          <p className="text-sm text-amber-700">Vraag de admin om een kandidaat aan je toe te wijzen.</p>
+          <p className="text-sm text-amber-700 mb-3">Vraag een recruiter om een kandidaat aan je toe te wijzen.</p>
+          <NieuweKandidaatKnop />
+        </div>
+      )}
+
+      {/* Setter kan altijd handmatig een nieuwe kandidaat aanvragen */}
+      {huidigeKandidaat && (
+        <div className="flex justify-end mb-6">
+          <NieuweKandidaatKnop />
         </div>
       )}
 
