@@ -66,3 +66,53 @@ html[data-sidebar="open"] main.pl-16 {
   color: var(--foreground);
   border-color: var(--border);
 }
+
+/* Donkere paarse merk-kleur (#333399) is op donkere achtergrond niet leesbaar.
+   Vervang door een lichtere variant (#a3a3ff) voor tekst/links, en houd geel
+   (#ffd84d) als accent voor knoppen/badges. */
+.dark .text-\[\#333399\],
+.dark .text-\[\#2a2a80\],
+.dark .text-\[\#5454c4\] {
+  color: #a3a3ff !important;
+}
+.dark .hover\:text-\[\#333399\]:hover,
+.dark .hover\:text-\[\#2a2a80\]:hover {
+  color: #c3c3ff !important;
+}
+.dark .border-\[\#333399\] {
+  border-color: #a3a3ff !important;
+}
+/* Paarse achtergronden lichter maken zodat witte tekst contrasteert. */
+.dark .bg-\[\#333399\] {
+  background-color: #4848b8 !important;
+}
+.dark .bg-\[\#333399\]\/10 {
+  background-color: rgba(163, 163, 255, 0.12) !important;
+}
+.dark .bg-\[\#333399\]\/20 {
+  background-color: rgba(163, 163, 255, 0.2) !important;
+}
+.dark .hover\:bg-\[\#2a2a80\]:hover,
+.dark .hover\:bg-\[\#1f1f5c\]:hover {
+  background-color: #5757c8 !important;
+}
+/* Lichte amber/groen/blauw-achtergronden zichtbaar maken op dark panels. */
+.dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.12) !important; }
+.dark .bg-amber-50   { background-color: rgba(245, 158, 11, 0.12) !important; }
+.dark .bg-red-50     { background-color: rgba(239, 68, 68, 0.12) !important; }
+.dark .bg-blue-50    { background-color: rgba(59, 130, 246, 0.12) !important; }
+.dark .bg-ddd6fe,
+.dark .bg-\[\#ddd6fe\] { background-color: rgba(163, 163, 255, 0.15) !important; }
+/* Tekst op lichte tinten ook lichter maken zodat het leesbaar blijft. */
+.dark .text-emerald-700, .dark .text-emerald-800 { color: #6ee7b7 !important; }
+.dark .text-amber-700,   .dark .text-amber-800,
+.dark .text-amber-900 { color: #fcd34d !important; }
+.dark .text-red-700,     .dark .text-red-800,
+.dark .text-red-900   { color: #fca5a5 !important; }
+.dark .text-blue-700,    .dark .text-blue-800 { color: #93c5fd !important; }
+.dark .text-purple-700,  .dark .text-purple-800 { color: #c4b5fd !important; }
+/* Ringen + borders rondom badges */
+.dark .border-emerald-200, .dark .border-emerald-300 { border-color: rgba(16, 185, 129, 0.4) !important; }
+.dark .border-amber-200,   .dark .border-amber-300   { border-color: rgba(245, 158, 11, 0.4) !important; }
+.dark .border-red-200,     .dark .border-red-300     { border-color: rgba(239, 68, 68, 0.4) !important; }
+.dark .border-blue-200,    .dark .border-blue-300    { border-color: rgba(59, 130, 246, 0.4) !important; }
