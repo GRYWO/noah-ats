@@ -313,8 +313,18 @@ export default async function CoachingPage({
     s.plaatsingen += 1;
     s.bedrag += Number(p.tarief_bedrag ?? 0);
   }
+  // Sorteer-volgorde (resultaat zwaarder dan output):
+  // plaatsingen → omzet → afspraken → voorgesteld → calls.
+  // Zo komt iemand met 40 calls maar 0 plaatsingen tóch boven iemand met
+  // 0 calls + 0 plaatsingen — input telt mee als tie-breaker.
   const leaderboard = Object.values(stats)
-    .sort((a, b) => b.plaatsingen - a.plaatsingen || b.bedrag - a.bedrag)
+    .sort((a, b) =>
+      b.plaatsingen - a.plaatsingen ||
+      b.bedrag - a.bedrag ||
+      b.afspraken - a.afspraken ||
+      b.voorgesteld - a.voorgesteld ||
+      b.calls - a.calls
+    )
     .slice(0, 10);
 
   // Filter-data voor admin/coach
