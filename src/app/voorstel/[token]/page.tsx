@@ -101,13 +101,7 @@ export default async function VoorstelPage({
                 {k.opleiding && <tr><td className="py-1 text-gray-500">Opleiding</td><td className="font-semibold">{k.opleiding}</td></tr>}
                 {k.open_voor && <tr><td className="py-1 text-gray-500">Open voor</td><td className="font-semibold">{k.open_voor}</td></tr>}
                 {k.tarief_ws && <tr><td className="py-1 text-gray-500">Tarief</td><td className="font-semibold">{k.tarief_ws}</td></tr>}
-                {k.score != null && (
-                  <tr><td className="py-1 text-gray-500">Score</td>
-                    <td className={`font-bold ${k.score >= 75 ? "text-emerald-600" : k.score >= 50 ? "text-amber-600" : "text-red-500"}`}>
-                      {k.score}/100
-                    </td>
-                  </tr>
-                )}
+                {/* Score is intern voor recruiter — niet voor opdrachtgever */}
               </tbody>
             </table>
           </div>

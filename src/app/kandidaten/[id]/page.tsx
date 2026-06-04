@@ -174,12 +174,15 @@ export default async function KandidaatDetail({
             </div>
           </div>
           <div className="flex flex-col items-end gap-3">
-            <div className="text-right">
-              <div className="text-xs text-gray-500 uppercase font-semibold">Score</div>
-              <div className={`text-4xl font-bold ${scoreColor}`}>
-                {k.score ?? "—"}{k.score != null && <span className="text-base text-gray-400">/100</span>}
+            {/* Score is intern — niet zichtbaar voor setter (én niet voor opdrachtgever) */}
+            {!isSetter && (
+              <div className="text-right">
+                <div className="text-xs text-gray-500 uppercase font-semibold">Score</div>
+                <div className={`text-4xl font-bold ${scoreColor}`}>
+                  {k.score ?? "—"}{k.score != null && <span className="text-base text-gray-400">/100</span>}
+                </div>
               </div>
-            </div>
+            )}
             {!isSetter && (
               <EigenaarKnop
                 kandidaatId={k.id}
