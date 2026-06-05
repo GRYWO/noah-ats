@@ -141,6 +141,25 @@ export async function stuurVoorstel(formData: FormData) {
     redirect(`/kandidaten/${kandidaatId}?error=Recruiters+kunnen+geen+voorstel+versturen`);
   }
 
+  // Dubbel-check: deze kandidaat mag maar 1x naar dezelfde opdrachtgever
+  // (op basis van e-mailadres). Voorkomt spam-mails naar zelfde contactpersoon.
+  if (opdrachtgeverEmail) {
+    const { data: bestaand } = await supabase
+      .from("voorstellen")
+      .select("id")
+      .eq("kandidaat_id", kandidaatId)
+      .eq("opdrachtgever_email", opdrachtgeverEmail)
+      .limit(1)
+      .maybeSingle();
+    if (bestaand) {
+      redirect(
+        `/kandidaten/${kandidaatId}?error=${encodeURIComponent(
+          `Deze kandidaat is al voorgesteld aan ${opdrachtgeverEmail}. Kies een andere opdrachtgever.`
+        )}`
+      );
+    }
+  }
+
   // Voorstel aanmaken
   const { data: nieuw, error } = await supabase.from("voorstellen").insert({
     tenant_id: profile.tenant_id,
