@@ -67,6 +67,33 @@ html[data-sidebar="open"] main.pl-16 {
   border-color: var(--border);
 }
 
+/* Native datepicker/timepicker (date, datetime-local, time, month, week)
+   moet expliciet dark color-scheme krijgen, anders rendert Chrome ze wit-op-wit
+   en lijkt het veld 'weg te vallen' op focus. */
+.dark input[type="date"],
+.dark input[type="datetime-local"],
+.dark input[type="time"],
+.dark input[type="month"],
+.dark input[type="week"] {
+  color-scheme: dark;
+}
+/* Lichte (default) mode: expliciet light scheme zodat Safari/Chrome de juiste
+   picker-kleuren kiest, ook als de browser zelf in dark mode staat. */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"],
+input[type="week"] {
+  color-scheme: light;
+}
+.dark input[type="date"],
+.dark input[type="datetime-local"],
+.dark input[type="time"],
+.dark input[type="month"],
+.dark input[type="week"] {
+  color-scheme: dark;
+}
+
 /* Donkere paarse merk-kleur (#333399) is op donkere achtergrond niet leesbaar.
    Vervang door een lichtere variant (#a3a3ff) voor tekst/links, en houd geel
    (#ffd84d) als accent voor knoppen/badges. */
