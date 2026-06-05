@@ -71,7 +71,12 @@ export function PlanNotificatieModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+      {/* Modal in light scheme — voorkomt dat dark mode de native date/time
+          inputs onleesbaar maakt (Chrome rendert ze wit-op-wit op hover). */}
+      <div
+        className="bg-white text-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
+        style={{ colorScheme: "light" }}
+      >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold inline-flex items-center gap-2">
             <CalendarClock size={18} className="text-[#333399]" />
