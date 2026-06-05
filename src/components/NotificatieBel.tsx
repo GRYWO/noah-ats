@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, X, Reply, Send, Loader2, Volume2, VolumeX } from "lucide-react";
+import { Bell, X, Reply, Send, Loader2, Volume2, VolumeX, CalendarClock } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
 import { reageerOpNotificatie } from "@/app/kandidaten/[id]/contact-actions";
+import { PlanNotificatieModal } from "./PlanNotificatieModal";
 
 type Notificatie = {
   id: string;
@@ -26,6 +27,7 @@ export function NotificatieBel({ userId }: { userId: string }) {
   const [reactie, setReactie] = useState("");
   const [verzenden, setVerzenden] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const eersteLaadRef = useRef(true);
   const [supabase] = useState(() =>
@@ -207,6 +209,13 @@ export function NotificatieBel({ userId }: { userId: string }) {
               <span className="font-bold text-sm text-gray-800">Notificaties</span>
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => setPlanOpen(true)}
+                  title="Notificatie inplannen"
+                  className="text-[#333399] hover:text-[#2a2a80]"
+                >
+                  <CalendarClock size={14} />
+                </button>
+                <button
                   onClick={toggleMute}
                   title={muted ? "Geluid aan" : "Geluid uit"}
                   className="text-gray-400 hover:text-gray-700"
@@ -304,6 +313,11 @@ export function NotificatieBel({ userId }: { userId: string }) {
           </div>
         </>
       )}
+      <PlanNotificatieModal
+        open={planOpen}
+        onClose={() => setPlanOpen(false)}
+        huidigeUserId={userId}
+      />
     </div>
   );
 }
