@@ -21,6 +21,7 @@ import {
   PhoneCall,
   Send,
   Calendar,
+  CalendarClock,
   Sparkles as SparklesIcon,
   FileSignature,
   Archive,
@@ -97,6 +98,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
     { key: "kanban",         href: "/kanban",         label: "Kanban",       Icon: KanbanSquare,  sectie: 2 },
     { key: "voorstellen",    href: "/voorstellen",    label: "Voorstellen",  Icon: Send,          sectie: 2 } as Item,
     { key: "agenda",         href: "/agenda",         label: "Agenda",       Icon: Calendar,      sectie: 2 },
+    { key: "herinneringen",  href: "/herinneringen",  label: "Herinneringen", Icon: CalendarClock, sectie: 2 },
 
     // Sectie 3: Relaties & tools
     { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",          Icon: Contact,       sectie: 3 },
