@@ -31,11 +31,11 @@ export function PlanNotificatieModal({
   useEffect(() => {
     if (open) {
       lijstTenantUsers().then(setUsers);
-      // Default: over 1 uur
+      // Default: over 1 uur — in DD-MM-JJJJ formaat (NL)
       const standaard = new Date(Date.now() + 60 * 60 * 1000);
       standaard.setSeconds(0, 0);
       const pad = (n: number) => String(n).padStart(2, "0");
-      setDatum(`${standaard.getFullYear()}-${pad(standaard.getMonth() + 1)}-${pad(standaard.getDate())}`);
+      setDatum(`${pad(standaard.getDate())}-${pad(standaard.getMonth() + 1)}-${standaard.getFullYear()}`);
       setTijd(`${pad(standaard.getHours())}:${pad(standaard.getMinutes())}`);
       setTitel("");
       setBericht("");
@@ -53,11 +53,29 @@ export function PlanNotificatieModal({
       fd.append("voor_user_id", voorUserId);
       fd.append("titel", titel);
       fd.append("bericht", bericht);
-      // Combineer datum + tijd in een echte ISO-string in de lokale tijdzone
-      // van de gebruiker. Server interpreteert ISO als absolute moment.
-      const [jaar, maand, dag] = datum.split("-").map((n) => parseInt(n, 10));
-      const [uren, minuten] = tijd.split(":").map((n) => parseInt(n, 10));
-      const lokaalMoment = new Date(jaar, (maand || 1) - 1, dag || 1, uren || 0, minuten || 0, 0, 0);
+      // Parse 'DD-MM-JJJJ' + 'HH:MM' naar lokaal moment en daarna ISO.
+      const datumMatch = datum.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+      const tijdMatch = tijd.match(/^(\d{1,2}):(\d{2})$/);
+      if (!datumMatch) {
+        setResultaat("Datum moet in formaat DD-MM-JJJJ (bv. 06-06-2026)");
+        return;
+      }
+      if (!tijdMatch) {
+        setResultaat("Tijd moet in formaat HH:MM (bv. 14:30)");
+        return;
+      }
+      const lokaalMoment = new Date(
+        parseInt(datumMatch[3], 10),
+        parseInt(datumMatch[2], 10) - 1,
+        parseInt(datumMatch[1], 10),
+        parseInt(tijdMatch[1], 10),
+        parseInt(tijdMatch[2], 10),
+        0, 0,
+      );
+      if (isNaN(lokaalMoment.getTime())) {
+        setResultaat("Ongeldige datum of tijd");
+        return;
+      }
       fd.append("geplande_tijd", lokaalMoment.toISOString());
       const r = await planNotificatie(fd);
       if (r.ok) {
@@ -126,23 +144,30 @@ export function PlanNotificatieModal({
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Datum</label>
                 <input
-                  type="date"
+                  type="text"
                   value={datum}
                   onChange={(e) => setDatum(e.target.value)}
-                  style={{ colorScheme: "light", color: "#111827", backgroundColor: "#fff" }}
+                  placeholder="06-06-2026"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  style={{ color: "#111827", backgroundColor: "#fff" }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                 />
+                <small className="text-gray-400 text-[11px]">DD-MM-JJJJ</small>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Tijd</label>
                 <input
-                  type="time"
+                  type="text"
                   value={tijd}
                   onChange={(e) => setTijd(e.target.value)}
-                  step="60"
-                  style={{ colorScheme: "light", color: "#111827", backgroundColor: "#fff" }}
+                  placeholder="14:30"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  style={{ color: "#111827", backgroundColor: "#fff" }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                 />
+                <small className="text-gray-400 text-[11px]">HH:MM (24-uurs)</small>
               </div>
             </div>
 
