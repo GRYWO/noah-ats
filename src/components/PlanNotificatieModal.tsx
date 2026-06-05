@@ -23,7 +23,8 @@ export function PlanNotificatieModal({
   const [voorUserId, setVoorUserId] = useState(huidigeUserId);
   const [titel, setTitel] = useState("");
   const [bericht, setBericht] = useState("");
-  const [datumTijd, setDatumTijd] = useState("");
+  const [datum, setDatum] = useState(""); // YYYY-MM-DD
+  const [tijd, setTijd] = useState(""); // HH:mm
   const [bezig, startTransition] = useTransition();
   const [resultaat, setResultaat] = useState<"ok" | string | null>(null);
 
@@ -34,8 +35,8 @@ export function PlanNotificatieModal({
       const standaard = new Date(Date.now() + 60 * 60 * 1000);
       standaard.setSeconds(0, 0);
       const pad = (n: number) => String(n).padStart(2, "0");
-      const lokaal = `${standaard.getFullYear()}-${pad(standaard.getMonth() + 1)}-${pad(standaard.getDate())}T${pad(standaard.getHours())}:${pad(standaard.getMinutes())}`;
-      setDatumTijd(lokaal);
+      setDatum(`${standaard.getFullYear()}-${pad(standaard.getMonth() + 1)}-${pad(standaard.getDate())}`);
+      setTijd(`${pad(standaard.getHours())}:${pad(standaard.getMinutes())}`);
       setTitel("");
       setBericht("");
       setVoorUserId(huidigeUserId);
@@ -52,7 +53,12 @@ export function PlanNotificatieModal({
       fd.append("voor_user_id", voorUserId);
       fd.append("titel", titel);
       fd.append("bericht", bericht);
-      fd.append("geplande_tijd", datumTijd);
+      // Combineer datum + tijd in een echte ISO-string in de lokale tijdzone
+      // van de gebruiker. Server interpreteert ISO als absolute moment.
+      const [jaar, maand, dag] = datum.split("-").map((n) => parseInt(n, 10));
+      const [uren, minuten] = tijd.split(":").map((n) => parseInt(n, 10));
+      const lokaalMoment = new Date(jaar, (maand || 1) - 1, dag || 1, uren || 0, minuten || 0, 0, 0);
+      fd.append("geplande_tijd", lokaalMoment.toISOString());
       const r = await planNotificatie(fd);
       if (r.ok) {
         setResultaat("ok");
@@ -111,17 +117,28 @@ export function PlanNotificatieModal({
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Datum &amp; tijd</label>
-              <input
-                type="datetime-local"
-                value={datumTijd}
-                onChange={(e) => setDatumTijd(e.target.value)}
-                // Forceer kleur-scheme: modal staat altijd op witte achtergrond
-                // ongeacht dark-mode. Hierdoor blijft de picker leesbaar.
-                style={{ colorScheme: "light", color: "#111827", backgroundColor: "#fff" }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Datum</label>
+                <input
+                  type="date"
+                  value={datum}
+                  onChange={(e) => setDatum(e.target.value)}
+                  style={{ colorScheme: "light", color: "#111827", backgroundColor: "#fff" }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Tijd</label>
+                <input
+                  type="time"
+                  value={tijd}
+                  onChange={(e) => setTijd(e.target.value)}
+                  step="60"
+                  style={{ colorScheme: "light", color: "#111827", backgroundColor: "#fff" }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
             </div>
 
             <div>
