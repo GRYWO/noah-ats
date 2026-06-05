@@ -47,7 +47,7 @@ export default async function KanbanPage() {
           <p className="text-gray-500 text-sm">Sleep kandidaten tussen kolommen om de status te wijzigen</p>
         </div>
 
-        <KanbanBoard initialKandidaten={kandidaten ?? []} />
+        <KanbanBoard initialKandidaten={kandidaten ?? []} isSetter={isSetter} />
       </div>
     </main>
   );

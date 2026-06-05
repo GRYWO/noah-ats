@@ -371,10 +371,8 @@ async function SetterDashboard({ userId }: { userId: string }) {
                 {huidigeKandidaat.telefoon && <span>{huidigeKandidaat.telefoon}</span>}
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-xs opacity-70 uppercase">Score</div>
-              <div className="text-3xl font-bold">{huidigeKandidaat.score ?? "—"}</div>
-            </div>
+            {/* Score is intern — setter ziet 'm niet. Toon pijl-naar-rechts ipv score. */}
+            <div className="text-right text-2xl opacity-70">→</div>
           </div>
         </Link>
       ) : (

@@ -19,7 +19,13 @@ type Kandidaat = {
 
 const KOLOMMEN = KANBAN_STAPPEN.map(s => ({ key: s.key, titel: s.kortLabel, kleur: s.rand }));
 
-export function KanbanBoard({ initialKandidaten }: { initialKandidaten: Kandidaat[] }) {
+export function KanbanBoard({
+  initialKandidaten,
+  isSetter = false,
+}: {
+  initialKandidaten: Kandidaat[];
+  isSetter?: boolean;
+}) {
   const router = useRouter();
   const [kandidaten, setKandidaten] = useState(initialKandidaten);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -115,7 +121,8 @@ export function KanbanBoard({ initialKandidaten }: { initialKandidaten: Kandidaa
                     {k.open_voor && (
                       <div className="text-xs text-gray-500 truncate">{k.open_voor}</div>
                     )}
-                    {k.score != null && (
+                    {/* Score alleen voor recruiter/admin/super — niet voor setter */}
+                    {!isSetter && k.score != null && (
                       <div className={`text-xs font-semibold mt-1 ${scoreColor(k.score)}`}>
                         Score {k.score}/100
                       </div>
