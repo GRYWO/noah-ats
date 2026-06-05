@@ -3,6 +3,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
 import { CalendarClock } from "lucide-react";
 import { AnnuleerKnop } from "./AnnuleerKnop";
+import { TestNuKnop } from "./TestNuKnop";
 import { redirect } from "next/navigation";
 
 type Herinnering = {
@@ -61,14 +62,17 @@ export default async function HerinneringenPage() {
       <TopBar />
 
       <div className="p-8 max-w-5xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 inline-flex items-center gap-2">
-            <CalendarClock size={22} className="text-[#333399]" />
-            Herinneringen
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Geplande pop-ups voor jezelf of voor collega's. Open de notificatie-bel om er nieuwe toe te voegen.
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 inline-flex items-center gap-2">
+              <CalendarClock size={22} className="text-[#333399]" />
+              Herinneringen
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Geplande pop-ups voor jezelf of voor collega's. Open de notificatie-bel om er nieuwe toe te voegen.
+            </p>
+          </div>
+          <TestNuKnop />
         </div>
 
         {open.length === 0 && archief.length === 0 ? (
