@@ -62,6 +62,21 @@ export default async function KandidatenPage({
   const kandidaten = kandidatenRes.data;
   const kandidaatTotaal = kandidatenRes.count;
 
+  // Eigenaar-namen ophalen in 1 query (geen N+1)
+  const eigenaarIds = Array.from(
+    new Set((kandidaten ?? []).map((k) => k.eigenaar_id).filter(Boolean)),
+  );
+  const { data: eigenaars } = eigenaarIds.length > 0
+    ? await supabase
+        .from("profiles")
+        .select("id, voornaam, achternaam")
+        .in("id", eigenaarIds)
+    : { data: [] };
+  const eigenaarNaam = new Map<string, string>();
+  for (const e of eigenaars ?? []) {
+    eigenaarNaam.set(e.id, `${e.voornaam ?? ""} ${e.achternaam ?? ""}`.trim() || "Onbekend");
+  }
+
   const totalPages = Math.ceil((kandidaatTotaal ?? 0) / PAGE_SIZE);
 
   // Perf-log (fire-and-forget)
@@ -121,6 +136,7 @@ export default async function KandidatenPage({
                   <th className="text-left px-4 py-3 font-semibold">E-mail</th>
                   <th className="text-left px-4 py-3 font-semibold">Woonplaats</th>
                   <th className="text-left px-4 py-3 font-semibold">Open voor</th>
+                  <th className="text-left px-4 py-3 font-semibold">Eigenaar</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,6 +158,15 @@ export default async function KandidatenPage({
                     <td className="px-4 py-3 text-sm text-gray-600"><Link href={`/kandidaten/${k.id}`} className="block">{k.email ?? "—"}</Link></td>
                     <td className="px-4 py-3 text-sm text-gray-600"><Link href={`/kandidaten/${k.id}`} className="block">{k.woonplaats ?? "—"}</Link></td>
                     <td className="px-4 py-3 text-sm text-gray-600"><Link href={`/kandidaten/${k.id}`} className="block">{k.open_voor ?? "—"}</Link></td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      <Link href={`/kandidaten/${k.id}`} className="block">
+                        {k.eigenaar_id ? (
+                          <span className="font-semibold text-[#333399]">{eigenaarNaam.get(k.eigenaar_id) ?? "—"}</span>
+                        ) : (
+                          <span className="text-gray-400 italic">Geen</span>
+                        )}
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
