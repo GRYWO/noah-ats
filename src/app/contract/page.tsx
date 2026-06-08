@@ -66,38 +66,83 @@ export default function ContractPagina() {
 
           <Sectie nummer="" titel="Partijen">
             <p>
-              <b>OneTwoStart NL B.V.</b> (handelend onder de naam <b>GRYWO</b>),
-              gevestigd te Nederland, KvK 96738782, hierna: &ldquo;GRYWO&rdquo;.
+              <b>Binqie B.V.</b>, gevestigd aan de St.-Jacobsstraat 6 A
+              (p/a KVK), 3511 BR Utrecht, ingeschreven bij de Kamer van
+              Koophandel onder nummer <b>94799822</b>, hierna te noemen:{" "}
+              &ldquo;Binqie&rdquo;.
             </p>
             <p>
               en de Setter wiens gegevens in het ondertekenformulier hieronder
-              zijn ingevuld, hierna: &ldquo;Setter&rdquo;.
+              zijn ingevuld, hierna te noemen: &ldquo;Setter&rdquo;.
+            </p>
+            <p className="text-xs text-gray-500 italic">
+              Binqie handelt onder andere onder het merk <b>GRYWO</b> voor
+              recruitment-werkzaamheden. Waar in deze overeenkomst over GRYWO
+              wordt gesproken, wordt Binqie B.V. bedoeld.
             </p>
           </Sectie>
 
           <Sectie nummer="1" titel="Werkzaamheden">
             <p>
-              Setter voert telefonische acquisitie uit voor GRYWO via het
-              ATS-platform Noah. Werkzaamheden omvatten het bellen van
-              opdrachtgevers, voorstellen versturen van kandidaten, voortgang
-              vastleggen in Noah en deelnemen aan dagelijkse EOD-coaching met
-              Pepijn als coach.
+              Setter voert telefonische acquisitie uit voor Binqie (handelend
+              als GRYWO) via het ATS-platform Noah. Werkzaamheden omvatten het
+              bellen van opdrachtgevers, voorstellen versturen van kandidaten,
+              voortgang vastleggen in Noah en deelnemen aan dagelijkse
+              EOD-coaching met Pepijn Zwartenberg als coach.
             </p>
           </Sectie>
 
           <Sectie nummer="2" titel="Vergoeding">
             <p>
-              Setter ontvangt een vast basisbedrag per maand zoals individueel
-              afgesproken, vermeerderd met een bonus per gerealiseerde plaatsing
-              van een door Setter voorgestelde kandidaat. Uitbetaling vindt
-              maandelijks plaats achteraf, na ontvangst van een deugdelijke
-              factuur van Setter aan GRYWO.
+              Setter ontvangt per gerealiseerde plaatsing een{" "}
+              <b>maandelijkse fee</b> berekend over het bruto jaarsalaris van
+              de geplaatste kandidaat. De fee wordt staffelgewijs verhoogd op
+              basis van het totaal aantal plaatsingen van Setter:
+            </p>
+
+            <div className="bg-[#333399]/5 border border-[#333399]/15 rounded-xl p-4 mt-3">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 uppercase">
+                    <th className="py-2 font-semibold">Aantal plaatsingen</th>
+                    <th className="py-2 font-semibold text-right">Fee per maand</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t border-[#333399]/15">
+                    <td className="py-2">1 tot en met 5 plaatsingen</td>
+                    <td className="py-2 text-right font-bold text-[#333399]">2,5%</td>
+                  </tr>
+                  <tr className="border-t border-[#333399]/15">
+                    <td className="py-2">Vanaf 8 plaatsingen</td>
+                    <td className="py-2 text-right font-bold text-[#333399]">3,0%</td>
+                  </tr>
+                  <tr className="border-t border-[#333399]/15">
+                    <td className="py-2">Vanaf 12 plaatsingen</td>
+                    <td className="py-2 text-right font-bold text-[#333399]">3,25%</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="text-xs text-gray-600 mt-3 italic">
+                Percentage geldt over het bruto jaarsalaris van de geplaatste
+                kandidaat en wordt elke maand opnieuw uitbetaald zolang de
+                kandidaat geplaatst blijft.
+              </p>
+            </div>
+
+            <p className="mt-4">
+              <b>Factuur en betaling:</b> Setter stuurt elke{" "}
+              <b>1e van de maand</b> een factuur per e-mail naar{" "}
+              <a href="mailto:pepijn@grywo.nl" className="text-[#333399] underline">
+                pepijn@grywo.nl
+              </a>. Binqie betaalt de factuur uit binnen <b>7 dagen</b> na
+              ontvangst, mits de factuur volledig en correct is.
             </p>
           </Sectie>
 
           <Sectie nummer="3" titel="Tools & toegang">
             <p>
-              GRYWO stelt aan Setter ter beschikking: een persoonlijk
+              Binqie stelt aan Setter ter beschikking: een persoonlijk
               Noah-account, een <b>voornaam@grywo.nl</b>-mailadres, toegang tot
               Jobdigger en de Robin AI-assistent.
             </p>
@@ -111,30 +156,87 @@ export default function ContractPagina() {
           <Sectie nummer="4" titel="Eigendom en data">
             <p>
               Alle kandidaten, leads en opdrachtgever-gegevens die binnen Noah
-              worden verzameld of bewerkt zijn eigendom van GRYWO. Bij
-              beëindiging van deze samenwerking blijven gegevens bij GRYWO en
-              wordt de toegang van Setter onmiddellijk gerevoceerd.
+              worden verzameld of bewerkt zijn eigendom van Binqie. Bij
+              beëindiging van deze samenwerking blijven alle gegevens bij
+              Binqie en wordt de toegang van Setter onmiddellijk gerevoceerd.
             </p>
           </Sectie>
 
           <Sectie nummer="5" titel="Geheimhouding">
             <p>
-              Setter verbindt zich alle informatie over opdrachtgevers,
-              kandidaten, tarieven, marges en interne werkwijzen van GRYWO
-              strikt vertrouwelijk te behandelen. Schending van geheimhouding
-              leidt tot directe beëindiging van de samenwerking en mogelijke
-              aansprakelijkheid.
+              <b>Alle informatie</b> die Setter tijdens of voor de samenwerking
+              te weten komt over Binqie / GRYWO, haar opdrachtgevers,
+              kandidaten, tarieven, marges, processen, software-functionaliteit,
+              klantenbestanden, financiële gegevens en strategie is strikt
+              vertrouwelijk.
+            </p>
+            <p>Setter verplicht zich:</p>
+            <ul className="list-disc pl-6 space-y-1.5">
+              <li>
+                Deze informatie <b>nooit</b> te delen met derden, ook niet na
+                beëindiging van de samenwerking.
+              </li>
+              <li>
+                Geen kandidaten, opdrachtgevers of contactgegevens uit Noah te
+                exporteren, kopiëren, foto&apos;s te maken of op andere wijze
+                buiten Noah te bewaren.
+              </li>
+              <li>
+                Inloggegevens, accounts en mailboxen niet te delen met derden.
+              </li>
+              <li>
+                Bij beëindiging direct alle toegang in te leveren en eventuele
+                lokale kopieën te vernietigen.
+              </li>
+            </ul>
+            <p>
+              De geheimhoudingsplicht geldt{" "}
+              <b>tijdens én na de samenwerking voor onbepaalde tijd</b>.
+              Schending leidt tot onmiddellijke beëindiging van de samenwerking
+              en een direct opeisbare boete van{" "}
+              <b>€ 10.000 per overtreding</b>, vermeerderd met € 500 per dag
+              dat de overtreding voortduurt, onverminderd het recht van Binqie
+              op volledige schadevergoeding.
             </p>
           </Sectie>
 
           <Sectie nummer="6" titel="Concurrentie & relatiebeding">
             <p>
-              Tijdens de samenwerking en gedurende{" "}
-              <b>12 maanden na beëindiging</b> verricht Setter geen
-              vergelijkbare werkzaamheden voor opdrachtgevers van GRYWO waarmee
-              hij/zij gedurende de samenwerking direct of indirect contact
-              heeft gehad, behoudens uitdrukkelijke schriftelijke toestemming
-              van GRYWO.
+              <b>Tijdens de samenwerking</b> is het Setter niet toegestaan
+              werkzaamheden te verrichten voor andere recruitmentbureaus,
+              uitzendbureaus, detacheringspartijen of vergelijkbare partijen
+              die concurreren met Binqie / GRYWO.
+            </p>
+            <p>
+              <b>
+                Gedurende 12 maanden na beëindiging van de samenwerking
+              </b>{" "}
+              is het Setter niet toegestaan:
+            </p>
+            <ul className="list-disc pl-6 space-y-1.5">
+              <li>
+                Vergelijkbare werkzaamheden te verrichten voor opdrachtgevers
+                van Binqie waarmee Setter direct of indirect contact heeft
+                gehad.
+              </li>
+              <li>
+                Kandidaten die via Binqie / GRYWO in beeld zijn gekomen te
+                bemiddelen, te benaderen of te plaatsen.
+              </li>
+              <li>
+                Werknemers, collega-setters of recruiters van Binqie actief te
+                benaderen voor een overstap (anti-ronselbeding).
+              </li>
+            </ul>
+            <p>
+              Bij overtreding van dit beding is Setter een direct opeisbare
+              boete verschuldigd van <b>€ 10.000 per overtreding</b>,
+              vermeerderd met € 500 per dag dat de overtreding voortduurt,
+              onverminderd het recht van Binqie op volledige schadevergoeding.
+            </p>
+            <p className="text-xs text-gray-500 italic">
+              Schriftelijke toestemming van Binqie kan dit beding opheffen in
+              individuele gevallen.
             </p>
           </Sectie>
 
@@ -142,8 +244,9 @@ export default function ContractPagina() {
             <p>
               De samenwerking start met een <b>7-daagse trial</b>. Beide
               partijen kunnen tijdens en na de trial schriftelijk opzeggen met
-              een opzegtermijn van één maand. GRYWO mag bij ernstige
-              tekortkomingen of geheimhouding-schendingen per direct beëindigen.
+              een opzegtermijn van één maand. Binqie mag bij ernstige
+              tekortkomingen of schending van geheimhouding/concurrentiebeding
+              per direct beëindigen.
             </p>
           </Sectie>
 
@@ -151,7 +254,7 @@ export default function ContractPagina() {
             <p>
               Op deze overeenkomst is uitsluitend Nederlands recht van
               toepassing. Geschillen worden voorgelegd aan de bevoegde rechter
-              in het arrondissement van vestiging van GRYWO.
+              in het arrondissement Utrecht.
             </p>
           </Sectie>
 
@@ -180,7 +283,7 @@ export default function ContractPagina() {
 
       {/* ─── FOOTER ─── */}
       <footer className="bg-[#0f0f23] text-white/40 text-xs text-center py-6">
-        © {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782 ·{" "}
+        © {new Date().getFullYear()} Binqie B.V. — KvK 94799822 · Utrecht ·{" "}
         <Link href="/word-setter" className="text-white/60 hover:text-white underline">
           Terug naar setter-pagina
         </Link>
