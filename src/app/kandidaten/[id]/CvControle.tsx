@@ -201,7 +201,7 @@ export function CvControle({
                   {cvGeparseerd.vaardigheden && <Rij k="Vaardigheden" v={cvGeparseerd.vaardigheden} />}
                 </dl>
               </div>
-              <RodeVlaggenSectie kandidaatId={kandidaatId} vlaggen={cvGeparseerd.rode_vlaggen} score={cvGeparseerd.ai_score} advies={cvGeparseerd.ai_advies} />
+              <RodeVlaggenSectie kandidaatId={kandidaatId} vlaggen={cvGeparseerd.rode_vlaggen} />
             </div>
           )}
 
@@ -245,8 +245,6 @@ function Rij({ k, v }: { k: string; v: string }) {
 function RodeVlaggenSectie({
   kandidaatId,
   vlaggen,
-  score,
-  advies,
 }: {
   kandidaatId: string;
   vlaggen?: RodeVlag[] | string[];
@@ -261,26 +259,13 @@ function RodeVlaggenSectie({
     return v;
   });
 
-  const scoreKleur = score == null
-    ? "bg-gray-100 text-gray-700"
-    : score >= 70 ? "bg-emerald-100 text-emerald-800"
-    : score >= 40 ? "bg-amber-100 text-amber-800"
-    : "bg-red-100 text-red-800";
-  const adviesLabel = advies === "goedkeuren" ? "Goedkeuren" : advies === "twijfel" ? "Twijfel" : advies === "afkeuren" ? "Afkeuren" : null;
-
   // Hoeveel vlaggen hebben nog GEEN toelichting? → gebruik dit om gebruiker
   // duidelijk naar de wizard te sturen voor beantwoording.
   const zonderToelichting = lijst.filter((v) => !v.toelichting?.trim()).length;
 
   return (
     <div className="space-y-3">
-      {score != null && (
-        <div className={`rounded-lg p-3 ${scoreKleur}`}>
-          <div className="text-xs font-bold uppercase opacity-70">AI-score</div>
-          <div className="text-2xl font-bold">{score}/100</div>
-          {adviesLabel && <div className="text-xs mt-1">Advies: <b>{adviesLabel}</b></div>}
-        </div>
-      )}
+      {/* AI-score is uit het systeem gehaald. */}
 
       {/* Prominente knop naar de intake-wizard zolang er nog vlaggen zonder
           toelichting zijn — daar staan ze met groene/rode knop én textarea

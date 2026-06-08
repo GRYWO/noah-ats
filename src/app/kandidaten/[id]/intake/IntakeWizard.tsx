@@ -81,13 +81,10 @@ export function IntakeWizard({ kandidaat: kInit }: { kandidaat: Kandidaat }) {
   );
   const [vlaggen, setVlaggen] = useState<RodeVlag[]>(initialeVlaggen);
 
-  // Punten-berekening: alleen niet-logische vlaggen tellen mee
-  const aiScore = typeof k.score === "number" ? k.score : 100;
-  const aftrek = vlaggen
-    .filter((v) => v.logisch === false)
-    .reduce((s, v) => s + Math.abs(v.punten), 0);
-  const finaleScore = Math.max(0, aiScore - aftrek);
-  const advies: "door" | "afkeuren" = finaleScore >= 50 ? "door" : "afkeuren";
+  // Score is uit het systeem gehaald. Advies puur op onverklaarde rode vlaggen:
+  // 2 of meer niet-logische vlaggen → afkeuren, anders → door.
+  const onverklaard = vlaggen.filter((v) => v.logisch === false).length;
+  const advies: "door" | "afkeuren" = onverklaard >= 2 ? "afkeuren" : "door";
 
   function setVlag(index: number, patch: Partial<RodeVlag>) {
     setVlaggen((vs) => vs.map((v, i) => (i === index ? { ...v, ...patch } : v)));
@@ -352,11 +349,10 @@ export function IntakeWizard({ kandidaat: kInit }: { kandidaat: Kandidaat }) {
       {/* STAP 2: Goedkeuren / Afkeuren */}
       {stap === 2 && (
         <div className="space-y-5">
-          <Card titel="Beoordeling" badge="Punten-systeem">
-            <div className="grid grid-cols-3 gap-4">
-              <ScoreBlok label="AI-score" waarde={aiScore} kleur="grijs" />
-              <ScoreBlok label="Aftrek (niet logisch)" waarde={`-${aftrek}`} kleur="oranje" />
-              <ScoreBlok label="Finale score" waarde={finaleScore} kleur={finaleScore >= 50 ? "groen" : "rood"} />
+          <Card titel="Beoordeling" badge="Op basis van vlaggen">
+            <div className="grid grid-cols-2 gap-4">
+              <ScoreBlok label="Totaal vlaggen" waarde={vlaggen.length} kleur="grijs" />
+              <ScoreBlok label="Niet logisch" waarde={onverklaard} kleur={onverklaard >= 2 ? "rood" : "groen"} />
             </div>
             <div className={`mt-4 rounded-lg p-4 text-sm ${advies === "door" ? "bg-emerald-50 border border-emerald-200 text-emerald-900" : "bg-red-50 border border-red-200 text-red-900"}`}>
               <div className="font-bold inline-flex items-center gap-2">

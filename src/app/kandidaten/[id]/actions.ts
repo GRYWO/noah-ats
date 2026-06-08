@@ -34,7 +34,6 @@ export async function updateKandidaat(formData: FormData) {
     eigen_vervoer: formData.get("eigen_vervoer") === "on",
     status:        (formData.get("status") as string)?.trim() || "nieuw",
     kanban_stap:   (formData.get("kanban_stap") as string)?.trim() || "interne_intake",
-    score:         formData.get("score") ? parseInt(formData.get("score") as string) : null,
     notitie:       (formData.get("notitie") as string)?.trim() || null,
   };
 

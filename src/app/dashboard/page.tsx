@@ -177,7 +177,7 @@ async function AdminDashboard() {
 
   const { data: kandidaten } = await supabase
     .from("kandidaten")
-    .select("id, voornaam, achternaam, status, kanban_stap, score, eigenaar_id, created_at");
+    .select("id, voornaam, achternaam, status, kanban_stap, eigenaar_id, created_at");
 
   const { data: setters } = await supabase
     .from("profiles")
@@ -371,7 +371,6 @@ async function SetterDashboard({ userId }: { userId: string }) {
                 {huidigeKandidaat.telefoon && <span>{huidigeKandidaat.telefoon}</span>}
               </div>
             </div>
-            {/* Score is intern — setter ziet 'm niet. Toon pijl-naar-rechts ipv score. */}
             <div className="text-right text-2xl opacity-70">→</div>
           </div>
         </Link>

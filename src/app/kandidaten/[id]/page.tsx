@@ -144,10 +144,7 @@ export default async function KandidaatDetail({
   };
 
   const initials = `${k.voornaam?.[0] ?? ""}${k.achternaam?.[0] ?? ""}`.toUpperCase();
-  const scoreColor =
-    k.score == null ? "text-gray-400" :
-    k.score >= 75 ? "text-emerald-600" :
-    k.score >= 50 ? "text-amber-600" : "text-red-500";
+  // Score is uit het systeem gehaald — variabele blijft als no-op weg.
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -174,15 +171,7 @@ export default async function KandidaatDetail({
             </div>
           </div>
           <div className="flex flex-col items-end gap-3">
-            {/* Score is intern — niet zichtbaar voor setter (én niet voor opdrachtgever) */}
-            {!isSetter && (
-              <div className="text-right">
-                <div className="text-xs text-gray-500 uppercase font-semibold">Score</div>
-                <div className={`text-4xl font-bold ${scoreColor}`}>
-                  {k.score ?? "—"}{k.score != null && <span className="text-base text-gray-400">/100</span>}
-                </div>
-              </div>
-            )}
+            {/* Score is uit het systeem gehaald — geen toegevoegde waarde. */}
             {!isSetter && (
               <EigenaarKnop
                 kandidaatId={k.id}
@@ -326,10 +315,6 @@ export default async function KandidaatDetail({
                 <select name="kanban_stap" defaultValue={k.kanban_stap ?? "nieuwe_sollicitatie"} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]">
                   {KANBAN_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Score (0-100)</label>
-                <input name="score" type="number" min="0" max="100" defaultValue={k.score ?? ""} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]" />
               </div>
             </div>
           </div>

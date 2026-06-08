@@ -65,10 +65,6 @@ export function KanbanBoard({
     });
   };
 
-  const scoreColor = (s: number | null) =>
-    s == null ? "text-gray-400" :
-    s >= 75 ? "text-emerald-600" :
-    s >= 50 ? "text-amber-600" : "text-red-500";
 
   return (
     <>
@@ -121,12 +117,7 @@ export function KanbanBoard({
                     {k.open_voor && (
                       <div className="text-xs text-gray-500 truncate">{k.open_voor}</div>
                     )}
-                    {/* Score alleen voor recruiter/admin/super — niet voor setter */}
-                    {!isSetter && k.score != null && (
-                      <div className={`text-xs font-semibold mt-1 ${scoreColor(k.score)}`}>
-                        Score {k.score}/100
-                      </div>
-                    )}
+                    {/* Score is uit het systeem gehaald. */}
                   </Link>
                 </div>
               ))}
