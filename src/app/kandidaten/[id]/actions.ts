@@ -216,7 +216,7 @@ export async function wijzigEigenaar(formData: FormData): Promise<{ ok?: boolean
   // Kandidaat moet in dezelfde tenant zitten
   const { data: kandidaat } = await admin
     .from("kandidaten")
-    .select("tenant_id")
+    .select("tenant_id, kanban_stap")
     .eq("id", kandidaatId)
     .single();
   if (!kandidaat) return { error: "Kandidaat niet gevonden" };
@@ -224,7 +224,8 @@ export async function wijzigEigenaar(formData: FormData): Promise<{ ok?: boolean
     return { error: "Geen rechten — andere tenant" };
   }
 
-  // Nieuwe eigenaar moet in dezelfde tenant zitten
+  // Nieuwe eigenaar moet in dezelfde tenant zitten + setter-zijn vereist voor schuiven
+  let doelRol: string | null = null;
   if (nieuweEigenaarId) {
     const { data: doel } = await admin
       .from("profiles")
@@ -235,11 +236,29 @@ export async function wijzigEigenaar(formData: FormData): Promise<{ ok?: boolean
     if (doel.tenant_id !== viewerProfile.tenant_id) {
       return { error: "Doel-user zit niet in dit bureau" };
     }
+    doelRol = doel.rol;
+  }
+
+  // Bij toewijzen aan setter: kanban-stap doorzetten naar 'bij_setter'
+  // als kandidaat nog in een eerdere stap (wachtrij / afwachting cv) zit.
+  // Bij ontkoppelen (null): kanban-stap terug naar 'in_wachtrij'.
+  const update: Record<string, unknown> = { eigenaar_id: nieuweEigenaarId };
+  if (nieuweEigenaarId && doelRol === "setter") {
+    if (
+      kandidaat.kanban_stap === "in_wachtrij" ||
+      kandidaat.kanban_stap === "in_afwachting_cv"
+    ) {
+      update.kanban_stap = "bij_setter";
+    }
+  } else if (!nieuweEigenaarId) {
+    if (kandidaat.kanban_stap === "bij_setter") {
+      update.kanban_stap = "in_wachtrij";
+    }
   }
 
   const { error } = await admin
     .from("kandidaten")
-    .update({ eigenaar_id: nieuweEigenaarId })
+    .update(update)
     .eq("id", kandidaatId);
   if (error) return { error: error.message };
 
