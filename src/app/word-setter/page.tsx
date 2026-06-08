@@ -70,8 +70,8 @@ export default function WordSetter() {
           </h1>
 
           <p className="text-lg md:text-2xl text-white/80 max-w-2xl mx-auto mb-10 font-light leading-relaxed">
-            Verdien aan elke kandidaat die je plaatst. Volledig opgeleid, het beste AI-systeem
-            van Nederland, en een team dat je elke dag scherp houdt.
+            Verdien aan elke kandidaat die je plaatst. Volledig opgeleid, AI-gestuurd
+            recruitment en een team dat je elke dag scherp houdt.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -104,12 +104,11 @@ export default function WordSetter() {
             Wie wij zijn
           </div>
           <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight">
-            GRYWO bouwt het{" "}
-            <span className="text-[#333399]">slimste recruitmentbureau</span>{" "}
-            van Nederland.
+            GRYWO doet recruitment{" "}
+            <span className="text-[#333399]">AI-gestuurd.</span>
           </h2>
           <p className="text-gray-600 text-lg leading-relaxed mb-4">
-            We combineren ervaren recruiters, een eigen AI-gedreven ATS (Noah) en een team
+            We combineren ervaren recruiters, ons eigen AI-systeem (Noah) en een team
             van setters dat alle leads zelf binnenhaalt. Geen dubbel werk, geen vage targets —
             jij belt, wij regelen de rest.
           </p>
@@ -139,7 +138,7 @@ export default function WordSetter() {
               kleur="#ef4444"
               nummer="1"
               titel="Warme lead"
-              tekst="Recruiter levert een kandidaat (vacature) aan met al ingevulde profielinfo."
+              tekst="Recruiter levert een kandidaat aan met al ingevulde profielinfo."
             />
             <Stap
               icoon={<ListChecks size={24} />}
@@ -232,7 +231,7 @@ export default function WordSetter() {
             />
             <Voordeel
               icoon={<Sparkles />}
-              titel="Het beste ATS van Nederland"
+              titel="AI-gestuurd recruitment"
               tekst="Noah met Robin AI en Jobdigger. Schrijft voorstellen voor je, vult bellijsten automatisch."
             />
             <Voordeel
