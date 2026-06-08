@@ -17,7 +17,6 @@ import {
   Phone,
   Handshake,
   Trophy,
-  FileSignature,
 } from "lucide-react";
 
 const WA_BERICHT = encodeURIComponent(
@@ -76,19 +75,19 @@ export default function WordSetter() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/contract"
-              className="bg-[#ffd84d] hover:bg-white text-[#333399] font-bold px-10 py-4 rounded-xl shadow-2xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
-            >
-              <FileSignature size={18} /> Bekijk &amp; onderteken contract
-            </Link>
             <a
               href={WA_LINK}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold px-8 py-4 rounded-xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
+              className="bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold px-10 py-4 rounded-xl shadow-2xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
             >
               <MessageCircle size={18} /> WhatsApp Pepijn
+            </a>
+            <a
+              href="#wat-je-doet"
+              className="text-white/80 hover:text-white font-semibold px-6 py-4 transition"
+            >
+              Wat je gaat doen ↓
             </a>
           </div>
 
