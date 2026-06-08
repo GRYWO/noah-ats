@@ -1063,13 +1063,19 @@ export async function sendAkkoordTerOndertekening({
 }: {
   naar: string;
   naam: string;
-  type: "nda_setter" | "gebruiksvoorwaarden";
+  type: "nda_setter" | "gebruiksvoorwaarden" | "setter_contract";
   token: string;
 }) {
   const url = `${APP_URL}/tekenen/${token}`;
-  const titel = type === "nda_setter" ? "Geheimhoudingsverklaring (NDA)" : "Gebruiksvoorwaarden Noah ATS";
+  const titel = type === "nda_setter"
+    ? "Geheimhoudingsverklaring (NDA)"
+    : type === "setter_contract"
+    ? "Samenwerkingsovereenkomst — Setter"
+    : "Gebruiksvoorwaarden Noah ATS";
   const uitleg = type === "nda_setter"
     ? "Als GRYWO-setter krijg je toegang tot kandidaten van meerdere bureaus. Onze geheimhoudingsverklaring legt vast hoe je met deze data omgaat — verplicht onder AVG art. 32 lid 4."
+    : type === "setter_contract"
+    ? "Hierbij ontvang je de samenwerkingsovereenkomst voor je setter-positie bij GRYWO. Hierin staan vergoeding, werkzaamheden, geheimhouding en duur. Onderteken aub digitaal."
     : "Voordat je live gaat met Noah ATS vragen we eenmalig akkoord op onze gebruiksvoorwaarden. Beschermt jou én de kandidaten die je beheert.";
 
   const body = `
@@ -1243,11 +1249,15 @@ export async function sendAkkoordBevestiging({
 }: {
   naar: string;
   naam: string;
-  type: "nda_setter" | "gebruiksvoorwaarden";
+  type: "nda_setter" | "gebruiksvoorwaarden" | "setter_contract";
   token: string;
 }) {
   const url = `${APP_URL}/tekenen/${token}`;
-  const titel = type === "nda_setter" ? "Geheimhoudingsverklaring" : "Gebruiksvoorwaarden";
+  const titel = type === "nda_setter"
+    ? "Geheimhoudingsverklaring"
+    : type === "setter_contract"
+    ? "Samenwerkingsovereenkomst"
+    : "Gebruiksvoorwaarden";
   const body = `
 <p>Hallo ${naam},</p>
 <p>Bedankt voor het ondertekenen van de ${titel.toLowerCase()}. Je kunt nu volledig gebruikmaken van Noah ATS.</p>

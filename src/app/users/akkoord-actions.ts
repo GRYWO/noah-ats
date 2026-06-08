@@ -53,35 +53,41 @@ export async function stuurAkkoordUit(formData: FormData) {
     .eq("id", doel.tenant_id!)
     .single();
 
-  const type = doel.rol === "setter" ? "nda_setter" : "gebruiksvoorwaarden";
-  const token = randomBytes(16).toString("hex");
+  // Setter krijgt 2 documenten: NDA + samenwerkingsovereenkomst.
+  // Recruiter/admin: alleen gebruiksvoorwaarden.
+  const types = doel.rol === "setter"
+    ? ["nda_setter", "setter_contract"] as const
+    : ["gebruiksvoorwaarden"] as const;
 
-  const { error: insErr } = await admin.from("user_agreements").insert({
-    user_id: userId,
-    tenant_id: doel.tenant_id,
-    token,
-    type,
-    status: "wachtend",
-    verzonden_aan_email: mailNaar,
-    verzonden_aan_naam: `${doel.voornaam ?? ""} ${doel.achternaam ?? ""}`.trim(),
-    verzonden_door: user.id,
-    user_voornaam: doel.voornaam,
-    user_achternaam: doel.achternaam,
-    user_rol: doel.rol,
-    bureau_naam: tenant?.handelsnaam || tenant?.naam || null,
-  });
-  if (insErr) redirect(`/users?error=${encodeURIComponent(insErr.message)}`);
-
-  try {
-    await sendAkkoordTerOndertekening({
-      naar: mailNaar,
-      naam: `${doel.voornaam ?? ""} ${doel.achternaam ?? ""}`.trim(),
-      type,
+  for (const type of types) {
+    const token = randomBytes(16).toString("hex");
+    const { error: insErr } = await admin.from("user_agreements").insert({
+      user_id: userId,
+      tenant_id: doel.tenant_id,
       token,
+      type,
+      status: "wachtend",
+      verzonden_aan_email: mailNaar,
+      verzonden_aan_naam: `${doel.voornaam ?? ""} ${doel.achternaam ?? ""}`.trim(),
+      verzonden_door: user.id,
+      user_voornaam: doel.voornaam,
+      user_achternaam: doel.achternaam,
+      user_rol: doel.rol,
+      bureau_naam: tenant?.handelsnaam || tenant?.naam || null,
     });
-  } catch (e) {
-    console.error("Akkoord-mail mislukt:", e);
-    redirect(`/users?error=${encodeURIComponent("Mail kon niet verstuurd worden")}`);
+    if (insErr) redirect(`/users?error=${encodeURIComponent(insErr.message)}`);
+
+    try {
+      await sendAkkoordTerOndertekening({
+        naar: mailNaar,
+        naam: `${doel.voornaam ?? ""} ${doel.achternaam ?? ""}`.trim(),
+        type,
+        token,
+      });
+    } catch (e) {
+      console.error("Akkoord-mail mislukt:", e);
+      redirect(`/users?error=${encodeURIComponent("Mail kon niet verstuurd worden")}`);
+    }
   }
 
   revalidatePath("/users");

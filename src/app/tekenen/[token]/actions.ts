@@ -53,41 +53,66 @@ export async function tekenAkkoord(formData: FormData): Promise<Result> {
     await sendAkkoordBevestiging({
       naar: row.verzonden_aan_email,
       naam,
-      type: row.type as "nda_setter" | "gebruiksvoorwaarden",
+      type: row.type as "nda_setter" | "gebruiksvoorwaarden" | "setter_contract",
       token,
     });
   } catch (e) {
     console.error("Bevestiging-mail mislukt:", e);
   }
 
+  // Setter-samenwerkingsovereenkomst getekend → kopie naar Bart + Pepijn
+  // zodat zij direct zijn geïnformeerd. Yorith ziet 'm sowieso in /documenten.
+  if (row.type === "setter_contract") {
+    try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      await resend.emails.send({
+        from: "Noah ATS <noreply@grywo.nl>",
+        to: ["bart@grywo.nl", "pepijn@grywo.nl"],
+        cc: ["info@grywo.nl"],
+        subject: `Samenwerkingsovereenkomst getekend: ${naam}`,
+        html: `<p>De samenwerkingsovereenkomst is zojuist getekend door <b>${naam}</b>.</p>
+<p>Token: <code>${token}</code><br>
+Bekijk het getekende document via Noah <a href="https://noah-ats.nl/tekenen/${token}">hier</a>.</p>
+<p>Audit-trail: IP ${ip ?? "?"} · ${userAgent ?? "?"}</p>`,
+      });
+    } catch (e) {
+      console.error("[setter_contract] kopie-mail naar bart/pepijn mislukt:", e);
+    }
+  }
+
   // Alle rollen (admin/recruiter/setter) krijgen na NDA-tekenen direct
   // welkomstmail met inloggegevens. Setters hebben dan 14 werkdagen
   // proefperiode (zie users/actions.ts). Pas na afloop stuurt de cron
   // (api/cron/setter-proefperiode) de Stripe-betalingsmail.
-  try {
-    const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
-    await admin.auth.admin.updateUserById(row.user_id, { password: nieuwWachtwoord });
+  // BELANGRIJK: welkomstmail alleen versturen na NDA / gebruiksvoorwaarden,
+  // NIET na setter_contract (dat zou een 2e wachtwoord-reset triggeren).
+  if (row.type !== "setter_contract") {
+    try {
+      const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+      await admin.auth.admin.updateUserById(row.user_id, { password: nieuwWachtwoord });
 
-    const { data: tenant } = row.tenant_id
-      ? await admin.from("tenants").select("naam, handelsnaam").eq("id", row.tenant_id).single()
-      : { data: null };
-    const bedrijf = tenant?.handelsnaam || tenant?.naam || "Noah ATS";
-    const rolLabel = row.user_rol === "admin"
-      ? "Admin"
-      : row.user_rol === "setter"
-      ? "Setter"
-      : "Recruiter";
+      const { data: tenant } = row.tenant_id
+        ? await admin.from("tenants").select("naam, handelsnaam").eq("id", row.tenant_id).single()
+        : { data: null };
+      const bedrijf = tenant?.handelsnaam || tenant?.naam || "Noah ATS";
+      const rolLabel = row.user_rol === "admin"
+        ? "Admin"
+        : row.user_rol === "setter"
+        ? "Setter"
+        : "Recruiter";
 
-    await sendWelkomstmailUser({
-      naar: row.verzonden_aan_email,
-      voornaam: row.user_voornaam ?? naam,
-      email: row.verzonden_aan_email,
-      wachtwoord: nieuwWachtwoord,
-      rolLabel,
-      bedrijf,
-    });
-  } catch (e) {
-    console.error("Welkomstmail na ondertekening mislukt:", e);
+      await sendWelkomstmailUser({
+        naar: row.verzonden_aan_email,
+        voornaam: row.user_voornaam ?? naam,
+        email: row.verzonden_aan_email,
+        wachtwoord: nieuwWachtwoord,
+        rolLabel,
+        bedrijf,
+      });
+    } catch (e) {
+      console.error("Welkomstmail na ondertekening mislukt:", e);
+    }
   }
 
   revalidatePath(`/tekenen/${token}`);

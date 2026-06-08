@@ -22,6 +22,7 @@ export default async function TekenAkkoordPage({
   const isGetekend = row.status === "getekend";
   const isIngetrokken = row.status === "ingetrokken";
   const isSetter = row.type === "nda_setter";
+  const isContract = row.type === "setter_contract";
   const naam = `${row.user_voornaam ?? ""} ${row.user_achternaam ?? ""}`.trim();
   const bureau = row.bureau_naam || "—";
 
@@ -32,7 +33,11 @@ export default async function TekenAkkoordPage({
         <div className="bg-[#333399] rounded-2xl p-5 mb-4 flex items-center justify-between flex-wrap gap-3">
           <div className="inline-flex items-center gap-3">
             <GrywoLogo size="md" wit={true} />
-            <span className="text-white/70 text-xs">{isSetter ? "Geheimhoudingsverklaring (NDA)" : "Gebruiksvoorwaarden Noah ATS"}</span>
+            <span className="text-white/70 text-xs">
+              {isSetter ? "Geheimhoudingsverklaring (NDA)" :
+               isContract ? "Samenwerkingsovereenkomst — Setter" :
+               "Gebruiksvoorwaarden Noah ATS"}
+            </span>
           </div>
           <StatusBadge status={row.status} />
         </div>
@@ -56,6 +61,8 @@ export default async function TekenAkkoordPage({
         <div className="bg-white rounded-2xl shadow-sm p-8 mb-4">
           {isSetter ? (
             <NdaSetterTekst naam={naam} bureau={bureau} datum={new Date(row.verzonden_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })} />
+          ) : isContract ? (
+            <SetterContractTekst naam={naam} datum={new Date(row.verzonden_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })} />
           ) : (
             <GebruiksvoorwaardenTekst naam={naam} rol={row.user_rol || "user"} bureau={bureau} datum={new Date(row.verzonden_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })} />
           )}
@@ -207,6 +214,90 @@ function NdaSetterTekst({ naam, bureau, datum }: { naam: string; bureau: string;
         Nederlands recht. Geschillen voor rechtbank Midden-Nederland, locatie Utrecht.
       </p>
     </>
+  );
+}
+
+/* ─────────── SETTER SAMENWERKINGSOVEREENKOMST ─────────── */
+function SetterContractTekst({ naam, datum }: { naam: string; datum: string }) {
+  return (
+    <div className="prose prose-sm max-w-none text-gray-800">
+      <h1 className="text-2xl font-bold mb-1">Samenwerkingsovereenkomst</h1>
+      <p className="text-sm text-gray-500 mb-6">Opgesteld op {datum} · Setter-positie bij GRYWO</p>
+
+      <h2 className="text-base font-bold mt-4 mb-2">Partijen</h2>
+      <p className="text-sm leading-relaxed">
+        <b>OneTwoStart NL B.V.</b> (handelend onder de naam <b>GRYWO</b>), gevestigd te Nederland,
+        KvK 96738782, hierna: &ldquo;GRYWO&rdquo;.
+      </p>
+      <p className="text-sm leading-relaxed">
+        en <b>{naam || "[Naam setter]"}</b>, hierna: &ldquo;Setter&rdquo;.
+      </p>
+
+      <h2 className="text-base font-bold mt-6 mb-2">1. Werkzaamheden</h2>
+      <p className="text-sm leading-relaxed">
+        Setter voert telefonische acquisitie uit voor GRYWO via het ATS-platform Noah.
+        Werkzaamheden omvatten het bellen van opdrachtgevers, voorstellen versturen van
+        kandidaten, voortgang vastleggen en deelnemen aan dagelijkse EOD-coaching.
+      </p>
+
+      <h2 className="text-base font-bold mt-4 mb-2">2. Vergoeding</h2>
+      <p className="text-sm leading-relaxed">
+        Setter ontvangt een vast basisbedrag per maand zoals individueel afgesproken,
+        vermeerderd met een bonus per gerealiseerde plaatsing van een door Setter voorgestelde
+        kandidaat. Uitbetaling vindt maandelijks plaats achteraf, na ontvangst van een
+        deugdelijke factuur van Setter aan GRYWO.
+      </p>
+
+      <h2 className="text-base font-bold mt-4 mb-2">3. Tools &amp; toegang</h2>
+      <p className="text-sm leading-relaxed">
+        GRYWO stelt aan Setter ter beschikking: een persoonlijk Noah-account, een
+        <b> voornaam@grywo.nl</b>-mailadres, toegang tot Jobdigger en de Robin AI-assistent.
+        Setter respecteert de Acceptable Use-bepalingen zoals beschreven in de
+        Gebruiksvoorwaarden Noah ATS.
+      </p>
+
+      <h2 className="text-base font-bold mt-4 mb-2">4. Eigendom en data</h2>
+      <p className="text-sm leading-relaxed">
+        Alle kandidaten, leads en opdrachtgever-gegevens die binnen Noah worden verzameld
+        of bewerkt zijn eigendom van GRYWO. Bij beëindiging van deze samenwerking blijven
+        gegevens bij GRYWO en wordt de toegang van Setter onmiddellijk gerevoceerd.
+      </p>
+
+      <h2 className="text-base font-bold mt-4 mb-2">5. Geheimhouding</h2>
+      <p className="text-sm leading-relaxed">
+        Aanvullend op de afzonderlijke Geheimhoudingsverklaring (NDA) verbindt Setter zich
+        alle informatie over opdrachtgevers, kandidaten, tarieven, marges en interne werkwijzen
+        van GRYWO strikt vertrouwelijk te behandelen. Schending van geheimhouding leidt tot
+        directe beëindiging van de samenwerking en mogelijke aansprakelijkheid.
+      </p>
+
+      <h2 className="text-base font-bold mt-4 mb-2">6. Concurrentie &amp; relatiebeding</h2>
+      <p className="text-sm leading-relaxed">
+        Tijdens de samenwerking en gedurende <b>12 maanden na beëindiging</b> verricht Setter
+        geen vergelijkbare werkzaamheden voor opdrachtgevers van GRYWO waarmee hij/zij
+        gedurende de samenwerking direct of indirect contact heeft gehad, behoudens uitdrukkelijke
+        schriftelijke toestemming van GRYWO.
+      </p>
+
+      <h2 className="text-base font-bold mt-4 mb-2">7. Duur en beëindiging</h2>
+      <p className="text-sm leading-relaxed">
+        Deze samenwerking gaat in vanaf de datum van ondertekening en is voor onbepaalde
+        tijd. Beide partijen kunnen schriftelijk opzeggen met een opzegtermijn van één maand.
+        GRYWO mag bij ernstige tekortkomingen of geheimhouding-schendingen per direct beëindigen.
+      </p>
+
+      <h2 className="text-base font-bold mt-4 mb-2">8. Toepasselijk recht</h2>
+      <p className="text-sm leading-relaxed">
+        Op deze overeenkomst is uitsluitend Nederlands recht van toepassing. Geschillen worden
+        voorgelegd aan de bevoegde rechter in het arrondissement van vestiging van GRYWO.
+      </p>
+
+      <p className="text-xs text-gray-500 mt-6">
+        Door deze overeenkomst hieronder elektronisch te ondertekenen verklaart Setter
+        akkoord met alle bovengenoemde voorwaarden. De handtekening wordt opgeslagen met
+        tijdstempel, IP-adres en user-agent als bewijs (eIDAS Simple Electronic Signature).
+      </p>
+    </div>
   );
 }
 
