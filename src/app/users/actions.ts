@@ -137,6 +137,33 @@ export async function nieuweSetter(formData: FormData) {
     redirect(`/users?error=${encodeURIComponent(profileErr.message)}`);
   }
 
+  // Automatisch mailbox voornaam@grywo.nl aanmaken via Migadu.
+  // Fire-and-forget zodat user-aanmaak niet wacht op API call.
+  // Wachtwoord van de mailbox = het mail_wachtwoord uit het form, OF auto-gen.
+  void (async () => {
+    try {
+      const { maakNoahMailbox } = await import("@/utils/migadu");
+      const { randomBytes } = await import("crypto");
+      const mailboxWw = mailWachtwoord
+        || randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+      const r = await maakNoahMailbox({ voornaam, achternaam, wachtwoord: mailboxWw });
+      if (r.ok) {
+        // Sla het versleutelde wachtwoord + email op zodat Noah IMAP/SMTP kan
+        await admin.from("profiles").update({
+          mail_adres: r.email,
+          mail_wachtwoord: encrypt(mailboxWw),
+          mail_status: "actief",
+        }).eq("id", created.user.id);
+      } else if (r.alBestaat) {
+        console.log(`[mailbox] ${r.email} bestaat al — overslaan`);
+      } else {
+        console.error(`[mailbox] aanmaak ${r.email} mislukt:`, r.error);
+      }
+    } catch (e) {
+      console.error("[mailbox] uitzondering:", e);
+    }
+  })();
+
   // Nieuwe setter? → verwerk wachtrij (kandidaten zonder eigenaar)
   if (rol === "setter") {
     await verwerkWachtrij(myProfile.tenant_id);
@@ -328,16 +355,29 @@ export async function verwijderSetter(formData: FormData) {
 
   const admin = createAdminClient();
 
-  // Haal tenant + rol van verwijderde user op vóór delete
+  // Haal tenant + rol + voornaam van verwijderde user op vóór delete
   const { data: teVerwijderen } = await admin
     .from("profiles")
-    .select("tenant_id, rol")
+    .select("tenant_id, rol, voornaam")
     .eq("id", id)
     .single();
 
   // Herverdeel actieve kandidaten naar andere setters of wachtrij
   if (teVerwijderen?.tenant_id) {
     await herverdeelKandidaten(id, teVerwijderen.tenant_id);
+  }
+
+  // Mailbox voornaam@grywo.nl ook verwijderen — fire-and-forget
+  if (teVerwijderen?.voornaam) {
+    void (async () => {
+      try {
+        const { verwijderNoahMailbox } = await import("@/utils/migadu");
+        const r = await verwijderNoahMailbox(teVerwijderen.voornaam!);
+        if (!r.ok) console.error("[mailbox] verwijderen mislukt:", r.error);
+      } catch (e) {
+        console.error("[mailbox] verwijder uitzondering:", e);
+      }
+    })();
   }
 
   await admin.from("profiles").delete().eq("id", id);
