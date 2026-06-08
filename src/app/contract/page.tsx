@@ -41,7 +41,7 @@ export default function ContractPagina() {
           <h1 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
             De afspraak tussen{" "}
             <span className="text-[#ffd84d]">jou</span>{" "}
-            en GRYWO.
+            en Binqie.
           </h1>
           <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
             Lees alles rustig door. Akkoord? Onderteken hieronder digitaal en
@@ -61,7 +61,7 @@ export default function ContractPagina() {
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-7 md:p-12">
           <h2 className="text-2xl font-black mb-1">Samenwerkingsovereenkomst</h2>
           <p className="text-xs text-gray-500 mb-8">
-            Setter-positie bij GRYWO · met 7-daagse trial
+            Setter-positie bij Binqie B.V. · met 7-daagse trial
           </p>
 
           <Sectie nummer="" titel="Partijen">
