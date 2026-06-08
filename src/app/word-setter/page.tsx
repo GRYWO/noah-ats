@@ -11,7 +11,18 @@ import {
   TrendingUp,
   ArrowRight,
   Check,
+  MessageCircle,
+  Flame,
+  ListChecks,
+  Phone,
+  Handshake,
+  Trophy,
 } from "lucide-react";
+
+const WA_BERICHT = encodeURIComponent(
+  "Hoi Pepijn, ik heb interesse in de setter-positie bij GRYWO. Kunnen we even sparren?",
+);
+const WA_LINK = `https://wa.me/31683481303?text=${WA_BERICHT}`;
 
 export const metadata = {
   title: "Word setter bij GRYWO — Sales-vacature recruitment",
@@ -65,10 +76,12 @@ export default function WordSetter() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="mailto:info@grywo.nl?subject=Setter%20worden%20bij%20GRYWO"
-              className="bg-[#ffd84d] hover:bg-white text-[#333399] font-bold px-10 py-4 rounded-xl shadow-2xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
+              href={WA_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold px-10 py-4 rounded-xl shadow-2xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
             >
-              Solliciteren <ArrowRight size={18} />
+              <MessageCircle size={18} /> WhatsApp Pepijn
             </a>
             <a
               href="#wat-je-doet"
@@ -79,7 +92,7 @@ export default function WordSetter() {
           </div>
 
           <p className="mt-8 text-white/50 text-sm">
-            Geen ervaring nodig · Vast salaris + bonus · Werken vanaf elke plek
+            7-daagse trial · Eigen zakelijk e-mailadres · Eigen Voys-nummer na trial
           </p>
         </div>
       </section>
@@ -112,42 +125,97 @@ export default function WordSetter() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-14">
             <div className="text-sm font-bold text-[#333399] uppercase tracking-wider mb-3">
-              Wat je gaat doen
+              De setter-flow
             </div>
-            <h2 className="text-3xl md:text-5xl font-black mb-4">Je dag bij GRYWO</h2>
+            <h2 className="text-3xl md:text-5xl font-black mb-4">Zo werkt het bij ons</h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Geen complexiteit. Geen administratie. Alleen gesprekken die geld opleveren.
+              Geen koude acquisitie. Geen administratie. Alleen gesprekken die geld opleveren.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-5 gap-4">
             <Stap
-              icoon={<PhoneCall size={28} />}
-              kleur="#3b82f6"
+              icoon={<Flame size={24} />}
+              kleur="#ef4444"
               nummer="1"
-              titel="Bellen"
-              tekst="Je krijgt een vacature van een kandidaat en belt met opdrachtgevers uit jouw bellijst. Geen koude acquisitie — alle leads zijn voorgekauwd."
+              titel="Warme lead"
+              tekst="Recruiter levert een kandidaat (vacature) aan met al ingevulde profielinfo."
             />
             <Stap
-              icoon={<Target size={28} />}
-              kleur="#a855f7"
+              icoon={<ListChecks size={24} />}
+              kleur="#3b82f6"
               nummer="2"
-              titel="Voorstellen"
-              tekst="Eén klik in Noah → kandidaat is voorgesteld aan de opdrachtgever. Robin (onze AI) schrijft de begeleidende tekst zelf in jouw stem."
+              titel="Bellijst — 1 klik"
+              tekst="In Noah-ATS druk je op één knop. Bellijst met opdrachtgevers staat direct klaar."
             />
             <Stap
-              icoon={<TrendingUp size={28} />}
-              kleur="#10b981"
+              icoon={<Phone size={24} />}
+              kleur="#f59e0b"
               nummer="3"
-              titel="Plaatsen + verdienen"
-              tekst="Kandidaat zegt ja → recruiter handelt af → jij krijgt bonus op elke plaatsing. Hoe meer je belt, hoe meer je verdient."
+              titel="Bellen + voorstellen"
+              tekst="Voorstellen de kandidaat zo vaak mogelijk. Nog beter: plan direct een afspraak in."
+            />
+            <Stap
+              icoon={<Handshake size={24} />}
+              kleur="#a855f7"
+              nummer="4"
+              titel="Gesprek"
+              tekst="Het kennismakingsgesprek tussen kandidaat en opdrachtgever vindt plaats."
+            />
+            <Stap
+              icoon={<Trophy size={24} />}
+              kleur="#10b981"
+              nummer="5"
+              titel="Plaatsing"
+              tekst="Kandidaat geplaatst → jij krijgt de bonus. Geen administratie, recruiter regelt de rest."
             />
           </div>
         </div>
       </section>
 
-      {/* ─── WAT JE KRIJGT ─── */}
+      {/* ─── 7-DAAGSE TRIAL ─── */}
       <section className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="text-sm font-bold text-[#333399] uppercase tracking-wider mb-3">
+            7-Daagse trial
+          </div>
+          <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
+            Eerst <span className="text-[#333399]">7 dagen</span> proberen, daarna pas tekenen.
+          </h2>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
+            We willen weten of we bij elkaar passen. In de 7-daagse trial krijg je alles
+            wat een setter nodig heeft — geen rare voorwaarden.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-5 text-left">
+            <div className="bg-[#f5f5f7] rounded-2xl p-6">
+              <div className="text-xs font-bold text-[#333399] uppercase tracking-wider mb-2">
+                Tijdens de trial (dag 1-7)
+              </div>
+              <ul className="space-y-3 text-gray-700 text-[15px]">
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Zakelijk e-mailadres <b>voornaam@grywo.nl</b></li>
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Eigen omgeving in Noah-ATS</li>
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Volledige toegang tot Jobdigger + Robin AI</li>
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Coaching van Pepijn vanaf dag 1</li>
+              </ul>
+            </div>
+            <div className="bg-gradient-to-br from-[#333399] to-[#1f1f5c] text-white rounded-2xl p-6">
+              <div className="text-xs font-bold text-[#ffd84d] uppercase tracking-wider mb-2">
+                Na de trial (dag 8+)
+              </div>
+              <ul className="space-y-3 text-white/90 text-[15px]">
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#ffd84d] flex-shrink-0 mt-0.5" /> Eigen <b>Voys-telefoonnummer</b></li>
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#ffd84d] flex-shrink-0 mt-0.5" /> Onbeperkt gratis bellen, vanaf elke locatie</li>
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#ffd84d] flex-shrink-0 mt-0.5" /> Doorlopend basissalaris + bonus per plaatsing</li>
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#ffd84d] flex-shrink-0 mt-0.5" /> Vaste plek in het GRYWO-team</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── WAT JE KRIJGT ─── */}
+      <section className="py-20 bg-[#f5f5f7]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-14">
             <div className="text-sm font-bold text-[#333399] uppercase tracking-wider mb-3">
@@ -159,8 +227,8 @@ export default function WordSetter() {
           <div className="grid md:grid-cols-2 gap-5">
             <Voordeel
               icoon={<CreditCard />}
-              titel="Vast salaris + bonus per plaatsing"
-              tekst="Basisgarantie elke maand. Bovenop dat: bonus voor élke kandidaat die wordt geplaatst."
+              titel="Basissalaris + bonus per plaatsing"
+              tekst="Vast bedrag elke maand. Bovenop dat: bonus voor élke kandidaat die wordt geplaatst."
             />
             <Voordeel
               icoon={<Sparkles />}
@@ -168,9 +236,9 @@ export default function WordSetter() {
               tekst="Noah met Robin AI en Jobdigger. Schrijft voorstellen voor je, vult bellijsten automatisch."
             />
             <Voordeel
-              icoon={<Users />}
-              titel="Volledige opleiding + coaching"
-              tekst="Dagelijkse EOD-coaching, persoonlijke records, eigen doelen. Je groeit elke week."
+              icoon={<Phone />}
+              titel="Eigen Voys-telefoonnummer"
+              tekst="Onbeperkt gratis bellen vanaf elke locatie. Krijg je na de 7-daagse trial."
             />
             <Voordeel
               icoon={<CalendarClock />}
@@ -178,14 +246,14 @@ export default function WordSetter() {
               tekst="Thuis, op kantoor, op het strand met wifi. Zolang je belt, ben je vrij."
             />
             <Voordeel
+              icoon={<Users />}
+              titel="Dagelijkse coaching"
+              tekst="Pepijn (jouw coach) belt en spart elke dag mee. Persoonlijke records, eigen doelen. Je groeit elke week."
+            />
+            <Voordeel
               icoon={<ShieldCheck />}
               titel="Geen administratieve rompslomp"
               tekst="Contracten, facturen, voorstellen — alles automatisch via Noah. Jij belt."
-            />
-            <Voordeel
-              icoon={<TrendingUp />}
-              titel="Doorgroei naar recruiter"
-              tekst="Als je het goed doet, kun je doorgroeien naar recruiter. Hoger basissalaris, meer regie."
             />
           </div>
         </div>
@@ -219,21 +287,21 @@ export default function WordSetter() {
         </div>
       </section>
 
-      {/* ─── QUOTE ─── */}
-      <section className="py-20 bg-[#f5f5f7]">
+      {/* ─── QUOTE PEPIJN ─── */}
+      <section className="py-20 bg-white">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <div className="text-6xl text-[#333399] mb-4 font-serif leading-none">"</div>
           <p className="text-2xl md:text-4xl font-bold leading-tight mb-6 text-gray-900">
             Bij GRYWO ben je geen nummer.{" "}
-            <span className="text-[#333399]">Je bent onderdeel van het team.</span>
+            <span className="text-[#333399]">Ik help je dagelijks om beter te worden.</span>
           </p>
           <div className="flex items-center justify-center gap-3 mt-8">
             <div className="w-12 h-12 rounded-full bg-[#333399] text-white font-bold flex items-center justify-center">
-              YH
+              PZ
             </div>
             <div className="text-left">
-              <div className="font-bold text-gray-900">Yorith Hulzebosch</div>
-              <div className="text-sm text-gray-500">Oprichter GRYWO</div>
+              <div className="font-bold text-gray-900">Pepijn Zwartenberg</div>
+              <div className="text-sm text-gray-500">Coach setters · GRYWO</div>
             </div>
           </div>
         </div>
@@ -254,21 +322,23 @@ export default function WordSetter() {
             Klaar om setter te worden?
           </h2>
           <p className="text-lg md:text-xl text-white/70 mb-10 max-w-xl mx-auto">
-            Stuur een mail met je CV (of LinkedIn) naar info@grywo.nl. Binnen 2 werkdagen
-            heb je een eerste kennismaking — geen lange procedures.
+            Stuur een whatsapp-bericht naar je toekomstige coach Pepijn. Hij belt je
+            persoonlijk terug — geen lange procedures.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="mailto:info@grywo.nl?subject=Setter%20worden%20bij%20GRYWO"
-              className="bg-[#ffd84d] hover:bg-white text-[#333399] font-bold px-10 py-4 rounded-xl shadow-2xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
+              href={WA_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold px-10 py-4 rounded-xl shadow-2xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
             >
-              Mail info@grywo.nl <ArrowRight size={18} />
+              <MessageCircle size={18} /> WhatsApp Pepijn
             </a>
             <a
-              href="tel:0854016082"
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white font-semibold px-8 py-4 rounded-xl transition"
+              href="tel:+31683481303"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white font-semibold px-8 py-4 rounded-xl transition inline-flex items-center gap-2"
             >
-              Of bel 085-4016082
+              <Phone size={18} /> Of bel direct: 06-83481303
             </a>
           </div>
         </div>
