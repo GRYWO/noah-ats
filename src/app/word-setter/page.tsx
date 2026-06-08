@@ -19,7 +19,6 @@ import {
   Trophy,
   FileSignature,
 } from "lucide-react";
-import { AanmeldForm } from "./AanmeldForm";
 
 const WA_BERICHT = encodeURIComponent(
   "Hoi Pepijn, ik heb interesse in de setter-positie bij GRYWO. Kunnen we even sparren?",
@@ -77,12 +76,12 @@ export default function WordSetter() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="#onderteken"
+            <Link
+              href="/contract"
               className="bg-[#ffd84d] hover:bg-white text-[#333399] font-bold px-10 py-4 rounded-xl shadow-2xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
             >
-              <FileSignature size={18} /> Direct ondertekenen
-            </a>
+              <FileSignature size={18} /> Bekijk &amp; onderteken contract
+            </Link>
             <a
               href={WA_LINK}
               target="_blank"
@@ -345,105 +344,6 @@ export default function WordSetter() {
         </div>
       </section>
 
-      {/* ─── CONTRACT + ONDERTEKENEN ─── */}
-      <section id="onderteken" className="py-20 bg-[#f5f5f7]">
-        <div className="max-w-3xl mx-auto px-6">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#333399]/10 text-[#333399] text-sm font-bold mb-4">
-              <FileSignature size={14} /> Direct ondertekenen
-            </div>
-            <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
-              Samenwerkings-intentieverklaring
-            </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Lees de overeenkomst hieronder en onderteken digitaal. Pepijn neemt
-              binnen 24 uur contact op om je 7-daagse trial te plannen.
-            </p>
-          </div>
-
-          {/* Contract scrollbaar */}
-          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-7 md:p-10 mb-6 max-h-[500px] overflow-y-auto prose prose-sm max-w-none">
-            <h3 className="text-xl font-bold mb-1">Samenwerkingsovereenkomst</h3>
-            <p className="text-xs text-gray-500 mb-5">Setter-positie bij GRYWO · 7-daagse trial</p>
-
-            <h4 className="text-base font-bold mt-4 mb-2">Partijen</h4>
-            <p className="text-sm leading-relaxed">
-              <b>OneTwoStart NL B.V.</b> (handelend onder de naam <b>GRYWO</b>), gevestigd te Nederland,
-              KvK 96738782, hierna: &ldquo;GRYWO&rdquo;.
-            </p>
-            <p className="text-sm leading-relaxed">
-              en de Setter wiens gegevens in het ondertekenformulier zijn ingevuld, hierna: &ldquo;Setter&rdquo;.
-            </p>
-
-            <h4 className="text-base font-bold mt-5 mb-2">1. Werkzaamheden</h4>
-            <p className="text-sm leading-relaxed">
-              Setter voert telefonische acquisitie uit voor GRYWO via het ATS-platform Noah.
-              Werkzaamheden omvatten het bellen van opdrachtgevers, voorstellen versturen van
-              kandidaten, voortgang vastleggen en deelnemen aan dagelijkse EOD-coaching.
-            </p>
-
-            <h4 className="text-base font-bold mt-4 mb-2">2. Vergoeding</h4>
-            <p className="text-sm leading-relaxed">
-              Setter ontvangt een vast basisbedrag per maand zoals individueel afgesproken,
-              vermeerderd met een bonus per gerealiseerde plaatsing van een door Setter voorgestelde
-              kandidaat. Uitbetaling vindt maandelijks plaats achteraf, na ontvangst van een
-              deugdelijke factuur van Setter aan GRYWO.
-            </p>
-
-            <h4 className="text-base font-bold mt-4 mb-2">3. Tools &amp; toegang</h4>
-            <p className="text-sm leading-relaxed">
-              GRYWO stelt aan Setter ter beschikking: een persoonlijk Noah-account, een
-              <b> voornaam@grywo.nl</b>-mailadres, toegang tot Jobdigger en de Robin AI-assistent.
-              Na de 7-daagse trial ontvangt Setter een eigen Voys-telefoonnummer waarmee
-              onbeperkt en gratis kan worden gebeld vanaf elke locatie.
-            </p>
-
-            <h4 className="text-base font-bold mt-4 mb-2">4. Eigendom en data</h4>
-            <p className="text-sm leading-relaxed">
-              Alle kandidaten, leads en opdrachtgever-gegevens die binnen Noah worden verzameld
-              of bewerkt zijn eigendom van GRYWO. Bij beëindiging van deze samenwerking blijven
-              gegevens bij GRYWO en wordt de toegang van Setter onmiddellijk gerevoceerd.
-            </p>
-
-            <h4 className="text-base font-bold mt-4 mb-2">5. Geheimhouding</h4>
-            <p className="text-sm leading-relaxed">
-              Setter verbindt zich alle informatie over opdrachtgevers, kandidaten, tarieven,
-              marges en interne werkwijzen van GRYWO strikt vertrouwelijk te behandelen.
-              Schending van geheimhouding leidt tot directe beëindiging van de samenwerking
-              en mogelijke aansprakelijkheid.
-            </p>
-
-            <h4 className="text-base font-bold mt-4 mb-2">6. Concurrentie &amp; relatiebeding</h4>
-            <p className="text-sm leading-relaxed">
-              Tijdens de samenwerking en gedurende <b>12 maanden na beëindiging</b> verricht Setter
-              geen vergelijkbare werkzaamheden voor opdrachtgevers van GRYWO waarmee hij/zij
-              gedurende de samenwerking direct of indirect contact heeft gehad, behoudens uitdrukkelijke
-              schriftelijke toestemming van GRYWO.
-            </p>
-
-            <h4 className="text-base font-bold mt-4 mb-2">7. Duur en beëindiging</h4>
-            <p className="text-sm leading-relaxed">
-              De samenwerking start met een <b>7-daagse trial</b>. Beide partijen kunnen tijdens
-              en na de trial schriftelijk opzeggen met een opzegtermijn van één maand.
-              GRYWO mag bij ernstige tekortkomingen of geheimhouding-schendingen per direct beëindigen.
-            </p>
-
-            <h4 className="text-base font-bold mt-4 mb-2">8. Toepasselijk recht</h4>
-            <p className="text-sm leading-relaxed">
-              Op deze overeenkomst is uitsluitend Nederlands recht van toepassing. Geschillen worden
-              voorgelegd aan de bevoegde rechter in het arrondissement van vestiging van GRYWO.
-            </p>
-
-            <p className="text-xs text-gray-500 mt-6 italic">
-              Door het ondertekenformulier hieronder in te vullen en te ondertekenen verklaart Setter
-              akkoord met alle bovengenoemde voorwaarden. De handtekening wordt opgeslagen met
-              tijdstempel, IP-adres en user-agent als bewijs (eIDAS Simple Electronic Signature).
-            </p>
-          </div>
-
-          <AanmeldForm />
-        </div>
-      </section>
 
       {/* ─── FOOTER ─── */}
       <footer className="bg-[#0f0f23] text-white/40 text-xs text-center py-6">

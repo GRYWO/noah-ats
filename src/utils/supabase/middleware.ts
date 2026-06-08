@@ -41,6 +41,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/handleiding") ||  // publiek boekwerk over Noah-ATS — deelbare URL
     path.startsWith("/website") ||      // publieke marketing-website voor Noah-ATS
     path.startsWith("/word-setter") ||  // publieke setter-vacature landingspagina
+    path.startsWith("/contract") ||     // publieke setter-overeenkomst (apart deelbaar)
     path.startsWith("/dpa-voorbeeld") || // tijdelijke DPA-preview
     path.startsWith("/dpa-tekenen") ||   // publieke DPA-tekenflow per token
     path.startsWith("/tekenen") ||       // publieke NDA / gebruiksvoorwaarden teken-flow
