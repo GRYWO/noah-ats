@@ -155,9 +155,9 @@ export default function ContractPagina() {
           <Sectie nummer="4" titel="Eigendom en data">
             <p>
               Alle kandidaten, leads en opdrachtgever-gegevens die binnen Noah
-              worden verzameld of bewerkt zijn eigendom van Binqie. Bij
+              worden verzameld of bewerkt zijn eigendom van GRYWO. Bij
               beëindiging van deze samenwerking blijven alle gegevens bij
-              Binqie en wordt de toegang van Setter onmiddellijk gerevoceerd.
+              GRYWO en wordt de toegang van Setter onmiddellijk gerevoceerd.
             </p>
           </Sectie>
 
