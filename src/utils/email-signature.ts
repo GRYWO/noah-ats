@@ -28,7 +28,14 @@ export function bouwHandtekening({
   mailAdres,
   functieTitel,
 }: SignatureInput): string {
-  const logoUri = getGrywoLogoDataUri();
+  // Logo wordt geladen van een publieke URL i.p.v. base64 data-URI,
+  // omdat Gmail (en sommige andere clients) data-URIs in <img> blokkeren
+  // uit veiligheid. URL absoluut zodat hij in elke client werkt.
+  const logoUrl = "https://www.noah-ats.nl/grywo-logo-wit.png";
+  // Data-URI fallback wordt niet meer gebruikt, maar we laten 'm hier
+  // zodat de import niet ongebruikt is en gebruiken hem als safety net
+  // mocht de URL ooit niet bereikbaar zijn tijdens build.
+  void getGrywoLogoDataUri;
   const naam = `${voornaam} ${achternaam}`.trim();
 
   // Functie zichtbaar voor admin altijd (fallback "Admin bij GRYWO").
@@ -40,9 +47,9 @@ export function bouwHandtekening({
       (rol === "admin" ? "Admin bij GRYWO" : ""))
     : "";
 
-  const logoBlok = logoUri
-    ? `<img src="${logoUri}" alt="GRYWO" height="36" style="display:block;border:0;outline:none;text-decoration:none;height:36px;width:auto;filter:brightness(0) invert(1);">`
-    : `<span style="font-family:Helvetica,Arial,sans-serif;font-size:30px;font-weight:900;letter-spacing:-1.5px;color:#ffffff;">GRYWO</span><span style="display:inline-block;width:8px;height:8px;background-color:${GRYWO_GEEL};border-radius:50%;margin-left:4px;vertical-align:2px;"></span>`;
+  // Wit GRYWO-logo geladen van noah-ats.nl. Fallback (alt + tekst-wordmark)
+  // verschijnt automatisch als de afbeelding geblokkeerd wordt.
+  const logoBlok = `<img src="${logoUrl}" alt="GRYWO" height="36" style="display:block;border:0;outline:none;text-decoration:none;height:36px;width:auto;">`;
 
   return `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;border-collapse:collapse;width:480px;max-width:100%;">
   <tr>
