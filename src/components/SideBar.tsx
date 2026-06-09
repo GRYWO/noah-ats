@@ -26,6 +26,7 @@ import {
   FileSignature,
   Archive,
   CreditCard,
+  AtSign,
 } from "lucide-react";
 
 type Item = {
@@ -109,6 +110,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
 
     // Sectie 4: Communicatie
     { key: "inbox",          href: "/inbox",          label: "E-mail",       Icon: Mail,          sectie: 4 },
+    { key: "mail-setup",     href: "/mail-setup",     label: "Mail-instellen", Icon: AtSign,      sectie: 4 },
 
     // Sectie 5: Team & beheer
     ...(!isRecruiter && !isBureauAdmin ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: SparklesIcon, sectie: 5 } as Item] : []),
