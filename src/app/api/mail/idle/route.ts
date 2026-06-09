@@ -3,6 +3,7 @@ import { ImapFlow } from "imapflow";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { decrypt } from "@/utils/crypto";
+import { getMailServers } from "@/utils/mail-provider";
 import { syncMailsVoorUser } from "@/utils/mail-sync";
 
 export const dynamic = "force-dynamic";
@@ -51,9 +52,10 @@ export async function GET() {
       };
 
       try {
+        const servers = getMailServers(mailAdres);
         client = new ImapFlow({
-          host: process.env.HOSTNET_IMAP_HOST ?? "imap.hostnet.nl",
-          port: parseInt(process.env.HOSTNET_IMAP_PORT ?? "993"),
+          host: servers.imapHost,
+          port: servers.imapPort,
           secure: true,
           auth: { user: mailAdres, pass: decrypt(wachtwoord) },
           logger: false,

@@ -1,6 +1,7 @@
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
 import { decrypt } from "./crypto";
+import { getMailServers } from "./mail-provider";
 import { createAdminClient } from "./supabase/admin";
 
 type MapType = "inbox" | "sent" | "drafts" | "trash" | "spam" | "ander";
@@ -49,9 +50,10 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
     return { error: "Account niet geconfigureerd" };
   }
 
+  const servers = getMailServers(account.mail_adres);
   const client = new ImapFlow({
-    host: account.imap_host ?? process.env.HOSTNET_IMAP_HOST ?? "imap.hostnet.nl",
-    port: account.imap_port ?? parseInt(process.env.HOSTNET_IMAP_PORT ?? "993"),
+    host: account.imap_host ?? servers.imapHost,
+    port: account.imap_port ?? servers.imapPort,
     secure: true,
     auth: { user: account.mail_adres, pass: decrypt(account.mail_wachtwoord) },
     logger: false,
@@ -221,9 +223,10 @@ export async function laadMailBody(accountId: string, mapPad: string, uid: numbe
     return { error: "Account niet geconfigureerd" };
   }
 
+  const servers2 = getMailServers(account.mail_adres);
   const client = new ImapFlow({
-    host: account.imap_host ?? "imap.hostnet.nl",
-    port: account.imap_port ?? 993,
+    host: account.imap_host ?? servers2.imapHost,
+    port: account.imap_port ?? servers2.imapPort,
     secure: true,
     auth: { user: account.mail_adres, pass: decrypt(account.mail_wachtwoord) },
     logger: false,

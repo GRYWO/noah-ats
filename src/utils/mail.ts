@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
 import { decrypt } from "./crypto";
+import { getMailServers } from "./mail-provider";
 
 function getLogoAttachment() {
   try {
@@ -232,9 +233,11 @@ export type MailDetail = {
 
 function getImapClient(mailAdres: string, encryptedPassword: string) {
   const password = decrypt(encryptedPassword);
+  // Route op basis van mailadres: @grywo.nl → Migadu, rest → Hostnet
+  const servers = getMailServers(mailAdres);
   return new ImapFlow({
-    host: process.env.HOSTNET_IMAP_HOST ?? "imap.hostnet.nl",
-    port: parseInt(process.env.HOSTNET_IMAP_PORT ?? "993"),
+    host: servers.imapHost,
+    port: servers.imapPort,
     secure: true,
     auth: { user: mailAdres, pass: password },
     logger: false,
@@ -344,10 +347,11 @@ export async function verstuurMail({
   htmlBody: string;
   handtekening: string | null;
 }) {
+  const servers = getMailServers(vanAdres);
   const transporter = nodemailer.createTransport({
-    host: process.env.HOSTNET_SMTP_HOST ?? "smtp.hostnet.nl",
-    port: parseInt(process.env.HOSTNET_SMTP_PORT ?? "587"),
-    secure: false, // STARTTLS
+    host: servers.smtpHost,
+    port: servers.smtpPort,
+    secure: servers.smtpSecure,
     auth: { user: vanAdres, pass: decrypt(vanWachtwoord) },
   });
 

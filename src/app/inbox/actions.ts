@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { ImapFlow } from "imapflow";
+import { getMailServers } from "@/utils/mail-provider";
 import { decrypt } from "@/utils/crypto";
 
 export async function maakNieuweMap(formData: FormData) {
@@ -32,9 +33,10 @@ export async function maakNieuweMap(formData: FormData) {
     redirect("/inbox?error=Geen+mail-config");
   }
 
+  const servers = getMailServers(profile.mail_adres);
   const client = new ImapFlow({
-    host: process.env.HOSTNET_IMAP_HOST ?? "imap.hostnet.nl",
-    port: parseInt(process.env.HOSTNET_IMAP_PORT ?? "993"),
+    host: servers.imapHost,
+    port: servers.imapPort,
     secure: true,
     auth: { user: profile.mail_adres, pass: decrypt(secret.mail_wachtwoord) },
     logger: false,
@@ -85,9 +87,10 @@ export async function verwijderMap(formData: FormData) {
     redirect("/inbox?error=Geen+mail-config");
   }
 
+  const servers = getMailServers(profile.mail_adres);
   const client = new ImapFlow({
-    host: process.env.HOSTNET_IMAP_HOST ?? "imap.hostnet.nl",
-    port: parseInt(process.env.HOSTNET_IMAP_PORT ?? "993"),
+    host: servers.imapHost,
+    port: servers.imapPort,
     secure: true,
     auth: { user: profile.mail_adres, pass: decrypt(secret.mail_wachtwoord) },
     logger: false,

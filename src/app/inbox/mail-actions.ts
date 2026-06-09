@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ImapFlow } from "imapflow";
+import { getMailServers } from "@/utils/mail-provider";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { decrypt } from "@/utils/crypto";
@@ -26,9 +27,10 @@ async function getImapForUser(userId: string) {
     throw new Error("Mailbox niet ingesteld");
   }
 
+  const servers = getMailServers(profile.mail_adres);
   return new ImapFlow({
-    host: process.env.HOSTNET_IMAP_HOST ?? "imap.hostnet.nl",
-    port: parseInt(process.env.HOSTNET_IMAP_PORT ?? "993"),
+    host: servers.imapHost,
+    port: servers.imapPort,
     secure: true,
     auth: { user: profile.mail_adres, pass: decrypt(secret.mail_wachtwoord) },
     logger: false,
