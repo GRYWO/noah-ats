@@ -27,7 +27,15 @@ export default async function SettersPage({
   // Sales-admin (Pepijn) krijgt dezelfde brede toegang als super-admin op /users
   // — hij beheert alle bureaus, dus moet alle users + alle rollen kunnen zien.
   const isSales = await isSalesAdmin(user);
-  const breedheidstoegang = isSuperAdmin || isSales;
+  // Intern personeel (Wouter) ziet ook alle setters cross-tenant —
+  // nieuwe setters komen in GRYWO-pool, niet in zijn eigen bureau-tenant.
+  const { data: viewerProfile } = await supabase
+    .from("profiles")
+    .select("is_intern_personeel")
+    .eq("id", user!.id)
+    .maybeSingle();
+  const isInternPersoneel = !!viewerProfile?.is_intern_personeel;
+  const breedheidstoegang = isSuperAdmin || isSales || isInternPersoneel;
 
   // Super- of sales-admin gebruikt admin-client zodat RLS niets uitfiltert.
   const settersClient = breedheidstoegang ? createAdminClient() : supabase;
