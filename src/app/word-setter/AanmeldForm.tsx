@@ -138,7 +138,7 @@ export function AanmeldForm() {
             type="text"
             value={voornaam}
             onChange={(e) => setVoornaam(e.target.value)}
-            placeholder="Pepijn"
+            placeholder=""
             className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#333399]"
             style={{ colorScheme: "light", color: "#111827", backgroundColor: "#fff" }}
           />
@@ -149,7 +149,7 @@ export function AanmeldForm() {
             type="text"
             value={achternaam}
             onChange={(e) => setAchternaam(e.target.value)}
-            placeholder="Zwartenberg"
+            placeholder=""
             className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#333399]"
             style={{ colorScheme: "light", color: "#111827", backgroundColor: "#fff" }}
           />
@@ -160,7 +160,7 @@ export function AanmeldForm() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="jij@gmail.com"
+            placeholder=""
             className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#333399]"
             style={{ colorScheme: "light", color: "#111827", backgroundColor: "#fff" }}
           />
@@ -171,7 +171,7 @@ export function AanmeldForm() {
             type="tel"
             value={telefoon}
             onChange={(e) => setTelefoon(e.target.value)}
-            placeholder="06 12345678"
+            placeholder=""
             className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#333399]"
             style={{ colorScheme: "light", color: "#111827", backgroundColor: "#fff" }}
           />
