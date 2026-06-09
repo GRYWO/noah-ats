@@ -130,8 +130,13 @@ export function InboxClient({
         },
         (payload) => {
           const nieuw = payload.new as { van: string; naam: string; onderwerp: string; map_pad: string };
-          // Alleen inbox-meldingen tonen (niet voor verzonden mails)
-          if (nieuw.map_pad.toLowerCase().includes("sent") || nieuw.map_pad.toLowerCase().includes("verzonden")) return;
+          // Alleen meldingen tonen voor mails die in de INBOX terechtkomen.
+          // Sent/Trash/Drafts/Spam/Junk filteren we eruit — anders krijg je
+          // een "nieuwe mail" toast bij elke sync nadat je net iets hebt
+          // verwijderd of verstuurd.
+          const map = (nieuw.map_pad ?? "").toLowerCase();
+          const isInbox = map === "inbox" || map.endsWith("/inbox") || map === "postvak in";
+          if (!isInbox) return;
           toonToast(nieuw.naam ?? nieuw.van ?? "?", nieuw.onderwerp ?? "(geen onderwerp)");
           router.refresh();
         },

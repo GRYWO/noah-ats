@@ -60,6 +60,7 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
   });
 
   let totaalNieuw = 0;
+  let nieuwInbox = 0; // Alleen tellen wat in INBOX terechtkomt voor push-trigger
 
   try {
     await client.connect();
@@ -146,6 +147,10 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
             onConflict: "user_id,map_pad,uid",
           });
           totaalNieuw += nieuweBerichten.length;
+          // Push alleen sturen als de nieuwe mail in INBOX zit — anders
+          // krijgt user notificaties voor mails die hij net naar trash
+          // verplaatste of die in Sent terechtkwamen.
+          if (type === "inbox") nieuwInbox += nieuweBerichten.length;
         }
       } finally {
         lock.release();
@@ -155,12 +160,13 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
     await client.logout().catch(() => {});
   }
 
-  // Push notificatie als er nieuwe mail is — niet awaiten zodat sync snel blijft
-  if (totaalNieuw > 0 && account.user_id) {
+  // Push notificatie ALLEEN als er nieuwe mail in INBOX zit — niet voor
+  // mails in Sent/Trash/Drafts (die zou je niet als 'nieuwe mail' melden).
+  if (nieuwInbox > 0 && account.user_id) {
     import("@/utils/push")
       .then(({ stuurPushNaarUser }) =>
         stuurPushNaarUser(account.user_id, {
-          title: totaalNieuw === 1 ? "📬 1 nieuwe mail" : `📬 ${totaalNieuw} nieuwe mails`,
+          title: nieuwInbox === 1 ? "📬 1 nieuwe mail" : `📬 ${nieuwInbox} nieuwe mails`,
           body: account.mail_adres,
           url: "/inbox",
           tag: "noah-mail",
