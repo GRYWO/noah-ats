@@ -52,6 +52,112 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
 
   const naam = `${voornaam} ${achternaam}`.trim();
 
+  // ─── AUTOMATISCH SETTER-ACCOUNT + MAILBOX + NDA ───
+  // Alles best-effort: fouten worden gelogd maar blokkeren de aanmelding niet
+  // (Pepijn krijgt sowieso de mail en kan handmatig ingrijpen).
+  try {
+    const { randomBytes } = await import("crypto");
+    const { getGrywoPoolTenantId } = await import("@/utils/setter-assign");
+    const { maakNoahMailbox } = await import("@/utils/migadu");
+    const { encrypt } = await import("@/utils/crypto");
+    const { werkdagenLater } = await import("@/utils/voorstel-log");
+    const { sendAkkoordTerOndertekening } = await import("@/utils/email");
+
+    const tenantId = await getGrywoPoolTenantId();
+    if (!tenantId) {
+      console.error("[setter-aanmelding] geen GRYWO-pool tenant gevonden");
+    } else {
+      // Wachtwoord voor Noah-account én Migadu-mailbox (zelfde of apart kan)
+      const noahWachtwoord =
+        randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+      const mailboxWachtwoord =
+        randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+
+      // 1. Auth-user aanmaken met persoonlijke email als login
+      const { data: created, error: createErr } = await admin.auth.admin.createUser({
+        email,
+        password: noahWachtwoord,
+        email_confirm: true,
+      });
+
+      if (createErr) {
+        // Email bestaat al? Dan vinden we 'm en hergebruiken
+        console.warn("[setter-aanmelding] createUser:", createErr.message);
+      }
+
+      const userId = created?.user?.id;
+      if (userId) {
+        // 2. Migadu mailbox @grywo.nl aanmaken (idempotent)
+        const grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@grywo.nl`;
+        let mailboxOk = false;
+        try {
+          const mb = await maakNoahMailbox({
+            voornaam,
+            achternaam,
+            wachtwoord: mailboxWachtwoord,
+          });
+          mailboxOk = mb.ok;
+          if (!mb.ok && !mb.alBestaat) {
+            console.error("[setter-aanmelding] Migadu:", mb.error);
+          }
+        } catch (e) {
+          console.error("[setter-aanmelding] Migadu uitzondering:", e);
+        }
+
+        // 3. Profile aanmaken in GRYWO-pool met 14-werkdagen proefperiode
+        const proefEinde = werkdagenLater(14);
+        await admin.from("profiles").insert({
+          id: userId,
+          tenant_id: tenantId,
+          voornaam,
+          achternaam,
+          rol: "setter",
+          telefoon: telefoon ?? null,
+          mail_adres: grywoEmail,
+          mail_wachtwoord: mailboxOk ? encrypt(mailboxWachtwoord) : null,
+          mail_status: mailboxOk ? "actief" : "niet_geconfigureerd",
+          abonnement_status: "proefperiode",
+          proefperiode_eindigt_op: proefEinde,
+        });
+
+        // 4. NDA-token aanmaken in user_agreements
+        const ndaToken = randomBytes(16).toString("hex");
+        const { data: tenant } = await admin
+          .from("tenants")
+          .select("naam, handelsnaam")
+          .eq("id", tenantId)
+          .single();
+        await admin.from("user_agreements").insert({
+          user_id: userId,
+          tenant_id: tenantId,
+          token: ndaToken,
+          type: "nda_setter",
+          status: "wachtend",
+          verzonden_aan_email: email, // PERSOONLIJK adres (user antwoord)
+          verzonden_aan_naam: naam,
+          user_voornaam: voornaam,
+          user_achternaam: achternaam,
+          user_rol: "setter",
+          bureau_naam: tenant?.handelsnaam || tenant?.naam || "GRYWO",
+        });
+
+        // 5. NDA-mail naar persoonlijke email
+        try {
+          await sendAkkoordTerOndertekening({
+            naar: email,
+            naam,
+            type: "nda_setter",
+            token: ndaToken,
+          });
+        } catch (e) {
+          console.error("[setter-aanmelding] NDA-mail:", e);
+        }
+      }
+    }
+  } catch (e) {
+    console.error("[setter-aanmelding] auto-account flow mislukt:", e);
+  }
+
   // Mail naar Pepijn + info@grywo.nl
   try {
     await resend.emails.send({
@@ -93,13 +199,18 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
 </div>
 <div style="background:white;padding:28px;border-radius:0 0 12px 12px;border:1px solid #eee;border-top:none;">
 <h2 style="color:#333399;margin-top:0;">Hoi ${voornaam},</h2>
-<p>Bedankt voor je interesse! Je intentieverklaring is binnen — Pepijn (jouw coach) neemt zo snel mogelijk contact op om de 7-daagse trial in te plannen.</p>
+<p>Bedankt voor je aanmelding! Je samenwerkings-intentieverklaring is binnen — alles is automatisch klaargezet:</p>
+<ul style="padding-left:20px;">
+  <li>✅ Je Noah-account is aangemaakt</li>
+  <li>✅ Je <b>${voornaam.toLowerCase()}@grywo.nl</b>-mailbox is klaar</li>
+  <li>✅ De geheimhoudingsverklaring (NDA) is zojuist apart naar dit e-mailadres verstuurd — onderteken die ook even, dan ben je klaar om te starten</li>
+</ul>
 <p><b>Wat gebeurt er nu?</b></p>
 <ul style="padding-left:20px;">
   <li>Pepijn belt of stuurt je een whatsapp-bericht op <b>${telefoon ?? email}</b></li>
   <li>Korte kennismaking — geen sollicitatie-grilling, gewoon een gesprek</li>
-  <li>Past het? Dan krijg je direct toegang tot Noah-ATS + je <b>voornaam@grywo.nl</b>-mailbox</li>
-  <li>Na 7 dagen: eigen Voys-telefoonnummer + vaste plek in het team</li>
+  <li>Na NDA-ondertekening krijg je je inloggegevens voor Noah-ATS</li>
+  <li>Na 7 werkdagen trial: eigen Voys-telefoonnummer + vaste plek in het team</li>
 </ul>
 <p style="margin-top:24px;">Vragen? WhatsApp Pepijn direct op <a href="https://wa.me/31683481303">+31 6 83481303</a>.</p>
 <p style="color:#666;font-size:13px;margin-top:32px;">Tot snel,<br>Het GRYWO-team</p>
