@@ -97,14 +97,32 @@ export function InboxClient({
   };
 
   // Toast tonen + auto-verbergen + geluidje
+  // Dedup: dezelfde van+onderwerp maximaal 1× per uur tonen. Voorkomt
+  // dat een mail die om wat voor reden dan ook herhaaldelijk als INSERT
+  // binnenkomt (server-side re-sync, IDLE-reconnect, cache-flush) elke
+  // keer opnieuw als 'Nieuwe e-mail' wordt getoond.
   const toonToast = (van: string, onderwerp: string) => {
+    try {
+      const key = `noah-toast-${van}|${onderwerp}`;
+      const laatst = parseInt(sessionStorage.getItem(key) ?? "0", 10);
+      const nu = Date.now();
+      if (laatst && nu - laatst < 60 * 60 * 1000) return; // < 1 uur geleden al getoond
+      sessionStorage.setItem(key, String(nu));
+    } catch {
+      // sessionStorage kan in private mode falen — negeer en toon toch
+    }
     const id = Date.now();
     setToasts(t => [...t, { id, van, onderwerp }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 6000);
     playChime();
-    // Browser notification (als toestemming gegeven)
+    // Browser notification (als toestemming gegeven).
+    // tag = identifier zodat de browser zelf duplicates samenvoegt.
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-      new Notification(`Nieuwe e-mail van ${van}`, { body: onderwerp, icon: "/grywo-logo.png" });
+      new Notification(`Nieuwe e-mail van ${van}`, {
+        body: onderwerp,
+        icon: "/grywo-logo.png",
+        tag: `noah-mail-${van}-${onderwerp}`.slice(0, 100),
+      });
     }
   };
 
