@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PWARegister } from "@/components/PWARegister";
+import { SysteemMeldingLader } from "@/components/SysteemMeldingLader";
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -57,6 +58,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <PWARegister />
+        <SysteemMeldingLader />
         {children}
       </body>
     </html>

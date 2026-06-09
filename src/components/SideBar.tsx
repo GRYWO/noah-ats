@@ -27,6 +27,7 @@ import {
   Archive,
   CreditCard,
   AtSign,
+  Megaphone,
 } from "lucide-react";
 
 type Item = {
@@ -118,6 +119,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
     ...(isSuperAdmin ? [{ key: "documenten", href: "/documenten", label: "Documenten", Icon: FileSignature, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "archief", href: "/archief", label: "Archief", Icon: Archive, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "abonnementen-beheer", href: "/abonnementen-beheer", label: "Abonnementen", Icon: CreditCard, sectie: 5 } as Item] : []),
+    ...(isSuperAdmin ? [{ key: "systeem-meldingen", href: "/systeem-meldingen", label: "Meldingen", Icon: Megaphone, sectie: 5 } as Item] : []),
     { key: "instellingen",   href: "/instellingen",   label: "Instellingen", Icon: Settings,      sectie: 5 },
   ];
 
