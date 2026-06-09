@@ -142,8 +142,8 @@ export default function ContractPagina() {
           <Sectie nummer="3" titel="Tools & toegang">
             <p>
               Binqie stelt aan Setter ter beschikking: een persoonlijk
-              Noah-account, een <b>voornaam@grywo.nl</b>-mailadres, toegang tot
-              Jobdigger en de Robin AI-assistent.
+              Noah-account, een eigen <b>@grywo.nl</b>-mailadres en toegang tot
+              Jobdigger.
             </p>
             <p>
               Na de 7-daagse trial ontvangt Setter een eigen{" "}
