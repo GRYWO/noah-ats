@@ -117,13 +117,13 @@ export function AanmeldForm() {
         <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-500 text-white flex items-center justify-center mb-5">
           <CheckCircle2 size={32} />
         </div>
-        <h3 className="text-2xl md:text-3xl font-black mb-3 text-emerald-900">Aanmelding ontvangen</h3>
+        <h3 className="text-2xl md:text-3xl font-black mb-3 text-emerald-900">Check je mail</h3>
         <p className="text-emerald-800 max-w-md mx-auto leading-relaxed mb-4">
-          Bedankt {voornaam}! Pepijn heeft je gegevens binnen en neemt zo snel mogelijk
-          persoonlijk contact op via whatsapp of bellen.
+          Je bent bijna klaar om te starten, {voornaam}! We hebben een mail gestuurd
+          naar <b>{email}</b> met je inloggegevens en de volgende stappen.
         </p>
         <p className="text-emerald-700 text-sm">
-          Een bevestigingsmail is verstuurd naar <b>{email}</b>.
+          Niet ontvangen? Check je spam of neem contact op met Pepijn via WhatsApp.
         </p>
       </div>
     );
