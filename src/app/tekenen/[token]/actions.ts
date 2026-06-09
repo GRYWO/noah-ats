@@ -88,30 +88,50 @@ Bekijk het getekende document via Noah <a href="https://noah-ats.nl/tekenen/${to
   // BELANGRIJK: welkomstmail alleen versturen na NDA / gebruiksvoorwaarden,
   // NIET na setter_contract (dat zou een 2e wachtwoord-reset triggeren).
   if (row.type !== "setter_contract") {
-    try {
-      const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
-      await admin.auth.admin.updateUserById(row.user_id, { password: nieuwWachtwoord });
+    // Voor setters via /contract: ze hebben al een mail_accounts rij +
+    // bevestigingsmail met inloggegevens. NIET opnieuw resetten/mailen.
+    const { data: bestaandAccount } = await admin
+      .from("mail_accounts")
+      .select("id")
+      .eq("user_id", row.user_id)
+      .limit(1)
+      .maybeSingle();
 
-      const { data: tenant } = row.tenant_id
-        ? await admin.from("tenants").select("naam, handelsnaam").eq("id", row.tenant_id).single()
-        : { data: null };
-      const bedrijf = tenant?.handelsnaam || tenant?.naam || "Noah ATS";
-      const rolLabel = row.user_rol === "admin"
-        ? "Admin"
-        : row.user_rol === "setter"
-        ? "Setter"
-        : "Recruiter";
+    if (!bestaandAccount) {
+      try {
+        const nieuwWachtwoord = randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
+        await admin.auth.admin.updateUserById(row.user_id, { password: nieuwWachtwoord });
 
-      await sendWelkomstmailUser({
-        naar: row.verzonden_aan_email,
-        voornaam: row.user_voornaam ?? naam,
-        email: row.verzonden_aan_email,
-        wachtwoord: nieuwWachtwoord,
-        rolLabel,
-        bedrijf,
-      });
-    } catch (e) {
-      console.error("Welkomstmail na ondertekening mislukt:", e);
+        const { data: tenant } = row.tenant_id
+          ? await admin.from("tenants").select("naam, handelsnaam").eq("id", row.tenant_id).single()
+          : { data: null };
+        const bedrijf = tenant?.handelsnaam || tenant?.naam || "Noah ATS";
+        const rolLabel = row.user_rol === "admin"
+          ? "Admin"
+          : row.user_rol === "setter"
+          ? "Setter"
+          : "Recruiter";
+
+        // Login-adres = profile.mail_adres (@grywo.nl), niet de persoonlijke
+        // email waar de NDA naartoe ging.
+        const { data: profile } = await admin
+          .from("profiles")
+          .select("mail_adres")
+          .eq("id", row.user_id)
+          .maybeSingle();
+        const loginEmail = profile?.mail_adres || row.verzonden_aan_email;
+
+        await sendWelkomstmailUser({
+          naar: row.verzonden_aan_email,
+          voornaam: row.user_voornaam ?? naam,
+          email: loginEmail,
+          wachtwoord: nieuwWachtwoord,
+          rolLabel,
+          bedrijf,
+        });
+      } catch (e) {
+        console.error("Welkomstmail na ondertekening mislukt:", e);
+      }
     }
   }
 
