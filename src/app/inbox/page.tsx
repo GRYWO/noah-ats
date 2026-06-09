@@ -68,6 +68,20 @@ export default async function InboxPage({
     type: m.type as "inbox" | "sent" | "drafts" | "trash" | "spam" | "ander",
   }));
 
+  // FALLBACK: als de inbox-row ontbreekt in mail_mappen (bv. doordat sync
+  // 'm nog niet ontdekt heeft of de row per ongeluk weg is) voegen we 'm
+  // hier client-side toe. Anders kan de gebruiker zijn Postvak IN
+  // niet meer aanklikken in het zijmenu.
+  if (!mappen.some(m => m.type === "inbox")) {
+    mappen.unshift({
+      pad: "INBOX",
+      label: "Postvak IN",
+      aantal: 0,
+      ongelezen: 0,
+      type: "inbox",
+    });
+  }
+
   const volgorde: Record<string, number> = { inbox: 1, sent: 2, drafts: 3, spam: 4, trash: 5, ander: 6 };
   mappen.sort((a, b) => (volgorde[a.type] ?? 9) - (volgorde[b.type] ?? 9) || a.label.localeCompare(b.label));
 
