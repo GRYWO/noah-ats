@@ -41,37 +41,55 @@ export function maakLocalPart(voornaam: string): string {
 }
 
 /**
- * Maakt voornaam@grywo.nl aan bij Migadu. Idempotent — als hij al bestaat,
- * krijg je {ok:false, alBestaat:true} terug.
+ * Maakt voornaam@grywo.nl aan bij Migadu. Bij conflict (naam bestaat al)
+ * probeert hij automatisch voornaam.achternaam@grywo.nl als fallback.
+ * Geeft het uiteindelijke adres terug (kan dus afwijken van voornaam@).
  */
 export async function maakNoahMailbox(opts: {
   voornaam: string;
   achternaam: string;
   wachtwoord: string;
-}): Promise<{ ok: boolean; email: string; alBestaat?: boolean; error?: string }> {
-  const localPart = maakLocalPart(opts.voornaam);
-  const email = `${localPart}@${DOMEIN}`;
+}): Promise<{ ok: boolean; email: string; gebruikteAchternaam?: boolean; alBestaat?: boolean; error?: string }> {
+  const voornaamPart = maakLocalPart(opts.voornaam);
+  const achternaamPart = maakLocalPart(opts.achternaam);
 
-  if (!localPart) return { ok: false, email, error: "Lege voornaam" };
+  if (!voornaamPart) return { ok: false, email: `@${DOMEIN}`, error: "Lege voornaam" };
   if (!migaduGeconfigureerd()) {
-    return { ok: false, email, error: "Migadu niet geconfigureerd (MIGADU_API_USER/KEY)" };
+    return { ok: false, email: `${voornaamPart}@${DOMEIN}`, error: "Migadu niet geconfigureerd (MIGADU_API_USER/KEY)" };
   }
 
-  const bestaat = await call(`/domains/${DOMEIN}/mailboxes/${localPart}`);
-  if (bestaat.ok) return { ok: false, email, alBestaat: true };
+  // Probeer in volgorde: voornaam, voornaam.achternaam
+  const kandidaten = [voornaamPart];
+  if (achternaamPart) kandidaten.push(`${voornaamPart}.${achternaamPart}`);
 
-  const r = await call(`/domains/${DOMEIN}/mailboxes`, {
-    method: "POST",
-    body: JSON.stringify({
-      local_part: localPart,
-      name: `${opts.voornaam} ${opts.achternaam}`.trim(),
-      password: opts.wachtwoord,
-    }),
-  });
+  for (let i = 0; i < kandidaten.length; i++) {
+    const localPart = kandidaten[i];
+    const email = `${localPart}@${DOMEIN}`;
+    const gebruikteAchternaam = i > 0;
 
-  if (r.ok) return { ok: true, email };
-  const msg = (r.data && (r.data.error || r.data.message)) || `Migadu fout ${r.status}`;
-  return { ok: false, email, error: typeof msg === "string" ? msg : JSON.stringify(msg) };
+    const bestaat = await call(`/domains/${DOMEIN}/mailboxes/${localPart}`);
+    if (bestaat.ok) {
+      // Deze naam is al bezet. Bij laatste optie: meld dat hij al bestaat.
+      if (i === kandidaten.length - 1) return { ok: false, email, alBestaat: true, gebruikteAchternaam };
+      continue; // probeer volgende
+    }
+
+    const r = await call(`/domains/${DOMEIN}/mailboxes`, {
+      method: "POST",
+      body: JSON.stringify({
+        local_part: localPart,
+        name: `${opts.voornaam} ${opts.achternaam}`.trim(),
+        password: opts.wachtwoord,
+      }),
+    });
+
+    if (r.ok) return { ok: true, email, gebruikteAchternaam };
+    // Bij fout: niet doorgaan naar achternaam — onbekend wat er mis is
+    const msg = (r.data && (r.data.error || r.data.message)) || `Migadu fout ${r.status}`;
+    return { ok: false, email, gebruikteAchternaam, error: typeof msg === "string" ? msg : JSON.stringify(msg) };
+  }
+
+  return { ok: false, email: `${voornaamPart}@${DOMEIN}`, error: "Onverwacht: geen kandidaten" };
 }
 
 /**

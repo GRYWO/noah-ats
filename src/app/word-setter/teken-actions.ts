@@ -55,6 +55,8 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
   // Inlog-gegevens die in de bevestigingsmail komen. Worden gevuld
   // tijdens de account-flow hieronder.
   let inlogWachtwoord: string | null = null;
+  let bevestigingMailbox: string | null = null;
+  let bevestigingMetAchternaam = false;
 
   // ─── AUTOMATISCH SETTER-ACCOUNT + MAILBOX + NDA ───
   // Alles best-effort: fouten worden gelogd maar blokkeren de aanmelding niet
@@ -98,11 +100,13 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
         }
       }
       if (userId) {
-        // Bewaar voor in de bevestigingsmail
+        // Bewaar voor in de bevestigingsmail (wordt later geüpdatet met grywoEmail)
         inlogWachtwoord = inlogPw;
-        // 2. Migadu mailbox @grywo.nl aanmaken (idempotent — zelfde wachtwoord als Noah)
-        const grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@grywo.nl`;
+        // 2. Migadu mailbox @grywo.nl aanmaken (idempotent — zelfde wachtwoord als Noah).
+        //    Bij conflict (naam al bezet) probeert hij voornaam.achternaam@grywo.nl.
         let mailboxOk = false;
+        let grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@grywo.nl`;
+        let gebruikteAchternaam = false;
         try {
           const mb = await maakNoahMailbox({
             voornaam,
@@ -110,12 +114,18 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
             wachtwoord: inlogPw,
           });
           mailboxOk = mb.ok || !!mb.alBestaat;
+          grywoEmail = mb.email;
+          gebruikteAchternaam = !!mb.gebruikteAchternaam;
           if (!mb.ok && !mb.alBestaat) {
             console.error("[setter-aanmelding] Migadu:", mb.error);
           }
         } catch (e) {
           console.error("[setter-aanmelding] Migadu uitzondering:", e);
         }
+
+        // Bewaar voor de bevestigingsmail
+        bevestigingMailbox = grywoEmail;
+        bevestigingMetAchternaam = gebruikteAchternaam;
 
         // 3. Profile aanmaken in GRYWO-pool met 14-werkdagen proefperiode.
         // Upsert want bij dubbele aanmelding kan profile al bestaan.
@@ -216,7 +226,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
 <p>Bedankt voor je aanmelding! Je samenwerkings-intentieverklaring is binnen — alles is automatisch klaargezet:</p>
 <ul style="padding-left:20px;">
   <li>✅ Je Noah-account is aangemaakt</li>
-  <li>✅ Je <b>${voornaam.toLowerCase()}@grywo.nl</b>-mailbox is klaar</li>
+  <li>✅ Je <b>${bevestigingMailbox ?? `${voornaam.toLowerCase()}@grywo.nl`}</b>-mailbox is klaar${bevestigingMetAchternaam ? ` <span style="color:#a05d00;font-size:12px;">(omdat ${voornaam.toLowerCase()}@grywo.nl al in gebruik was, krijg je je achternaam erbij)</span>` : ""}</li>
   <li>✅ De geheimhoudingsverklaring (NDA) is zojuist apart naar dit e-mailadres verstuurd — onderteken die ook even</li>
 </ul>
 
@@ -225,7 +235,7 @@ ${inlogWachtwoord ? `
   <div style="font-size:12px;font-weight:700;color:#333399;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Je inloggegevens</div>
   <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr><td style="padding:4px 0;color:#666;width:38%;font-size:13px;">Noah-ATS login (e-mail)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${email}</td></tr>
-    <tr><td style="padding:4px 0;color:#666;font-size:13px;">Mailbox (zakelijk)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${voornaam.toLowerCase()}@grywo.nl</td></tr>
+    <tr><td style="padding:4px 0;color:#666;font-size:13px;">Mailbox (zakelijk)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${bevestigingMailbox ?? `${voornaam.toLowerCase()}@grywo.nl`}</td></tr>
     <tr><td style="padding:4px 0;color:#666;font-size:13px;">Wachtwoord (voor beide)</td><td style="padding:4px 0;font-weight:600;font-family:monospace;font-size:13px;">${inlogWachtwoord}</td></tr>
   </table>
   <p style="margin:14px 0 0 0;font-size:11px;color:#888;">Hetzelfde wachtwoord werkt voor Noah-ATS én je mailbox. Wijzig het direct na je eerste login.</p>
@@ -236,7 +246,7 @@ ${inlogWachtwoord ? `
 </div>
 
 <p style="margin:0 0 4px 0;font-size:13px;text-align:center;">
-  Je <b>${voornaam.toLowerCase()}@grywo.nl</b>-mailbox check je via webmail:<br>
+  Je <b>${bevestigingMailbox ?? `${voornaam.toLowerCase()}@grywo.nl`}</b>-mailbox check je via webmail:<br>
   <a href="https://webmail.migadu.com" style="color:#333399;">webmail.migadu.com</a>
 </p>
 ` : ""}
