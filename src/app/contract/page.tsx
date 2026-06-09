@@ -44,8 +44,7 @@ export default function ContractPagina() {
             en Binqie.
           </h1>
           <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
-            Lees alles rustig door. Akkoord? Onderteken hieronder digitaal en
-            Pepijn neemt binnen 24 uur contact op.
+            Lees alles rustig door. Akkoord? Onderteken hieronder digitaal.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
