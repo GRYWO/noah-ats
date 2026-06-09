@@ -5,7 +5,7 @@ import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { maakNieuweMap, verwijderMap } from "./actions";
-import { mailVerwijderen, mailVerplaatsen, mailFlagToggle, mailOngelezen } from "./mail-actions";
+import { mailVerwijderen, mailVerplaatsen, mailFlagToggle, mailOngelezen, mailenBulkVerwijderen } from "./mail-actions";
 import type { InboxBericht, MailMap, MailDetail } from "@/utils/mail";
 
 type Toast = { id: number; van: string; onderwerp: string };
@@ -50,6 +50,25 @@ export function InboxClient({
 
   const [syncBezig, setSyncBezig] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [geselecteerd, setGeselecteerd] = useState<Set<number>>(new Set());
+
+  // Reset selectie als map wisselt
+  useEffect(() => { setGeselecteerd(new Set()); }, [mapPad]);
+
+  function toggleSelect(uid: number) {
+    setGeselecteerd(prev => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid); else next.add(uid);
+      return next;
+    });
+  }
+  function selecteerAlles() {
+    setGeselecteerd(new Set(berichten.map(b => b.uid)));
+  }
+  function selectieWissen() {
+    setGeselecteerd(new Set());
+  }
+  const allesGeselecteerd = berichten.length > 0 && geselecteerd.size === berichten.length;
 
   // Kort chime-geluidje afspelen
   const playChime = () => {
@@ -446,32 +465,126 @@ export function InboxClient({
           <div className="m-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md p-3">{fetchError}</div>
         )}
 
+        {/* Selectie-/bulk-actie balk */}
+        {!fetchError && berichten.length > 0 && (
+          <div className="px-5 py-2 border-b bg-gray-50 flex items-center gap-3 sticky top-[81px] z-[5]">
+            <input
+              type="checkbox"
+              checked={allesGeselecteerd}
+              onChange={() => allesGeselecteerd ? selectieWissen() : selecteerAlles()}
+              className="w-4 h-4 accent-[#333399] cursor-pointer"
+              title={allesGeselecteerd ? "Selectie wissen" : "Alles selecteren"}
+            />
+            {geselecteerd.size > 0 ? (
+              <>
+                <span className="text-xs font-semibold text-gray-700">
+                  {geselecteerd.size} geselecteerd
+                </span>
+                <form
+                  action={mailenBulkVerwijderen}
+                  onSubmit={(e) => {
+                    if (!confirm(`${geselecteerd.size} mail(s) verwijderen?`)) e.preventDefault();
+                    else selectieWissen();
+                  }}
+                  className="ml-auto"
+                >
+                  <input type="hidden" name="uids" value={Array.from(geselecteerd).join(",")} />
+                  <input type="hidden" name="map_pad" value={mapPad} />
+                  <button
+                    type="submit"
+                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md flex items-center gap-1.5 transition"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6M14 11v6"/>
+                    </svg>
+                    Verwijder {geselecteerd.size}
+                  </button>
+                </form>
+                <button
+                  type="button"
+                  onClick={selectieWissen}
+                  className="text-xs text-gray-500 hover:text-gray-700 underline"
+                >
+                  Wis selectie
+                </button>
+              </>
+            ) : (
+              <span className="text-xs text-gray-500">Klik om mails te selecteren voor bulk-acties</span>
+            )}
+          </div>
+        )}
+
         {!fetchError && berichten.length > 0 && (
           <div>
             {berichten.map(b => {
               const isActive = uid && b.uid === parseInt(uid);
+              const isSelected = geselecteerd.has(b.uid);
               return (
-                <Link
+                <div
                   key={b.uid}
-                  href={`/inbox?map=${encodeURIComponent(mapPad)}&uid=${b.uid}`}
-                  className={`block px-5 py-3 border-b border-gray-100 hover:bg-gray-50 ${
+                  className={`group relative border-b border-gray-100 hover:bg-gray-50 ${
                     isActive ? "bg-[#333399]/10 border-l-4 border-l-[#333399]" :
+                    isSelected ? "bg-[#333399]/5" :
                     !b.gelezen ? "bg-blue-50/50" : ""
                   }`}
                 >
-                  <div className="flex justify-between items-baseline">
-                    <span className={`text-sm truncate ${!b.gelezen ? "font-bold text-gray-900" : "text-gray-700"}`}>
-                      {b.naam}
-                    </span>
-                    <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
-                      {new Date(b.datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}
-                    </span>
-                  </div>
-                  <div className={`text-sm truncate mt-0.5 ${!b.gelezen ? "font-semibold text-gray-900" : "text-gray-700"}`}>
-                    {b.onderwerp}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate mt-0.5">{b.van}</div>
-                </Link>
+                  {/* Checkbox links — pakt klik los van de Link */}
+                  <label
+                    className="absolute top-3 left-1.5 z-10 p-1 cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(b.uid)}
+                      className="w-4 h-4 accent-[#333399] cursor-pointer"
+                    />
+                  </label>
+
+                  {/* Hover verwijder-knop rechts */}
+                  <form
+                    action={mailVerwijderen}
+                    onSubmit={(e) => {
+                      if (!confirm("Mail verwijderen?")) e.preventDefault();
+                    }}
+                    className="absolute top-2.5 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input type="hidden" name="uid" value={b.uid} />
+                    <input type="hidden" name="map_pad" value={mapPad} />
+                    <button
+                      type="submit"
+                      title="Verwijder mail"
+                      className="p-1.5 rounded-md bg-white border border-gray-200 hover:bg-red-50 hover:border-red-300 hover:text-red-600 text-gray-500 shadow-sm transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6"/>
+                      </svg>
+                    </button>
+                  </form>
+
+                  <Link
+                    href={`/inbox?map=${encodeURIComponent(mapPad)}&uid=${b.uid}`}
+                    className="block pl-10 pr-12 py-3"
+                  >
+                    <div className="flex justify-between items-baseline">
+                      <span className={`text-sm truncate ${!b.gelezen ? "font-bold text-gray-900" : "text-gray-700"}`}>
+                        {b.naam}
+                      </span>
+                      <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                        {new Date(b.datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}
+                      </span>
+                    </div>
+                    <div className={`text-sm truncate mt-0.5 ${!b.gelezen ? "font-semibold text-gray-900" : "text-gray-700"}`}>
+                      {b.onderwerp}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate mt-0.5">{b.van}</div>
+                  </Link>
+                </div>
               );
             })}
           </div>

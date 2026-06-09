@@ -71,6 +71,57 @@ export async function mailVerwijderen(formData: FormData) {
   redirect(`/inbox?map=${encodeURIComponent(mapPad)}`);
 }
 
+/**
+ * Bulk-verwijder meerdere mails in 1 IMAP-sessie. UIDs als comma-separated string.
+ */
+export async function mailenBulkVerwijderen(formData: FormData) {
+  const uidsRaw = (formData.get("uids") as string) ?? "";
+  const mapPad = formData.get("map_pad") as string;
+  const uids = uidsRaw.split(",").map((s) => parseInt(s.trim())).filter((n) => !isNaN(n));
+
+  if (uids.length === 0) {
+    redirect(`/inbox?map=${encodeURIComponent(mapPad)}`);
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const client = await getImapForUser(user.id);
+  try {
+    await client.connect();
+    const lock = await client.getMailboxLock(mapPad);
+    try {
+      const list = await client.list();
+      const trash = list.find(m => m.specialUse === "\\Trash") ?? list.find(m => m.path.toLowerCase().includes("trash") || m.path.toLowerCase().includes("prullen"));
+
+      // ImapFlow accepteert UID-sequence "1,2,3" of een array
+      const uidSeq = uids.join(",");
+      if (trash && mapPad !== trash.path) {
+        await client.messageMove(uidSeq, trash.path, { uid: true });
+      } else {
+        await client.messageDelete(uidSeq, { uid: true });
+      }
+    } finally {
+      lock.release();
+    }
+
+    // Lokale cache opruimen zodat lijst meteen klopt
+    const admin = createAdminClient();
+    await admin
+      .from("mail_berichten")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("map_pad", mapPad)
+      .in("uid", uids);
+  } finally {
+    await client.logout().catch(() => {});
+  }
+
+  revalidatePath("/inbox");
+  redirect(`/inbox?map=${encodeURIComponent(mapPad)}`);
+}
+
 export async function mailVerplaatsen(formData: FormData) {
   const uid = parseInt(formData.get("uid") as string);
   const vanMap = formData.get("van_map") as string;
