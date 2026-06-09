@@ -74,13 +74,37 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
       console.error("[setter-aanmelding] geen GRYWO-pool tenant gevonden");
     } else {
       // EÉN wachtwoord voor zowel Noah-login als Migadu-mailbox.
-      // Setter onthoudt zo maar één code voor alles.
       const inlogPw =
         randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
 
-      // 1. Auth-user aanmaken met persoonlijke email als login
+      // 1. EERST Migadu mailbox @grywo.nl aanmaken — die naam wordt OOK
+      //    het inlog-adres voor Noah-ATS. Bij conflict probeert hij
+      //    voornaam.achternaam@grywo.nl.
+      let mailboxOk = false;
+      let grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@grywo.nl`;
+      let gebruikteAchternaam = false;
+      try {
+        const mb = await maakNoahMailbox({
+          voornaam,
+          achternaam,
+          wachtwoord: inlogPw,
+        });
+        mailboxOk = mb.ok || !!mb.alBestaat;
+        grywoEmail = mb.email;
+        gebruikteAchternaam = !!mb.gebruikteAchternaam;
+        if (!mb.ok && !mb.alBestaat) {
+          console.error("[setter-aanmelding] Migadu:", mb.error);
+        }
+      } catch (e) {
+        console.error("[setter-aanmelding] Migadu uitzondering:", e);
+      }
+
+      bevestigingMailbox = grywoEmail;
+      bevestigingMetAchternaam = gebruikteAchternaam;
+
+      // 2. Auth-user aanmaken met @grywo.nl als login (NIET de persoonlijke email)
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
-        email,
+        email: grywoEmail,
         password: inlogPw,
         email_confirm: true,
       });
@@ -91,41 +115,16 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
         console.warn("[setter-aanmelding] createUser:", createErr.message);
         const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
         const bestaand = list?.users.find(
-          (u) => u.email?.toLowerCase() === email.toLowerCase(),
+          (u) => u.email?.toLowerCase() === grywoEmail.toLowerCase(),
         );
         if (bestaand) {
           userId = bestaand.id;
-          // Zet wachtwoord opnieuw zodat het paswoord in deze mail werkt
           await admin.auth.admin.updateUserById(userId, { password: inlogPw });
         }
       }
       if (userId) {
-        // Bewaar voor in de bevestigingsmail (wordt later geüpdatet met grywoEmail)
+        // Bewaar voor in de bevestigingsmail
         inlogWachtwoord = inlogPw;
-        // 2. Migadu mailbox @grywo.nl aanmaken (idempotent — zelfde wachtwoord als Noah).
-        //    Bij conflict (naam al bezet) probeert hij voornaam.achternaam@grywo.nl.
-        let mailboxOk = false;
-        let grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@grywo.nl`;
-        let gebruikteAchternaam = false;
-        try {
-          const mb = await maakNoahMailbox({
-            voornaam,
-            achternaam,
-            wachtwoord: inlogPw,
-          });
-          mailboxOk = mb.ok || !!mb.alBestaat;
-          grywoEmail = mb.email;
-          gebruikteAchternaam = !!mb.gebruikteAchternaam;
-          if (!mb.ok && !mb.alBestaat) {
-            console.error("[setter-aanmelding] Migadu:", mb.error);
-          }
-        } catch (e) {
-          console.error("[setter-aanmelding] Migadu uitzondering:", e);
-        }
-
-        // Bewaar voor de bevestigingsmail
-        bevestigingMailbox = grywoEmail;
-        bevestigingMetAchternaam = gebruikteAchternaam;
 
         // 3. Profile aanmaken in GRYWO-pool met 14-werkdagen proefperiode.
         // Upsert want bij dubbele aanmelding kan profile al bestaan.
@@ -249,11 +248,10 @@ ${inlogWachtwoord ? `
 <div style="background:#f9f9fb;border:1px solid #e0e0ea;border-radius:10px;padding:18px;margin:22px 0;">
   <div style="font-size:12px;font-weight:700;color:#333399;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Je inloggegevens</div>
   <table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr><td style="padding:4px 0;color:#666;width:38%;font-size:13px;">Noah-ATS login (e-mail)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${email}</td></tr>
-    <tr><td style="padding:4px 0;color:#666;font-size:13px;">Mailbox (zakelijk)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${bevestigingMailbox ?? `${voornaam.toLowerCase()}@grywo.nl`}</td></tr>
-    <tr><td style="padding:4px 0;color:#666;font-size:13px;">Wachtwoord (voor beide)</td><td style="padding:4px 0;font-weight:600;font-family:monospace;font-size:13px;">${inlogWachtwoord}</td></tr>
+    <tr><td style="padding:4px 0;color:#666;width:38%;font-size:13px;">E-mail (= login)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${bevestigingMailbox ?? `${voornaam.toLowerCase()}@grywo.nl`}</td></tr>
+    <tr><td style="padding:4px 0;color:#666;font-size:13px;">Wachtwoord</td><td style="padding:4px 0;font-weight:600;font-family:monospace;font-size:13px;">${inlogWachtwoord}</td></tr>
   </table>
-  <p style="margin:14px 0 0 0;font-size:11px;color:#888;">Hetzelfde wachtwoord werkt voor Noah-ATS én je mailbox. Wijzig het direct na je eerste login.</p>
+  <p style="margin:14px 0 0 0;font-size:11px;color:#888;">Dit adres + wachtwoord werkt voor zowel Noah-ATS als je mailbox. Wijzig het wachtwoord direct na je eerste login.</p>
 </div>
 
 <div style="text-align:center;margin:24px 0;">
