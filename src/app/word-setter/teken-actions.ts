@@ -71,38 +71,45 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
     if (!tenantId) {
       console.error("[setter-aanmelding] geen GRYWO-pool tenant gevonden");
     } else {
-      // Wachtwoord voor Noah-account én Migadu-mailbox (zelfde of apart kan)
-      const noahWachtwoord =
-        randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
-      const mailboxWachtwoord =
+      // EÉN wachtwoord voor zowel Noah-login als Migadu-mailbox.
+      // Setter onthoudt zo maar één code voor alles.
+      const inlogPw =
         randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
 
       // 1. Auth-user aanmaken met persoonlijke email als login
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email,
-        password: noahWachtwoord,
+        password: inlogPw,
         email_confirm: true,
       });
 
-      if (createErr) {
-        // Email bestaat al? Dan vinden we 'm en hergebruiken
+      // Bij dubbele email: zoek bestaande user en gebruik die.
+      let userId: string | null = created?.user?.id ?? null;
+      if (!userId && createErr) {
         console.warn("[setter-aanmelding] createUser:", createErr.message);
+        const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const bestaand = list?.users.find(
+          (u) => u.email?.toLowerCase() === email.toLowerCase(),
+        );
+        if (bestaand) {
+          userId = bestaand.id;
+          // Zet wachtwoord opnieuw zodat het paswoord in deze mail werkt
+          await admin.auth.admin.updateUserById(userId, { password: inlogPw });
+        }
       }
-
-      const userId = created?.user?.id;
       if (userId) {
         // Bewaar voor in de bevestigingsmail
-        inlogWachtwoord = noahWachtwoord;
-        // 2. Migadu mailbox @grywo.nl aanmaken (idempotent)
+        inlogWachtwoord = inlogPw;
+        // 2. Migadu mailbox @grywo.nl aanmaken (idempotent — zelfde wachtwoord als Noah)
         const grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@grywo.nl`;
         let mailboxOk = false;
         try {
           const mb = await maakNoahMailbox({
             voornaam,
             achternaam,
-            wachtwoord: mailboxWachtwoord,
+            wachtwoord: inlogPw,
           });
-          mailboxOk = mb.ok;
+          mailboxOk = mb.ok || !!mb.alBestaat;
           if (!mb.ok && !mb.alBestaat) {
             console.error("[setter-aanmelding] Migadu:", mb.error);
           }
@@ -110,9 +117,10 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
           console.error("[setter-aanmelding] Migadu uitzondering:", e);
         }
 
-        // 3. Profile aanmaken in GRYWO-pool met 14-werkdagen proefperiode
+        // 3. Profile aanmaken in GRYWO-pool met 14-werkdagen proefperiode.
+        // Upsert want bij dubbele aanmelding kan profile al bestaan.
         const proefEinde = werkdagenLater(14);
-        await admin.from("profiles").insert({
+        await admin.from("profiles").upsert({
           id: userId,
           tenant_id: tenantId,
           voornaam,
@@ -120,11 +128,11 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
           rol: "setter",
           telefoon: telefoon ?? null,
           mail_adres: grywoEmail,
-          mail_wachtwoord: mailboxOk ? encrypt(mailboxWachtwoord) : null,
+          mail_wachtwoord: mailboxOk ? encrypt(inlogPw) : null,
           mail_status: mailboxOk ? "actief" : "niet_geconfigureerd",
           abonnement_status: "proefperiode",
           proefperiode_eindigt_op: proefEinde,
-        });
+        }, { onConflict: "id" });
 
         // 4. NDA-token aanmaken in user_agreements
         const ndaToken = randomBytes(16).toString("hex");
@@ -214,17 +222,23 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
 
 ${inlogWachtwoord ? `
 <div style="background:#f9f9fb;border:1px solid #e0e0ea;border-radius:10px;padding:18px;margin:22px 0;">
-  <div style="font-size:12px;font-weight:700;color:#333399;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Je inloggegevens voor Noah-ATS</div>
+  <div style="font-size:12px;font-weight:700;color:#333399;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Je inloggegevens</div>
   <table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr><td style="padding:4px 0;color:#666;width:35%;font-size:13px;">E-mail</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${email}</td></tr>
-    <tr><td style="padding:4px 0;color:#666;font-size:13px;">Wachtwoord</td><td style="padding:4px 0;font-weight:600;font-family:monospace;font-size:13px;">${inlogWachtwoord}</td></tr>
+    <tr><td style="padding:4px 0;color:#666;width:38%;font-size:13px;">Noah-ATS login (e-mail)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${email}</td></tr>
+    <tr><td style="padding:4px 0;color:#666;font-size:13px;">Mailbox (zakelijk)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${voornaam.toLowerCase()}@grywo.nl</td></tr>
+    <tr><td style="padding:4px 0;color:#666;font-size:13px;">Wachtwoord (voor beide)</td><td style="padding:4px 0;font-weight:600;font-family:monospace;font-size:13px;">${inlogWachtwoord}</td></tr>
   </table>
-  <p style="margin:14px 0 0 0;font-size:11px;color:#888;">Wijzig dit wachtwoord direct na je eerste login.</p>
+  <p style="margin:14px 0 0 0;font-size:11px;color:#888;">Hetzelfde wachtwoord werkt voor Noah-ATS én je mailbox. Wijzig het direct na je eerste login.</p>
 </div>
 
 <div style="text-align:center;margin:24px 0;">
   <a href="https://www.noah-ats.nl/login" style="display:inline-block;background:#333399;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:bold;font-size:15px;">Inloggen bij Noah-ATS →</a>
 </div>
+
+<p style="margin:0 0 4px 0;font-size:13px;text-align:center;">
+  Je <b>${voornaam.toLowerCase()}@grywo.nl</b>-mailbox check je via webmail:<br>
+  <a href="https://webmail.migadu.com" style="color:#333399;">webmail.migadu.com</a>
+</p>
 ` : ""}
 
 <p><b>Wat gebeurt er nu?</b></p>
