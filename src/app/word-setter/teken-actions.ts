@@ -144,6 +144,21 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
           proefperiode_eindigt_op: proefEinde,
         }, { onConflict: "id" });
 
+        // 3b. Mailbox automatisch koppelen in mail_accounts zodat de inbox-feature
+        // direct werkt — setter hoeft niks handmatig in te voeren op /instellingen.
+        if (mailboxOk) {
+          // Bestaat er al een primary voor deze user? Andere als niet-primary zetten.
+          await admin.from("mail_accounts").update({ is_primary: false }).eq("user_id", userId);
+          await admin.from("mail_accounts").upsert({
+            user_id: userId,
+            mail_adres: grywoEmail,
+            mail_wachtwoord: encrypt(inlogPw),
+            display_naam: "Werk",
+            is_primary: true,
+            mail_status: "actief",
+          }, { onConflict: "user_id,mail_adres" });
+        }
+
         // 4. NDA-token aanmaken in user_agreements
         const ndaToken = randomBytes(16).toString("hex");
         const { data: tenant } = await admin
