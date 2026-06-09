@@ -87,6 +87,8 @@ export async function TopBar({ active }: Props) {
       />
       <SnelZoeken />
       <AutoRefresh />
+      {/* Spacer zodat pagina-content niet onder de fixed SnelZoeken-balk valt */}
+      <div aria-hidden className="h-14" />
     </>
   );
 }
