@@ -52,6 +52,10 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
 
   const naam = `${voornaam} ${achternaam}`.trim();
 
+  // Inlog-gegevens die in de bevestigingsmail komen. Worden gevuld
+  // tijdens de account-flow hieronder.
+  let inlogWachtwoord: string | null = null;
+
   // ─── AUTOMATISCH SETTER-ACCOUNT + MAILBOX + NDA ───
   // Alles best-effort: fouten worden gelogd maar blokkeren de aanmelding niet
   // (Pepijn krijgt sowieso de mail en kan handmatig ingrijpen).
@@ -87,6 +91,8 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
 
       const userId = created?.user?.id;
       if (userId) {
+        // Bewaar voor in de bevestigingsmail
+        inlogWachtwoord = noahWachtwoord;
         // 2. Migadu mailbox @grywo.nl aanmaken (idempotent)
         const grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@grywo.nl`;
         let mailboxOk = false;
@@ -203,13 +209,28 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
 <ul style="padding-left:20px;">
   <li>✅ Je Noah-account is aangemaakt</li>
   <li>✅ Je <b>${voornaam.toLowerCase()}@grywo.nl</b>-mailbox is klaar</li>
-  <li>✅ De geheimhoudingsverklaring (NDA) is zojuist apart naar dit e-mailadres verstuurd — onderteken die ook even, dan ben je klaar om te starten</li>
+  <li>✅ De geheimhoudingsverklaring (NDA) is zojuist apart naar dit e-mailadres verstuurd — onderteken die ook even</li>
 </ul>
+
+${inlogWachtwoord ? `
+<div style="background:#f9f9fb;border:1px solid #e0e0ea;border-radius:10px;padding:18px;margin:22px 0;">
+  <div style="font-size:12px;font-weight:700;color:#333399;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Je inloggegevens voor Noah-ATS</div>
+  <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr><td style="padding:4px 0;color:#666;width:35%;font-size:13px;">E-mail</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${email}</td></tr>
+    <tr><td style="padding:4px 0;color:#666;font-size:13px;">Wachtwoord</td><td style="padding:4px 0;font-weight:600;font-family:monospace;font-size:13px;">${inlogWachtwoord}</td></tr>
+  </table>
+  <p style="margin:14px 0 0 0;font-size:11px;color:#888;">Wijzig dit wachtwoord direct na je eerste login.</p>
+</div>
+
+<div style="text-align:center;margin:24px 0;">
+  <a href="https://www.noah-ats.nl/login" style="display:inline-block;background:#333399;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:bold;font-size:15px;">Inloggen bij Noah-ATS →</a>
+</div>
+` : ""}
+
 <p><b>Wat gebeurt er nu?</b></p>
 <ul style="padding-left:20px;">
-  <li>Pepijn belt of stuurt je een whatsapp-bericht op <b>${telefoon ?? email}</b></li>
-  <li>Korte kennismaking — geen sollicitatie-grilling, gewoon een gesprek</li>
-  <li>Na NDA-ondertekening krijg je je inloggegevens voor Noah-ATS</li>
+  <li>Log in op Noah-ATS met bovenstaande gegevens en kijk rond</li>
+  <li>Onderteken de NDA-mail die we apart hebben gestuurd</li>
   <li>Na 7 werkdagen trial: eigen Voys-telefoonnummer + vaste plek in het team</li>
 </ul>
 <p style="margin-top:24px;">Vragen? WhatsApp Pepijn direct op <a href="https://wa.me/31683481303">+31 6 83481303</a>.</p>
