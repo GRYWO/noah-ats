@@ -162,7 +162,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
   try {
     await resend.emails.send({
       from: "Noah ATS <noreply@grywo.nl>",
-      to: ["pepijn@grywo.nl"],
+      to: ["pepijn@grywo.nl", "wouter@grywo.nl"],
       cc: ["info@grywo.nl"],
       subject: `🎯 Nieuwe setter-aanmelding: ${naam}`,
       html: `
