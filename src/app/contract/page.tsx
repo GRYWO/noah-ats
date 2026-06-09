@@ -41,7 +41,7 @@ export default function ContractPagina() {
           <h1 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
             De afspraak tussen{" "}
             <span className="text-[#ffd84d]">jou</span>{" "}
-            en Binqie en GRYWO.
+            en Binqie.
           </h1>
           <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
             Lees alles rustig door. Akkoord? Onderteken hieronder digitaal.
@@ -60,27 +60,33 @@ export default function ContractPagina() {
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-7 md:p-12">
           <h2 className="text-2xl font-black mb-1">Samenwerkingsovereenkomst</h2>
           <p className="text-xs text-gray-500 mb-8">
-            Setter-positie bij Binqie en GRYWO · met 7-daagse trial
+            Setter-positie bij Binqie · met 7-daagse trial
           </p>
 
           <Sectie nummer="" titel="Partijen">
             <p>
               <b>Binqie B.V.</b>, gevestigd aan de St.-Jacobsstraat 6 A
               (p/a KVK), 3511 BR Utrecht, ingeschreven bij de Kamer van
-              Koophandel onder nummer <b>94799822</b>, handelend onder de
-              naam <b>GRYWO</b>, hierna te noemen:{" "}
-              &ldquo;Binqie en GRYWO&rdquo;.
+              Koophandel onder nummer <b>94799822</b>, hierna te noemen:{" "}
+              &ldquo;Binqie&rdquo;.
             </p>
             <p>
               en de Setter wiens gegevens in het ondertekenformulier hieronder
               zijn ingevuld, hierna te noemen: &ldquo;Setter&rdquo;.
             </p>
+            <p className="text-xs text-gray-500 italic">
+              Setter werkt voor Binqie en wordt door Binqie ingezet voor
+              recruitment-werkzaamheden onder het merk <b>GRYWO</b>. Waar in
+              deze overeenkomst over GRYWO wordt gesproken, gaat het om de
+              werkzaamheden die Setter onder dat merk uitvoert.
+            </p>
           </Sectie>
 
           <Sectie nummer="1" titel="Werkzaamheden">
             <p>
-              Setter voert telefonische acquisitie uit voor Binqie en GRYWO
-              via het ATS-platform Noah. Werkzaamheden omvatten het
+              Setter voert telefonische acquisitie uit voor Binqie, en wordt
+              door Binqie ingezet voor recruitment-werkzaamheden onder het
+              merk GRYWO via het ATS-platform Noah. Werkzaamheden omvatten het
               bellen van opdrachtgevers, voorstellen versturen van kandidaten,
               voortgang vastleggen in Noah en deelnemen aan dagelijkse
               EOD-coaching met Pepijn Zwartenberg als coach.
@@ -130,14 +136,14 @@ export default function ContractPagina() {
               <b>1e van de maand</b> een factuur per e-mail naar{" "}
               <a href="mailto:pepijn@grywo.nl" className="text-[#333399] underline">
                 pepijn@grywo.nl
-              </a>. Binqie en GRYWO betalen de factuur uit binnen <b>7 dagen</b> na
+              </a>. Binqie betalen de factuur uit binnen <b>7 dagen</b> na
               ontvangst, mits de factuur volledig en correct is.
             </p>
           </Sectie>
 
           <Sectie nummer="3" titel="Tools & toegang">
             <p>
-              Binqie en GRYWO stellen aan Setter ter beschikking: een persoonlijk
+              Binqie stellen aan Setter ter beschikking: een persoonlijk
               Noah-account, een eigen <b>@grywo.nl</b>-mailadres en toegang tot
               Jobdigger.
             </p>
@@ -160,7 +166,7 @@ export default function ContractPagina() {
           <Sectie nummer="5" titel="Geheimhouding">
             <p>
               <b>Alle informatie</b> die Setter tijdens of voor de samenwerking
-              te weten komt over Binqie en GRYWO, haar opdrachtgevers,
+              te weten komt over Binqie, haar opdrachtgevers,
               kandidaten, tarieven, marges, processen, software-functionaliteit,
               klantenbestanden, financiële gegevens en strategie is strikt
               vertrouwelijk.
@@ -190,7 +196,7 @@ export default function ContractPagina() {
               Schending leidt tot onmiddellijke beëindiging van de samenwerking
               en een direct opeisbare boete van{" "}
               <b>€ 10.000 per overtreding</b>, vermeerderd met € 500 per dag
-              dat de overtreding voortduurt, onverminderd het recht van Binqie en GRYWO
+              dat de overtreding voortduurt, onverminderd het recht van Binqie
               op volledige schadevergoeding.
             </p>
           </Sectie>
@@ -200,7 +206,7 @@ export default function ContractPagina() {
               <b>Tijdens de samenwerking</b> is het Setter niet toegestaan
               werkzaamheden te verrichten voor andere recruitmentbureaus,
               uitzendbureaus, detacheringspartijen of vergelijkbare partijen
-              die concurreren met Binqie en GRYWO.
+              die concurreren met Binqie.
             </p>
             <p>
               <b>
@@ -211,15 +217,15 @@ export default function ContractPagina() {
             <ul className="list-disc pl-6 space-y-1.5">
               <li>
                 Vergelijkbare werkzaamheden te verrichten voor opdrachtgevers
-                van Binqie en GRYWO waarmee Setter direct of indirect contact heeft
+                van Binqie waarmee Setter direct of indirect contact heeft
                 gehad.
               </li>
               <li>
-                Kandidaten die via Binqie en GRYWO in beeld zijn gekomen te
+                Kandidaten die via Binqie in beeld zijn gekomen te
                 bemiddelen, te benaderen of te plaatsen.
               </li>
               <li>
-                Werknemers, collega-setters of recruiters van Binqie en GRYWO actief te
+                Werknemers, collega-setters of recruiters van Binqie actief te
                 benaderen voor een overstap (anti-ronselbeding).
               </li>
             </ul>
@@ -227,10 +233,10 @@ export default function ContractPagina() {
               Bij overtreding van dit beding is Setter een direct opeisbare
               boete verschuldigd van <b>€ 10.000 per overtreding</b>,
               vermeerderd met € 500 per dag dat de overtreding voortduurt,
-              onverminderd het recht van Binqie en GRYWO op volledige schadevergoeding.
+              onverminderd het recht van Binqie op volledige schadevergoeding.
             </p>
             <p className="text-xs text-gray-500 italic">
-              Schriftelijke toestemming van Binqie en GRYWO kan dit beding opheffen in
+              Schriftelijke toestemming van Binqie kan dit beding opheffen in
               individuele gevallen.
             </p>
           </Sectie>
@@ -240,7 +246,7 @@ export default function ContractPagina() {
               De samenwerking start met een <b>7-daagse trial</b>. Beide
               partijen kunnen de samenwerking tijdens en na de trial{" "}
               <b>per direct</b> schriftelijk opzeggen, zonder opzegtermijn.
-              Binqie en GRYWO mogen bij ernstige tekortkomingen of schending
+              Binqie mogen bij ernstige tekortkomingen of schending
               van geheimhouding/concurrentiebeding direct beëindigen met
               behoud van alle rechten.
             </p>
