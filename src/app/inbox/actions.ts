@@ -96,12 +96,12 @@ export async function verwijderMap(formData: FormData) {
     logger: false,
   });
 
+  let foutmelding: string | null = null;
   try {
     await client.connect();
 
-    // Voordat we de map zelf verwijderen, eerst alle berichten verplaatsen
-    // naar de Prullenbak. Veel IMAP-servers (waaronder Migadu) weigeren
-    // anders met "Command failed" als de mailbox niet leeg is.
+    // 1. Leeg de map: verplaats berichten naar Prullenbak, of hard delete
+    //    als er geen trash is / we al in trash zitten.
     const list = await client.list();
     const trash = list.find(m => m.specialUse === "\\Trash")
                ?? list.find(m => m.path.toLowerCase().includes("trash") || m.path.toLowerCase().includes("prullen"));
@@ -109,30 +109,47 @@ export async function verwijderMap(formData: FormData) {
     const lock = await client.getMailboxLock(mapPad);
     try {
       const mailbox = client.mailbox as { exists: number };
-      if (mailbox.exists > 0 && trash && trash.path !== mapPad) {
-        // Alle mails uit deze map naar de Prullenbak verplaatsen
-        await client.messageMove("1:*", trash.path);
-      } else if (mailbox.exists > 0) {
-        // Geen trash beschikbaar of we zitten al in trash → hard delete
-        await client.messageDelete("1:*");
+      if (mailbox.exists > 0) {
+        if (trash && trash.path !== mapPad) {
+          await client.messageMove("1:*", trash.path).catch(async () => {
+            // Fallback: als move faalt (bv. quota of permissies), hard delete
+            await client.messageDelete("1:*");
+          });
+        } else {
+          await client.messageDelete("1:*");
+        }
       }
     } finally {
       lock.release();
     }
 
+    // 2. BELANGRIJK: switch naar INBOX (of een andere mailbox) voordat
+    //    we de target deleten. Migadu (en RFC 3501) weigeren DELETE op
+    //    een geselecteerde mailbox met "Command failed". Door INBOX te
+    //    openen wordt de huidige selectie gedeselecteerd.
+    try {
+      await client.mailboxOpen("INBOX");
+      await client.mailboxClose();
+    } catch {
+      // Negeer — als INBOX niet kan worden geopend gaan we toch door
+    }
+
+    // 3. Probeer de mailbox te verwijderen
     await client.mailboxDelete(mapPad);
 
-    // Lokale cache opruimen zodat de map ook in Noah-ATS direct verdwijnt
+    // 4. Lokale cache opruimen zodat map direct verdwijnt in UI
     await admin.from("mail_mappen").delete().eq("user_id", user.id).eq("pad", mapPad);
     await admin.from("mail_berichten").delete().eq("user_id", user.id).eq("map_pad", mapPad);
   } catch (e) {
+    foutmelding = (e as Error).message || "Onbekende fout";
+    console.error("[verwijderMap] IMAP-fout:", foutmelding, "map:", mapPad);
+  } finally {
     await client.logout().catch(() => {});
-    const msg = (e as Error).message || "Onbekende fout";
-    redirect(`/inbox?error=${encodeURIComponent("Map verwijderen mislukt: " + msg)}`);
   }
 
-  await client.logout().catch(() => {});
-
   revalidatePath("/inbox");
+  if (foutmelding) {
+    redirect(`/inbox?error=${encodeURIComponent("Map verwijderen mislukt: " + foutmelding)}`);
+  }
   redirect("/inbox");
 }
