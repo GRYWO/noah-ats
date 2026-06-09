@@ -164,7 +164,7 @@ export default function ContractPagina() {
           <Sectie nummer="5" titel="Geheimhouding">
             <p>
               <b>Alle informatie</b> die Setter tijdens of voor de samenwerking
-              te weten komt over Binqie / GRYWO, haar opdrachtgevers,
+              te weten komt over Binqie en GRYWO, haar opdrachtgevers,
               kandidaten, tarieven, marges, processen, software-functionaliteit,
               klantenbestanden, financiële gegevens en strategie is strikt
               vertrouwelijk.
@@ -204,7 +204,7 @@ export default function ContractPagina() {
               <b>Tijdens de samenwerking</b> is het Setter niet toegestaan
               werkzaamheden te verrichten voor andere recruitmentbureaus,
               uitzendbureaus, detacheringspartijen of vergelijkbare partijen
-              die concurreren met Binqie / GRYWO.
+              die concurreren met Binqie en GRYWO.
             </p>
             <p>
               <b>
@@ -219,7 +219,7 @@ export default function ContractPagina() {
                 gehad.
               </li>
               <li>
-                Kandidaten die via Binqie / GRYWO in beeld zijn gekomen te
+                Kandidaten die via Binqie en GRYWO in beeld zijn gekomen te
                 bemiddelen, te benaderen of te plaatsen.
               </li>
               <li>
