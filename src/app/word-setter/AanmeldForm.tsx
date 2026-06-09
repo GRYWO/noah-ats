@@ -260,8 +260,7 @@ export function AanmeldForm() {
       </button>
 
       <p className="text-xs text-gray-500 text-center">
-        Door te ondertekenen ga je akkoord met het opslaan van je gegevens. Pepijn neemt
-        binnen 24 uur contact op om de 7-daagse trial te plannen.
+        Door te ondertekenen ga je akkoord met het opslaan van je gegevens.
       </p>
     </form>
   );
