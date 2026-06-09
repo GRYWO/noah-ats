@@ -13,6 +13,7 @@ import { MfaSectie } from "./MfaSectie";
 import { ThemaSectie } from "./ThemaSectie";
 import { SidebarSectie } from "./SidebarSectie";
 import { VoorkeurenSectie } from "./VoorkeurenSectie";
+import { ensureMailAccountForUser } from "@/utils/mail-auto-link";
 
 export default async function InstellingenPage({
   searchParams,
@@ -22,6 +23,10 @@ export default async function InstellingenPage({
   const { ok, error } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Auto-koppel mailbox: als profiel mail-config heeft maar mail_accounts
+  // leeg is, dan automatisch een rij aanmaken zodat de inbox direct werkt.
+  if (user?.id) await ensureMailAccountForUser(user.id);
 
   const [profileRes, accountsRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user!.id).single(),

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { InboxClient } from "./InboxClient";
+import { ensureMailAccountForUser } from "@/utils/mail-auto-link";
 
 export const revalidate = 0;
 
@@ -14,6 +15,9 @@ export default async function InboxPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Auto-koppel mailbox uit profiel als die er nog niet is (legacy setters)
+  if (user?.id) await ensureMailAccountForUser(user.id);
 
   // Haal alle mail-accounts van user
   const { data: accounts } = await supabase
