@@ -124,9 +124,8 @@ export default function ContractPagina() {
                 </tbody>
               </table>
               <p className="text-xs text-gray-600 mt-3 italic">
-                Het percentage wordt berekend over het bruto jaarsalaris en
-                vervolgens in maandelijkse termijnen uitgekeerd zolang de
-                kandidaat geplaatst blijft.
+                Het percentage wordt elke maand opnieuw berekend over het bruto
+                jaarsalaris en uitbetaald zolang de kandidaat geplaatst blijft.
               </p>
             </div>
 
