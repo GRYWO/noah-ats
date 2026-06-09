@@ -5,30 +5,29 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 
-type Result = { ok?: boolean; error?: string };
-
 async function checkSuperAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !isSuperAdminEmail(user.email)) {
-    return { error: "Alleen super-admin mag dit", user: null };
+    return { ok: false, user: null };
   }
-  return { error: null, user };
+  return { ok: true, user };
 }
 
-export async function plaatsSysteemMelding(formData: FormData): Promise<Result> {
+export async function plaatsSysteemMelding(formData: FormData): Promise<void> {
   const check = await checkSuperAdmin();
-  if (check.error || !check.user) return { error: check.error ?? "Niet ingelogd" };
+  if (!check.ok || !check.user) {
+    console.error("[systeem-meldingen] niet geautoriseerd");
+    return;
+  }
 
   const type = formData.get("type") as string;
   const titel = (formData.get("titel") as string)?.trim();
   const bericht = (formData.get("bericht") as string)?.trim();
 
-  if (!type || !["let_op", "update", "storing"].includes(type)) {
-    return { error: "Kies een type" };
-  }
-  if (!titel || titel.length < 2) return { error: "Vul een titel in" };
-  if (!bericht || bericht.length < 2) return { error: "Vul een bericht in" };
+  if (!type || !["let_op", "update", "storing"].includes(type)) return;
+  if (!titel || titel.length < 2) return;
+  if (!bericht || bericht.length < 2) return;
 
   const admin = createAdminClient();
 
@@ -46,27 +45,23 @@ export async function plaatsSysteemMelding(formData: FormData): Promise<Result> 
     aangemaakt_door: check.user.id,
   });
 
-  if (error) return { error: error.message };
+  if (error) console.error("[systeem-meldingen] insert mislukt:", error.message);
 
   revalidatePath("/", "layout");
-  return { ok: true };
 }
 
-export async function deactiveerSysteemMelding(formData: FormData): Promise<Result> {
+export async function deactiveerSysteemMelding(formData: FormData): Promise<void> {
   const check = await checkSuperAdmin();
-  if (check.error) return { error: check.error };
+  if (!check.ok) return;
 
   const id = formData.get("id") as string;
-  if (!id) return { error: "Geen ID" };
+  if (!id) return;
 
   const admin = createAdminClient();
-  const { error } = await admin
+  await admin
     .from("systeem_meldingen")
     .update({ actief: false, gedeactiveerd_op: new Date().toISOString() })
     .eq("id", id);
 
-  if (error) return { error: error.message };
-
   revalidatePath("/", "layout");
-  return { ok: true };
 }
