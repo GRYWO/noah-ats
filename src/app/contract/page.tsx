@@ -94,9 +94,10 @@ export default function ContractPagina() {
           <Sectie nummer="2" titel="Vergoeding">
             <p>
               Setter ontvangt per gerealiseerde plaatsing een{" "}
-              <b>maandelijkse fee</b> berekend over het bruto jaarsalaris van
-              de geplaatste kandidaat. De fee wordt staffelgewijs verhoogd op
-              basis van het totaal aantal plaatsingen van Setter:
+              <b>percentage van het bruto jaarsalaris</b> van de geplaatste
+              kandidaat, dat <b>maandelijks wordt uitgekeerd</b>. Het percentage
+              wordt staffelgewijs verhoogd op basis van het totaal aantal
+              plaatsingen van Setter:
             </p>
 
             <div className="bg-[#333399]/5 border border-[#333399]/15 rounded-xl p-4 mt-3">
@@ -104,7 +105,7 @@ export default function ContractPagina() {
                 <thead>
                   <tr className="text-left text-xs text-gray-500 uppercase">
                     <th className="py-2 font-semibold">Aantal plaatsingen</th>
-                    <th className="py-2 font-semibold text-right">Fee per maand</th>
+                    <th className="py-2 font-semibold text-right">% van bruto jaarsalaris</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -123,8 +124,8 @@ export default function ContractPagina() {
                 </tbody>
               </table>
               <p className="text-xs text-gray-600 mt-3 italic">
-                Percentage geldt over het bruto jaarsalaris van de geplaatste
-                kandidaat en wordt elke maand opnieuw uitbetaald zolang de
+                Het percentage wordt berekend over het bruto jaarsalaris en
+                vervolgens in maandelijkse termijnen uitgekeerd zolang de
                 kandidaat geplaatst blijft.
               </p>
             </div>
