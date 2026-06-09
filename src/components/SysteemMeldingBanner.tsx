@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertTriangle, Sparkles, AlertOctagon, X } from "lucide-react";
+
+const DISMISS_STORAGE_KEY = "noah-systeem-melding-dismissed";
 
 type Melding = {
   id: string;
@@ -20,7 +22,32 @@ const TYPE_META = {
 export function SysteemMeldingBanner({ melding }: { melding: Melding | null }) {
   const [open, setOpen] = useState(false);
   const [dismissedId, setDismissedId] = useState<string | null>(null);
+  const [gehydrateerd, setGehydrateerd] = useState(false);
 
+  // Laad bij mount welke melding-ID al is weggeklikt door deze user/browser.
+  // Persistent in localStorage zodat 'Begrepen' onthouden wordt over
+  // pagina-navigatie en sessies heen.
+  useEffect(() => {
+    try {
+      const opgeslagen = localStorage.getItem(DISMISS_STORAGE_KEY);
+      if (opgeslagen) setDismissedId(opgeslagen);
+    } catch {
+      // localStorage kan in private mode geblokkeerd zijn — negeren
+    }
+    setGehydrateerd(true);
+  }, []);
+
+  function bewaarDismiss(id: string) {
+    setDismissedId(id);
+    try {
+      localStorage.setItem(DISMISS_STORAGE_KEY, id);
+    } catch {
+      // negeer
+    }
+  }
+
+  // Voorkom flash van banner tijdens hydration
+  if (!gehydrateerd) return null;
   if (!melding || dismissedId === melding.id) return null;
 
   const meta = TYPE_META[melding.type] ?? TYPE_META.let_op;
@@ -87,7 +114,7 @@ export function SysteemMeldingBanner({ melding }: { melding: Melding | null }) {
               <button
                 type="button"
                 onClick={() => {
-                  setDismissedId(melding.id);
+                  bewaarDismiss(melding.id);
                   setOpen(false);
                 }}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition"
