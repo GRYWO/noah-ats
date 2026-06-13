@@ -50,6 +50,27 @@ export async function plaatsSysteemMelding(formData: FormData): Promise<void> {
   revalidatePath("/", "layout");
 }
 
+/**
+ * Markeer voor de huidige user dat deze melding is weggeklikt.
+ * Persistent in DB zodat hij ook op andere apparaten / browsers
+ * niet meer verschijnt voor deze user.
+ */
+export async function dismissSysteemMeldingVoorUser(meldingId: string): Promise<void> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !meldingId) return;
+
+  const admin = createAdminClient();
+  await admin
+    .from("dismissed_systeem_meldingen")
+    .upsert(
+      { user_id: user.id, melding_id: meldingId },
+      { onConflict: "user_id,melding_id" }
+    );
+
+  revalidatePath("/", "layout");
+}
+
 export async function deactiveerSysteemMelding(formData: FormData): Promise<void> {
   const check = await checkSuperAdmin();
   if (!check.ok) return;
