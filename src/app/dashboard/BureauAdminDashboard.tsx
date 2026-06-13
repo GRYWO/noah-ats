@@ -190,7 +190,7 @@ export async function BureauAdminDashboard({ tenantId, bureauNaam }: { tenantId:
         <SnelLink
           href="/users"
           titel="Recruiters beheren"
-          beschrijving="Voeg recruiters toe en beheer hun gegevens. Setters worden centraal door GRYWO geregeld."
+          beschrijving="Voeg recruiters toe en beheer hun gegevens. Setters worden centraal door Noah recruitment geregeld."
           icoon={<UserPlus size={20} />}
         />
         <SnelLink

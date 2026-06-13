@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { AlertTriangle, Sparkles, AlertOctagon, X } from "lucide-react";
+import { dismissSysteemMeldingVoorUser } from "@/app/systeem-meldingen/actions";
 
 const DISMISS_STORAGE_KEY = "noah-systeem-melding-dismissed";
 
@@ -23,6 +24,7 @@ export function SysteemMeldingBanner({ melding }: { melding: Melding | null }) {
   const [open, setOpen] = useState(false);
   const [dismissedId, setDismissedId] = useState<string | null>(null);
   const [gehydrateerd, setGehydrateerd] = useState(false);
+  const [, startTransition] = useTransition();
 
   // Laad bij mount welke melding-ID al is weggeklikt door deze user/browser.
   // Persistent in localStorage zodat 'Begrepen' onthouden wordt over
@@ -38,12 +40,22 @@ export function SysteemMeldingBanner({ melding }: { melding: Melding | null }) {
   }, []);
 
   function bewaarDismiss(id: string) {
+    // Direct UI verbergen
     setDismissedId(id);
+    // localStorage als snelle cache
     try {
       localStorage.setItem(DISMISS_STORAGE_KEY, id);
     } catch {
       // negeer
     }
+    // Server-side opslaan zodat de melding ook op andere apparaten /
+    // browsers permanent verborgen blijft voor deze user.
+    startTransition(() => {
+      dismissSysteemMeldingVoorUser(id).catch(() => {
+        // Als de server-action faalt blijft de localStorage-cache hem
+        // verbergen op dit apparaat — geen drama.
+      });
+    });
   }
 
   // Voorkom flash van banner tijdens hydration

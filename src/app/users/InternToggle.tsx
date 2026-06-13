@@ -17,7 +17,7 @@ export function InternToggle({
   function klik() {
     if (!confirm(aan
       ? "Intern-personeel vlag weghalen? Deze admin krijgt dan weer een bureau-view."
-      : "Markeren als intern Noah/GRYWO personeel? Deze admin krijgt dan de volledige admin-view i.p.v. bureau-view."
+      : "Markeren als intern Noah recruitment personeel? Deze admin krijgt dan de volledige admin-view i.p.v. bureau-view."
     )) return;
     setAan(!aan);
     start(async () => {

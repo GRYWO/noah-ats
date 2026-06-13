@@ -98,7 +98,7 @@ export async function vraagNieuweKandidaatAan(formData: FormData): Promise<Resul
   try {
     await sendNieuweKandidaatVerzoek({
       naar: "info@grywo.nl",
-      recruiterVoornaam: "GRYWO-team",
+      recruiterVoornaam: "Noah recruitment-team",
       setterNaam: `${setterNaam} → ${recruiter.voornaam ?? "?"} (${recruiterEmail})`,
       reden,
       aantalUitnodigingen,

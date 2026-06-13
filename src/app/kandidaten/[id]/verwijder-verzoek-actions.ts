@@ -129,7 +129,7 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
   try {
     await sendKandidaatVerwijderVerzoek({
       naar: "info@grywo.nl",
-      recruiterVoornaam: "GRYWO-team",
+      recruiterVoornaam: "Noah recruitment-team",
       kandidaatNaam: `[KOPIE] ${kandidaatNaam}`,
       setterNaam: `${setterNaam} → recruiter: ${recruiter.voornaam ?? "?"} (${recruiterEmail})`,
       reden,

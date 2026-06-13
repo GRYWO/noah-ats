@@ -53,7 +53,7 @@ export function NieuwDocumentForm() {
             <input
               name="titel"
               required
-              placeholder="bv. Samenwerkingsovereenkomst GRYWO × ABC B.V."
+              placeholder="bv. Samenwerkingsovereenkomst Noah recruitment × ABC B.V."
               className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]"
             />
           </div>

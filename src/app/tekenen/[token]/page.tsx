@@ -143,13 +143,13 @@ function NdaSetterTekst({ naam, bureau, datum }: { naam: string; bureau: string;
   return (
     <>
       <h1 className="text-3xl font-bold text-gray-900 mb-1">Geheimhoudingsverklaring</h1>
-      <p className="text-sm text-gray-500 mb-6">Voor setters in de GRYWO-pool · {datum}</p>
+      <p className="text-sm text-gray-500 mb-6">Voor setters in de Noah recruitment-pool · {datum}</p>
 
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-5 text-sm">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 py-1">
           <div className="font-semibold text-gray-600">Tussen</div>
           <div className="md:col-span-2 text-gray-900">
-            <b>OneTwoStart NL B.V.</b> (handelsnaam: GRYWO) — Raasdorperweg 191 A, 1175 KV Lijnden — KvK 96738782
+            <b>OneTwoStart NL B.V.</b> (handelsnaam: Noah recruitment) — Raasdorperweg 191 A, 1175 KV Lijnden — KvK 96738782
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 py-1 mt-2 border-t border-gray-200 pt-3">
@@ -165,7 +165,7 @@ function NdaSetterTekst({ naam, bureau, datum }: { naam: string; bureau: string;
 
       <H2>1. Waarom deze verklaring?</H2>
       <p className="text-sm text-gray-700">
-        Als GRYWO-setter werk je in Noah ATS centraal voor <b>meerdere recruitment-bureaus</b>. Daardoor zie je kandidaten,
+        Als Noah recruitment-setter werk je in Noah ATS centraal voor <b>meerdere recruitment-bureaus</b>. Daardoor zie je kandidaten,
         opdrachtgevers en interne data van verschillende klanten door elkaar. Deze verklaring beschermt al die data en is
         verplicht onder AVG art. 32 lid 4.
       </p>
@@ -177,14 +177,14 @@ function NdaSetterTekst({ naam, bureau, datum }: { naam: string; bureau: string;
         <li>Voorstellen, plaatsings-tarieven, interne marges, betalingsstatus</li>
         <li>Bellijsten, EOD-rapporten, coaching-aanvragen, doelen, statistieken van collega's</li>
         <li>Login-gegevens, mailbox-credentials, IT-architectuur, source-code, screenshots van Noah ATS</li>
-        <li>Strategie, business-modellen en alle niet-publieke informatie van GRYWO en aangesloten bureaus</li>
+        <li>Strategie, business-modellen en alle niet-publieke informatie van Noah recruitment en aangesloten bureaus</li>
       </ul>
 
       <H2>3. Je verplichtingen</H2>
       <ul className="list-disc pl-6 space-y-1 text-sm text-gray-700">
         <li>Vertrouwelijke informatie blijft <b>strikt binnen Noah ATS</b> — geen export naar Excel, e-mail of WhatsApp voor eigen doel</li>
         <li>Je deelt geen wachtwoorden, niet met collega's en niet met externen</li>
-        <li>Je maakt geen screenshots of foto's van Noah-schermen behalve waar uitdrukkelijk verzocht door GRYWO</li>
+        <li>Je maakt geen screenshots of foto's van Noah-schermen behalve waar uitdrukkelijk verzocht door Noah recruitment</li>
         <li>Schermdeling (Zoom/Teams) tijdens werk-uren alleen voor werk-doeleinden; deel geen kandidaat-data via je persoonlijke devices</li>
         <li>Je benadert geen kandidaten of opdrachtgevers <b>buiten</b> Noah ATS om voor eigen voordeel (geen "side-deals")</li>
         <li>Verdachte activiteit of een vermoed datalek meld je <b>direct</b> aan Yorith Hulzebosch (085-4016082)</li>
@@ -198,15 +198,15 @@ function NdaSetterTekst({ naam, bureau, datum }: { naam: string; bureau: string;
 
       <H2>5. Duur en na beëindiging</H2>
       <p className="text-sm text-gray-700">
-        Deze verklaring geldt tijdens je dienstverband bij GRYWO én <b>5 jaar daarna</b>. Bij beëindiging:
+        Deze verklaring geldt tijdens je dienstverband bij Noah recruitment én <b>5 jaar daarna</b>. Bij beëindiging:
         je toegang tot Noah ATS wordt direct ingetrokken, je vernietigt alle lokale kopieën (downloads, screenshots, notities)
-        en je geeft alle GRYWO-apparatuur retour.
+        en je geeft alle Noah recruitment-apparatuur retour.
       </p>
 
       <H2>6. Boete bij overtreding</H2>
       <p className="text-sm text-gray-700">
         Bij aantoonbare overtreding ben je een <b>direct opeisbare boete</b> van € 5.000 per overtreding verschuldigd,
-        plus € 500 voor elke dag dat de overtreding voortduurt — onverminderd het recht van GRYWO op volledige schadevergoeding.
+        plus € 500 voor elke dag dat de overtreding voortduurt — onverminderd het recht van Noah recruitment op volledige schadevergoeding.
       </p>
 
       <H2>7. Toepasselijk recht</H2>
@@ -222,12 +222,12 @@ function SetterContractTekst({ naam, datum }: { naam: string; datum: string }) {
   return (
     <div className="prose prose-sm max-w-none text-gray-800">
       <h1 className="text-2xl font-bold mb-1">Samenwerkingsovereenkomst</h1>
-      <p className="text-sm text-gray-500 mb-6">Opgesteld op {datum} · Setter-positie bij GRYWO</p>
+      <p className="text-sm text-gray-500 mb-6">Opgesteld op {datum} · Setter-positie bij Noah recruitment</p>
 
       <h2 className="text-base font-bold mt-4 mb-2">Partijen</h2>
       <p className="text-sm leading-relaxed">
-        <b>OneTwoStart NL B.V.</b> (handelend onder de naam <b>GRYWO</b>), gevestigd te Nederland,
-        KvK 96738782, hierna: &ldquo;GRYWO&rdquo;.
+        <b>OneTwoStart NL B.V.</b> (handelend onder de naam <b>Noah recruitment</b>), gevestigd te Nederland,
+        KvK 96738782, hierna: &ldquo;Noah recruitment&rdquo;.
       </p>
       <p className="text-sm leading-relaxed">
         en <b>{naam || "[Naam setter]"}</b>, hierna: &ldquo;Setter&rdquo;.
@@ -235,7 +235,7 @@ function SetterContractTekst({ naam, datum }: { naam: string; datum: string }) {
 
       <h2 className="text-base font-bold mt-6 mb-2">1. Werkzaamheden</h2>
       <p className="text-sm leading-relaxed">
-        Setter voert telefonische acquisitie uit voor GRYWO via het ATS-platform Noah.
+        Setter voert telefonische acquisitie uit voor Noah recruitment via het ATS-platform Noah.
         Werkzaamheden omvatten het bellen van opdrachtgevers, voorstellen versturen van
         kandidaten, voortgang vastleggen en deelnemen aan dagelijkse EOD-coaching.
       </p>
@@ -245,12 +245,12 @@ function SetterContractTekst({ naam, datum }: { naam: string; datum: string }) {
         Setter ontvangt een vast basisbedrag per maand zoals individueel afgesproken,
         vermeerderd met een bonus per gerealiseerde plaatsing van een door Setter voorgestelde
         kandidaat. Uitbetaling vindt maandelijks plaats achteraf, na ontvangst van een
-        deugdelijke factuur van Setter aan GRYWO.
+        deugdelijke factuur van Setter aan Noah recruitment.
       </p>
 
       <h2 className="text-base font-bold mt-4 mb-2">3. Tools &amp; toegang</h2>
       <p className="text-sm leading-relaxed">
-        GRYWO stelt aan Setter ter beschikking: een persoonlijk Noah-account, een
+        Noah recruitment stelt aan Setter ter beschikking: een persoonlijk Noah-account, een
         <b> voornaam@grywo.nl</b>-mailadres, toegang tot Jobdigger en de Robin AI-assistent.
         Setter respecteert de Acceptable Use-bepalingen zoals beschreven in de
         Gebruiksvoorwaarden Noah ATS.
@@ -259,37 +259,37 @@ function SetterContractTekst({ naam, datum }: { naam: string; datum: string }) {
       <h2 className="text-base font-bold mt-4 mb-2">4. Eigendom en data</h2>
       <p className="text-sm leading-relaxed">
         Alle kandidaten, leads en opdrachtgever-gegevens die binnen Noah worden verzameld
-        of bewerkt zijn eigendom van GRYWO. Bij beëindiging van deze samenwerking blijven
-        gegevens bij GRYWO en wordt de toegang van Setter onmiddellijk gerevoceerd.
+        of bewerkt zijn eigendom van Noah recruitment. Bij beëindiging van deze samenwerking blijven
+        gegevens bij Noah recruitment en wordt de toegang van Setter onmiddellijk gerevoceerd.
       </p>
 
       <h2 className="text-base font-bold mt-4 mb-2">5. Geheimhouding</h2>
       <p className="text-sm leading-relaxed">
         Aanvullend op de afzonderlijke Geheimhoudingsverklaring (NDA) verbindt Setter zich
         alle informatie over opdrachtgevers, kandidaten, tarieven, marges en interne werkwijzen
-        van GRYWO strikt vertrouwelijk te behandelen. Schending van geheimhouding leidt tot
+        van Noah recruitment strikt vertrouwelijk te behandelen. Schending van geheimhouding leidt tot
         directe beëindiging van de samenwerking en mogelijke aansprakelijkheid.
       </p>
 
       <h2 className="text-base font-bold mt-4 mb-2">6. Concurrentie &amp; relatiebeding</h2>
       <p className="text-sm leading-relaxed">
         Tijdens de samenwerking en gedurende <b>12 maanden na beëindiging</b> verricht Setter
-        geen vergelijkbare werkzaamheden voor opdrachtgevers van GRYWO waarmee hij/zij
+        geen vergelijkbare werkzaamheden voor opdrachtgevers van Noah recruitment waarmee hij/zij
         gedurende de samenwerking direct of indirect contact heeft gehad, behoudens uitdrukkelijke
-        schriftelijke toestemming van GRYWO.
+        schriftelijke toestemming van Noah recruitment.
       </p>
 
       <h2 className="text-base font-bold mt-4 mb-2">7. Duur en beëindiging</h2>
       <p className="text-sm leading-relaxed">
         Deze samenwerking gaat in vanaf de datum van ondertekening en is voor onbepaalde
         tijd. Beide partijen kunnen schriftelijk opzeggen met een opzegtermijn van één maand.
-        GRYWO mag bij ernstige tekortkomingen of geheimhouding-schendingen per direct beëindigen.
+        Noah recruitment mag bij ernstige tekortkomingen of geheimhouding-schendingen per direct beëindigen.
       </p>
 
       <h2 className="text-base font-bold mt-4 mb-2">8. Toepasselijk recht</h2>
       <p className="text-sm leading-relaxed">
         Op deze overeenkomst is uitsluitend Nederlands recht van toepassing. Geschillen worden
-        voorgelegd aan de bevoegde rechter in het arrondissement van vestiging van GRYWO.
+        voorgelegd aan de bevoegde rechter in het arrondissement van vestiging van Noah recruitment.
       </p>
 
       <p className="text-xs text-gray-500 mt-6">
@@ -312,7 +312,7 @@ function GebruiksvoorwaardenTekst({ naam, rol, bureau, datum }: { naam: string; 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 py-1">
           <div className="font-semibold text-gray-600">Tussen</div>
           <div className="md:col-span-2 text-gray-900">
-            <b>OneTwoStart NL B.V.</b> (handelsnaam: GRYWO) — KvK 96738782
+            <b>OneTwoStart NL B.V.</b> (handelsnaam: Noah recruitment) — KvK 96738782
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 py-1 mt-2 border-t border-gray-200 pt-3">
@@ -349,8 +349,8 @@ function GebruiksvoorwaardenTekst({ naam, rol, bureau, datum }: { naam: string; 
 
       <H2>4. Privacy en data</H2>
       <p className="text-sm text-gray-700">
-        GRYWO verwerkt persoonsgegevens conform de AVG, zie <a href="/privacy" className="text-[#333399] underline">privacybeleid</a>.
-        Tussen je bureau en GRYWO is een verwerkersovereenkomst getekend die de juridische basis vormt voor data-verwerking.
+        Noah recruitment verwerkt persoonsgegevens conform de AVG, zie <a href="/privacy" className="text-[#333399] underline">privacybeleid</a>.
+        Tussen je bureau en Noah recruitment is een verwerkersovereenkomst getekend die de juridische basis vormt voor data-verwerking.
       </p>
 
       <H2>5. Beëindiging</H2>

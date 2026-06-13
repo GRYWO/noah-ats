@@ -62,7 +62,7 @@ export default async function HoofdstukPage({
             </Link>
             <Link href="/" className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition">
               <span>Powered by</span>
-              <Image src="/grywo-logo-wit.png" alt="GRYWO" width={70} height={20} className="opacity-90" />
+              <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={70} height={20} className="opacity-90" />
             </Link>
           </div>
 
@@ -176,7 +176,7 @@ export default async function HoofdstukPage({
       </article>
 
       <footer className="bg-[#0f0f23] text-white/40 text-xs text-center py-6">
-        © {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782 · Noah-ATS is een product van GRYWO
+        © {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782 · Noah-ATS is een product van Noah recruitment
       </footer>
     </main>
   );

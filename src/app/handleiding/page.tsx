@@ -5,7 +5,7 @@ import { HOOFDSTUKKEN } from "./data";
 export const metadata = {
   title: "Noah-ATS handleiding — Hoe alles in elkaar zit",
   description:
-    "Volledig boekwerk over Noah-ATS — rollen, flows, beveiliging, AI, Stripe en meer. Powered by GRYWO.",
+    "Volledig boekwerk over Noah-ATS — rollen, flows, beveiliging, AI, Stripe en meer. Powered by Noah recruitment.",
 };
 
 const KLEUREN: Record<string, { bg: string; tekst: string; rand: string }> = {
@@ -46,7 +46,7 @@ export default function HandleidingPage() {
             <span>Powered by</span>
             <Image
               src="/grywo-logo-wit.png"
-              alt="GRYWO"
+              alt="Noah recruitment"
               width={70}
               height={20}
               className="opacity-90"
@@ -126,7 +126,7 @@ export default function HandleidingPage() {
       {/* Footer */}
       <footer className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 py-8 text-center text-[11px] text-white/40 border-t border-white/10">
         © {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782 · Noah-ATS
-        is een product van GRYWO
+        is een product van Noah recruitment
       </footer>
     </main>
   );

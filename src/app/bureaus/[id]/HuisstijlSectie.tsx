@@ -88,7 +88,7 @@ export function HuisstijlSectie({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src="/grywo-logo-wit.png"
-                alt="GRYWO logo (standaard)"
+                alt="Noah recruitment logo (standaard)"
                 className="h-12 max-w-[180px] object-contain opacity-90"
               />
             )}
