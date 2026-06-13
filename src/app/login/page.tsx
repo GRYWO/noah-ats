@@ -77,12 +77,14 @@ export default async function LoginPage({
 
       {/* Login card */}
       <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 -mt-8">
-        {/* Noah-logo block */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl px-10 py-8 mb-8 flex items-baseline">
+        {/* Noah ATS logo block */}
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl px-10 py-8 mb-8 flex items-baseline gap-3">
           <span className="text-white text-5xl md:text-6xl font-black tracking-tighter">
-            noah
+            Noah<span className="text-[#ffd84d]">.</span>
           </span>
-          <span className="ml-2 w-4 h-4 rounded-full bg-[#ffd84d] inline-block" />
+          <span className="text-white/80 text-xs md:text-sm font-semibold uppercase tracking-[0.35em]">
+            ATS
+          </span>
         </div>
 
         {/* Form card */}
