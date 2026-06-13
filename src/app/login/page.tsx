@@ -55,18 +55,20 @@ export default async function LoginPage({
         }}
       />
 
-      {/* Header — klein GRYWO logo */}
+      {/* Header — Powered by Noah launch */}
       <header className="relative z-10 flex items-center justify-between px-8 py-6">
-        <Link href="/" className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition">
+        <a
+          href="https://noah-launch.vercel.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-baseline gap-2 text-xs text-white/70 hover:text-white transition"
+        >
           <span>Powered by</span>
-          <Image
-            src="/grywo-logo-wit.png"
-            alt="Noah recruitment"
-            width={70}
-            height={20}
-            className="opacity-90"
-          />
-        </Link>
+          <span className="text-base font-extrabold tracking-tight text-white">
+            Noah<span style={{ color: "#ffd84d" }}>.</span>
+            <span className="ml-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-white/70">launch</span>
+          </span>
+        </a>
         <div className="flex items-center gap-2 text-xs text-white/50">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           Noah is online
