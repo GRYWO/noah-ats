@@ -231,7 +231,7 @@ export default async function InstellingenPage({
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Mailadres *</label>
-                <input name="mail_adres" type="email" required placeholder="naam@grywo.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <input name="mail_adres" type="email" required placeholder="naam@noah-recruitment.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Wachtwoord *</label>

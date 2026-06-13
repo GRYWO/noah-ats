@@ -4,7 +4,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { runCron } from "@/utils/cron-log";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = "Noah ATS <noreply@grywo.nl>";
+const FROM = "Noah ATS <noreply@noah-recruitment.nl>";
 
 export const dynamic = "force-dynamic";
 

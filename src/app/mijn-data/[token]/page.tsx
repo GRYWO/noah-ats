@@ -40,7 +40,7 @@ export default async function MijnDataDetailPage({
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Hoi {k.voornaam}!</h1>
           <p className="text-sm text-gray-600 mb-6">
             Dit zijn de gegevens die Noah ATS over jou heeft opgeslagen. Wil je iets laten aanpassen of helemaal laten wissen?
-            Gebruik onderstaande knop of mail naar <a href="mailto:info@grywo.nl" className="text-[#333399] font-semibold">info@grywo.nl</a>.
+            Gebruik onderstaande knop of mail naar <a href="mailto:info@noah-recruitment.nl" className="text-[#333399] font-semibold">info@noah-recruitment.nl</a>.
           </p>
 
           <div className="space-y-2 text-sm">

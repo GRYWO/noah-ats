@@ -133,8 +133,8 @@ export default function ContractPagina() {
             <p className="mt-4">
               <b>Factuur en betaling:</b> Setter stuurt elke{" "}
               <b>1e van de maand</b> een factuur per e-mail naar{" "}
-              <a href="mailto:pepijn@grywo.nl" className="text-[#333399] underline">
-                pepijn@grywo.nl
+              <a href="mailto:pepijn@noah-recruitment.nl" className="text-[#333399] underline">
+                pepijn@noah-recruitment.nl
               </a>. Binqie betalen de factuur uit binnen <b>7 dagen</b> na
               ontvangst, mits de factuur volledig en correct is.
             </p>
@@ -143,7 +143,7 @@ export default function ContractPagina() {
           <Sectie nummer="3" titel="Tools & toegang">
             <p>
               Binqie stellen aan Setter ter beschikking: een persoonlijk
-              Noah-account, een eigen <b>@grywo.nl</b>-mailadres en toegang tot
+              Noah-account, een eigen <b>@noah-recruitment.nl</b>-mailadres en toegang tot
               Jobdigger.
             </p>
             <p>

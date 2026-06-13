@@ -41,7 +41,7 @@ async function haalContext() {
 
 /**
  * Aanvraag voor email of voys-nummer.
- * Slaat op in DB met token + verstuurt mail met reply-knop naar info@grywo.nl.
+ * Slaat op in DB met token + verstuurt mail met reply-knop naar info@noah-recruitment.nl.
  */
 export async function vraagAan({
   type,
@@ -107,8 +107,8 @@ export async function vraagAan({
 
   try {
     const result = await resend.emails.send({
-      from: "Noah ATS <noreply@grywo.nl>",
-      to: "info@grywo.nl",
+      from: "Noah ATS <noreply@noah-recruitment.nl>",
+      to: "info@noah-recruitment.nl",
       replyTo: user.email ?? undefined,
       subject: `${typeIcoon} Aanvraag ${typeLabel} — ${voornaam} ${achternaam} (${bureauNaam})`,
       html,
@@ -121,7 +121,7 @@ export async function vraagAan({
 }
 
 /**
- * Vrije bevestiging / bericht naar info@grywo.nl.
+ * Vrije bevestiging / bericht naar info@noah-recruitment.nl.
  */
 export async function stuurBevestiging({
   bericht,
@@ -172,8 +172,8 @@ export async function stuurBevestiging({
 
   try {
     const result = await resend.emails.send({
-      from: "Noah ATS <noreply@grywo.nl>",
-      to: "info@grywo.nl",
+      from: "Noah ATS <noreply@noah-recruitment.nl>",
+      to: "info@noah-recruitment.nl",
       replyTo: user.email ?? undefined,
       subject: `✓ Bevestiging van ${bureauNaam} — ${aanvragerNaam}`,
       html,
@@ -228,15 +228,15 @@ export async function verstuurReply({
   <p style="margin:16px 0 8px 0;font-size:12px;color:#888;">
     Met vriendelijke groet,<br>
     Team Noah recruitment<br>
-    <a href="mailto:info@grywo.nl" style="color:#333399;">info@grywo.nl</a> · 085-4016082
+    <a href="mailto:info@noah-recruitment.nl" style="color:#333399;">info@noah-recruitment.nl</a> · 085-4016082
   </p>
 </div>`;
 
   try {
     const result = await resend.emails.send({
-      from: "Noah recruitment <info@grywo.nl>",
+      from: "Noah recruitment <info@noah-recruitment.nl>",
       to: aanvraag.aanvrager_email,
-      replyTo: "info@grywo.nl",
+      replyTo: "info@noah-recruitment.nl",
       subject: onderwerp,
       html,
     });

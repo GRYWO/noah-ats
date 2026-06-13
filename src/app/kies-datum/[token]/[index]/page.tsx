@@ -183,7 +183,7 @@ function FoutPagina({ melding }: { melding: string }) {
         <p className="text-white/70 text-sm">{melding}</p>
         <p className="text-white/50 text-xs mt-4">
           Vragen? Mail{" "}
-          <a href="mailto:info@grywo.nl" className="underline">info@grywo.nl</a>
+          <a href="mailto:info@noah-recruitment.nl" className="underline">info@noah-recruitment.nl</a>
         </p>
       </div>
     </main>

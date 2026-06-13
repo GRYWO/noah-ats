@@ -137,7 +137,7 @@ export async function nieuweSetter(formData: FormData) {
     redirect(`/users?error=${encodeURIComponent(profileErr.message)}`);
   }
 
-  // Automatisch mailbox voornaam@grywo.nl aanmaken via Migadu.
+  // Automatisch mailbox voornaam@noah-recruitment.nl aanmaken via Migadu.
   // Fire-and-forget zodat user-aanmaak niet wacht op API call.
   // Wachtwoord van de mailbox = het mail_wachtwoord uit het form, OF auto-gen.
   void (async () => {
@@ -367,7 +367,7 @@ export async function verwijderSetter(formData: FormData) {
     await herverdeelKandidaten(id, teVerwijderen.tenant_id);
   }
 
-  // Mailbox voornaam@grywo.nl ook verwijderen — fire-and-forget
+  // Mailbox voornaam@noah-recruitment.nl ook verwijderen — fire-and-forget
   if (teVerwijderen?.voornaam) {
     void (async () => {
       try {

@@ -77,11 +77,11 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
       const inlogPw =
         randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 10) + "1!";
 
-      // 1. EERST Migadu mailbox @grywo.nl aanmaken — die naam wordt OOK
+      // 1. EERST Migadu mailbox @noah-recruitment.nl aanmaken — die naam wordt OOK
       //    het inlog-adres voor Noah-ATS. Bij conflict probeert hij
-      //    voornaam.achternaam@grywo.nl.
+      //    voornaam.achternaam@noah-recruitment.nl.
       let mailboxOk = false;
-      let grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@grywo.nl`;
+      let grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@noah-recruitment.nl`;
       let gebruikteAchternaam = false;
       try {
         const mb = await maakNoahMailbox({
@@ -102,7 +102,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
       bevestigingMailbox = grywoEmail;
       bevestigingMetAchternaam = gebruikteAchternaam;
 
-      // 2. Auth-user aanmaken met @grywo.nl als login (NIET de persoonlijke email)
+      // 2. Auth-user aanmaken met @noah-recruitment.nl als login (NIET de persoonlijke email)
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email: grywoEmail,
         password: inlogPw,
@@ -196,12 +196,12 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
     console.error("[setter-aanmelding] auto-account flow mislukt:", e);
   }
 
-  // Mail naar Pepijn + info@grywo.nl
+  // Mail naar Pepijn + info@noah-recruitment.nl
   try {
     await resend.emails.send({
-      from: "Noah ATS <noreply@grywo.nl>",
-      to: ["pepijn@grywo.nl", "wouter@grywo.nl"],
-      cc: ["info@grywo.nl"],
+      from: "Noah ATS <noreply@noah-recruitment.nl>",
+      to: ["pepijn@noah-recruitment.nl", "wouter@noah-recruitment.nl"],
+      cc: ["info@noah-recruitment.nl"],
       subject: `🎯 Nieuwe setter-aanmelding: ${naam}`,
       html: `
 <div style="font-family:-apple-system,sans-serif;max-width:600px;margin:auto;">
@@ -227,7 +227,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
   // Bevestigingsmail naar de aanmelder
   try {
     await resend.emails.send({
-      from: "Noah recruitment <noreply@grywo.nl>",
+      from: "Noah recruitment <noreply@noah-recruitment.nl>",
       to: email,
       subject: "Welkom bij Noah recruitment — Pepijn neemt snel contact op",
       html: `
@@ -240,7 +240,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
 <p>Bedankt voor je aanmelding! Je samenwerkings-intentieverklaring is binnen — alles is automatisch klaargezet:</p>
 <ul style="padding-left:20px;">
   <li>✅ Je Noah-account is aangemaakt</li>
-  <li>✅ Je <b>${bevestigingMailbox ?? `${voornaam.toLowerCase()}@grywo.nl`}</b>-mailbox is klaar${bevestigingMetAchternaam ? ` <span style="color:#a05d00;font-size:12px;">(omdat ${voornaam.toLowerCase()}@grywo.nl al in gebruik was, krijg je je achternaam erbij)</span>` : ""}</li>
+  <li>✅ Je <b>${bevestigingMailbox ?? `${voornaam.toLowerCase()}@noah-recruitment.nl`}</b>-mailbox is klaar${bevestigingMetAchternaam ? ` <span style="color:#a05d00;font-size:12px;">(omdat ${voornaam.toLowerCase()}@noah-recruitment.nl al in gebruik was, krijg je je achternaam erbij)</span>` : ""}</li>
   <li>✅ De geheimhoudingsverklaring (NDA) is zojuist apart naar dit e-mailadres verstuurd — onderteken die ook even</li>
 </ul>
 
@@ -248,7 +248,7 @@ ${inlogWachtwoord ? `
 <div style="background:#f9f9fb;border:1px solid #e0e0ea;border-radius:10px;padding:18px;margin:22px 0;">
   <div style="font-size:12px;font-weight:700;color:#333399;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Je inloggegevens</div>
   <table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr><td style="padding:4px 0;color:#666;width:38%;font-size:13px;">E-mail (= login)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${bevestigingMailbox ?? `${voornaam.toLowerCase()}@grywo.nl`}</td></tr>
+    <tr><td style="padding:4px 0;color:#666;width:38%;font-size:13px;">E-mail (= login)</td><td style="padding:4px 0;font-weight:600;font-size:13px;">${bevestigingMailbox ?? `${voornaam.toLowerCase()}@noah-recruitment.nl`}</td></tr>
     <tr><td style="padding:4px 0;color:#666;font-size:13px;">Wachtwoord</td><td style="padding:4px 0;font-weight:600;font-family:monospace;font-size:13px;">${inlogWachtwoord}</td></tr>
   </table>
   <p style="margin:14px 0 0 0;font-size:11px;color:#888;">Dit adres + wachtwoord werkt voor zowel Noah-ATS als je mailbox. Wijzig het wachtwoord direct na je eerste login.</p>
@@ -259,7 +259,7 @@ ${inlogWachtwoord ? `
 </div>
 
 <p style="margin:0 0 4px 0;font-size:13px;text-align:center;">
-  Je <b>${bevestigingMailbox ?? `${voornaam.toLowerCase()}@grywo.nl`}</b>-mailbox check je via webmail:<br>
+  Je <b>${bevestigingMailbox ?? `${voornaam.toLowerCase()}@noah-recruitment.nl`}</b>-mailbox check je via webmail:<br>
   <a href="https://webmail.migadu.com" style="color:#333399;">webmail.migadu.com</a>
 </p>
 ` : ""}

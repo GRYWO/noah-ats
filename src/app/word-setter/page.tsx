@@ -192,7 +192,7 @@ export default function WordSetter() {
                 Tijdens de trial (dag 1-7)
               </div>
               <ul className="space-y-3 text-gray-700 text-[15px]">
-                <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Zakelijk e-mailadres <b>voornaam@grywo.nl</b></li>
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Zakelijk e-mailadres <b>voornaam@noah-recruitment.nl</b></li>
                 <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Eigen omgeving in Noah-ATS</li>
                 <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Volledige toegang tot Jobdigger + Robin AI</li>
                 <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Coaching van Pepijn vanaf dag 1</li>

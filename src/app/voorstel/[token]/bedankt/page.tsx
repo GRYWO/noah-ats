@@ -12,7 +12,7 @@ export default function BedanktPage() {
           Je reactie is ontvangen. De kandidaat krijgt direct een mail met alle informatie.
         </p>
         <p className="text-sm text-gray-400">
-          Vragen? Mail <a href="mailto:noah@grywo.nl" className="text-[#333399] hover:underline">noah@grywo.nl</a>
+          Vragen? Mail <a href="mailto:noah@noah-recruitment.nl" className="text-[#333399] hover:underline">noah@noah-recruitment.nl</a>
         </p>
       </div>
     </main>

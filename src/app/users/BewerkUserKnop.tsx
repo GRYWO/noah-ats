@@ -82,7 +82,7 @@ export function BewerkUserKnop({ user, magRolWijzigen }: Props) {
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-adres bedrijf</label>
-                <input name="mail_adres" type="email" defaultValue={user.mail_adres ?? ""} placeholder="voorbeeld@grywo.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <input name="mail_adres" type="email" defaultValue={user.mail_adres ?? ""} placeholder="voorbeeld@noah-recruitment.nl" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Functietitel</label>

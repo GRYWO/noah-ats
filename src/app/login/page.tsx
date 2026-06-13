@@ -21,7 +21,7 @@ export default async function LoginPage({
     : setter_abonnement === "achterstallig"
     ? { kleur: "red", tekst: "⚠ Je abonnement heeft een achterstallige betaling. Werk je betaalmethode bij via Stripe." }
     : setter_abonnement === "opgezegd"
-    ? { kleur: "red", tekst: "Je abonnement is opgezegd. Neem contact op met info@grywo.nl om opnieuw te starten." }
+    ? { kleur: "red", tekst: "Je abonnement is opgezegd. Neem contact op met info@noah-recruitment.nl om opnieuw te starten." }
     : bureau_abonnement === "geen"
     ? { kleur: "amber", tekst: "⚠ Je bureau heeft nog geen actief abonnement. Check de mail van het contactpersoon voor de Stripe-betaallink." }
     : bureau_abonnement === "wachtend_betaling"
@@ -29,9 +29,9 @@ export default async function LoginPage({
     : bureau_abonnement === "achterstallig"
     ? { kleur: "red", tekst: "⚠ Het bureau-abonnement heeft een achterstallige betaling. De toegang is geblokkeerd tot de betaling rond is." }
     : bureau_abonnement === "opgezegd"
-    ? { kleur: "red", tekst: "Het bureau-abonnement is opgezegd. Neem contact op met info@grywo.nl om opnieuw te starten." }
+    ? { kleur: "red", tekst: "Het bureau-abonnement is opgezegd. Neem contact op met info@noah-recruitment.nl om opnieuw te starten." }
     : bureau_abonnement === "geblokkeerd"
-    ? { kleur: "red", tekst: "🔒 Het bureau-abonnement is geblokkeerd. Neem contact op met info@grywo.nl." }
+    ? { kleur: "red", tekst: "🔒 Het bureau-abonnement is geblokkeerd. Neem contact op met info@noah-recruitment.nl." }
     : reden === "ander_apparaat"
     ? { kleur: "amber", tekst: "🔐 Je bent uitgelogd omdat er op een ander apparaat is ingelogd met dit account." }
     : reden === "inactiviteit"
@@ -114,7 +114,7 @@ export default async function LoginPage({
                 name="email"
                 required
                 autoComplete="off"
-                placeholder="voorbeeld@grywo.nl"
+                placeholder="voorbeeld@noah-recruitment.nl"
                 className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white placeholder-white/30 rounded-lg focus:outline-none focus:border-[#ffd84d] focus:bg-white/10 transition"
               />
             </div>

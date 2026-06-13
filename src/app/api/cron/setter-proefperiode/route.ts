@@ -62,13 +62,13 @@ export async function GET(req: Request) {
       }
     }
 
-    // Stuur interne waarschuwing naar info@grywo.nl als er fouten zijn,
+    // Stuur interne waarschuwing naar info@noah-recruitment.nl als er fouten zijn,
     // zodat Yorith/Pepijn direct kan ingrijpen voordat een setter blijft hangen.
     if (resultaat.fouten.length > 0) {
       try {
         await resend.emails.send({
-          from: "Noah ATS <noreply@grywo.nl>",
-          to: "info@grywo.nl",
+          from: "Noah ATS <noreply@noah-recruitment.nl>",
+          to: "info@noah-recruitment.nl",
           subject: `⚠ Setter-proefperiode cron: ${resultaat.fouten.length} fout(en)`,
           html: `<p>De dagelijkse cron heeft <b>${resultaat.fouten.length}</b> setter(s) niet kunnen verwerken:</p>
 <ul>${resultaat.fouten.map((f) => `<li>${f}</li>`).join("")}</ul>

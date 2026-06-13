@@ -233,7 +233,7 @@ export type MailDetail = {
 
 function getImapClient(mailAdres: string, encryptedPassword: string) {
   const password = decrypt(encryptedPassword);
-  // Route op basis van mailadres: @grywo.nl → Migadu, rest → Hostnet
+  // Route op basis van mailadres: @noah-recruitment.nl → Migadu, rest → Hostnet
   const servers = getMailServers(mailAdres);
   return new ImapFlow({
     host: servers.imapHost,

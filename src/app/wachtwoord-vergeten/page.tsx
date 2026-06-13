@@ -38,7 +38,7 @@ export default async function WachtwoordVergetenPage({
               type="email"
               name="email"
               required
-              placeholder="jij@grywo.nl"
+              placeholder="jij@noah-recruitment.nl"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#333399]"
             />
           </div>

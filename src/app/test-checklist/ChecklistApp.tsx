@@ -61,7 +61,7 @@ const CHECKLIST: Categorie[] = [
       { id: "voorstel", titel: "Voorstel verzenden", instructie: "Bij de kandidaat: voorstel verzenden naar test-email (jezelf). Mail aankomen?" },
       { id: "voorstelprofiel", titel: "Voorstelprofiel", instructie: "Klik in de mail op 'Bekijk voorstelprofiel'. Pagina toont Noah recruitment-logo + functie/woonplaats/voornaam + setter-email onderaan?" },
       { id: "uitnodigen", titel: "Uitnodigen + kennismaking", instructie: "Op het voorstel: klik 'Uitnodigen' → vul kennismaking-datum in. Krijgt kandidaat afspraakbevestiging-mail?" },
-      { id: "plaatsing", titel: "Plaatsing", instructie: "Status naar 'geplaatst' → plaatsings-modal vullen (basis, tarief, startdatum). Backoffice-mail aangekomen op backoffice@grywo.nl?" },
+      { id: "plaatsing", titel: "Plaatsing", instructie: "Status naar 'geplaatst' → plaatsings-modal vullen (basis, tarief, startdatum). Backoffice-mail aangekomen op backoffice@noah-recruitment.nl?" },
     ],
   },
   {

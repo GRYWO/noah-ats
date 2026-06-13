@@ -3,16 +3,16 @@ import { renderMailTemplate } from "@/utils/mail-templates";
 import { getGrywoLogoWitDataUri } from "@/utils/grywo-logo";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-// Default afzender. Vereist dat grywo.nl in Resend geverifieerd is
-// (Resend → Domains → grywo.nl → status 'Verified').
-// Harde guard: alleen een grywo.nl-adres is toegestaan, anders forceer
+// Default afzender. Vereist dat noah-recruitment.nl in Resend geverifieerd is
+// (Resend → Domains → noah-recruitment.nl → status 'Verified').
+// Harde guard: alleen een noah-recruitment.nl-adres is toegestaan, anders forceer
 // fallback. Voorkomt dat een verkeerde RESEND_FROM_EMAIL env-var (bv.
 // onboarding@resend.dev of een lege string) Resend in test-mode laat
 // blijven hangen.
 function bepaalFrom(): string {
   const env = (process.env.RESEND_FROM_EMAIL ?? "").trim();
-  if (env && /@grywo\.nl[>]?\s*$/i.test(env)) return env;
-  return "Noah ATS <noreply@grywo.nl>";
+  if (env && /@noah-recruitment\.nl[>]?\s*$/i.test(env)) return env;
+  return "Noah ATS <noreply@noah-recruitment.nl>";
 }
 const FROM = bepaalFrom();
 // Productie-URL bepalen voor links in mails.
@@ -513,7 +513,7 @@ export async function sendPlaatsingNaarBackoffice({
 
   const result = await resend.emails.send({
     from: from ?? FROM,
-    to: "backoffice@grywo.nl",
+    to: "backoffice@noah-recruitment.nl",
     cc: aangemeldDoor.email ? [aangemeldDoor.email] : undefined,
     subject: `Nieuwe plaatsing: ${fullnaam} bij ${klant.bedrijf}`,
     html: brandedLayout({ titel: `Plaatsing: ${fullnaam}`, body, merk: "noah" }),
@@ -623,7 +623,7 @@ export async function sendPlaatsingAfgekeurdNaarBackoffice({
 
   const result = await resend.emails.send({
     from: from ?? FROM,
-    to: "backoffice@grywo.nl",
+    to: "backoffice@noah-recruitment.nl",
     cc: afgekeurdDoor.email ? [afgekeurdDoor.email] : undefined,
     subject: `Plaatsing afgekeurd: ${kandidaatNaam} bij ${bedrijf}`,
     html: brandedLayout({ titel: `Plaatsing afgekeurd`, body, merk: "noah" }),
@@ -963,7 +963,7 @@ Of kopieer deze link in je browser:<br>
 <a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
 </p>
 
-<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail info@grywo.nl of bel 085-4016082.</p>`;
+<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail info@noah-recruitment.nl of bel 085-4016082.</p>`;
 
   const result = await resend.emails.send({
     from: FROM,
@@ -1001,7 +1001,7 @@ export async function sendDpaGetekendBevestiging({
   </a>
 </div>
 
-<p style="font-size:12px;color:#888;margin-top:18px;">Bij vragen: info@grywo.nl · 085-4016082.</p>`;
+<p style="font-size:12px;color:#888;margin-top:18px;">Bij vragen: info@noah-recruitment.nl · 085-4016082.</p>`;
 
   return resend.emails.send({
     from: FROM,
@@ -1046,7 +1046,7 @@ export async function sendDpaGetekendIntern({
 
   return resend.emails.send({
     from: FROM,
-    to: "yorith@grywo.nl",
+    to: "yorith@noah-recruitment.nl",
     subject: `[Noah recruitment] DPA getekend — ${bureauNaam}`,
     html: brandedLayout({ titel: "DPA getekend", body }),
   });
@@ -1093,7 +1093,7 @@ Of kopieer deze link in je browser:<br>
 <a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
 </p>
 
-<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail info@grywo.nl of bel 085-4016082.</p>`;
+<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail info@noah-recruitment.nl of bel 085-4016082.</p>`;
 
   const result = await resend.emails.send({
     from: FROM,
@@ -1163,7 +1163,7 @@ Na de eenmalige betaling wordt het maandbedrag <b>automatisch elke maand</b> van
 </p>
 
 <p style="font-size:12px;color:#888;margin-top:18px;">
-Vragen? Mail <a href="mailto:info@grywo.nl">info@grywo.nl</a> of bel 085-4016082.
+Vragen? Mail <a href="mailto:info@noah-recruitment.nl">info@noah-recruitment.nl</a> of bel 085-4016082.
 </p>`;
 
   const result = await resend.emails.send({
@@ -1225,7 +1225,7 @@ Wat krijg je voor je abonnement?
 
 <p style="font-size:12px;color:#888;margin-top:18px;">
 Zodra de betaling is verwerkt, krijg je een mail met je inloggegevens.<br>
-Vragen? Mail <a href="mailto:info@grywo.nl">info@grywo.nl</a> of bel 085-4016082.
+Vragen? Mail <a href="mailto:info@noah-recruitment.nl">info@noah-recruitment.nl</a> of bel 085-4016082.
 </p>`;
 
   const result = await resend.emails.send({
@@ -1268,7 +1268,7 @@ export async function sendAkkoordBevestiging({
   </a>
 </div>
 
-<p style="font-size:12px;color:#888;margin-top:18px;">Bewaar deze mail. Bij vragen: info@grywo.nl.</p>`;
+<p style="font-size:12px;color:#888;margin-top:18px;">Bewaar deze mail. Bij vragen: info@noah-recruitment.nl.</p>`;
 
   return resend.emails.send({
     from: FROM,
@@ -1308,7 +1308,7 @@ Of kopieer deze link in je browser:<br>
 </p>
 
 <p style="font-size:12px;color:#888;margin-top:18px;">
-Geen verzoek ingediend? Negeer deze mail. Bij vragen: info@grywo.nl
+Geen verzoek ingediend? Negeer deze mail. Bij vragen: info@noah-recruitment.nl
 </p>`;
 
   return resend.emails.send({
@@ -1391,7 +1391,7 @@ Of kopieer deze link in je browser:<br>
 <a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
 </p>
 
-<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail backoffice@grywo.nl of bel 085-4016082.</p>`;
+<p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail backoffice@noah-recruitment.nl of bel 085-4016082.</p>`;
 
   const result = await resend.emails.send({
     from: FROM,
@@ -1513,7 +1513,7 @@ ${verschilWaarschuwing}
 
   const result = await resend.emails.send({
     from: FROM,
-    to: "backoffice@grywo.nl",
+    to: "backoffice@noah-recruitment.nl",
     subject: `📄 Contract geverifieerd: ${kandidaatNaam} — bruto ${eur(totaal)}`,
     html: brandedLayout({ titel: "Contract klaar voor facturatie", body }),
     attachments,
@@ -1621,7 +1621,7 @@ ${akkoord
   ? `<p style="margin:0 0 16px 0;">De kandidaat is verwijderd. Je kunt nu een nieuwe kandidaat aanvragen.</p>`
   : `<p style="margin:0 0 16px 0;">Neem contact op met ${recruiterNaam} als je vragen hebt over deze beslissing.</p>`}
 
-<p style="font-size:12px;color:#999;margin-top:24px;">Vragen? Mail <a href="mailto:info@grywo.nl">info@grywo.nl</a>.</p>`;
+<p style="font-size:12px;color:#999;margin-top:24px;">Vragen? Mail <a href="mailto:info@noah-recruitment.nl">info@noah-recruitment.nl</a>.</p>`;
 
   const result = await resend.emails.send({
     from: FROM,
@@ -1685,7 +1685,7 @@ export async function sendGesprek1BevestigingOpdrachtgever({
 
 <p style="margin:16px 0;">Mocht het toch niet schikken, neem dan contact met ons op zodat we kunnen herplannen.</p>
 
-<p style="font-size:12px;color:#888;margin-top:24px;">Vragen? Mail <a href="mailto:info@grywo.nl">info@grywo.nl</a>.</p>`;
+<p style="font-size:12px;color:#888;margin-top:24px;">Vragen? Mail <a href="mailto:info@noah-recruitment.nl">info@noah-recruitment.nl</a>.</p>`;
 
   const result = await resend.emails.send({
     from: from ?? FROM,
