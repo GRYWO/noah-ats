@@ -67,19 +67,34 @@ export function SysteemMeldingBanner({ melding }: { melding: Melding | null }) {
 
   return (
     <>
-      {/* Rode balk bovenaan — klikbaar */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="fixed top-0 left-0 right-0 z-[60] bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 flex items-center justify-center gap-3 shadow-lg transition cursor-pointer"
-      >
-        <Icon size={18} className="animate-pulse shrink-0" />
-        <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-          {meta.label}
-        </span>
-        <span className="truncate max-w-[60vw]">{melding.titel}</span>
-        <span className="text-white/80 text-xs underline">klik voor meer</span>
-      </button>
+      {/* Rode balk bovenaan — klikbaar voor details + X-knop om direct weg te klikken */}
+      <div className="fixed top-0 left-0 right-0 z-[60] bg-red-600 text-white text-sm font-semibold shadow-lg flex items-center">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex-1 hover:bg-red-700 transition cursor-pointer py-2 px-4 flex items-center justify-center gap-3"
+        >
+          <Icon size={18} className="animate-pulse shrink-0" />
+          <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+            {meta.label}
+          </span>
+          <span className="truncate max-w-[60vw]">{melding.titel}</span>
+          <span className="text-white/80 text-xs underline">klik voor meer</span>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            bewaarDismiss(melding.id);
+          }}
+          className="hover:bg-red-700 transition cursor-pointer py-2 px-3 border-l border-white/20 flex items-center gap-1.5"
+          title="Sluiten voor altijd"
+          aria-label="Banner sluiten"
+        >
+          <X size={16} />
+          <span className="hidden sm:inline text-xs">Sluiten</span>
+        </button>
+      </div>
 
       {/* Modal met volledige tekst */}
       {open && (
