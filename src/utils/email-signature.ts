@@ -38,17 +38,23 @@ export function bouwHandtekening({
   void getGrywoLogoDataUri;
   const naam = `${voornaam} ${achternaam}`.trim();
 
-  // Functie zichtbaar voor admin altijd (fallback "Admin bij GRYWO").
+  // Functie zichtbaar voor admin altijd (fallback "Admin bij Noah recruitment").
   // Voor recruiter/setter alleen als ze zelf iets invulden.
   const toonFunctie =
     rol === "admin" || (functieTitel && functieTitel.trim().length > 0);
   const functieRegel = toonFunctie
     ? (functieTitel?.trim() ||
-      (rol === "admin" ? "Admin bij GRYWO" : ""))
+      (rol === "admin" ? "Admin bij Noah recruitment" : ""))
     : "";
 
-  // Wit GRYWO-logo geladen van noah-ats.nl.
-  const logoBlok = `<img src="${logoUrl}" alt="GRYWO" height="44" style="display:block;border:0;outline:none;text-decoration:none;height:44px;width:auto;">`;
+  // Tekst-wordmark voor Noah recruitment: werkt in elke mail-client zonder externe afhankelijkheid.
+  // "Noah." in extra-bold wit + gele punt (#ffd84d) + " RECRUITMENT " in spatie-uppercase.
+  const logoBlok = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
+    <tr>
+      <td style="padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:32px;font-weight:900;letter-spacing:-1px;color:#ffffff;line-height:1;vertical-align:baseline;">Noah<span style="color:${GRYWO_GEEL};">.</span></td>
+      <td style="padding:0 0 0 12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;color:rgba(255,255,255,0.7);text-transform:uppercase;vertical-align:baseline;">RECRUITMENT</td>
+    </tr>
+  </table>`;
 
   // Brede twee-koloms handtekening (640px): links logo-vlak met
   // GRYWO-merk, rechts contact-info. Mobiele clients vallen terug op
@@ -57,9 +63,6 @@ export function bouwHandtekening({
   <tr>
     <td style="background:linear-gradient(135deg,${GRYWO_PAARS} 0%,#4a4ab8 100%);background-color:${GRYWO_PAARS};padding:22px 28px;width:200px;vertical-align:middle;border-right:3px solid ${GRYWO_GEEL};">
       ${logoBlok}
-      <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:10px;letter-spacing:1.5px;text-transform:uppercase;">
-        Recruitment&nbsp;&amp;&nbsp;Sales
-      </div>
     </td>
     <td style="background-color:#ffffff;padding:22px 28px;vertical-align:middle;">
       <div style="font-size:20px;font-weight:800;color:#1a1a2e;letter-spacing:-0.4px;line-height:1.2;">

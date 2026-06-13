@@ -15,12 +15,12 @@ function leesPubliek(bestand: string): string {
   }
 }
 
-/** Paarse GRYWO-wordmark als base64 (voor witte achtergrond). */
+/** Paarse Noah recruitment-wordmark als base64 (voor witte achtergrond). */
 export function getGrywoLogoBase64(): string {
   return leesPubliek("grywo-logo.png");
 }
 
-/** Witte GRYWO-wordmark als base64 (voor paarse e-mail header). */
+/** Witte Noah recruitment-wordmark als base64 (voor paarse e-mail header). */
 export function getGrywoLogoWitBase64(): string {
   return leesPubliek("grywo-logo-wit.png");
 }

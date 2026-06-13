@@ -18,7 +18,7 @@ const CHECKLIST: Categorie[] = [
     tests: [
       { id: "wis", titel: "Wis test-data", instructie: "Ga naar /bureaus → rode knop 'Wis alle test-data' → typ WIS → groene melding?", pad: "/bureaus" },
       { id: "bucket", titel: "Storage bucket aanmaken", instructie: "Supabase → Storage → New bucket 'bureau-documenten' → private. Aangemaakt?" },
-      { id: "login", titel: "Super-admin inloggen", instructie: "Log in als Yorith → zie je het volledige GRYWO-dashboard (niet bureau-versie)?", pad: "/dashboard" },
+      { id: "login", titel: "Super-admin inloggen", instructie: "Log in als Yorith → zie je het volledige Noah recruitment-dashboard (niet bureau-versie)?", pad: "/dashboard" },
     ],
   },
   {
@@ -48,10 +48,10 @@ const CHECKLIST: Categorie[] = [
     ],
   },
   {
-    naam: "5. Setter flow (GRYWO-pool)",
+    naam: "5. Setter flow (Noah recruitment-pool)",
     tests: [
-      { id: "auto-toewijzing", titel: "Auto-toewijzing", instructie: "De kandidaat krijgt automatisch een GRYWO-setter toegewezen. Check op kanban dat hij bij 'bij_setter' staat." },
-      { id: "setter-login", titel: "Setter inloggen", instructie: "Log in als een GRYWO-setter. Zie je de kandidaat in /kandidaten?", pad: "/kandidaten" },
+      { id: "auto-toewijzing", titel: "Auto-toewijzing", instructie: "De kandidaat krijgt automatisch een Noah recruitment-setter toegewezen. Check op kanban dat hij bij 'bij_setter' staat." },
+      { id: "setter-login", titel: "Setter inloggen", instructie: "Log in als een Noah recruitment-setter. Zie je de kandidaat in /kandidaten?", pad: "/kandidaten" },
       { id: "bellijst", titel: "Bellijst uploaden", instructie: "Open de kandidaat → upload Jobdigger-Excel. Kandidaat schuift door naar 'in proces' + mail komt aan?" },
     ],
   },
@@ -59,7 +59,7 @@ const CHECKLIST: Categorie[] = [
     naam: "6. Voorstel & plaatsing",
     tests: [
       { id: "voorstel", titel: "Voorstel verzenden", instructie: "Bij de kandidaat: voorstel verzenden naar test-email (jezelf). Mail aankomen?" },
-      { id: "voorstelprofiel", titel: "Voorstelprofiel", instructie: "Klik in de mail op 'Bekijk voorstelprofiel'. Pagina toont GRYWO-logo + functie/woonplaats/voornaam + setter-email onderaan?" },
+      { id: "voorstelprofiel", titel: "Voorstelprofiel", instructie: "Klik in de mail op 'Bekijk voorstelprofiel'. Pagina toont Noah recruitment-logo + functie/woonplaats/voornaam + setter-email onderaan?" },
       { id: "uitnodigen", titel: "Uitnodigen + kennismaking", instructie: "Op het voorstel: klik 'Uitnodigen' → vul kennismaking-datum in. Krijgt kandidaat afspraakbevestiging-mail?" },
       { id: "plaatsing", titel: "Plaatsing", instructie: "Status naar 'geplaatst' → plaatsings-modal vullen (basis, tarief, startdatum). Backoffice-mail aangekomen op backoffice@grywo.nl?" },
     ],

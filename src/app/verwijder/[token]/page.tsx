@@ -30,7 +30,7 @@ export default async function VerwijderVerzoekPagina({
         </Link>
         <div className="flex items-center gap-2 text-xs text-white/60">
           <span>Powered by</span>
-          <Image src="/grywo-logo-wit.png" alt="GRYWO" width={60} height={16} className="opacity-80" />
+          <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={60} height={16} className="opacity-80" />
         </div>
       </header>
 

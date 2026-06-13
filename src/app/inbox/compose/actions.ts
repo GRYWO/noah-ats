@@ -53,7 +53,7 @@ export async function stuurMail(formData: FormData) {
       vanAdres: account.mail_adres,
       vanWachtwoord: account.mail_wachtwoord,
       vanVoornaam: profile?.voornaam ?? "",
-      vanBureau: tenant?.naam ?? "GRYWO",
+      vanBureau: tenant?.naam ?? "Noah recruitment",
       naar,
       onderwerp,
       htmlBody: body.replace(/\n/g, "<br>"),

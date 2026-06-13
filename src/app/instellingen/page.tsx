@@ -121,8 +121,8 @@ export default async function InstellingenPage({
               {profile?.rol === "admin" && (
                 <div className="col-span-2">
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Functietitel (in handtekening)</label>
-                  <input name="functie_titel" defaultValue={profile?.functie_titel ?? ""} placeholder="bv Eigenaar GRYWO" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
-                  <small className="text-gray-400 text-xs">Laat leeg = standaard &quot;Admin bij GRYWO&quot;. Alleen admins tonen een functie-regel.</small>
+                  <input name="functie_titel" defaultValue={profile?.functie_titel ?? ""} placeholder="bv Eigenaar Noah recruitment" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                  <small className="text-gray-400 text-xs">Laat leeg = standaard &quot;Admin bij Noah recruitment&quot;. Alleen admins tonen een functie-regel.</small>
                 </div>
               )}
             </div>

@@ -542,7 +542,7 @@ export default async function KandidaatDetail({
           <div className="bg-white rounded-xl shadow-sm p-6 mt-6 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-bold text-gray-800">Voorstelprofiel</h2>
-              <p className="text-xs text-gray-500 mt-1">Alle relevante info over deze kandidaat in GRYWO-stijl.</p>
+              <p className="text-xs text-gray-500 mt-1">Alle relevante info over deze kandidaat in Noah recruitment-stijl.</p>
             </div>
             <div className="flex items-center gap-2">
               {k.voorstelprofiel_token && (

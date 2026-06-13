@@ -56,7 +56,7 @@ export function BevestigingKnop() {
       <div className="flex items-center justify-between">
         <div className="text-xs font-semibold text-emerald-800 inline-flex items-center gap-1.5">
           <CheckCircle2 size={14} />
-          Bericht naar GRYWO (info@grywo.nl)
+          Bericht naar Noah recruitment (info@grywo.nl)
         </div>
         <button
           type="button"

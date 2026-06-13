@@ -44,8 +44,8 @@ export async function GET() {
     const { data: nieuwe, error: tErr } = await admin
       .from("tenants")
       .insert({
-        naam: "GRYWO",
-        handelsnaam: "GRYWO",
+        naam: "Noah recruitment",
+        handelsnaam: "Noah recruitment",
         is_grywo_pool: true,
       })
       .select("id")

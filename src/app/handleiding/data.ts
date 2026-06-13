@@ -24,7 +24,7 @@ export const HOOFDSTUKKEN: Hoofdstuk[] = [
     slug: "wat-is-noah",
     nummer: "01",
     titel: "Wat is Noah?",
-    intro: "Het hart van GRYWO — één plek voor recruitment, voorstellen, plaatsingen en coaching.",
+    intro: "Het hart van Noah recruitment — één plek voor recruitment, voorstellen, plaatsingen en coaching.",
     icoon: "🌟",
     kleur: "paars",
     secties: [
@@ -54,7 +54,7 @@ export const HOOFDSTUKKEN: Hoofdstuk[] = [
         lijst: [
           "Recruitmentbureaus (bureau-admin + recruiters) — beheren hun eigen kandidaten en opdrachtgevers binnen hun tenant.",
           "Setter-stoel-gebruikers (individuele setters) — werken met eigen abonnement, eigen kandidaten, los van bureaus.",
-          "GRYWO-team (super-admin Yorith, sales-admin Pepijn, intern personeel Wouter) — beheren alle bureaus, abonnementen, en de finance-cockpit.",
+          "Noah recruitment-team (super-admin Yorith, sales-admin Pepijn, intern personeel Wouter) — beheren alle bureaus, abonnementen, en de finance-cockpit.",
         ],
       },
     ],
@@ -116,7 +116,7 @@ export const HOOFDSTUKKEN: Hoofdstuk[] = [
         ],
         callout: {
           type: "info",
-          tekst: "Verwarrend? Onthoud: rol = wat je doet. Flags (is_intern_personeel, kan_abonnementen_beheren) = uitzonderingen voor GRYWO-interne mensen.",
+          tekst: "Verwarrend? Onthoud: rol = wat je doet. Flags (is_intern_personeel, kan_abonnementen_beheren) = uitzonderingen voor Noah recruitment-interne mensen.",
         },
       },
     ],
@@ -254,7 +254,7 @@ export const HOOFDSTUKKEN: Hoofdstuk[] = [
           "Volledig voorstelprofiel — alleen voornaam (geen achternaam totdat akkoord)",
           "Eén klik: 'Ja, ik wil kennismaken' → datum kiezen via /kies-datum/[token]/[index]",
           "Eén klik: 'Nee, niet geschikt' → met reden-veld",
-          "Eén klik: 'Eerst meer info' → bericht naar GRYWO",
+          "Eén klik: 'Eerst meer info' → bericht naar Noah recruitment",
         ],
       },
       {
@@ -420,7 +420,7 @@ export const HOOFDSTUKKEN: Hoofdstuk[] = [
       {
         kop: "Wat Noah ondertekent",
         tekst: [
-          "Alle juridische documenten tussen GRYWO en derden, gecategoriseerd:",
+          "Alle juridische documenten tussen Noah recruitment en derden, gecategoriseerd:",
         ],
         lijst: [
           "DPA (verwerkersovereenkomst) — bureau bij aanmaak",
@@ -698,7 +698,7 @@ export const HOOFDSTUKKEN: Hoofdstuk[] = [
       {
         kop: "Fase 9 — Beveiliging",
         tekst: [
-          "Single-device-policy, inactiviteits-uitlog, hardcoded uitzonderingen voor GRYWO-team.",
+          "Single-device-policy, inactiviteits-uitlog, hardcoded uitzonderingen voor Noah recruitment-team.",
         ],
       },
       {

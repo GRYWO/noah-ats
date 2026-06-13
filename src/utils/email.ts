@@ -70,14 +70,14 @@ function brandedLayout({
   const header = merk === "noah"
     ? `<span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">noah</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>`
     : grywoWit
-      ? `<img src="${grywoWit}" alt="GRYWO" width="180" style="display:inline-block;border:0;outline:none;text-decoration:none;height:auto;max-width:180px;">`
+      ? `<img src="${grywoWit}" alt="Noah recruitment" width="180" style="display:inline-block;border:0;outline:none;text-decoration:none;height:auto;max-width:180px;">`
       // Tekst-fallback als het logo-bestand niet leesbaar is
-      : `<span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">grywo</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>`;
+      : `<span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">Noah recruitment</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>`;
   const footer = merk === "noah"
     ? `Noah ATS · het ATS-platform voor recruitment bureaus`
     : afzenderEmail
       ? `${afzenderNaam ? `${afzenderNaam} · ` : ""}<a href="mailto:${afzenderEmail}" style="color:#888;text-decoration:underline;">${afzenderEmail}</a>`
-      : `GRYWO`;
+      : `Noah recruitment`;
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background-color:#f4f4f7;">
@@ -1047,7 +1047,7 @@ export async function sendDpaGetekendIntern({
   return resend.emails.send({
     from: FROM,
     to: "yorith@grywo.nl",
-    subject: `[GRYWO] DPA getekend — ${bureauNaam}`,
+    subject: `[Noah recruitment] DPA getekend — ${bureauNaam}`,
     html: brandedLayout({ titel: "DPA getekend", body }),
   });
 }
@@ -1073,9 +1073,9 @@ export async function sendAkkoordTerOndertekening({
     ? "Samenwerkingsovereenkomst — Setter"
     : "Gebruiksvoorwaarden Noah ATS";
   const uitleg = type === "nda_setter"
-    ? "Als GRYWO-setter krijg je toegang tot kandidaten van meerdere bureaus. Onze geheimhoudingsverklaring legt vast hoe je met deze data omgaat — verplicht onder AVG art. 32 lid 4."
+    ? "Als Noah recruitment-setter krijg je toegang tot kandidaten van meerdere bureaus. Onze geheimhoudingsverklaring legt vast hoe je met deze data omgaat — verplicht onder AVG art. 32 lid 4."
     : type === "setter_contract"
-    ? "Hierbij ontvang je de samenwerkingsovereenkomst voor je setter-positie bij GRYWO. Hierin staan vergoeding, werkzaamheden, geheimhouding en duur. Onderteken aub digitaal."
+    ? "Hierbij ontvang je de samenwerkingsovereenkomst voor je setter-positie bij Noah recruitment. Hierin staan vergoeding, werkzaamheden, geheimhouding en duur. Onderteken aub digitaal."
     : "Voordat je live gaat met Noah ATS vragen we eenmalig akkoord op onze gebruiksvoorwaarden. Beschermt jou én de kandidaten die je beheert.";
 
   const body = `
@@ -1342,7 +1342,7 @@ export async function sendKandidaatStatusAfwijzing({
   return resend.emails.send({
     from: from ?? FROM,
     to: naar,
-    subject: "Update vanuit GRYWO",
+    subject: "Update vanuit Noah recruitment",
     html: brandedLayout({ titel: "Bedankt voor je tijd", body }),
   });
 }
@@ -1374,7 +1374,7 @@ export async function sendContractControleUitnodiging({
     <li>Het contract wordt geautomatiseerd geanalyseerd; <b>alle PII wordt zwart gemaakt</b> (BSN, IBAN, privé-adres, geboortedatum, telefoon, etc.).</li>
     <li>Het <b>origineel wordt binnen 24 uur verwijderd</b> (AVG art. 5 — dataminimalisatie).</li>
     <li>Wij bewaren <b>alleen de geredacteerde versie + samenvatting</b>, 7 jaar lang (fiscale bewaarplicht).</li>
-    <li>Toegang is gelogd en beperkt tot geautoriseerde GRYWO-medewerkers.</li>
+    <li>Toegang is gelogd en beperkt tot geautoriseerde Noah recruitment-medewerkers.</li>
   </ul>
 </div>
 
@@ -1396,7 +1396,7 @@ Of kopieer deze link in je browser:<br>
   const result = await resend.emails.send({
     from: FROM,
     to: naar,
-    subject: `Contract-verificatie voor ${kandidaatNaam} — GRYWO`,
+    subject: `Contract-verificatie voor ${kandidaatNaam} — Noah recruitment`,
     html: brandedLayout({ titel: "Verzoek tot contract-aanlevering", body }),
   });
   if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);

@@ -25,12 +25,12 @@ export default function PrivacyPage() {
           <p>
             Dit privacybeleid is van toepassing op <b>Noah ATS</b> (het ATS-platform op{" "}
             <a href="https://noah-ats.nl" className="text-[#333399] underline">noah-ats.nl</a>) en op de Chrome-extensie{" "}
-            <b>Noah ATS — Embed Helper</b>. Beide worden aangeboden door GRYWO.
+            <b>Noah ATS — Embed Helper</b>. Beide worden aangeboden door Noah recruitment.
           </p>
 
           <h2 className="text-xl font-bold text-gray-800 mt-8 mb-2">1. Wie verwerkt jouw gegevens?</h2>
           <p>
-            <b>GRYWO</b> · Woerden, Nederland · <a href="mailto:info@grywo.nl" className="text-[#333399] underline">info@grywo.nl</a> · 085-4016082
+            <b>Noah recruitment</b> · Woerden, Nederland · <a href="mailto:info@grywo.nl" className="text-[#333399] underline">info@grywo.nl</a> · 085-4016082
           </p>
 
           <h2 className="text-xl font-bold text-gray-800 mt-8 mb-2">2. Chrome-extensie — Noah ATS Embed Helper</h2>
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-bold text-gray-800 mt-8 mb-2">3. Noah ATS — gegevens binnen het platform</h2>
           <p>
             Noah ATS verwerkt namens recruitment-bureaus persoonsgegevens van kandidaten (naam, contactgegevens, CV, opmerkingen) en
-            opdrachtgevers. Bureaus zijn verwerkingsverantwoordelijke voor deze data; GRYWO is verwerker. Data wordt opgeslagen
+            opdrachtgevers. Bureaus zijn verwerkingsverantwoordelijke voor deze data; Noah recruitment is verwerker. Data wordt opgeslagen
             binnen de EU (Supabase, Resend, Vercel) en alleen gebruikt voor de werking van het ATS-platform.
           </p>
 
@@ -80,7 +80,7 @@ export default function PrivacyPage() {
 
           <h2 className="text-xl font-bold text-gray-800 mt-8 mb-2">8. Voor bureaus — verwerkersovereenkomst</h2>
           <p>
-            Bureaus die Noah ATS gebruiken sluiten met GRYWO een verwerkersovereenkomst (DPA) conform art. 28 AVG.
+            Bureaus die Noah ATS gebruiken sluiten met Noah recruitment een verwerkersovereenkomst (DPA) conform art. 28 AVG.
             Vraag de template-DPA op via{" "}
             <a href="mailto:info@grywo.nl?subject=DPA Noah ATS" className="text-[#333399] underline">info@grywo.nl</a>{" "}
             (we sturen 'm direct retour).
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
 
         <div className="mt-12 pt-6 border-t text-sm text-gray-500 flex items-center justify-between">
           <Link href="/login" className="text-[#333399] hover:underline font-semibold">← Terug naar login</Link>
-          <span>GRYWO · Noah ATS</span>
+          <span>Noah recruitment · Noah ATS</span>
         </div>
       </div>
     </main>

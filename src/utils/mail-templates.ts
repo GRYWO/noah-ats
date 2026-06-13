@@ -72,22 +72,22 @@ export const DEFAULT_BODIES: Record<TemplateSleutel, string> = {
   kandidaat_voorgesteld: `<p>Hi {voornaam},</p>
 <p>We hebben je zojuist voorgesteld bij een potentiële werkgever.</p>
 <p>We wachten nu op een reactie. Zodra we groen licht krijgen, brengen we je direct op de hoogte met alle details voor een kennismaking.</p>
-<p style="color:#666;">Hartelijke groet,<br>Team GRYWO</p>`,
+<p style="color:#666;">Hartelijke groet,<br>Team Noah recruitment</p>`,
 
   kandidaat_afwijzing: `<p>Hi {voornaam},</p>
 <p>Helaas heeft de werkgever waar we je hadden voorgesteld besloten om niet verder te gaan met je profiel.</p>
 <p>Geen zorgen — we gaan voor je aan de slag met andere passende kansen. We houden je op de hoogte.</p>
-<p style="color:#666;">Hartelijke groet,<br>Team GRYWO</p>`,
+<p style="color:#666;">Hartelijke groet,<br>Team Noah recruitment</p>`,
 
   kandidaat_plaatsing: `<p>Hi {voornaam},</p>
 <p><b>Gefeliciteerd!</b> Je bent geplaatst. Wij wensen je heel veel succes en plezier op je nieuwe werkplek.</p>
 <p>Mocht je vragen hebben of we iets voor je kunnen betekenen, dan horen we het graag.</p>
-<p style="color:#666;">Hartelijke groet,<br>Team GRYWO</p>`,
+<p style="color:#666;">Hartelijke groet,<br>Team Noah recruitment</p>`,
 
   kandidaat_status_afwijzing: `<p>Hi {voornaam},</p>
 <p>Bedankt voor de moeite die je in dit traject hebt gestoken. Op dit moment hebben we helaas geen passende match voor je.</p>
 <p>We bewaren je profiel in onze talentpool en nemen contact op zodra er een geschikte kans voorbij komt.</p>
-<p style="color:#666;">Hartelijke groet,<br>Team GRYWO</p>`,
+<p style="color:#666;">Hartelijke groet,<br>Team Noah recruitment</p>`,
 
   kandidaat_bevestiging: `<p>Hi {voornaam},</p>
 <p>Goed nieuws — <b>{bedrijf}</b> wil graag kennismaken!</p>`,

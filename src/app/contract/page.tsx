@@ -4,9 +4,9 @@ import { FileSignature, ShieldCheck, MapPin, BadgeCheck } from "lucide-react";
 import { AanmeldForm } from "../word-setter/AanmeldForm";
 
 export const metadata = {
-  title: "Samenwerkingsovereenkomst — GRYWO Setter",
+  title: "Samenwerkingsovereenkomst — Noah recruitment Setter",
   description:
-    "Lees de samenwerkings-intentieverklaring tussen GRYWO en jou als setter. Onderteken digitaal met eIDAS-handtekening.",
+    "Lees de samenwerkings-intentieverklaring tussen Noah recruitment en jou als setter. Onderteken digitaal met eIDAS-handtekening.",
 };
 
 export default function ContractPagina() {
@@ -30,7 +30,7 @@ export default function ContractPagina() {
           </Link>
           <div className="flex items-center gap-2 text-xs text-white/70">
             <span>Powered by</span>
-            <Image src="/grywo-logo-wit.png" alt="GRYWO" width={70} height={20} className="opacity-90" />
+            <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={70} height={20} className="opacity-90" />
           </div>
         </div>
 
@@ -76,8 +76,8 @@ export default function ContractPagina() {
             </p>
             <p className="text-xs text-gray-500 italic">
               Setter werkt voor Binqie en wordt door Binqie ingezet voor
-              recruitment-werkzaamheden onder het merk <b>GRYWO</b>. Waar in
-              deze overeenkomst over GRYWO wordt gesproken, gaat het om de
+              recruitment-werkzaamheden onder het merk <b>Noah recruitment</b>. Waar in
+              deze overeenkomst over Noah recruitment wordt gesproken, gaat het om de
               werkzaamheden die Setter onder dat merk uitvoert.
             </p>
           </Sectie>
@@ -86,7 +86,7 @@ export default function ContractPagina() {
             <p>
               Setter voert telefonische acquisitie uit voor Binqie, en wordt
               door Binqie ingezet voor recruitment-werkzaamheden onder het
-              merk GRYWO via het ATS-platform Noah. Werkzaamheden omvatten het
+              merk Noah recruitment via het ATS-platform Noah. Werkzaamheden omvatten het
               bellen van opdrachtgevers, voorstellen versturen van kandidaten,
               voortgang vastleggen in Noah en deelnemen aan dagelijkse
               EOD-coaching met Pepijn Zwartenberg als coach.
@@ -156,9 +156,9 @@ export default function ContractPagina() {
           <Sectie nummer="4" titel="Eigendom en data">
             <p>
               Alle kandidaten, leads en opdrachtgever-gegevens die binnen Noah
-              worden verzameld of bewerkt zijn eigendom van GRYWO. Bij
+              worden verzameld of bewerkt zijn eigendom van Noah recruitment. Bij
               beëindiging van deze samenwerking blijven alle gegevens bij
-              GRYWO en wordt de toegang van Setter onmiddellijk gerevoceerd.
+              Noah recruitment en wordt de toegang van Setter onmiddellijk gerevoceerd.
             </p>
           </Sectie>
 

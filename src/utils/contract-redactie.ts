@@ -418,7 +418,7 @@ async function genereerSamenvattingsPdf(data: {
   }
 
   // Footer
-  page.drawText("Gegenereerd door Noah ATS · GRYWO (OneTwoStart NL B.V.) · KvK 96738782", {
+  page.drawText("Gegenereerd door Noah ATS · Noah recruitment (OneTwoStart NL B.V.) · KvK 96738782", {
     x: 50,
     y: 40,
     size: 7,

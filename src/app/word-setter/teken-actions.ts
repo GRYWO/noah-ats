@@ -176,7 +176,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
           user_voornaam: voornaam,
           user_achternaam: achternaam,
           user_rol: "setter",
-          bureau_naam: tenant?.handelsnaam || tenant?.naam || "GRYWO",
+          bureau_naam: tenant?.handelsnaam || tenant?.naam || "Noah recruitment",
         });
 
         // 5. NDA-mail naar persoonlijke email
@@ -227,9 +227,9 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
   // Bevestigingsmail naar de aanmelder
   try {
     await resend.emails.send({
-      from: "GRYWO <noreply@grywo.nl>",
+      from: "Noah recruitment <noreply@grywo.nl>",
       to: email,
-      subject: "Welkom bij GRYWO — Pepijn neemt snel contact op",
+      subject: "Welkom bij Noah recruitment — Pepijn neemt snel contact op",
       html: `
 <div style="font-family:-apple-system,sans-serif;max-width:600px;margin:auto;">
 <div style="background:#333399;color:white;padding:24px;text-align:center;border-radius:12px 12px 0 0;">
@@ -271,7 +271,7 @@ ${inlogWachtwoord ? `
   <li>Na 7 werkdagen trial: eigen Voys-telefoonnummer + vaste plek in het team</li>
 </ul>
 <p style="margin-top:24px;">Vragen? WhatsApp Pepijn direct op <a href="https://wa.me/31683481303">+31 6 83481303</a>.</p>
-<p style="color:#666;font-size:13px;margin-top:32px;">Tot snel,<br>Het GRYWO-team</p>
+<p style="color:#666;font-size:13px;margin-top:32px;">Tot snel,<br>Het Noah recruitment-team</p>
 </div>
 </div>`,
     });

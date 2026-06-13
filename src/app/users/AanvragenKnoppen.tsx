@@ -74,7 +74,7 @@ export function AanvragenKnop({ type }: { type: Type }) {
                 </div>
                 <h4 className="font-bold text-gray-800 mb-1">Aanvraag verstuurd!</h4>
                 <p className="text-sm text-gray-500">
-                  GRYWO krijgt deze aanvraag binnen — meestal binnen 1 werkdag geregeld.
+                  Noah recruitment krijgt deze aanvraag binnen — meestal binnen 1 werkdag geregeld.
                 </p>
               </div>
             ) : (
@@ -115,7 +115,7 @@ export function AanvragenKnop({ type }: { type: Type }) {
 
                 <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-md p-2.5">
                   📨 Een mail gaat automatisch naar <b>info@grywo.nl</b> met deze gegevens
-                  + jouw bureau. GRYWO regelt het en stuurt het terug zodra klaar.
+                  + jouw bureau. Noah recruitment regelt het en stuurt het terug zodra klaar.
                 </p>
 
                 <div className="flex justify-end gap-2 pt-1">

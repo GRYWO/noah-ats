@@ -219,7 +219,7 @@ export async function verstuurReply({
 
   const html = `
 <div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-  <h2 style="color:#333399;margin:0 0 16px 0;">📨 Reactie vanuit GRYWO</h2>
+  <h2 style="color:#333399;margin:0 0 16px 0;">📨 Reactie vanuit Noah recruitment</h2>
 
   <p style="margin:0 0 16px 0;">Hallo ${aanvraag.aanvrager_naam ?? ""},</p>
 
@@ -227,14 +227,14 @@ export async function verstuurReply({
 
   <p style="margin:16px 0 8px 0;font-size:12px;color:#888;">
     Met vriendelijke groet,<br>
-    Team GRYWO<br>
+    Team Noah recruitment<br>
     <a href="mailto:info@grywo.nl" style="color:#333399;">info@grywo.nl</a> · 085-4016082
   </p>
 </div>`;
 
   try {
     const result = await resend.emails.send({
-      from: "GRYWO <info@grywo.nl>",
+      from: "Noah recruitment <info@grywo.nl>",
       to: aanvraag.aanvrager_email,
       replyTo: "info@grywo.nl",
       subject: onderwerp,

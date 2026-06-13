@@ -20,14 +20,14 @@ import {
 } from "lucide-react";
 
 const WA_BERICHT = encodeURIComponent(
-  "Hoi Pepijn, ik heb interesse in de setter-positie bij GRYWO. Kunnen we even sparren?",
+  "Hoi Pepijn, ik heb interesse in de setter-positie bij Noah recruitment. Kunnen we even sparren?",
 );
 const WA_LINK = `https://wa.me/31683481303?text=${WA_BERICHT}`;
 
 export const metadata = {
-  title: "Word setter bij GRYWO — Sales-vacature recruitment",
+  title: "Word setter bij Noah recruitment — Sales-vacature recruitment",
   description:
-    "Word onderdeel van GRYWO en verdien aan elke plaatsing. Volledig opgeleid, AI-gedreven ATS, vast salaris + bonus. Solliciteer direct.",
+    "Word onderdeel van Noah recruitment en verdien aan elke plaatsing. Volledig opgeleid, AI-gedreven ATS, vast salaris + bonus. Solliciteer direct.",
 };
 
 export default function WordSetter() {
@@ -55,7 +55,7 @@ export default function WordSetter() {
           </Link>
           <div className="flex items-center gap-2 text-xs text-white/70">
             <span>Powered by</span>
-            <Image src="/grywo-logo-wit.png" alt="GRYWO" width={70} height={20} className="opacity-90" />
+            <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={70} height={20} className="opacity-90" />
           </div>
         </header>
 
@@ -66,7 +66,7 @@ export default function WordSetter() {
 
           <h1 className="text-4xl md:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
             Word setter bij{" "}
-            <span className="text-[#ffd84d]">GRYWO.</span>
+            <span className="text-[#ffd84d]">Noah recruitment.</span>
           </h1>
 
           <p className="text-lg md:text-2xl text-white/80 max-w-2xl mx-auto mb-10 font-light leading-relaxed">
@@ -97,14 +97,14 @@ export default function WordSetter() {
         </div>
       </section>
 
-      {/* ─── WAT IS GRYWO ─── */}
+      {/* ─── WAT IS NOAH RECRUITMENT ─── */}
       <section className="py-20 bg-white">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <div className="text-sm font-bold text-[#333399] uppercase tracking-wider mb-3">
             Wie wij zijn
           </div>
           <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight">
-            GRYWO doet recruitment{" "}
+            Noah recruitment doet recruitment{" "}
             <span className="text-[#333399]">AI-gestuurd.</span>
           </h2>
           <p className="text-gray-600 text-lg leading-relaxed mb-4">
@@ -113,7 +113,7 @@ export default function WordSetter() {
             jij belt, wij regelen de rest.
           </p>
           <p className="text-gray-600 text-lg leading-relaxed">
-            Klanten kiezen GRYWO omdat we sneller leveren dan elk ander bureau.
+            Klanten kiezen Noah recruitment omdat we sneller leveren dan elk ander bureau.
             Setters kiezen ons omdat ze met betere tooling méér verdienen.
           </p>
         </div>
@@ -206,7 +206,7 @@ export default function WordSetter() {
                 <li className="flex items-start gap-2"><Check size={18} className="text-[#ffd84d] flex-shrink-0 mt-0.5" /> Eigen <b>Voys-telefoonnummer</b></li>
                 <li className="flex items-start gap-2"><Check size={18} className="text-[#ffd84d] flex-shrink-0 mt-0.5" /> Onbeperkt gratis bellen, vanaf elke locatie</li>
                 <li className="flex items-start gap-2"><Check size={18} className="text-[#ffd84d] flex-shrink-0 mt-0.5" /> Doorlopend basissalaris + bonus per plaatsing</li>
-                <li className="flex items-start gap-2"><Check size={18} className="text-[#ffd84d] flex-shrink-0 mt-0.5" /> Vaste plek in het GRYWO-team</li>
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#ffd84d] flex-shrink-0 mt-0.5" /> Vaste plek in het Noah recruitment-team</li>
               </ul>
             </div>
           </div>
@@ -291,7 +291,7 @@ export default function WordSetter() {
         <div className="max-w-3xl mx-auto px-6 text-center">
           <div className="text-6xl text-[#333399] mb-4 font-serif leading-none">"</div>
           <p className="text-2xl md:text-4xl font-bold leading-tight mb-6 text-gray-900">
-            Bij GRYWO ben je geen nummer.{" "}
+            Bij Noah recruitment ben je geen nummer.{" "}
             <span className="text-[#333399]">Ik help je dagelijks om beter te worden.</span>
           </p>
           <div className="flex items-center justify-center gap-3 mt-8">
@@ -300,7 +300,7 @@ export default function WordSetter() {
             </div>
             <div className="text-left">
               <div className="font-bold text-gray-900">Pepijn Zwartenberg</div>
-              <div className="text-sm text-gray-500">Coach setters · GRYWO</div>
+              <div className="text-sm text-gray-500">Coach setters · Noah recruitment</div>
             </div>
           </div>
         </div>
@@ -346,7 +346,7 @@ export default function WordSetter() {
 
       {/* ─── FOOTER ─── */}
       <footer className="bg-[#0f0f23] text-white/40 text-xs text-center py-6">
-        © {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782 · Noah-ATS is een product van GRYWO
+        © {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782 · Noah-ATS is een product van Noah recruitment
       </footer>
     </main>
   );

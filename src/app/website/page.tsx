@@ -21,7 +21,7 @@ import {
 export const metadata = {
   title: "Noah-ATS — Recruitment op autopilot · AI-gedreven ATS",
   description:
-    "Het hart van GRYWO. Eén platform voor recruiters, setters en bureau-admins — met Robin AI, Jobdigger-integratie en automatische coaching.",
+    "Het hart van Noah recruitment. Eén platform voor recruiters, setters en bureau-admins — met Robin AI, Jobdigger-integratie en automatische coaching.",
 };
 
 export default function Website() {
@@ -71,9 +71,9 @@ export default function Website() {
             href="/"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm text-xs text-white/80 mb-10 hover:bg-white/10 transition"
           >
-            <Image src="/grywo-logo-wit.png" alt="GRYWO" width={50} height={14} className="opacity-90" />
+            <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={50} height={14} className="opacity-90" />
             <span className="text-white/40">·</span>
-            <span>Een product van GRYWO</span>
+            <span>Een product van Noah recruitment</span>
           </Link>
 
           {/* Noah-logo */}
@@ -405,7 +405,7 @@ export default function Website() {
           <div className="text-6xl text-[#333399] mb-6 font-serif leading-none">"</div>
           <p className="text-2xl md:text-4xl font-bold leading-tight mb-6 text-gray-900">
             Noah is niet zomaar software.{" "}
-            <span className="text-[#333399]">Het is het hart van GRYWO.</span>
+            <span className="text-[#333399]">Het is het hart van Noah recruitment.</span>
           </p>
           <div className="flex items-center justify-center gap-3 mt-8">
             <div className="w-12 h-12 rounded-full bg-[#333399] text-white font-bold flex items-center justify-center">
@@ -413,7 +413,7 @@ export default function Website() {
             </div>
             <div className="text-left">
               <div className="font-bold text-gray-900">Yorith Hulzebosch</div>
-              <div className="text-sm text-gray-500">Oprichter GRYWO</div>
+              <div className="text-sm text-gray-500">Oprichter Noah recruitment</div>
             </div>
           </div>
         </div>
@@ -502,7 +502,7 @@ export default function Website() {
                 <span className="ml-1.5 w-2 h-2 rounded-full bg-[#ffd84d] inline-block" />
               </div>
               <p className="text-sm leading-relaxed">
-                Recruitment op autopilot.<br />Een product van GRYWO.
+                Recruitment op autopilot.<br />Een product van Noah recruitment.
               </p>
             </div>
             <div>
@@ -532,7 +532,7 @@ export default function Website() {
             <div>© {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782</div>
             <div className="flex items-center gap-2 mt-3 md:mt-0">
               <span>Powered by</span>
-              <Image src="/grywo-logo-wit.png" alt="GRYWO" width={60} height={16} className="opacity-90" />
+              <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={60} height={16} className="opacity-90" />
             </div>
           </div>
         </div>

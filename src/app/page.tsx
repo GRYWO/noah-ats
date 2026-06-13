@@ -26,7 +26,7 @@ export default function Home() {
           <span>Powered by</span>
           <Image
             src="/grywo-logo-wit.png"
-            alt="GRYWO"
+            alt="Noah recruitment"
             width={70}
             height={20}
             className="opacity-90"

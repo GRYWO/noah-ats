@@ -48,7 +48,7 @@ export default async function TekenPage({
 
         {isIngetrokken && (
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 mb-4 text-sm">
-            <b>Deze uitnodiging is ingetrokken.</b> Neem contact op met GRYWO voor een nieuwe.
+            <b>Deze uitnodiging is ingetrokken.</b> Neem contact op met Noah recruitment voor een nieuwe.
           </div>
         )}
 
@@ -82,7 +82,7 @@ export default async function TekenPage({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 py-1 mt-2 border-t border-gray-200 pt-3">
               <div className="font-semibold text-gray-600">Verwerker</div>
               <div className="md:col-span-2 text-gray-900">
-                <b>OneTwoStart NL B.V.</b> (handelsnaam: GRYWO)<br />
+                <b>OneTwoStart NL B.V.</b> (handelsnaam: Noah recruitment)<br />
                 Raasdorperweg 191 A, 1175 KV Lijnden<br />
                 KvK 96738782 · vertegenwoordigd door Yorith Hulzebosch, eigenaar
               </div>
@@ -90,7 +90,7 @@ export default async function TekenPage({
           </div>
 
           <Section nr="1" titel="Doel">
-            <p>GRYWO levert het Noah ATS-platform en verwerkt namens {bureauHandel} persoonsgegevens van kandidaten, opdrachtgevers en medewerkers.</p>
+            <p>Noah recruitment levert het Noah ATS-platform en verwerkt namens {bureauHandel} persoonsgegevens van kandidaten, opdrachtgevers en medewerkers.</p>
           </Section>
           <Section nr="2" titel="Verwerkingen">
             <ul className="list-disc pl-6 space-y-1 text-sm text-gray-700">
@@ -109,14 +109,14 @@ export default async function TekenPage({
             <p>Afgewezen kandidaten max 4 weken (talentpool 1 jaar met toestemming). Plaatsings-logs 7 jaar (fiscaal). Bij beëindiging samenwerking binnen 30 dagen verwijderd.</p>
           </Section>
           <Section nr="6" titel="Datalekken">
-            <p>GRYWO meldt binnen 24 uur aan het bureau. Bureau is verantwoordelijk voor melding aan AP (binnen 72 uur).</p>
+            <p>Noah recruitment meldt binnen 24 uur aan het bureau. Bureau is verantwoordelijk voor melding aan AP (binnen 72 uur).</p>
           </Section>
           <Section nr="7" titel="Rechten van betrokkenen">
-            <p>GRYWO ondersteunt verzoeken om inzage, correctie, verwijdering en dataportabiliteit binnen 30 dagen.</p>
+            <p>Noah recruitment ondersteunt verzoeken om inzage, correctie, verwijdering en dataportabiliteit binnen 30 dagen.</p>
           </Section>
           <Section nr="8" titel="Audit-recht, aansprakelijkheid, duur">
             <p>
-              Bureau mag eens per jaar audit doen. Aansprakelijkheid GRYWO beperkt tot de in de 12 voorgaande maanden betaalde bedragen. Overeenkomst loopt zolang Bureau gebruikmaakt van Noah ATS.
+              Bureau mag eens per jaar audit doen. Aansprakelijkheid Noah recruitment beperkt tot de in de 12 voorgaande maanden betaalde bedragen. Overeenkomst loopt zolang Bureau gebruikmaakt van Noah ATS.
             </p>
           </Section>
           <Section nr="9" titel="Toepasselijk recht">

@@ -85,12 +85,12 @@ export default async function DpaPage({
               <tr>
                 <td className="py-2 pr-4 font-semibold text-gray-700 align-top">Verwerker</td>
                 <td className="py-2">
-                  <b>OneTwoStart NL B.V.</b> (handelsnaam: GRYWO)<br />
+                  <b>OneTwoStart NL B.V.</b> (handelsnaam: Noah recruitment)<br />
                   Raasdorperweg 191 A, 1175 KV Lijnden<br />
                   KvK 96738782<br />
                   Vertegenwoordigd door Yorith Hulzebosch, eigenaar
                   <br />
-                  <span className="text-gray-500">— hierna te noemen "<b>GRYWO</b>"</span>
+                  <span className="text-gray-500">— hierna te noemen "<b>Noah recruitment</b>"</span>
                 </td>
               </tr>
             </tbody>
@@ -99,13 +99,13 @@ export default async function DpaPage({
 
         <H2>1. Doel en achtergrond</H2>
         <p>
-          Bureau heeft GRYWO opdracht gegeven het ATS-platform <b>Noah ATS</b> (https://noah-ats.nl) te leveren.
-          Bij die dienstverlening verwerkt GRYWO namens Bureau persoonsgegevens van kandidaten, opdrachtgevers
+          Bureau heeft Noah recruitment opdracht gegeven het ATS-platform <b>Noah ATS</b> (https://noah-ats.nl) te leveren.
+          Bij die dienstverlening verwerkt Noah recruitment namens Bureau persoonsgegevens van kandidaten, opdrachtgevers
           en medewerkers van Bureau. Deze overeenkomst regelt die verwerking conform artikel 28 AVG.
         </p>
 
         <H2>2. Verwerkingen</H2>
-        <p>GRYWO verwerkt namens Bureau onder andere:</p>
+        <p>Noah recruitment verwerkt namens Bureau onder andere:</p>
         <table className="w-full text-[12px] my-3 border-collapse">
           <thead>
             <tr className="bg-gray-50">
@@ -142,7 +142,7 @@ export default async function DpaPage({
         </ul>
 
         <H2>4. Sub-verwerkers</H2>
-        <p>GRYWO maakt gebruik van de volgende sub-verwerkers. Bureau geeft hiervoor toestemming.</p>
+        <p>Noah recruitment maakt gebruik van de volgende sub-verwerkers. Bureau geeft hiervoor toestemming.</p>
         <table className="w-full text-[12px] my-3 border-collapse">
           <thead>
             <tr className="bg-gray-50">
@@ -186,13 +186,13 @@ export default async function DpaPage({
 
         <H2>7. Rechten van betrokkenen</H2>
         <p>
-          GRYWO ondersteunt Bureau bij verzoeken van betrokkenen (inzage, correctie, verwijdering,
+          Noah recruitment ondersteunt Bureau bij verzoeken van betrokkenen (inzage, correctie, verwijdering,
           dataportabiliteit, bezwaar). Verzoeken worden binnen 5 werkdagen behandeld; binnen 30 dagen afgerond.
         </p>
 
         <H2>8. Datalekken</H2>
         <p>
-          Bij een (vermoedelijk) datalek meldt GRYWO dit <b>binnen 24 uur</b> aan Bureau, inclusief aard,
+          Bij een (vermoedelijk) datalek meldt Noah recruitment dit <b>binnen 24 uur</b> aan Bureau, inclusief aard,
           categorieën en aantal betrokkenen, mogelijke gevolgen en genomen maatregelen. Bureau is
           verantwoordelijk voor melding aan de Autoriteit Persoonsgegevens (binnen 72 uur) en betrokkenen waar van toepassing.
         </p>
@@ -205,8 +205,8 @@ export default async function DpaPage({
 
         <H2>10. Aansprakelijkheid</H2>
         <p>
-          Iedere partij is aansprakelijk voor schade door eigen toedoen. GRYWO's aansprakelijkheid is beperkt tot
-          het bedrag dat Bureau in de 12 maanden voorafgaand aan het schadevoorval aan GRYWO heeft betaald,
+          Iedere partij is aansprakelijk voor schade door eigen toedoen. Noah recruitment's aansprakelijkheid is beperkt tot
+          het bedrag dat Bureau in de 12 maanden voorafgaand aan het schadevoorval aan Noah recruitment heeft betaald,
           behalve bij opzet of grove schuld.
         </p>
 
@@ -228,7 +228,7 @@ export default async function DpaPage({
             <div className="mt-1 text-xs text-gray-600">{contactNaam}, {contactFunctie}</div>
           </div>
           <div>
-            <div className="font-bold text-gray-700 mb-2">Voor GRYWO (OneTwoStart NL B.V.)</div>
+            <div className="font-bold text-gray-700 mb-2">Voor Noah recruitment (OneTwoStart NL B.V.)</div>
             <div className="text-xs text-gray-500 mb-8">Naam, functie, datum, handtekening</div>
             <div className="border-b border-gray-400 h-16"></div>
             <div className="mt-1 text-xs text-gray-600">Yorith Hulzebosch, eigenaar</div>
