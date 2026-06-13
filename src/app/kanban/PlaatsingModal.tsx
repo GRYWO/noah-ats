@@ -311,7 +311,7 @@ export function PlaatsingModal({ open, kandidaatId, kandidaatNaam, onAnnuleer, o
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900">
             <b>Wat gebeurt er na bevestigen?</b>
             <ul className="mt-1 ml-4 list-disc space-y-0.5">
-              <li>Plaatsings-mail naar backoffice@grywo.nl</li>
+              <li>Plaatsings-mail naar backoffice@noah-recruitment.nl</li>
               {basis === "werving_selectie" && (
                 <li>Contract-controle uitnodiging naar {contactEmail || "klant"}</li>
               )}

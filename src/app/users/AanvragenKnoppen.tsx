@@ -114,7 +114,7 @@ export function AanvragenKnop({ type }: { type: Type }) {
                 )}
 
                 <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-md p-2.5">
-                  📨 Een mail gaat automatisch naar <b>info@grywo.nl</b> met deze gegevens
+                  📨 Een mail gaat automatisch naar <b>info@noah-recruitment.nl</b> met deze gegevens
                   + jouw bureau. Noah recruitment regelt het en stuurt het terug zodra klaar.
                 </p>
 

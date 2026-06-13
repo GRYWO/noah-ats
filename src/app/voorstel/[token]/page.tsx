@@ -62,7 +62,7 @@ export default async function VoorstelPage({
              "Dit voorstel is verlopen"}
           </h1>
           <p className="text-gray-600 text-sm">
-            Je reactie is verwerkt. Vragen? Mail <a href={`mailto:noah@grywo.nl`} className="text-[#333399] hover:underline">noah@grywo.nl</a>.
+            Je reactie is verwerkt. Vragen? Mail <a href={`mailto:noah@noah-recruitment.nl`} className="text-[#333399] hover:underline">noah@noah-recruitment.nl</a>.
           </p>
         </div>
       </main>

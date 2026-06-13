@@ -101,9 +101,12 @@ export async function updateSession(request: NextRequest) {
       const userEmail = (user.email ?? "").toLowerCase();
       const internGrywo = new Set([
         "yorith@grywo.nl",
+        "yorith@noah-recruitment.nl",
         "yorith@grywo.com",
         "pepijn@grywo.nl",
+        "pepijn@noah-recruitment.nl",
         "wouter@grywo.nl",
+        "wouter@noah-recruitment.nl",
       ]);
       const isSuperUser = internGrywo.has(userEmail);
       if (!isSuperUser && profile?.tenant_id && (profile.rol === "admin" || profile.rol === "recruiter")) {

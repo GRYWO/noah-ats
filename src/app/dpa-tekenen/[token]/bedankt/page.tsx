@@ -32,7 +32,7 @@ export default async function BedanktPage({
         </div>
 
         <div className="mt-6 text-xs text-gray-500">
-          Vragen? Mail <a href="mailto:info@grywo.nl" className="text-[#333399] font-semibold">info@grywo.nl</a>
+          Vragen? Mail <a href="mailto:info@noah-recruitment.nl" className="text-[#333399] font-semibold">info@noah-recruitment.nl</a>
         </div>
       </div>
     </main>

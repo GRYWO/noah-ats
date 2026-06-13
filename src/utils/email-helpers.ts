@@ -1,16 +1,16 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 
-const MAIL_DOMEIN = "grywo.nl";
+const MAIL_DOMEIN = "noah-recruitment.nl";
 
 /**
  * Bouw een 'From'-string voor een setter/recruiter. Format:
- *   "Voornaam Achternaam <voornaam@grywo.nl>"
+ *   "Voornaam Achternaam <voornaam@noah-recruitment.nl>"
  *
  * Het mailadres wordt automatisch afgeleid uit de voornaam (lowercase,
  * zonder spaties/diacritics) tenzij er expliciet een ander mail_adres in
- * het profiel staat dat niet @grywo.nl is.
+ * het profiel staat dat niet @noah-recruitment.nl is.
  *
- * Belangrijk: het domein moet in Resend geverifieerd zijn (@grywo.nl is dat).
+ * Belangrijk: het domein moet in Resend geverifieerd zijn (@noah-recruitment.nl is dat).
  */
 export async function getSetterFrom(
   setterId: string | null | undefined,
@@ -31,10 +31,10 @@ export async function getSetterFrom(
     .replace(/[^a-z0-9]/g, "");
   const standaardEmail = `${voornaamSchoon}@${MAIL_DOMEIN}`;
 
-  // Resend kan alleen vanaf @grywo.nl versturen (enige geverifieerde domein).
-  // Voorkeur: mail_adres als dat een @grywo.nl-adres is — zo werkt elke
-  // Hostnet-mailbox zoals 'p.zwartenberg@grywo.nl', 'pepijn.zw@grywo.nl', etc.
-  // Anders fallback op auto-generated voornaam@grywo.nl.
+  // Resend kan alleen vanaf @noah-recruitment.nl versturen (enige geverifieerde domein).
+  // Voorkeur: mail_adres als dat een @noah-recruitment.nl-adres is — zo werkt elke
+  // Hostnet-mailbox zoals 'p.zwartenberg@noah-recruitment.nl', 'pepijn.zw@noah-recruitment.nl', etc.
+  // Anders fallback op auto-generated voornaam@noah-recruitment.nl.
   const ingevuldGrywo = data.mail_adres?.trim().toLowerCase().endsWith(`@${MAIL_DOMEIN}`)
     ? data.mail_adres.trim()
     : null;

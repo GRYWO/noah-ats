@@ -75,7 +75,7 @@ export function PlaatsingTrigger({
                 <input type="hidden" name="kandidaat_id" value={kandidaatId} />
 
                 <div className="bg-red-50 border border-red-200 text-red-900 text-sm rounded-md p-3">
-                  De plaatsing wordt afgekeurd, backoffice@grywo.nl krijgt een mail met
+                  De plaatsing wordt afgekeurd, backoffice@noah-recruitment.nl krijgt een mail met
                   de reden en wie heeft afgekeurd. De kandidaat keert terug naar
                   &quot;in proces&quot;.
                 </div>

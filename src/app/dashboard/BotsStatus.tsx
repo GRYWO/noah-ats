@@ -124,7 +124,7 @@ export async function BotsStatus() {
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-gray-800">Resend (mail)</div>
             <div className="text-xs text-gray-500">
-              Verzending van alle systeem-mails via noreply@grywo.nl
+              Verzending van alle systeem-mails via noreply@noah-recruitment.nl
             </div>
           </div>
           <div className="text-xs text-emerald-600 font-semibold inline-flex items-center gap-1">

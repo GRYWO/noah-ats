@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const naar = url.searchParams.get("naar") ?? user.email!;
-  const from = url.searchParams.get("from") ?? "Noah <noreply@grywo.nl>";
+  const from = url.searchParams.get("from") ?? "Noah <noreply@noah-recruitment.nl>";
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {

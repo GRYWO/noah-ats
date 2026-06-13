@@ -91,8 +91,8 @@ export default async function ContractControlePage({
 
         <p className="text-xs text-white/40 mt-8 text-center">
           Vragen? Mail{" "}
-          <a href="mailto:backoffice@grywo.nl" className="text-white/70 underline">
-            backoffice@grywo.nl
+          <a href="mailto:backoffice@noah-recruitment.nl" className="text-white/70 underline">
+            backoffice@noah-recruitment.nl
           </a>{" "}
           of bel 085-4016082
         </p>
@@ -132,8 +132,8 @@ function FoutPagina({ titel }: { titel: string }) {
         <h1 className="text-2xl font-bold mb-2">{titel}</h1>
         <p className="text-white/60 text-sm">
           De link is mogelijk verlopen. Mail{" "}
-          <a href="mailto:backoffice@grywo.nl" className="underline">
-            backoffice@grywo.nl
+          <a href="mailto:backoffice@noah-recruitment.nl" className="underline">
+            backoffice@noah-recruitment.nl
           </a>
           .
         </p>

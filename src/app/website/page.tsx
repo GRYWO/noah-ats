@@ -483,7 +483,7 @@ export default function Website() {
               Inloggen <ArrowRight size={18} />
             </Link>
             <a
-              href="mailto:info@grywo.nl?subject=Demo%20Noah-ATS"
+              href="mailto:info@noah-recruitment.nl?subject=Demo%20Noah-ATS"
               className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white font-semibold px-8 py-4 rounded-xl transition"
             >
               Demo aanvragen
@@ -516,7 +516,7 @@ export default function Website() {
             <div>
               <h4 className="text-white font-bold text-sm mb-3 uppercase tracking-wider">Bedrijf</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="mailto:info@grywo.nl" className="hover:text-white transition">Contact</a></li>
+                <li><a href="mailto:info@noah-recruitment.nl" className="hover:text-white transition">Contact</a></li>
                 <li><Link href="/privacy" className="hover:text-white transition">Privacy</Link></li>
               </ul>
             </div>

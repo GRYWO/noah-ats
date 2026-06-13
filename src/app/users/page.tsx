@@ -135,7 +135,7 @@ export default async function SettersPage({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">E-mail *</label>
-                <input name="email" type="email" required placeholder="voorbeeld@grywo.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <input name="email" type="email" required placeholder="voorbeeld@noah-recruitment.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                 <AanvragenKnop type="email" />
               </div>
               <div>
@@ -176,9 +176,9 @@ export default async function SettersPage({
                 <h4 className="text-xs uppercase text-gray-500 font-semibold mb-2">Mailbox (Hostnet)</h4>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Verzend-mailbox (Hostnet, @grywo.nl)</label>
-                <input name="mail_adres" type="email" placeholder="voornaam.achternaam@grywo.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
-                <small className="text-gray-400 text-xs">Hier vandaan worden voorstellen verzonden. Leeg = auto voornaam@grywo.nl</small>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Verzend-mailbox (Hostnet, @noah-recruitment.nl)</label>
+                <input name="mail_adres" type="email" placeholder="voornaam.achternaam@noah-recruitment.nl" autoComplete="off" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                <small className="text-gray-400 text-xs">Hier vandaan worden voorstellen verzonden. Leeg = auto voornaam@noah-recruitment.nl</small>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Mail-wachtwoord (Hostnet)</label>

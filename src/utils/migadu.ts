@@ -1,8 +1,8 @@
-// Migadu Admin API — mailboxen automatisch aanmaken op @grywo.nl
+// Migadu Admin API — mailboxen automatisch aanmaken op @noah-recruitment.nl
 // Env vereist: MIGADU_API_USER, MIGADU_API_KEY (zie noah-web setup)
 
 const BASE = "https://api.migadu.com/v1";
-const DOMEIN = "grywo.nl";
+const DOMEIN = "noah-recruitment.nl";
 
 export function migaduGeconfigureerd(): boolean {
   return Boolean(process.env.MIGADU_API_USER && process.env.MIGADU_API_KEY);
@@ -41,8 +41,8 @@ export function maakLocalPart(voornaam: string): string {
 }
 
 /**
- * Maakt voornaam@grywo.nl aan bij Migadu. Bij conflict (naam bestaat al)
- * probeert hij automatisch voornaam.achternaam@grywo.nl als fallback.
+ * Maakt voornaam@noah-recruitment.nl aan bij Migadu. Bij conflict (naam bestaat al)
+ * probeert hij automatisch voornaam.achternaam@noah-recruitment.nl als fallback.
  * Geeft het uiteindelijke adres terug (kan dus afwijken van voornaam@).
  */
 export async function maakNoahMailbox(opts: {
@@ -93,7 +93,7 @@ export async function maakNoahMailbox(opts: {
 }
 
 /**
- * Verwijdert voornaam@grywo.nl uit Migadu.
+ * Verwijdert voornaam@noah-recruitment.nl uit Migadu.
  */
 export async function verwijderNoahMailbox(voornaam: string): Promise<{ ok: boolean; error?: string }> {
   const localPart = maakLocalPart(voornaam);

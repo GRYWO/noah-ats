@@ -13,7 +13,7 @@ function vandaagDatumNL(): string {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-const COACH_EMAIL = "pepijn@grywo.nl";
+const COACH_EMAIL = "pepijn@noah-recruitment.nl";
 
 export async function submitEodRapport(formData: FormData) {
   const supabase = await createClient();
@@ -128,7 +128,7 @@ export async function vraagCoachingMeetingAan(formData: FormData) {
   }
 
   if (!coachId) {
-    redirect(`/coaching?error=${encodeURIComponent("Coach (Pepijn) niet gevonden — laat admin pepijn@grywo.nl aanmaken")}`);
+    redirect(`/coaching?error=${encodeURIComponent("Coach (Pepijn) niet gevonden — laat admin pepijn@noah-recruitment.nl aanmaken")}`);
   }
 
   const { error } = await admin.from("coaching_aanvragen").insert({

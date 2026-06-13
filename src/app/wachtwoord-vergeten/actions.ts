@@ -50,7 +50,7 @@ export async function vraagNieuwWachtwoordAan(formData: FormData) {
         : profile?.rol === "setter" ? "Setter"
         : "Gebruiker";
 
-      const from = "Noah <noreply@grywo.nl>";
+      const from = "Noah <noreply@noah-recruitment.nl>";
       console.log("[wachtwoord-vergeten] versturen vanaf:", from, "naar:", email);
       await sendInloggegevensOpnieuw({
         naar: email,

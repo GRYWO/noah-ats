@@ -23,7 +23,7 @@ export default function MijnDataPage() {
 
           <div className="mt-6 pt-4 border-t text-xs text-gray-500">
             De link is <b>1 uur geldig</b> en kan eenmalig gebruikt worden. Geen mail ontvangen?
-            Check je spam-map of mail <a href="mailto:info@grywo.nl" className="text-[#333399] font-semibold">info@grywo.nl</a>.
+            Check je spam-map of mail <a href="mailto:info@noah-recruitment.nl" className="text-[#333399] font-semibold">info@noah-recruitment.nl</a>.
           </div>
         </div>
 

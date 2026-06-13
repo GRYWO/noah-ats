@@ -54,7 +54,7 @@ export function ReplyForm({ token, aanvragerNaam, aanvragerEmail }: Props) {
         onChange={(e) => setBericht(e.target.value)}
         disabled={bezig}
         rows={6}
-        placeholder="Bijvoorbeeld: 'E-mailadres is aangemaakt: voornaam@grywo.nl, wachtwoord volgt apart.'"
+        placeholder="Bijvoorbeeld: 'E-mailadres is aangemaakt: voornaam@noah-recruitment.nl, wachtwoord volgt apart.'"
         className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white placeholder-white/30 rounded-lg focus:outline-none focus:border-[#ffd84d] focus:bg-white/10 transition resize-none"
       />
 

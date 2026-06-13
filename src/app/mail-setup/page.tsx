@@ -21,7 +21,7 @@ export default function MailSetupPage() {
           Mail instellen in een externe app
         </h1>
         <p className="text-gray-600 mb-8">
-          Wil je je @grywo.nl-mailbox naast Noah-ATS ook gebruiken in Outlook,
+          Wil je je @noah-recruitment.nl-mailbox naast Noah-ATS ook gebruiken in Outlook,
           Apple Mail of je telefoon? Hieronder vind je alle instellingen.
         </p>
 
@@ -72,8 +72,8 @@ export default function MailSetupPage() {
           </h2>
           <ul className="text-sm text-gray-700 space-y-2 list-disc pl-5">
             <li>
-              <b>Gebruikersnaam:</b> je volledige @grywo.nl-adres
-              (bv. <code className="bg-gray-100 px-1.5 py-0.5 rounded">voornaam@grywo.nl</code>)
+              <b>Gebruikersnaam:</b> je volledige @noah-recruitment.nl-adres
+              (bv. <code className="bg-gray-100 px-1.5 py-0.5 rounded">voornaam@noah-recruitment.nl</code>)
             </li>
             <li>
               <b>Wachtwoord:</b> je Migadu-wachtwoord. Dit is hetzelfde
@@ -115,7 +115,7 @@ export default function MailSetupPage() {
           <KopieerKnop
             tekst={`Hoi,
 
-Je @grywo.nl-mailbox is gehost bij Migadu. Pas je mailprogramma als volgt aan:
+Je @noah-recruitment.nl-mailbox is gehost bij Migadu. Pas je mailprogramma als volgt aan:
 
 📥 INKOMEND (IMAP)
    Server:    imap.migadu.com
@@ -128,7 +128,7 @@ Je @grywo.nl-mailbox is gehost bij Migadu. Pas je mailprogramma als volgt aan:
    Encryptie: SSL/TLS
 
 🔑 INLOGGEN
-   Gebruikersnaam: je volledige @grywo.nl-adres
+   Gebruikersnaam: je volledige @noah-recruitment.nl-adres
    Wachtwoord:     je Migadu-wachtwoord (krijg je apart)
 
 Webmail (geen instellingen nodig):

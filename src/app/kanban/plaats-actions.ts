@@ -20,7 +20,7 @@ const TOEGESTANE_PCT = new Set(["15", "16", "17"]);
  * Setter sleept kandidaat naar "Geplaatst" → modal opent → setter vult in →
  * Deze action:
  *  1. Maakt plaatsings-record
- *  2. Verstuurt mail naar backoffice@grywo.nl met alle plaatsings-info
+ *  2. Verstuurt mail naar backoffice@noah-recruitment.nl met alle plaatsings-info
  *  3. Verstuurt automatisch contract-controle uitnodiging naar opdrachtgever
  *  4. Zet kandidaat-status op "geplaatst"
  */
@@ -100,7 +100,7 @@ export async function plaatsViaKanban(input: {
     .update({ status: "geplaatst", kanban_stap: "geplaatst" })
     .eq("id", input.kandidaatId);
 
-  // 3) Mail naar backoffice@grywo.nl
+  // 3) Mail naar backoffice@noah-recruitment.nl
   const setterFrom = await getSetterFrom(user.id);
   let backofficeMailFout: string | null = null;
   try {

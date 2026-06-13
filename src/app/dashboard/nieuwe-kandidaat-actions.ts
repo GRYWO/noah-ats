@@ -94,10 +94,10 @@ export async function vraagNieuweKandidaatAan(formData: FormData): Promise<Resul
     return { error: `Mail naar recruiter mislukt: ${(e as Error).message}` };
   }
 
-  // Failsafe-kopie naar info@grywo.nl
+  // Failsafe-kopie naar info@noah-recruitment.nl
   try {
     await sendNieuweKandidaatVerzoek({
-      naar: "info@grywo.nl",
+      naar: "info@noah-recruitment.nl",
       recruiterVoornaam: "Noah recruitment-team",
       setterNaam: `${setterNaam} → ${recruiter.voornaam ?? "?"} (${recruiterEmail})`,
       reden,

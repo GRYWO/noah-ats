@@ -109,7 +109,7 @@ export default async function TekenAkkoordPage({
         )}
 
         <div className="text-center py-5 text-xs text-gray-500">
-          Vragen? Mail <a href="mailto:info@grywo.nl" className="text-[#333399] font-semibold">info@grywo.nl</a> of bel 085-4016082
+          Vragen? Mail <a href="mailto:info@noah-recruitment.nl" className="text-[#333399] font-semibold">info@noah-recruitment.nl</a> of bel 085-4016082
         </div>
       </div>
     </main>
@@ -251,7 +251,7 @@ function SetterContractTekst({ naam, datum }: { naam: string; datum: string }) {
       <h2 className="text-base font-bold mt-4 mb-2">3. Tools &amp; toegang</h2>
       <p className="text-sm leading-relaxed">
         Noah recruitment stelt aan Setter ter beschikking: een persoonlijk Noah-account, een
-        <b> voornaam@grywo.nl</b>-mailadres, toegang tot Jobdigger en de Robin AI-assistent.
+        <b> voornaam@noah-recruitment.nl</b>-mailadres, toegang tot Jobdigger en de Robin AI-assistent.
         Setter respecteert de Acceptable Use-bepalingen zoals beschreven in de
         Gebruiksvoorwaarden Noah ATS.
       </p>
@@ -343,7 +343,7 @@ function GebruiksvoorwaardenTekst({ naam, rol, bureau, datum }: { naam: string; 
       <ul className="list-disc pl-6 space-y-1 text-sm text-gray-700">
         <li>Wachtwoord direct na eerste login wijzigen (via Instellingen)</li>
         <li>2FA aanzetten zodra dit beschikbaar is op je account</li>
-        <li>Verdachte activiteit (vreemde mails, ongebruikelijke logins) direct melden aan je bureau-admin of aan info@grywo.nl</li>
+        <li>Verdachte activiteit (vreemde mails, ongebruikelijke logins) direct melden aan je bureau-admin of aan info@noah-recruitment.nl</li>
         <li>Kandidaten respectvol behandelen — je werkt met persoonlijke data</li>
       </ul>
 

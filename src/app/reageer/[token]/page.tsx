@@ -105,7 +105,7 @@ export default async function ReageerPage({
         </div>
 
         <p className="text-xs text-white/40 mt-6 text-center">
-          Dit antwoord wordt vanuit <b className="text-white/60">info@grywo.nl</b> verstuurd.
+          Dit antwoord wordt vanuit <b className="text-white/60">info@noah-recruitment.nl</b> verstuurd.
         </p>
       </section>
 

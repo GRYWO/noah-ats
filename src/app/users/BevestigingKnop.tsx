@@ -46,7 +46,7 @@ export function BevestigingKnop() {
     return (
       <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3 inline-flex items-center gap-2 text-sm text-emerald-700 font-semibold">
         <CheckCircle2 size={16} />
-        Bericht verstuurd naar info@grywo.nl
+        Bericht verstuurd naar info@noah-recruitment.nl
       </div>
     );
   }
@@ -56,7 +56,7 @@ export function BevestigingKnop() {
       <div className="flex items-center justify-between">
         <div className="text-xs font-semibold text-emerald-800 inline-flex items-center gap-1.5">
           <CheckCircle2 size={14} />
-          Bericht naar Noah recruitment (info@grywo.nl)
+          Bericht naar Noah recruitment (info@noah-recruitment.nl)
         </div>
         <button
           type="button"

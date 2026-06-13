@@ -67,9 +67,9 @@ export async function tekenAkkoord(formData: FormData): Promise<Result> {
       const { Resend } = await import("resend");
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
-        from: "Noah ATS <noreply@grywo.nl>",
-        to: ["bart@grywo.nl", "pepijn@grywo.nl"],
-        cc: ["info@grywo.nl"],
+        from: "Noah ATS <noreply@noah-recruitment.nl>",
+        to: ["bart@noah-recruitment.nl", "pepijn@noah-recruitment.nl"],
+        cc: ["info@noah-recruitment.nl"],
         subject: `Samenwerkingsovereenkomst getekend: ${naam}`,
         html: `<p>De samenwerkingsovereenkomst is zojuist getekend door <b>${naam}</b>.</p>
 <p>Token: <code>${token}</code><br>
@@ -112,7 +112,7 @@ Bekijk het getekende document via Noah <a href="https://noah-ats.nl/tekenen/${to
           ? "Setter"
           : "Recruiter";
 
-        // Login-adres = profile.mail_adres (@grywo.nl), niet de persoonlijke
+        // Login-adres = profile.mail_adres (@noah-recruitment.nl), niet de persoonlijke
         // email waar de NDA naartoe ging.
         const { data: profile } = await admin
           .from("profiles")

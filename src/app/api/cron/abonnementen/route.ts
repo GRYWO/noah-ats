@@ -4,7 +4,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { runCron } from "@/utils/cron-log";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = "Noah ATS <noreply@grywo.nl>";
+const FROM = "Noah ATS <noreply@noah-recruitment.nl>";
 
 export const dynamic = "force-dynamic";
 
@@ -75,11 +75,11 @@ export async function GET(req: Request) {
 }
 
 async function stuurNotificatie(bureau: string, type: "read_only" | "geblokkeerd") {
-  // Stuur intern naar info@grywo.nl
+  // Stuur intern naar info@noah-recruitment.nl
   try {
     await resend.emails.send({
       from: FROM,
-      to: "info@grywo.nl",
+      to: "info@noah-recruitment.nl",
       subject: `⚠ Bureau ${bureau} status → ${type}`,
       html: `<p>Het abonnement van <b>${bureau}</b> is automatisch op status <b>${type}</b> gezet wegens 14/21 dagen wanbetaling.</p>
 <p>Controleer in Stripe + bel het bureau om af te wikkelen.</p>`,

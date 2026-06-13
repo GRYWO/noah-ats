@@ -124,7 +124,7 @@ export async function verwerkContractUpload(formData: FormData) {
     const msg = (e as Error).message ?? "onbekend";
     // Probeer specifieker te zijn
     if (msg.includes("JSON")) {
-      return { ok: false, error: "AI kon geen contract-info uit deze PDF halen. Is dit echt een arbeidscontract? Anders: mail backoffice@grywo.nl." };
+      return { ok: false, error: "AI kon geen contract-info uit deze PDF halen. Is dit echt een arbeidscontract? Anders: mail backoffice@noah-recruitment.nl." };
     }
     if (msg.toLowerCase().includes("rate") || msg.toLowerCase().includes("429")) {
       return { ok: false, error: "AI is tijdelijk druk — probeer over een minuut opnieuw." };
@@ -132,7 +132,7 @@ export async function verwerkContractUpload(formData: FormData) {
     if (msg.toLowerCase().includes("timeout")) {
       return { ok: false, error: "PDF te groot of complex (timeout). Probeer een eenvoudigere/kleinere PDF." };
     }
-    return { ok: false, error: `Verwerking mislukt: ${msg.slice(0, 200)}. Mail backoffice@grywo.nl voor handmatige verwerking.` };
+    return { ok: false, error: `Verwerking mislukt: ${msg.slice(0, 200)}. Mail backoffice@noah-recruitment.nl voor handmatige verwerking.` };
   }
 
   // 3) Samenvattings-PDF opslaan (geredacteerd skippen — duurt te lang)

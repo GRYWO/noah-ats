@@ -78,7 +78,7 @@ export const HOOFDSTUKKEN: Hoofdstuk[] = [
       {
         kop: "Super-admin",
         tekst: [
-          "Yorith Hulzebosch (yorith@grywo.nl / yorith@grywo.com). Alleen op basis van e-mail — hardcoded in src/utils/auth.ts.",
+          "Yorith Hulzebosch (yorith@noah-recruitment.nl / yorith@grywo.com). Alleen op basis van e-mail — hardcoded in src/utils/auth.ts.",
           "Ziet alles: alle bureaus, alle kandidaten, alle abonnementen, performance-monitor, archief, documenten-beheer.",
           "Wordt nooit geblokkeerd door bureau-abonnement-checks en omzeilt de single-device-policy niet maar de inactiviteits-uitlog wel niet (zie hoofdstuk Beveiliging).",
         ],

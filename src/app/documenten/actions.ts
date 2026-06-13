@@ -10,7 +10,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = "Noah ATS <noreply@grywo.nl>";
+const FROM = "Noah ATS <noreply@noah-recruitment.nl>";
 
 function appUrl() {
   const env = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim();

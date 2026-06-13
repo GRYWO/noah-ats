@@ -76,7 +76,7 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
     recruiterId = fallback?.id ?? null;
   }
   if (!recruiterId) {
-    return { error: "Geen recruiter of admin in dit bureau gevonden — neem contact op met info@grywo.nl." };
+    return { error: "Geen recruiter of admin in dit bureau gevonden — neem contact op met info@noah-recruitment.nl." };
   }
 
   // Recruiter-profiel + e-mailadres
@@ -124,11 +124,11 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
     return { error: `Mail naar recruiter mislukt: ${(e as Error).message}` };
   }
 
-  // Failsafe-kopie naar info@grywo.nl zodat GRYWO altijd op de hoogte is
+  // Failsafe-kopie naar info@noah-recruitment.nl zodat GRYWO altijd op de hoogte is
   // (en kan ingrijpen als de recruiter niet reageert).
   try {
     await sendKandidaatVerwijderVerzoek({
-      naar: "info@grywo.nl",
+      naar: "info@noah-recruitment.nl",
       recruiterVoornaam: "Noah recruitment-team",
       kandidaatNaam: `[KOPIE] ${kandidaatNaam}`,
       setterNaam: `${setterNaam} → recruiter: ${recruiter.voornaam ?? "?"} (${recruiterEmail})`,
@@ -136,7 +136,7 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
       token,
     });
   } catch (e) {
-    console.error("[verwijder-verzoek] failsafe-kopie naar info@grywo.nl mislukt:", e);
+    console.error("[verwijder-verzoek] failsafe-kopie naar info@noah-recruitment.nl mislukt:", e);
   }
 
   revalidatePath(`/kandidaten/${kandidaatId}`);
