@@ -149,9 +149,15 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
     >
       {/* Logo */}
       <div className={`h-16 flex items-center border-b border-gray-100 ${open ? "px-4" : "justify-center"}`}>
-        <Link href="/dashboard" className="flex items-baseline">
-          <span className="text-[#333399] text-2xl font-black tracking-tighter">{open ? "noah" : "n"}</span>
-          <span className="ml-1 w-2 h-2 rounded-full bg-[#ffd84d] inline-block"></span>
+        <Link href="/dashboard" className="flex items-baseline gap-1.5">
+          <span className="text-[#333399] text-2xl font-black tracking-tighter">
+            {open ? "Noah" : "N"}<span className="text-[#ffd84d]">.</span>
+          </span>
+          {open && (
+            <span className="text-[#333399]/70 text-[10px] font-semibold uppercase tracking-[0.25em]">
+              ATS
+            </span>
+          )}
         </Link>
       </div>
 
