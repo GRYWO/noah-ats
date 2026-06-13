@@ -78,12 +78,8 @@ export function bouwHandtekening({
           <td style="padding:2px 0;color:#444;"><a href="tel:${voysNummer}" style="color:#444;text-decoration:none;font-weight:500;">${voysNummer}</a></td>
         </tr>` : ""}
         <tr>
-          <td style="padding:2px 8px 2px 0;color:#9a9aa8;width:18px;vertical-align:middle;">✉️</td>
-          <td style="padding:2px 0;color:#444;"><a href="mailto:${mailAdres}" style="color:#444;text-decoration:none;font-weight:500;">${mailAdres}</a></td>
-        </tr>
-        <tr>
           <td style="padding:2px 8px 2px 0;color:#9a9aa8;width:18px;vertical-align:middle;">🌐</td>
-          <td style="padding:2px 0;"><a href="https://www.noah-recruitment.nl" style="color:${GRYWO_PAARS};text-decoration:none;font-weight:700;">noah-recruitment.nl</a></td>
+          <td style="padding:2px 0;"><a href="https://www.noah-recruitment.nl" style="color:${GRYWO_PAARS};text-decoration:none;font-weight:700;">www.noah-recruitment.nl</a></td>
         </tr>
       </table>
     </td>
