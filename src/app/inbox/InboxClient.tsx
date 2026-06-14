@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { maakNieuweMap, verwijderMap } from "./actions";
 import { mailVerwijderen, mailVerplaatsen, mailFlagToggle, mailOngelezen, mailenBulkVerwijderen } from "./mail-actions";
+import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import type { InboxBericht, MailMap, MailDetail } from "@/utils/mail";
 
 type Toast = { id: number; van: string; onderwerp: string };
@@ -51,9 +52,113 @@ export function InboxClient({
   const [syncBezig, setSyncBezig] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [geselecteerd, setGeselecteerd] = useState<Set<number>>(new Set());
+  // IDLE-status: true zodra de SSE-verbinding 'connected' meldt. Gebruikt
+  // voor het visuele bolletje naast de Auto-checkbox.
+  const [idleVerbonden, setIdleVerbonden] = useState(false);
 
-  // Reset selectie als map wisselt
-  useEffect(() => { setGeselecteerd(new Set()); }, [mapPad]);
+  // Dedup-set: per browser-sessie 1x prefetchen per uid+map. Ref ipv state
+  // omdat we geen re-render willen op mutate.
+  const prefetchedRef = useRef<Set<string>>(new Set());
+  // Hover-timer: prefetch alleen vuren als > 300ms gehoverd is, anders
+  // krijgen we bij elke scroll een berg requests.
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const startPrefetch = (mailUid: number) => {
+    const key = `${accountId}:${mapPad}:${mailUid}`;
+    if (prefetchedRef.current.has(key)) return;
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => {
+      // Markeer direct als prefetched zodat een snelle mouseleave/-enter
+      // tussen 300ms en de fetch-respons niet alsnog dubbel triggert.
+      prefetchedRef.current.add(key);
+      fetch(
+        `/api/mail/prefetch-body?account=${accountId}&map=${encodeURIComponent(mapPad)}&uid=${mailUid}`,
+        { method: "POST" },
+      ).catch(() => {
+        // Best-effort: bij fout de key weghalen zodat een nieuwe hover later
+        // gewoon opnieuw probeert.
+        prefetchedRef.current.delete(key);
+      });
+    }, 300);
+  };
+
+  const cancelPrefetch = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  // Reset dedup als account/map wisselt — andere mailbox = andere uids,
+  // maar de Set is gekoppeld aan account+map dus eigenlijk overbodig. Toch
+  // legen om geheugen vrij te geven bij veel mapwissels.
+  useEffect(() => {
+    prefetchedRef.current = new Set();
+  }, [accountId, mapPad]);
+
+  // Optimistic UI: mails die de gebruiker net heeft verwijderd verbergen we
+  // direct uit de lijst, voordat de server-action klaar is. Voorkomt de
+  // 1-2 sec "freeze" waarin de IMAP-call moet voltooien + revalidate.
+  const [hiddenUids, setHiddenUids] = useState<Set<number>>(new Set());
+  // Idem voor "markeer als gelezen": als de gebruiker een ongelezen mail
+  // opent renderen we 'm meteen als gelezen, zonder te wachten op de
+  // server-roundtrip.
+  const [optimischGelezen, setOptimischGelezen] = useState<Set<number>>(new Set());
+
+  // Reset selectie + optimistic state als map wisselt — verse server-data
+  // is dan de waarheid.
+  useEffect(() => {
+    setGeselecteerd(new Set());
+    setHiddenUids(new Set());
+    setOptimischGelezen(new Set());
+  }, [mapPad]);
+
+  // Als de server-data ververst is, optimistische staat opschonen voor mails
+  // die er echt uit zijn / al echt gelezen zijn. Anders blijven uids voor
+  // eeuwig in de set staan (memory leak + verwarring bij undo).
+  useEffect(() => {
+    const aanwezig = new Set(berichten.map(b => b.uid));
+    setHiddenUids(prev => {
+      let veranderd = false;
+      const next = new Set<number>();
+      prev.forEach(uid => {
+        if (aanwezig.has(uid)) next.add(uid); // server zegt: bestaat nog → hou verborgen
+        else veranderd = true;                // server zegt: weg → mag uit set
+      });
+      return veranderd ? next : prev;
+    });
+    setOptimischGelezen(prev => {
+      let veranderd = false;
+      const next = new Set<number>();
+      prev.forEach(uid => {
+        const b = berichten.find(x => x.uid === uid);
+        if (b && !b.gelezen) next.add(uid); // server nog ongelezen → blijf optimistisch markeren
+        else veranderd = true;
+      });
+      return veranderd ? next : prev;
+    });
+  }, [berichten]);
+
+  // Zichtbare berichten = server-lijst minus optimistisch verwijderd
+  const zichtbareBerichten = berichten.filter(b => !hiddenUids.has(b.uid));
+
+  // Optimistisch verbergen — gebruikt door delete-handler (single + bulk)
+  function verbergUids(uids: number[]) {
+    setHiddenUids(prev => {
+      const next = new Set(prev);
+      uids.forEach(u => next.add(u));
+      return next;
+    });
+  }
+  // Optimistisch als gelezen markeren — gebruikt bij klik op ongelezen mail
+  function markeerOptimischGelezen(targetUid: number) {
+    setOptimischGelezen(prev => {
+      if (prev.has(targetUid)) return prev;
+      const next = new Set(prev);
+      next.add(targetUid);
+      return next;
+    });
+  }
 
   function toggleSelect(uid: number) {
     setGeselecteerd(prev => {
@@ -63,12 +168,12 @@ export function InboxClient({
     });
   }
   function selecteerAlles() {
-    setGeselecteerd(new Set(berichten.map(b => b.uid)));
+    setGeselecteerd(new Set(zichtbareBerichten.map(b => b.uid)));
   }
   function selectieWissen() {
     setGeselecteerd(new Set());
   }
-  const allesGeselecteerd = berichten.length > 0 && geselecteerd.size === berichten.length;
+  const allesGeselecteerd = zichtbareBerichten.length > 0 && geselecteerd.size === zichtbareBerichten.length;
 
   // Kort chime-geluidje afspelen
   const playChime = () => {
@@ -227,11 +332,70 @@ export function InboxClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapPad, accountId]);
 
-  // Auto-sync elke 15 seconden (haalt uit IMAP)
+  // Auto-sync elke 15 seconden (haalt uit IMAP). Fallback voor het geval
+  // de IDLE-SSE-verbinding niet werkt of dichtgevallen is.
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(syncEnRefresh, 15_000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRefresh]);
+
+  // IMAP IDLE via SSE: push i.p.v. poll. Endpoint sluit zichzelf na ~5 min
+  // (Vercel limiet), dus auto-reconnect bij onclose. EventSource doet dat
+  // standaard al, maar we resetten de idleVerbonden-state zodat het bolletje
+  // grijs wordt tot de nieuwe verbinding 'connected' meldt.
+  useEffect(() => {
+    if (!autoRefresh) {
+      setIdleVerbonden(false);
+      return;
+    }
+    let es: EventSource | null = null;
+    let stopped = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = () => {
+      if (stopped) return;
+      es = new EventSource("/api/mail/idle");
+
+      es.onmessage = (ev) => {
+        try {
+          const data = JSON.parse(ev.data) as { type: string };
+          if (data.type === "connected") {
+            setIdleVerbonden(true);
+          } else if (data.type === "new-mail") {
+            // Push i.p.v. poll: server zegt "er is nieuwe mail" → direct
+            // de UI revalideren zodat lijst meteen update.
+            startTransition(() => {
+              router.refresh();
+              setLastRefresh(new Date());
+            });
+          } else if (data.type === "error") {
+            setIdleVerbonden(false);
+          }
+        } catch {
+          // ping of niet-JSON, negeren
+        }
+      };
+
+      es.onerror = () => {
+        setIdleVerbonden(false);
+        es?.close();
+        if (!stopped) {
+          // Reconnect na 3s (route sluit zichzelf na 280s, of bij netwerkhik)
+          reconnectTimer = setTimeout(connect, 3000);
+        }
+      };
+    };
+
+    connect();
+
+    return () => {
+      stopped = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      es?.close();
+      setIdleVerbonden(false);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh]);
 
@@ -301,6 +465,7 @@ export function InboxClient({
 
   return (
     <>
+    <KeyboardShortcuts />
     {/* Toast notifications */}
     <div className="fixed top-20 right-4 z-50 space-y-2 max-w-sm">
       {toasts.map(t => (
@@ -468,7 +633,16 @@ export function InboxClient({
                   <path d="M21 3v5h-5"/>
                 </svg>
               </button>
-              <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer" title="Auto-refresh elke 30 sec">
+              <label
+                className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer"
+                title={
+                  autoRefresh
+                    ? idleVerbonden
+                      ? "IDLE-verbinding actief — nieuwe mail wordt direct gepusht"
+                      : "Auto-refresh elke 15 sec (IDLE-verbinding niet actief)"
+                    : "Auto-refresh uit"
+                }
+              >
                 <input
                   type="checkbox"
                   checked={autoRefresh}
@@ -476,6 +650,14 @@ export function InboxClient({
                   className="w-3 h-3 accent-[#333399]"
                 />
                 <span>Auto</span>
+                <span
+                  aria-hidden="true"
+                  className={`inline-block w-2 h-2 rounded-full ${
+                    autoRefresh && idleVerbonden
+                      ? "bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.6)]"
+                      : "bg-gray-300"
+                  }`}
+                />
               </label>
             </div>
           </div>
@@ -489,7 +671,7 @@ export function InboxClient({
         )}
 
         {/* Selectie-/bulk-actie balk */}
-        {!fetchError && berichten.length > 0 && (
+        {!fetchError && zichtbareBerichten.length > 0 && (
           <div className="px-5 py-2 border-b bg-gray-50 flex items-center gap-3 sticky top-[81px] z-[5]">
             <input
               type="checkbox"
@@ -506,8 +688,18 @@ export function InboxClient({
                 <form
                   action={mailenBulkVerwijderen}
                   onSubmit={(e) => {
-                    if (!confirm(`${geselecteerd.size} mail(s) verwijderen?`)) e.preventDefault();
-                    else selectieWissen();
+                    if (!confirm(`${geselecteerd.size} mail(s) verwijderen?`)) {
+                      e.preventDefault();
+                      return;
+                    }
+                    // Optimistisch: verberg meteen + clear selectie. startTransition
+                    // wrapt zodat React weet dat er nog async werk loopt en de
+                    // disabled-states correct meeschakelen.
+                    const tegelijk = Array.from(geselecteerd);
+                    startTransition(() => {
+                      verbergUids(tegelijk);
+                      selectieWissen();
+                    });
                   }}
                   className="ml-auto"
                 >
@@ -539,18 +731,24 @@ export function InboxClient({
           </div>
         )}
 
-        {!fetchError && berichten.length > 0 && (
+        {!fetchError && zichtbareBerichten.length > 0 && (
           <div>
-            {berichten.map(b => {
+            {zichtbareBerichten.map(b => {
               const isActive = uid && b.uid === parseInt(uid);
               const isSelected = geselecteerd.has(b.uid);
+              // "Effectief gelezen" = server zegt gelezen OF wij hebben 'm
+              // optimistisch al als gelezen gemarkeerd na klik.
+              const effGelezen = b.gelezen || optimischGelezen.has(b.uid);
               return (
                 <div
                   key={b.uid}
+                  data-uid={b.uid}
+                  onMouseEnter={() => startPrefetch(b.uid)}
+                  onMouseLeave={cancelPrefetch}
                   className={`group relative border-b border-gray-100 hover:bg-gray-50 ${
                     isActive ? "bg-[#333399]/10 border-l-4 border-l-[#333399]" :
                     isSelected ? "bg-[#333399]/5" :
-                    !b.gelezen ? "bg-blue-50/50" : ""
+                    !effGelezen ? "bg-blue-50/50" : ""
                   }`}
                 >
                   {/* Checkbox links — pakt klik los van de Link */}
@@ -570,7 +768,17 @@ export function InboxClient({
                   <form
                     action={mailVerwijderen}
                     onSubmit={(e) => {
-                      if (!confirm("Mail verwijderen?")) e.preventDefault();
+                      if (!confirm("Mail verwijderen?")) {
+                        e.preventDefault();
+                        return;
+                      }
+                      // Optimistisch verbergen vóór de server-action draait.
+                      // startTransition zodat React deze state-update als
+                      // niet-urgent markeert en isPending true wordt — geeft
+                      // visuele freeze-bescherming op andere knoppen.
+                      startTransition(() => {
+                        verbergUids([b.uid]);
+                      });
                     }}
                     className="absolute top-2.5 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => e.stopPropagation()}
@@ -592,17 +800,24 @@ export function InboxClient({
 
                   <Link
                     href={`/inbox?map=${encodeURIComponent(mapPad)}&uid=${b.uid}`}
+                    onClick={() => {
+                      // Optimistisch markeren als gelezen zodra je klikt.
+                      // De server-revalidate werkt de echte gelezen-state bij;
+                      // tot die tijd zien we al meteen het visuele "is gelezen"
+                      // effect (geen bold, geen blauwe achtergrond).
+                      if (!b.gelezen) markeerOptimischGelezen(b.uid);
+                    }}
                     className="block pl-10 pr-12 py-3"
                   >
                     <div className="flex justify-between items-baseline">
-                      <span className={`text-sm truncate ${!b.gelezen ? "font-bold text-gray-900" : "text-gray-700"}`}>
+                      <span className={`text-sm truncate ${!effGelezen ? "font-bold text-gray-900" : "text-gray-700"}`}>
                         {b.naam}
                       </span>
                       <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
                         {new Date(b.datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}
                       </span>
                     </div>
-                    <div className={`text-sm truncate mt-0.5 ${!b.gelezen ? "font-semibold text-gray-900" : "text-gray-700"}`}>
+                    <div className={`text-sm truncate mt-0.5 ${!effGelezen ? "font-semibold text-gray-900" : "text-gray-700"}`}>
                       {b.onderwerp}
                     </div>
                     <div className="text-xs text-gray-500 truncate mt-0.5">{b.van}</div>
@@ -613,7 +828,7 @@ export function InboxClient({
           </div>
         )}
 
-        {!fetchError && berichten.length === 0 && (
+        {!fetchError && zichtbareBerichten.length === 0 && (
           <div className="p-8 text-center text-gray-500 text-sm">Leeg.</div>
         )}
       </section>
@@ -691,10 +906,25 @@ export function InboxClient({
 
               <div className="w-px h-6 bg-gray-200 mx-1"></div>
 
-              <form action={mailVerwijderen}>
+              <form
+                action={mailVerwijderen}
+                onSubmit={() => {
+                  // Optimistisch verbergen vanuit de detail-toolbar. De
+                  // server redirect straks, maar tot die tijd zien we al
+                  // dat de mail uit de lijst is.
+                  startTransition(() => {
+                    verbergUids([geopendeMail.uid]);
+                  });
+                }}
+              >
                 <input type="hidden" name="uid" value={geopendeMail.uid} />
                 <input type="hidden" name="map_pad" value={mapPad} />
-                <button type="submit" title="Verwijderen" className="p-2 hover:bg-red-50 rounded-md text-red-600">
+                <button
+                  type="submit"
+                  title="Verwijderen"
+                  data-mail-action="delete"
+                  className="p-2 hover:bg-red-50 rounded-md text-red-600"
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                 </button>
               </form>

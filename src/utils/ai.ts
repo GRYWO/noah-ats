@@ -290,3 +290,49 @@ ${data.notitie ? `- Interne notitie: ${data.notitie}` : ""}`,
     .join("\n")
     .trim();
 }
+
+/**
+ * Verbeter een mail-bericht: betere toon, structuur, foutloos Nederlands.
+ * Behoudt de bedoeling en feiten — voegt niets verzonnen toe.
+ */
+export async function verbeterMailtekst(opts: {
+  tekst: string;
+  onderwerp?: string | null;
+  naar?: string | null;
+  toon?: "professioneel" | "vriendelijk" | "kort";
+}): Promise<string> {
+  const toon = opts.toon ?? "professioneel";
+
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 1500,
+    messages: [
+      {
+        role: "user",
+        content: `Je krijgt een conceptmail in het Nederlands. Schrijf een verbeterde versie.
+
+REGELS (strikt):
+- Behoud alle feiten en bedoelingen — VERZIN niets nieuws (geen extra deadlines, bedragen, namen)
+- ALLEEN de mail-body — geen aanhef-blok zoals "Beste X" tenzij die al in het origineel staat
+- GEEN afsluiting met "Met vriendelijke groet, ..." — de handtekening wordt automatisch toegevoegd door het systeem
+- Toon: ${toon === "vriendelijk" ? "warm en menselijk, mag iets informeler" : toon === "kort" ? "kort en bondig, alleen het hoognodige" : "zakelijk en professioneel, vriendelijk maar duidelijk"}
+- Heldere structuur: korte alinea's, geen muurtjes tekst
+- Foutloos Nederlands: spelling, grammatica, leestekens
+- Gebruik géén gedachtestreepjes (—, –). Schrijf normaal menselijk.
+- Geen markdown, geen bullets tenzij echt nuttig
+- Geef ALLEEN de verbeterde mail-tekst terug, geen uitleg of intro
+${opts.onderwerp ? `\nContext — onderwerp van de mail: "${opts.onderwerp}"` : ""}
+${opts.naar ? `\nContext — geadresseerde: ${opts.naar}` : ""}
+
+ORIGINELE TEKST:
+${opts.tekst}`,
+      },
+    ],
+  });
+
+  return res.content
+    .filter((b): b is Anthropic.TextBlock => b.type === "text")
+    .map((b) => b.text)
+    .join("\n")
+    .trim();
+}
