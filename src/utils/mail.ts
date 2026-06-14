@@ -337,6 +337,7 @@ export async function verstuurMail({
   onderwerp,
   htmlBody,
   handtekening,
+  appendHandtekening = true,
 }: {
   vanAdres: string;
   vanWachtwoord: string;  // encrypted
@@ -346,6 +347,9 @@ export async function verstuurMail({
   onderwerp: string;
   htmlBody: string;
   handtekening: string | null;
+  // Optioneel: zet op false als de aanroeper de handtekening al in htmlBody
+  // heeft staan (bijvoorbeeld vanuit de compose-textarea).
+  appendHandtekening?: boolean;
 }) {
   const servers = getMailServers(vanAdres);
   const transporter = nodemailer.createTransport({
@@ -355,7 +359,8 @@ export async function verstuurMail({
     auth: { user: vanAdres, pass: decrypt(vanWachtwoord) },
   });
 
-  const fullBody = `<div>${htmlBody}</div>${handtekening ? `<br><br>${handtekening}` : ""}`;
+  const voegToe = appendHandtekening && handtekening;
+  const fullBody = `<div>${htmlBody}</div>${voegToe ? `<br><br>${handtekening}` : ""}`;
   const displayName = `${vanVoornaam} | ${vanBureau}`;
 
   return transporter.sendMail({

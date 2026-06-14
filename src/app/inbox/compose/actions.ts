@@ -15,6 +15,7 @@ export async function stuurMail(formData: FormData) {
   const onderwerp = (formData.get("onderwerp") as string)?.replace(/[\r\n]+/g, " ").trim().slice(0, 255);
   const body      = (formData.get("body") as string)?.trim();
   const accountId = (formData.get("account_id") as string)?.trim();
+  const conceptId = (formData.get("concept_id") as string)?.trim();
 
   if (!naar || !onderwerp || !body) {
     redirect("/inbox/compose?error=Alle+velden+verplicht");
@@ -30,7 +31,7 @@ export async function stuurMail(formData: FormData) {
   const admin = createAdminClient();
   const { data: profile } = await admin
     .from("profiles")
-    .select("handtekening_html, voornaam, achternaam, tenant_id")
+    .select("voornaam, achternaam, tenant_id")
     .eq("id", user.id)
     .single();
 
@@ -57,6 +58,8 @@ export async function stuurMail(formData: FormData) {
     .single();
 
   try {
+    // De body bevat de handtekening al (de user kan hem in de textarea zien
+    // en aanpassen voor verzenden), dus we slaan auto-appenden over.
     await verstuurMail({
       vanAdres: account.mail_adres,
       vanWachtwoord: account.mail_wachtwoord,
@@ -65,10 +68,20 @@ export async function stuurMail(formData: FormData) {
       naar,
       onderwerp,
       htmlBody: body.replace(/\n/g, "<br>"),
-      handtekening: profile?.handtekening_html,
+      handtekening: null,
+      appendHandtekening: false,
     });
   } catch (e) {
     redirect(`/inbox/compose?error=${encodeURIComponent((e as Error).message)}`);
+  }
+
+  // Concept opruimen na succesvol verzenden.
+  if (conceptId) {
+    await admin
+      .from("mail_concepten")
+      .delete()
+      .eq("id", conceptId)
+      .eq("user_id", user.id);
   }
 
   redirect("/inbox?ok=verzonden");

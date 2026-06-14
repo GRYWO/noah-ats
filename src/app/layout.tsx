@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PWARegister } from "@/components/PWARegister";
+import { InstallPWAButton } from "@/components/InstallPWAButton";
 import { SysteemMeldingLader } from "@/components/SysteemMeldingLader";
 
 const jakartaSans = Plus_Jakarta_Sans({
@@ -27,7 +28,10 @@ export const metadata: Metadata = {
   // Cache-busting (?v=2) zodat Chrome de favicon opnieuw download na deploy.
   // Bump dit nummer wanneer het icoon wijzigt.
   icons: {
-    icon: "/icon-192.png?v=2",
+    icon: [
+      { url: "/icon-192.png?v=2", type: "image/png", sizes: "192x192" },
+      { url: "/icon-192.svg", type: "image/svg+xml" },
+    ],
     apple: "/icon-192.png?v=2",
     shortcut: "/icon-192.png?v=2",
   },
@@ -60,6 +64,7 @@ export default function RootLayout({
         <PWARegister />
         <SysteemMeldingLader />
         {children}
+        <InstallPWAButton />
       </body>
     </html>
   );

@@ -7,6 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { maakNieuweMap, verwijderMap } from "./actions";
 import { mailVerwijderen, mailVerplaatsen, mailFlagToggle, mailOngelezen, mailenBulkVerwijderen } from "./mail-actions";
 import { KeyboardShortcuts } from "./KeyboardShortcuts";
+import { SearchBar } from "./SearchBar";
 import type { InboxBericht, MailMap, MailDetail } from "@/utils/mail";
 
 type Toast = { id: number; van: string; onderwerp: string };
@@ -18,7 +19,7 @@ type Props = {
   accounts: MailAccount[];
   mapPad: string;
   uid: string | undefined;
-  berichten: InboxBericht[];
+  berichten: (InboxBericht & { threadCount?: number })[];
   mappen: MailMap[];
   geopendeMail: (MailDetail & { body_loaded?: boolean }) | null;
   fetchError: string | null;
@@ -89,7 +90,7 @@ export function InboxClient({
     }
   };
 
-  // Reset dedup als account/map wisselt — andere mailbox = andere uids,
+  // Reset dedup als account/map wisselt: andere mailbox = andere uids,
   // maar de Set is gekoppeld aan account+map dus eigenlijk overbodig. Toch
   // legen om geheugen vrij te geven bij veel mapwissels.
   useEffect(() => {
@@ -105,7 +106,7 @@ export function InboxClient({
   // server-roundtrip.
   const [optimischGelezen, setOptimischGelezen] = useState<Set<number>>(new Set());
 
-  // Reset selectie + optimistic state als map wisselt — verse server-data
+  // Reset selectie + optimistic state als map wisselt: verse server-data
   // is dan de waarheid.
   useEffect(() => {
     setGeselecteerd(new Set());
@@ -142,7 +143,7 @@ export function InboxClient({
   // Zichtbare berichten = server-lijst minus optimistisch verwijderd
   const zichtbareBerichten = berichten.filter(b => !hiddenUids.has(b.uid));
 
-  // Optimistisch verbergen — gebruikt door delete-handler (single + bulk)
+  // Optimistisch verbergen, gebruikt door delete-handler (single + bulk)
   function verbergUids(uids: number[]) {
     setHiddenUids(prev => {
       const next = new Set(prev);
@@ -150,7 +151,7 @@ export function InboxClient({
       return next;
     });
   }
-  // Optimistisch als gelezen markeren — gebruikt bij klik op ongelezen mail
+  // Optimistisch als gelezen markeren, gebruikt bij klik op ongelezen mail
   function markeerOptimischGelezen(targetUid: number) {
     setOptimischGelezen(prev => {
       if (prev.has(targetUid)) return prev;
@@ -197,7 +198,7 @@ export function InboxClient({
       });
       setTimeout(() => ctx.close(), 700);
     } catch {
-      // Audio context kan geblokkeerd zijn — negeer
+      // Audio context kan geblokkeerd zijn, negeer
     }
   };
 
@@ -214,7 +215,7 @@ export function InboxClient({
       if (laatst && nu - laatst < 60 * 60 * 1000) return; // < 1 uur geleden al getoond
       sessionStorage.setItem(key, String(nu));
     } catch {
-      // sessionStorage kan in private mode falen — negeer en toon toch
+      // sessionStorage kan in private mode falen, negeer en toon toch
     }
     const id = Date.now();
     setToasts(t => [...t, { id, van, onderwerp }]);
@@ -254,7 +255,7 @@ export function InboxClient({
         (payload) => {
           const nieuw = payload.new as { van: string; naam: string; onderwerp: string; map_pad: string };
           // Alleen meldingen tonen voor mails die in de INBOX terechtkomen.
-          // Sent/Trash/Drafts/Spam/Junk filteren we eruit — anders krijg je
+          // Sent/Trash/Drafts/Spam/Junk filteren we eruit, anders krijg je
           // een "nieuwe mail" toast bij elke sync nadat je net iets hebt
           // verwijderd of verstuurd.
           const map = (nieuw.map_pad ?? "").toLowerCase();
@@ -593,7 +594,7 @@ export function InboxClient({
             )}
           </div>
         </nav>
-        <div className="p-3 border-t text-xs text-gray-500 truncate">{mailAdres ?? "—"}</div>
+        <div className="p-3 border-t text-xs text-gray-500 truncate">{mailAdres ?? "geen"}</div>
       </aside>
 
       {/* Resize handle 1 */}
@@ -609,6 +610,7 @@ export function InboxClient({
         style={{ width: `${listWidth}px` }}
       >
         <div className="px-5 py-3 border-b sticky top-0 bg-white z-10">
+          <div className="mb-2"><SearchBar /></div>
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-base font-bold text-gray-800">{huidigeMap?.label ?? "Postvak IN"}</h1>
@@ -638,7 +640,7 @@ export function InboxClient({
                 title={
                   autoRefresh
                     ? idleVerbonden
-                      ? "IDLE-verbinding actief — nieuwe mail wordt direct gepusht"
+                      ? "IDLE-verbinding actief, nieuwe mail wordt direct gepusht"
                       : "Auto-refresh elke 15 sec (IDLE-verbinding niet actief)"
                     : "Auto-refresh uit"
                 }
@@ -751,7 +753,7 @@ export function InboxClient({
                     !effGelezen ? "bg-blue-50/50" : ""
                   }`}
                 >
-                  {/* Checkbox links — pakt klik los van de Link */}
+                  {/* Checkbox links, pakt klik los van de Link */}
                   <label
                     className="absolute top-3 left-1.5 z-10 p-1 cursor-pointer"
                     onClick={(e) => e.stopPropagation()}
@@ -774,7 +776,7 @@ export function InboxClient({
                       }
                       // Optimistisch verbergen vóór de server-action draait.
                       // startTransition zodat React deze state-update als
-                      // niet-urgent markeert en isPending true wordt — geeft
+                      // niet-urgent markeert en isPending true wordt, geeft
                       // visuele freeze-bescherming op andere knoppen.
                       startTransition(() => {
                         verbergUids([b.uid]);
@@ -819,6 +821,9 @@ export function InboxClient({
                     </div>
                     <div className={`text-sm truncate mt-0.5 ${!effGelezen ? "font-semibold text-gray-900" : "text-gray-700"}`}>
                       {b.onderwerp}
+                      {b.threadCount && b.threadCount > 1 ? (
+                        <span className="ml-2 text-xs text-gray-400 font-normal">({b.threadCount} berichten)</span>
+                      ) : null}
                     </div>
                     <div className="text-xs text-gray-500 truncate mt-0.5">{b.van}</div>
                   </Link>

@@ -113,6 +113,7 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
           datum: string;
           gelezen: boolean;
           gevlagd: boolean;
+          thread_id: string;
         }> = [];
 
         for await (const msg of client.fetch(`${start}:${end}`, {
@@ -128,6 +129,20 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
             ? new Date(msg.internalDate).toISOString()
             : env?.date?.toISOString() ?? new Date().toISOString();
 
+          // Thread-id bepalen: uitsluitend op basis van het genormaliseerde
+          // onderwerp (zelfde regel als SQL backfill 082): Re:/Fwd:/Fw:/Aw:
+          // prefixes strippen, trimmen en lower-casen. Lege onderwerpen
+          // vallen terug op '(geen onderwerp)' zodat threading consistent
+          // blijft met de database-backfill.
+          const rauwOnderwerp = (env?.subject ?? "").trim();
+          const genormaliseerdOnderwerp = rauwOnderwerp
+            .toLowerCase()
+            .replace(/^(re:|fwd:|fw:|aw:)\s*/g, "")
+            .trim();
+          const thread_id = genormaliseerdOnderwerp.length > 0
+            ? genormaliseerdOnderwerp
+            : "(geen onderwerp)";
+
           nieuweBerichten.push({
             user_id: account.user_id,
             account_id: accountId,
@@ -139,6 +154,7 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
             datum,
             gelezen: msg.flags?.has("\\Seen") ?? false,
             gevlagd: msg.flags?.has("\\Flagged") ?? false,
+            thread_id,
           });
         }
 
@@ -147,7 +163,7 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
             onConflict: "user_id,map_pad,uid",
           });
           totaalNieuw += nieuweBerichten.length;
-          // Push alleen sturen als de nieuwe mail in INBOX zit — anders
+          // Push alleen sturen als de nieuwe mail in INBOX zit, anders
           // krijgt user notificaties voor mails die hij net naar trash
           // verplaatste of die in Sent terechtkwamen.
           if (type === "inbox") nieuwInbox += nieuweBerichten.length;
@@ -160,13 +176,13 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
     await client.logout().catch(() => {});
   }
 
-  // Push notificatie ALLEEN als er nieuwe mail in INBOX zit — niet voor
+  // Push notificatie ALLEEN als er nieuwe mail in INBOX zit, niet voor
   // mails in Sent/Trash/Drafts (die zou je niet als 'nieuwe mail' melden).
   if (nieuwInbox > 0 && account.user_id) {
     import("@/utils/push")
       .then(({ stuurPushNaarUser }) =>
         stuurPushNaarUser(account.user_id, {
-          title: nieuwInbox === 1 ? "📬 1 nieuwe mail" : `📬 ${nieuwInbox} nieuwe mails`,
+          title: nieuwInbox === 1 ? "1 nieuwe mail" : `${nieuwInbox} nieuwe mails`,
           body: account.mail_adres,
           url: "/inbox",
           tag: "noah-mail",

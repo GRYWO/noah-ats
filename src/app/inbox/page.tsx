@@ -12,6 +12,7 @@ export default async function InboxPage({
   searchParams: Promise<{ map?: string; uid?: string; error?: string; account?: string }>;
 }) {
   const { map: mapPad = "INBOX", uid, error, account: accountParam } = await searchParams;
+  const berichtenLimit = 50;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -53,11 +54,11 @@ export default async function InboxPage({
       .order("type", { ascending: true }),
     supabase
       .from("mail_berichten")
-      .select("id, uid, van, naam, onderwerp, datum, gelezen, gevlagd")
+      .select("id, uid, van, naam, onderwerp, datum, gelezen, gevlagd, thread_id")
       .eq("account_id", activeAccount.id)
       .eq("map_pad", mapPad)
       .order("datum", { ascending: false })
-      .limit(50),
+      .limit(berichtenLimit + 150),
   ]);
 
   const mappen = (mappenRes.data ?? []).map(m => ({
@@ -85,15 +86,37 @@ export default async function InboxPage({
   const volgorde: Record<string, number> = { inbox: 1, sent: 2, drafts: 3, spam: 4, trash: 5, ander: 6 };
   mappen.sort((a, b) => (volgorde[a.type] ?? 9) - (volgorde[b.type] ?? 9) || a.label.localeCompare(b.label));
 
-  const berichten = (berichtenRes.data ?? []).map(b => ({
-    uid: b.uid,
-    van: b.van ?? "?",
-    naam: b.naam ?? b.van ?? "?",
-    onderwerp: b.onderwerp ?? "(geen onderwerp)",
-    datum: b.datum,
-    gelezen: b.gelezen ?? false,
-    preview: "",
-  }));
+  // Groepeer op thread_id zodat een antwoord-keten als 1 lijst-item verschijnt.
+  // We halen extra rows op (berichtenLimit + 150) zodat threads waarvan de
+  // nieuwste mail uit de top 50 valt, alsnog tot 1 entry samenklappen op
+  // basis van oudere berichten in dezelfde thread. Per thread tonen we de
+  // nieuwste mail (server-side al gesorteerd op datum desc) en houden we
+  // het aantal mails in de thread bij voor de UI-badge. Daarna slicen we
+  // tot berichtenLimit en behouden de query-volgorde (datum desc).
+  const ruweBerichten = berichtenRes.data ?? [];
+  type RuwBericht = (typeof ruweBerichten)[number];
+  const perThread = new Map<string, RuwBericht & { threadCount: number }>();
+  for (const m of ruweBerichten) {
+    const k = m.thread_id ?? `__uid_${m.uid}`;
+    const bestaand = perThread.get(k);
+    if (!bestaand) {
+      perThread.set(k, { ...m, threadCount: 1 });
+    } else {
+      bestaand.threadCount++;
+    }
+  }
+  const berichten = Array.from(perThread.values())
+    .slice(0, berichtenLimit)
+    .map(b => ({
+      uid: b.uid,
+      van: b.van ?? "?",
+      naam: b.naam ?? b.van ?? "?",
+      onderwerp: b.onderwerp ?? "(geen onderwerp)",
+      datum: b.datum,
+      gelezen: b.gelezen ?? false,
+      preview: "",
+      threadCount: b.threadCount,
+    }));
 
   // Mail detail
   let geopendeMail = null;

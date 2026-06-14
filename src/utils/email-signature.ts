@@ -86,3 +86,58 @@ export function bouwHandtekening({
   </tr>
 </table>`;
 }
+
+/**
+ * Converteer een HTML-handtekening naar plain text, geschikt voor de
+ * compose-textarea. Strip tags, decode basis-entities, normaliseer
+ * whitespace. Werkt zonder browser-DOM (server-safe).
+ */
+export function handtekeningNaarPlainText(html: string | null | undefined): string {
+  if (!html) return "";
+  let tekst = String(html);
+
+  // Vervang block-grenzen en line-breaks door newlines.
+  tekst = tekst.replace(/<\s*br\s*\/?\s*>/gi, "\n");
+  tekst = tekst.replace(/<\/(p|div|tr|li|h[1-6])\s*>/gi, "\n");
+  tekst = tekst.replace(/<\/(td|th)\s*>/gi, " ");
+
+  // Strip alle overige tags.
+  tekst = tekst.replace(/<[^>]+>/g, "");
+
+  // Decode basis HTML-entities.
+  tekst = tekst
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, "\"")
+    .replace(/&#39;/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&mdash;/gi, "-")
+    .replace(/&ndash;/gi, "-");
+
+  // Numerieke entities (decimal en hex).
+  tekst = tekst.replace(/&#(\d+);/g, (_, d) => {
+    const code = parseInt(d, 10);
+    return Number.isFinite(code) ? String.fromCharCode(code) : "";
+  });
+  tekst = tekst.replace(/&#x([0-9a-f]+);/gi, (_, h) => {
+    const code = parseInt(h, 16);
+    return Number.isFinite(code) ? String.fromCharCode(code) : "";
+  });
+
+  // Whitespace normaliseren: per regel trimmen, max 2 lege regels achter elkaar.
+  const regels = tekst.split("\n").map((r) => r.replace(/[ \t]+/g, " ").trim());
+  const opgeschoond: string[] = [];
+  let legeRij = 0;
+  for (const r of regels) {
+    if (r.length === 0) {
+      legeRij += 1;
+      if (legeRij <= 1) opgeschoond.push("");
+    } else {
+      legeRij = 0;
+      opgeschoond.push(r);
+    }
+  }
+  return opgeschoond.join("\n").trim();
+}
