@@ -33,6 +33,13 @@ img{max-width:100%;height:auto;border:0;}
       const doc = ifr!.contentDocument;
       if (!doc) return;
       meet(doc);
+      // Alle handtekening-links openen in een nieuw browser-tabblad in plaats
+      // van binnen de iframe. Zonder dit klikt de gebruiker op de website
+      // en wordt die in de mini-iframe geladen.
+      doc.querySelectorAll("a").forEach((a) => {
+        a.setAttribute("target", "_blank");
+        a.setAttribute("rel", "noopener noreferrer");
+      });
       let obs: ResizeObserver | undefined;
       if (typeof ResizeObserver !== "undefined") {
         obs = new ResizeObserver(() => meet(doc));
@@ -70,7 +77,7 @@ img{max-width:100%;height:auto;border:0;}
         ref={iframeRef}
         srcDoc={srcDoc}
         title="Handtekening"
-        sandbox="allow-same-origin"
+        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         style={{
           width: "100%",
           border: "none",
