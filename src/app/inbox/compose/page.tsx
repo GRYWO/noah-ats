@@ -3,7 +3,6 @@ import { TopBar } from "@/components/TopBar";
 import { ComposeForm } from "./ComposeForm";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { handtekeningNaarPlainText } from "@/utils/email-signature";
 
 export default async function ComposePage({
   searchParams,
@@ -12,10 +11,10 @@ export default async function ComposePage({
 }) {
   const { reply_to, subject, error } = await searchParams;
 
-  // Haal de HTML-handtekening van de ingelogde user op en converteer naar
-  // plain text. Op die manier kan de user de handtekening al in de textarea
-  // zien staan en eventueel aanpassen voor verzenden.
-  let defaultHandtekening = "";
+  // We laden de HTML-handtekening direct uit profiles.handtekening_html en
+  // geven hem ongewijzigd door aan de RichTextEditor. De editor toont 'm
+  // dan met logo-wordmark, kleuren en lay-out zoals in de mail zelf.
+  let defaultHandtekeningHtml = "";
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
@@ -25,7 +24,7 @@ export default async function ComposePage({
       .select("handtekening_html")
       .eq("id", user.id)
       .single();
-    defaultHandtekening = handtekeningNaarPlainText(profile?.handtekening_html);
+    defaultHandtekeningHtml = profile?.handtekening_html ?? "";
   }
 
   return (
@@ -37,8 +36,6 @@ export default async function ComposePage({
           Terug naar inbox
         </Link>
 
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Nieuwe mail</h1>
-
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
             {error}
@@ -48,7 +45,7 @@ export default async function ComposePage({
         <ComposeForm
           defaultNaar={reply_to ?? ""}
           defaultOnderwerp={subject ?? ""}
-          defaultHandtekening={defaultHandtekening}
+          defaultHandtekeningHtml={defaultHandtekeningHtml}
         />
       </div>
     </main>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { saneerMailHtml, bevatHtmlTags } from "@/utils/html-sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,8 @@ export async function PUT(request: Request) {
 
   const naar = (body.naar ?? "").slice(0, 320);
   const onderwerp = (body.onderwerp ?? "").slice(0, 500);
-  const tekst = (body.tekst ?? "").slice(0, 100000);
+  const ruweTekst = (body.tekst ?? "").slice(0, 100000);
+  const tekst = bevatHtmlTags(ruweTekst) ? saneerMailHtml(ruweTekst) : ruweTekst;
   const nu = new Date().toISOString();
 
   if (body.id) {

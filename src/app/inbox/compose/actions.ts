@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { verstuurMail } from "@/utils/mail";
+import { saneerMailHtml } from "@/utils/html-sanitize";
 
 export async function stuurMail(formData: FormData) {
   const supabase = await createClient();
@@ -13,11 +14,15 @@ export async function stuurMail(formData: FormData) {
   const naar      = (formData.get("naar") as string)?.trim();
   // Onderwerp: CR/LF eruit (header-injectie-hardening) en lengte begrenzen.
   const onderwerp = (formData.get("onderwerp") as string)?.replace(/[\r\n]+/g, " ").trim().slice(0, 255);
-  const body      = (formData.get("body") as string)?.trim();
+  // body_html is de nieuwe WYSIWYG-payload (kan handtekening al bevatten).
+  // body is de legacy plain-text-fallback uit oudere clients/tests.
+  const bodyHtml  = (formData.get("body_html") as string | null)?.trim() ?? "";
+  const bodyPlain = (formData.get("body") as string | null)?.trim() ?? "";
   const accountId = (formData.get("account_id") as string)?.trim();
   const conceptId = (formData.get("concept_id") as string)?.trim();
 
-  if (!naar || !onderwerp || !body) {
+  // Minstens 1 van beide body-velden moet inhoud hebben.
+  if (!naar || !onderwerp || (!bodyHtml && !bodyPlain)) {
     redirect("/inbox/compose?error=Alle+velden+verplicht");
   }
 
@@ -58,8 +63,14 @@ export async function stuurMail(formData: FormData) {
     .single();
 
   try {
-    // De body bevat de handtekening al (de user kan hem in de textarea zien
-    // en aanpassen voor verzenden), dus we slaan auto-appenden over.
+    // De body bevat de handtekening al (de user heeft 'm in de editor staan
+    // en kan hem aanpassen voor verzenden), dus we slaan auto-appenden over.
+    // Voorkeur: body_html (WYSIWYG). Fallback: plain body met <br>-conversie.
+    const ruwHtml = bodyHtml
+      ? bodyHtml
+      : `<div>${bodyPlain.replace(/\n/g, "<br>")}</div>`;
+    const htmlBody = saneerMailHtml(ruwHtml);
+
     await verstuurMail({
       vanAdres: account.mail_adres,
       vanWachtwoord: account.mail_wachtwoord,
@@ -67,7 +78,7 @@ export async function stuurMail(formData: FormData) {
       vanBureau: tenant?.naam ?? "Noah recruitment",
       naar,
       onderwerp,
-      htmlBody: body.replace(/\n/g, "<br>"),
+      htmlBody,
       handtekening: null,
       appendHandtekening: false,
     });

@@ -345,10 +345,14 @@ export async function verstuurMail({
   vanBureau: string;
   naar: string;
   onderwerp: string;
+  // Volledige HTML-body. Kan zelf de handtekening al bevatten
+  // (zie appendHandtekening). Backward compatible met legacy callers die
+  // hier een aaneengeplakte plain-text-met-<br>-string doorgeven.
   htmlBody: string;
   handtekening: string | null;
   // Optioneel: zet op false als de aanroeper de handtekening al in htmlBody
-  // heeft staan (bijvoorbeeld vanuit de compose-textarea).
+  // heeft staan (bijvoorbeeld vanuit de compose-editor). Default true voor
+  // backward-compat met systeem-mails die de handtekening apart meegeven.
   appendHandtekening?: boolean;
 }) {
   const servers = getMailServers(vanAdres);
@@ -359,14 +363,34 @@ export async function verstuurMail({
     auth: { user: vanAdres, pass: decrypt(vanWachtwoord) },
   });
 
-  const voegToe = appendHandtekening && handtekening;
+  // Veiligheidsnet: als de body al een data-handtekening="ja"-blok bevat,
+  // forceer appendHandtekening uit — anders krijg je een dubbele handtekening.
+  const bevatHandtekeningMarker =
+    typeof htmlBody === "string" && /data-handtekening=("|')ja("|')/i.test(htmlBody);
+  const voegToe = appendHandtekening && handtekening && !bevatHandtekeningMarker;
+
   const fullBody = `<div>${htmlBody}</div>${voegToe ? `<br><br>${handtekening}` : ""}`;
   const displayName = `${vanVoornaam} | ${vanBureau}`;
+
+  const tekstFallback = fullBody
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
   return transporter.sendMail({
     from: `"${displayName}" <${vanAdres}>`,
     to: naar,
     subject: onderwerp,
     html: fullBody,
+    text: tekstFallback,
   });
 }

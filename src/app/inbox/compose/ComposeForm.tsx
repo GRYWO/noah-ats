@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { stuurMail } from "./actions";
 import { SnippetPicker } from "@/components/SnippetPicker";
+import { RichTextEditor, RichTextToolbar } from "@/components/RichTextEditor";
+import { bouwInitieleHtml } from "@/utils/handtekening-html";
 
 type Toon = "professioneel" | "vriendelijk" | "kort";
 const TOON_OPTIES: Array<{ value: Toon; label: string; uitleg: string }> = [
@@ -17,22 +19,46 @@ function tijdHHMM(d: Date): string {
   return `${uu}:${mm}`;
 }
 
+/**
+ * Strip HTML naar plain text. Gebruikt een onzichtbare <div> in de DOM
+ * zodat de browser zelf entiteiten decodeert en blok-elementen netjes
+ * vertaalt naar regeleinden. Dit is de plain-text fallback voor mail-
+ * clients die geen HTML renderen.
+ */
+function htmlNaarPlainText(html: string): string {
+  if (typeof document === "undefined") return "";
+  const wrap = document.createElement("div");
+  wrap.innerHTML = html
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/(p|div|li|tr|h[1-6])>/gi, "\n");
+  return (wrap.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/**
+ * Escape voor execCommand('insertHTML'): tekstuele snippets mogen geen
+ * HTML uit gaan ademen die de styling van de mail kan breken.
+ */
+function htmlEscape(tekst: string): string {
+  return tekst
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+}
+
 export function ComposeForm({
   defaultNaar,
   defaultOnderwerp,
-  defaultHandtekening,
+  defaultHandtekeningHtml,
 }: {
   defaultNaar: string;
   defaultOnderwerp: string;
-  defaultHandtekening: string;
+  defaultHandtekeningHtml: string;
 }) {
   const [naar, setNaar] = useState(defaultNaar);
   const [onderwerp, setOnderwerp] = useState(defaultOnderwerp);
-  // Body start met 3 lege regels gevolgd door de handtekening, zodat de user
-  // bovenaan kan typen en zijn handtekening al onderaan ziet staan.
-  const initieelBody = defaultHandtekening
-    ? `\n\n\n${defaultHandtekening}`
-    : "";
+  // Body is nu een HTML-string. Initieel: 3 lege regels + handtekening-blok.
+  const initieelBody = bouwInitieleHtml(defaultHandtekeningHtml);
   const [body, setBody] = useState(initieelBody);
   const [toon, setToon] = useState<Toon>("professioneel");
   const [toonOpen, setToonOpen] = useState(false);
@@ -49,28 +75,27 @@ export function ComposeForm({
   const naarRef = useRef(naar);
   const onderwerpRef = useRef(onderwerp);
   const bodyRef = useRef(body);
-  // Bezig-vlag voorkomt dat tegelijkertijd twee saves naar de server vertrekken
-  // (race condition tussen interval-tick en beforeunload-flush).
   const bezigRef = useRef(false);
 
-  // Refs synchroniseren zodat interval en beforeunload de laatste waardes lezen.
   useEffect(() => { naarRef.current = naar; }, [naar]);
   useEffect(() => { onderwerpRef.current = onderwerp; }, [onderwerp]);
   useEffect(() => { bodyRef.current = body; }, [body]);
   useEffect(() => { conceptIdRef.current = conceptId; }, [conceptId]);
 
-  // Textarea ref voor cursor-positie bij snippet-invoegen
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  // Editor-ref voor snippet-invoegen en toolbar-commando's.
+  const editorRef = useRef<HTMLDivElement | null>(null);
 
-  // Concept herstellen: bij mount kijken of er een laatst-opgeslagen concept
-  // staat en dat invullen, MAAR alleen als de form nog leeg is en er geen
-  // querystring-context is meegegeven (reply_to/subject).
+  // Plain-text representatie van de HTML, voor de hidden "body"-input.
+  const [bodyPlain, setBodyPlain] = useState("");
+  useEffect(() => {
+    setBodyPlain(htmlNaarPlainText(body));
+  }, [body]);
+
+  // Concept herstellen.
   useEffect(() => {
     const heeftQuerystring =
       defaultNaar.length > 0 || defaultOnderwerp.length > 0;
     if (heeftQuerystring) return;
-    // Body is bij mount alleen de (lege of handtekening-)init; als er al iets
-    // anders staat, niet overschrijven.
     if (bodyRef.current !== initieelBody) return;
 
     let geannuleerd = false;
@@ -82,27 +107,31 @@ export function ComposeForm({
         if (geannuleerd) return;
         const c = data?.concept;
         if (!c) return;
-        // Nog een keer checken dat de user intussen niet is gaan typen.
         if (bodyRef.current !== initieelBody) return;
         if (naarRef.current.length > 0 || onderwerpRef.current.length > 0) return;
         setNaar(c.naar ?? "");
         setOnderwerp(c.onderwerp ?? "");
-        setBody(c.tekst ?? "");
+        const ruwe = (c.tekst ?? "") as string;
+        const lijktOpHtml = /<[a-z][\s\S]*?>/i.test(ruwe);
+        const alsHtml = lijktOpHtml
+          ? ruwe
+          : ruwe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+        setBody(alsHtml);
         setConceptId(c.id ?? null);
       } catch {
-        // stil falen, bij volgende save komt het concept opnieuw terecht.
+        // stil falen
       }
     })();
     return () => {
       geannuleerd = true;
     };
-    // initieelBody is afgeleid van defaultHandtekening en stabiel binnen 1 mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function verbeterMetAi() {
     setAiError(null);
-    if (!body.trim() || body.trim().length < 5) {
+    const ruwePlain = htmlNaarPlainText(body);
+    if (!ruwePlain.trim() || ruwePlain.trim().length < 5) {
       setAiError("Typ eerst je bericht, de AI verbetert wat je hebt");
       return;
     }
@@ -112,14 +141,16 @@ export function ComposeForm({
         const res = await fetch("/api/inbox/verbeter-tekst", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tekst: body, onderwerp, naar, toon }),
+          body: JSON.stringify({ tekst_html: body, onderwerp, naar, toon }),
         });
         const data = await res.json();
         if (!res.ok) {
           setAiError(data.error ?? "AI gaf een fout");
           return;
         }
-        setBody(data.tekst);
+        // Backend levert nieuwe volledige HTML inclusief handtekening-wrapper.
+        const nieuw = data.tekst_html ?? data.tekst ?? "";
+        if (nieuw) setBody(nieuw);
       } catch (e) {
         setAiError((e as Error).message);
       }
@@ -134,27 +165,22 @@ export function ComposeForm({
   }
 
   function voegSnippetIn(tekst: string) {
-    const el = textareaRef.current;
+    const el = editorRef.current;
     if (!el) {
-      setBody((b) => b + (b.endsWith("\n") || b.length === 0 ? "" : "\n") + tekst);
+      // Geen editor in beeld: gewoon achteraan plakken.
+      setBody((b) => b + htmlEscape(tekst));
       return;
     }
-    const start = el.selectionStart ?? body.length;
-    const eind = el.selectionEnd ?? body.length;
-    const nieuw = body.slice(0, start) + tekst + body.slice(eind);
-    setBody(nieuw);
-    // Plaats cursor na ingevoegde tekst.
-    requestAnimationFrame(() => {
-      const pos = start + tekst.length;
-      el.focus();
-      try { el.setSelectionRange(pos, pos); } catch { /* no-op */ }
-    });
+    el.focus();
+    // execCommand insertHTML respecteert de huidige cursorpositie.
+    document.execCommand("insertHTML", false, htmlEscape(tekst));
+    // execCommand vuurt niet altijd 'input', dus handmatig synct:
+    setBody(el.innerHTML);
   }
 
-  // Auto-save: elke 10s als er iets veranderd is.
+  // Auto-save: elke 10s.
   useEffect(() => {
     const interval = setInterval(async () => {
-      // Skip als er nog een save loopt; voorkomt race tussen interval en flush.
       if (bezigRef.current) return;
 
       const n = naarRef.current;
@@ -163,7 +189,6 @@ export function ComposeForm({
       const combined = `${n}${o}${b}`;
 
       if (combined === vorigSaveRef.current) return;
-      // Skip lege concepten
       if (b.length < 5 && o.length < 3) return;
 
       bezigRef.current = true;
@@ -187,7 +212,7 @@ export function ComposeForm({
         vorigSaveRef.current = combined;
         setLaatstOpgeslagen(tijdHHMM(new Date()));
       } catch {
-        // Stilte: volgende tick proberen we weer.
+        // stil
       } finally {
         bezigRef.current = false;
       }
@@ -204,9 +229,7 @@ export function ComposeForm({
       const b = bodyRef.current;
       if (b.length < 5 && o.length < 3) return;
       const combined = `${n}${o}${b}`;
-      // Niets nieuws: skip.
       if (combined === vorigSaveRef.current) return;
-      // Er loopt al een save: skip (anders dubbele insert).
       if (bezigRef.current) return;
       try {
         fetch("/api/mail/concept", {
@@ -231,38 +254,81 @@ export function ComposeForm({
   const huidigeToon = TOON_OPTIES.find((t) => t.value === toon)!;
 
   return (
-    <form action={stuurMail} className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-      {/* Concept-id meesturen, zodat de server-action het concept kan verwijderen na verzenden. */}
+    <form
+      action={stuurMail}
+      className="bg-white rounded-t-xl shadow-md max-w-3xl mx-auto overflow-hidden"
+    >
+      {/* Concept-id en hidden body-velden voor de server-action. */}
       <input type="hidden" name="concept_id" value={conceptId ?? ""} />
+      <input type="hidden" name="body_html" value={body} />
+      <input type="hidden" name="body" value={bodyPlain} />
 
-      <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1">Aan *</label>
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-gray-200 bg-[#f6f8fb]">
+        <h2 className="text-sm font-semibold text-gray-700">Nieuwe mail</h2>
+      </div>
+
+      {/* Aan */}
+      <div className="border-b border-gray-200">
         <input
           name="naar"
           type="email"
           required
           value={naar}
           onChange={(e) => setNaar(e.target.value)}
-          placeholder="ontvanger@bedrijf.nl"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+          placeholder="Aan"
+          className="w-full px-4 py-3 text-sm outline-none border-none bg-transparent"
         />
       </div>
 
-      <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1">Onderwerp *</label>
+      {/* Onderwerp */}
+      <div className="border-b border-gray-200">
         <input
           name="onderwerp"
           required
           value={onderwerp}
           onChange={(e) => setOnderwerp(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+          placeholder="Onderwerp"
+          className="w-full px-4 py-3 text-sm outline-none border-none bg-transparent"
         />
       </div>
 
+      {/* Bericht */}
       <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-xs font-semibold text-gray-600">Bericht *</label>
+        <RichTextEditor
+          value={body}
+          onChange={setBody}
+          placeholder="Hi, ..."
+          editorRef={editorRef}
+        />
+        {aiError && (
+          <div className="mx-4 mb-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+            {aiError}
+          </div>
+        )}
+      </div>
 
+      {/* Footer */}
+      <div className="border-t border-gray-200 bg-[#fafbfc] px-3 py-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Verzenden */}
+          <button
+            type="submit"
+            disabled={ai}
+            className="bg-[#333399] hover:bg-[#2a2a80] disabled:opacity-50 text-white font-semibold px-6 py-2 rounded-full text-sm"
+          >
+            Verzenden
+          </button>
+
+          {/* Toolbar rich-text knoppen */}
+          <div className="pl-2 ml-1 border-l border-gray-200">
+            <RichTextToolbar editorRef={editorRef} />
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Snippet / Toon / AI rechts */}
           <div className="flex items-center gap-2">
             {vorigeRef.current !== null && !ai && (
               <button
@@ -275,10 +341,8 @@ export function ComposeForm({
               </button>
             )}
 
-            {/* Snippet-picker */}
             <SnippetPicker onInvoegen={voegSnippetIn} />
 
-            {/* Toon-selector */}
             <div className="relative">
               <button
                 type="button"
@@ -289,7 +353,7 @@ export function ComposeForm({
                 Toon: {huidigeToon.label}
               </button>
               {toonOpen && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-[180px]">
+                <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-[180px]">
                   {TOON_OPTIES.map((opt) => (
                     <button
                       key={opt.value}
@@ -310,53 +374,22 @@ export function ComposeForm({
               )}
             </div>
 
-            {/* Verbeter met AI knop */}
             <button
               type="button"
               onClick={verbeterMetAi}
-              disabled={ai || body.trim().length < 5}
+              disabled={ai || htmlNaarPlainText(body).trim().length < 5}
               className="text-xs font-semibold text-white bg-gradient-to-r from-[#333399] to-[#5a5acc] hover:from-[#252573] hover:to-[#4040a5] disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 rounded-md shadow-sm transition"
             >
               {ai ? "AI schrijft..." : "Verbeter met AI"}
             </button>
+
+            {laatstOpgeslagen && (
+              <span className="text-xs text-gray-400 pl-2">
+                Concept opgeslagen om {laatstOpgeslagen}
+              </span>
+            )}
           </div>
         </div>
-
-        <textarea
-          name="body"
-          required
-          rows={14}
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          ref={textareaRef}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-sans"
-          placeholder="Hi, ..."
-        />
-
-        {aiError && (
-          <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
-            {aiError}
-          </div>
-        )}
-
-        <small className="text-gray-400 text-xs block mt-1">
-          Handtekening staat hieronder, je kunt boven typen.
-        </small>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={ai}
-          className="bg-[#333399] hover:bg-[#2a2a80] disabled:opacity-50 text-white font-semibold px-8 py-2 rounded-md text-sm"
-        >
-          Verzenden
-        </button>
-        {laatstOpgeslagen && (
-          <span className="text-xs text-gray-400">
-            Concept opgeslagen om {laatstOpgeslagen}
-          </span>
-        )}
       </div>
     </form>
   );
