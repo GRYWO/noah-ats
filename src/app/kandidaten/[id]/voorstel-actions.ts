@@ -185,6 +185,15 @@ export async function stuurVoorstel(formData: FormData) {
   // Setter mail-adres ophalen voor From-veld
   const setterFrom = await getSetterFrom(user.id);
 
+  // Handtekening van de setter ophalen zodat opdrachtgever-mail
+  // 'm netjes onderaan toont (Noah recruitment wordmark + contact).
+  const { data: setterProfile } = await supabase
+    .from("profiles")
+    .select("handtekening_html")
+    .eq("id", user.id)
+    .single();
+  const setterHandtekening = setterProfile?.handtekening_html ?? null;
+
   // Mail naar opdrachtgever
   if (kandidaat) {
     try {
@@ -196,6 +205,7 @@ export async function stuurVoorstel(formData: FormData) {
         token: nieuw.token,
         voorstelprofielToken: kandidaat.voorstelprofiel_token,
         from: setterFrom,
+        handtekeningHtml: setterHandtekening,
       });
     } catch (e) {
       console.error("Mail naar opdrachtgever mislukt:", e);

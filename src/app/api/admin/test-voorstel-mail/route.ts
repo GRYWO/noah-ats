@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { sendVoorstelMail } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
@@ -37,6 +38,15 @@ export async function POST(request: Request) {
   // From: huidige ingelogde setter (= Yorith)
   const from = await getSetterFrom(user.id);
 
+  // Handtekening uit eigen profiel
+  const admin = createAdminClient();
+  const { data: prof } = await admin
+    .from("profiles")
+    .select("handtekening_html")
+    .eq("id", user.id)
+    .single();
+  const handtekeningHtml = prof?.handtekening_html ?? null;
+
   // Nep tokens (geen DB-row, links werken dus niet — alleen voor preview)
   const token = randomBytes(16).toString("hex");
   const voorstelprofielToken = randomBytes(16).toString("hex");
@@ -61,6 +71,7 @@ export async function POST(request: Request) {
       token,
       voorstelprofielToken,
       from,
+      handtekeningHtml,
     });
     return NextResponse.json({ ok: true, verzonden_naar: naar, van: from });
   } catch (e) {

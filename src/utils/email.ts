@@ -63,16 +63,18 @@ function brandedLayout({
   afzenderNaam?: string;
   afzenderEmail?: string;
 }) {
-  // Logo INLINE als base64 data-URI embedden, zodat het ook werkt
-  // wanneer Gmail/Outlook externe images blokkeert en ongeacht of
-  // NEXT_PUBLIC_APP_URL correct is gezet.
-  const grywoWit = getGrywoLogoWitDataUri();
+  // Inline tekst-wordmark — werkt in elke mailclient zonder externe afhankelijkheid.
+  // Gmail blokkeert data-URI's in <img>, dus we tekenen het logo met HTML/CSS.
+  void getGrywoLogoWitDataUri; // legacy import — niet meer gebruikt
   const header = merk === "noah"
-    ? `<span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">noah</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>`
-    : grywoWit
-      ? `<img src="${grywoWit}" alt="Noah recruitment" width="180" style="display:inline-block;border:0;outline:none;text-decoration:none;height:auto;max-width:180px;">`
-      // Tekst-fallback als het logo-bestand niet leesbaar is
-      : `<span style="font-family:Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;">Noah recruitment</span><span style="display:inline-block;width:10px;height:10px;background-color:#ffd84d;border-radius:50%;margin-left:4px;vertical-align:1px;"></span>`;
+    ? `<table cellpadding="0" cellspacing="0" border="0" align="center" role="presentation" style="border-collapse:collapse;"><tr>
+        <td style="padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;line-height:1;vertical-align:baseline;">Noah<span style="color:#ffd84d;">.</span></td>
+        <td style="padding:0 0 0 14px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:3px;color:rgba(255,255,255,0.75);text-transform:uppercase;vertical-align:baseline;">ATS</td>
+      </tr></table>`
+    : `<table cellpadding="0" cellspacing="0" border="0" align="center" role="presentation" style="border-collapse:collapse;"><tr>
+        <td style="padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;line-height:1;vertical-align:baseline;">Noah<span style="color:#ffd84d;">.</span></td>
+        <td style="padding:0 0 0 14px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:3px;color:rgba(255,255,255,0.75);text-transform:uppercase;vertical-align:baseline;">RECRUITMENT</td>
+      </tr></table>`;
   const footer = merk === "noah"
     ? `Noah ATS · het ATS-platform voor recruitment bureaus`
     : afzenderEmail
@@ -120,6 +122,7 @@ export async function sendVoorstelMail({
   token,
   voorstelprofielToken,
   from,
+  handtekeningHtml,
 }: {
   naar: string;
   opdrachtgeverNaam: string | null;
@@ -128,6 +131,7 @@ export async function sendVoorstelMail({
   token: string;
   voorstelprofielToken?: string | null;
   from?: string;
+  handtekeningHtml?: string | null;
 }) {
   // Privacy: opdrachtgever ziet alleen voornaam — geen achternaam/email/telefoon.
   const naam = (kandidaat.voornaam ?? "").trim() || "Kandidaat";
@@ -177,6 +181,8 @@ ${voorstelprofielToken ? `
 </table>
 
 <p style="font-size:12px;color:#999;text-align:center;margin:16px 0 0 0;">Bij uitnodigen vul je in 1 minuut je bedrijfsgegevens + 3 voorkeursdata in.</p>
+
+${handtekeningHtml ? `<div style="margin-top:32px;">${handtekeningHtml}</div>` : ""}
 `;
 
   const result = await resend.emails.send({
