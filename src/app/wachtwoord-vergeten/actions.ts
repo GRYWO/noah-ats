@@ -1,20 +1,31 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { randomInt } from "crypto";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendInloggegevensOpnieuw } from "@/utils/email";
+import { rateLimit, clientIp } from "@/utils/ratelimit";
 
-function genereerWachtwoord(lengte = 12) {
+function genereerWachtwoord(lengte = 14) {
+  // Cryptografisch veilig (niet Math.random).
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
   let pw = "";
-  for (let i = 0; i < lengte; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < lengte; i++) pw += chars[randomInt(chars.length)];
   return pw;
 }
 
 export async function vraagNieuwWachtwoordAan(formData: FormData) {
   const email = ((formData.get("email") as string) ?? "").trim().toLowerCase();
   if (!email) {
-    redirect("/wachtwoord-vergeten?error=E-mail+verplicht");
+    redirect("/wachtwoord-vergeten?error=1");
+  }
+
+  // Rate-limit: voorkomt dat iemand een bekend e-mailadres herhaaldelijk laat
+  // resetten (account-lockout/DoS). Per e-mail én per IP.
+  const ip = await clientIp();
+  if (!rateLimit(`pwreset:${email}`, 3, 3600) || !rateLimit(`pwreset-ip:${ip}`, 12, 3600)) {
+    // Geen detail prijsgeven; doen alsof het verstuurd is.
+    redirect("/wachtwoord-vergeten?ok=1");
   }
 
   const admin = createAdminClient();
@@ -66,8 +77,9 @@ export async function vraagNieuwWachtwoordAan(formData: FormData) {
       console.log("[wachtwoord-vergeten] email niet bekend:", email);
     }
   } catch (e) {
+    // Interne fout NIET in de URL lekken; alleen serverside loggen.
     console.error("[wachtwoord-vergeten] mislukt:", (e as Error).message);
-    redirect(`/wachtwoord-vergeten?error=${encodeURIComponent("Verzenden mislukt: " + (e as Error).message)}`);
+    redirect("/wachtwoord-vergeten?error=1");
   }
 
   redirect("/wachtwoord-vergeten?ok=1");

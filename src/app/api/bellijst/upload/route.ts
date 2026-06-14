@@ -58,6 +58,12 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+  // TENANT-CHECK: de kandidaat moet van DEZE tenant zijn (anders schrijf je een
+  // bellijst op de kandidaat van een andere klant).
+  const { data: kand } = await admin.from("kandidaten").select("tenant_id").eq("id", kandidaatId).single();
+  if (!kand || kand.tenant_id !== profile.tenant_id) {
+    return NextResponse.json({ error: "Geen toegang tot deze kandidaat" }, { status: 403 });
+  }
   const { data: bellijst, error: bErr } = await admin.from("bellijsten").insert({
     tenant_id: profile.tenant_id,
     kandidaat_id: kandidaatId,

@@ -54,6 +54,22 @@ export async function nieuweSetter(formData: FormData) {
 
   const admin = createAdminClient();
 
+  // PLAN-LIMIET: max aantal gebruikers van het abonnement server-side afdwingen
+  // (voorheen alleen in de UI → een bureau kon ongelimiteerd users aanmaken).
+  {
+    const { data: ab } = await admin.from("abonnementen").select("plan").eq("tenant_id", myProfile.tenant_id).maybeSingle();
+    if (ab?.plan) {
+      const { getPlan } = await import("@/utils/plans");
+      const plan = await getPlan(ab.plan);
+      if (plan?.max_users != null) {
+        const { count } = await admin.from("profiles").select("id", { count: "exact", head: true }).eq("tenant_id", myProfile.tenant_id);
+        if ((count ?? 0) >= plan.max_users) {
+          redirect(`/users?error=${encodeURIComponent("Maximum aantal gebruikers voor je abonnement bereikt. Upgrade je plan om meer toe te voegen.")}`);
+        }
+      }
+    }
+  }
+
   // 1. Maak auth user aan
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
     email,
@@ -209,6 +225,7 @@ export async function nieuweSetter(formData: FormData) {
       user_achternaam: achternaam,
       user_rol: rol,
       bureau_naam: bedrijf,
+      verloopt_op: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
     await sendAkkoordTerOndertekening({
@@ -295,9 +312,11 @@ export async function bewerkUser(formData: FormData) {
     }
   }
 
-  // Bureau-admin mag alleen users in eigen tenant bewerken
+  // Bureau-admin mag ALLEEN users in eigen tenant bewerken. Ontbreekt de tenant
+  // (en is het geen super-/sales-admin), dan weigeren i.p.v. ongescoped bewerken.
   let q = admin.from("profiles").update(update).eq("id", id);
-  if (!isSuperAdmin && myProfile?.tenant_id) {
+  if (!isSuperAdmin && !isSales) {
+    if (!myProfile?.tenant_id) return { error: "Geen tenant" };
     q = q.eq("tenant_id", myProfile.tenant_id);
   }
   const { error } = await q;
@@ -345,7 +364,7 @@ export async function verwijderSetter(formData: FormData) {
 
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("rol")
+    .select("rol, tenant_id")
     .eq("id", user.id)
     .single();
 
@@ -361,6 +380,15 @@ export async function verwijderSetter(formData: FormData) {
     .select("tenant_id, rol, voornaam")
     .eq("id", id)
     .single();
+
+  // TENANT-GRENDEL: een bureau-admin mag ALLEEN users van de EIGEN tenant verwijderen.
+  // (Super-admin/sales-admin mogen cross-tenant.) Voorheen kon elk profiel-id worden
+  // gepost en zo een user van een andere klant + diens auth-account vernietigd worden.
+  const { isSalesAdmin } = await import("@/utils/sales-admin");
+  const magCrossTenant = isSuperAdminEmail(user.email) || (await isSalesAdmin(user));
+  if (!teVerwijderen || (!magCrossTenant && teVerwijderen.tenant_id !== myProfile.tenant_id)) {
+    redirect("/users?error=Geen+toegang");
+  }
 
   // Herverdeel actieve kandidaten naar andere setters of wachtrij
   if (teVerwijderen?.tenant_id) {

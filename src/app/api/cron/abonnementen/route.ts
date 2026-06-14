@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronGeautoriseerd } from "@/utils/cron-auth";
 import { Resend } from "resend";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { runCron } from "@/utils/cron-log";
@@ -9,9 +10,7 @@ const FROM = "Noah ATS <noreply@noah-recruitment.nl>";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  const expected = `Bearer ${process.env.CRON_SECRET ?? ""}`;
-  if (process.env.CRON_SECRET && auth !== expected) {
+  if (!cronGeautoriseerd(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -21,10 +20,13 @@ export async function GET(req: Request) {
     const resultaat = { reminders: 0, read_only: 0, geblokkeerd: 0, fouten: [] as string[] };
 
     // Achterstallige abonnementen vinden
+    // Ook read_only-rijen meenemen: anders bereikt het dag-21-blok (dat een
+    // read_only_sinds vereist) die rijen nooit en blijven wanbetalers eeuwig
+    // read_only zonder ooit geblokkeerd te worden.
     const { data: achterstallig } = await admin
       .from("abonnementen")
       .select("id, tenant_id, status, huidige_periode_einde, laatste_reminder_op, read_only_sinds, geblokkeerd_sinds, tenant:tenants(naam)")
-      .eq("status", "achterstallig");
+      .in("status", ["achterstallig", "read_only"]);
 
     for (const ab of achterstallig ?? []) {
       const tenant = Array.isArray(ab.tenant) ? ab.tenant[0] : ab.tenant;

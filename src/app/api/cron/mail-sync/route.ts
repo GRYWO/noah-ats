@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronGeautoriseerd } from "@/utils/cron-auth";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { runCron } from "@/utils/cron-log";
 import { syncMailsVoorAccount } from "@/utils/mail-sync";
@@ -18,9 +19,7 @@ export const maxDuration = 60;
  * Authenticatie via CRON_SECRET — Vercel Cron stuurt 'Authorization: Bearer ...'.
  */
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  const expected = `Bearer ${process.env.CRON_SECRET ?? ""}`;
-  if (process.env.CRON_SECRET && auth !== expected) {
+  if (!cronGeautoriseerd(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -35,11 +34,12 @@ export async function GET(req: Request) {
 
     if (error) {
       console.error("[cron mail-sync] kon accounts niet ophalen:", error);
-      return { gesynct: 0, fouten: 1 };
+      // fouten als ARRAY zodat runCron de run als 'gedeeltelijk' markeert.
+      return { gesynct: 0, fouten: [`accounts ophalen mislukt: ${error.message}`] };
     }
 
     let gesynct = 0;
-    let fouten = 0;
+    const fouten: string[] = [];
 
     // Sync parallel — maar in batches van 5 om Hostnet IMAP niet te overbelasten
     const accs = accounts ?? [];
@@ -48,13 +48,15 @@ export async function GET(req: Request) {
       const resultaten = await Promise.allSettled(
         batch.map((acc) => syncMailsVoorAccount(acc.id, 25))
       );
-      for (const r of resultaten) {
-        if (r.status === "fulfilled") gesynct++;
-        else {
-          fouten++;
-          console.error("[cron mail-sync] account-sync mislukt:", r.reason);
+      resultaten.forEach((r, idx) => {
+        if (r.status === "fulfilled") {
+          gesynct++;
+        } else {
+          const adres = batch[idx]?.mail_adres ?? "onbekend";
+          fouten.push(`${adres}: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`);
+          console.error(`[cron mail-sync] account-sync mislukt (${adres}):`, r.reason);
         }
-      }
+      });
     }
 
     return { totaal_accounts: accs.length, gesynct, fouten };

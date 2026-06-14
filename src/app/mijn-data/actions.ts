@@ -64,7 +64,8 @@ export async function valideerToken(token: string) {
     .eq("token", token)
     .single();
   if (!row) return { error: "Onbekende link" };
-  if (new Date(row.verloopt_op) < new Date()) return { error: "Link is verlopen — vraag een nieuwe aan" };
+  if (row.gebruikt_op) return { error: "Deze link is al gebruikt. Vraag een nieuwe aan." };
+  if (new Date(row.verloopt_op) < new Date()) return { error: "Link is verlopen, vraag een nieuwe aan" };
   if (!row.kandidaat_id) return { error: "Geen gegevens gevonden voor dit e-mailadres" };
   return { row };
 }
@@ -83,7 +84,7 @@ export async function verwijderMij(formData: FormData) {
     .select("*")
     .eq("token", token)
     .single();
-  if (!row || new Date(row.verloopt_op) < new Date() || !row.kandidaat_id) {
+  if (!row || row.gebruikt_op || new Date(row.verloopt_op) < new Date() || !row.kandidaat_id) {
     redirect("/mijn-data");
   }
 
@@ -92,28 +93,35 @@ export async function verwijderMij(formData: FormData) {
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;
   const userAgent = h.get("user-agent") || null;
 
+  // Token DIRECT als gebruikt markeren (eenmalig) — voorkomt herhaald gebruik.
   await admin.from("mijn_data_tokens")
     .update({ gebruikt_op: new Date().toISOString(), ip_adres: ip, user_agent: userAgent })
     .eq("id", row.id);
 
-  // Log audit-trail vóór de delete (kandidaat wordt verwijderd)
-  const { data: k } = await admin
+  // AVG art. 17: verwijder ALLE kandidaat-records met dit e-mailadres, niet
+  // alleen de nieuwste — anders blijven dubbele inschrijvingen achter.
+  const { data: kandidaten } = await admin
     .from("kandidaten")
-    .select("tenant_id, voornaam, achternaam, email")
-    .eq("id", row.kandidaat_id)
-    .single();
+    .select("id, tenant_id, email, cv_url")
+    .eq("email", row.email);
 
-  if (k?.tenant_id) {
-    await admin.from("voorstel_logs").insert({
-      tenant_id: k.tenant_id,
-      kandidaat_id: row.kandidaat_id,
-      event: "afwijzing",
-      beschrijving: `Kandidaat heeft zelf verwijderverzoek ingediend via /mijn-data (AVG art. 17). IP: ${ip ?? "?"}`,
-      zichtbaar_voor_kandidaat: false,
-    });
+  for (const k of kandidaten ?? []) {
+    // Log audit-trail vóór de delete (kandidaat wordt verwijderd)
+    if (k.tenant_id) {
+      await admin.from("voorstel_logs").insert({
+        tenant_id: k.tenant_id,
+        kandidaat_id: k.id,
+        event_type: "afwijzing",
+        beschrijving: `Kandidaat heeft zelf verwijderverzoek ingediend via /mijn-data (AVG art. 17). IP: ${ip ?? "?"}`,
+        zichtbaar_voor_kandidaat: false,
+      });
+    }
+    // Ook het CV-bestand uit storage verwijderen (niet alleen de DB-rij).
+    if (k.cv_url && !/^https?:\/\//i.test(k.cv_url)) {
+      await admin.storage.from("cvs").remove([k.cv_url]).catch(() => {});
+    }
+    await admin.from("kandidaten").delete().eq("id", k.id);
   }
-
-  await admin.from("kandidaten").delete().eq("id", row.kandidaat_id);
 
   revalidatePath("/kandidaten");
   redirect(`/mijn-data/${token}/verwijderd`);

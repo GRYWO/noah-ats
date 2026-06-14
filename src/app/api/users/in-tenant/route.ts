@@ -16,10 +16,14 @@ export async function GET() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("tenant_id")
+    .select("tenant_id, rol")
     .eq("id", user.id)
     .single();
   if (!profile?.tenant_id) return NextResponse.json({ users: [] });
+  // Alleen admins/recruiters mogen de userlijst (voor de "doorzetten"-dropdown).
+  if (!["admin", "recruiter"].includes(String(profile.rol))) {
+    return NextResponse.json({ users: [] }, { status: 403 });
+  }
 
   const admin = createAdminClient();
   const { data: users } = await admin

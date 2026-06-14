@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronGeautoriseerd } from "@/utils/cron-auth";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { runCron } from "@/utils/cron-log";
 
@@ -10,9 +11,7 @@ export const maxDuration = 30;
  * notificaties zodat de popup verschijnt (via realtime in NotificatieBel).
  */
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  const expected = `Bearer ${process.env.CRON_SECRET ?? ""}`;
-  if (process.env.CRON_SECRET && auth !== expected) {
+  if (!cronGeautoriseerd(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

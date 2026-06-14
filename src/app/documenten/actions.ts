@@ -198,6 +198,20 @@ export async function tekenDocument({
   if (!o) return { ok: false, error: "Token ongeldig" };
   if (o.status !== "wachtend") return { ok: false, error: "Al ondertekend" };
 
+  // De envelope zelf moet nog open staan: een ingetrokken, vervallen of al
+  // voltooide envelope mag niet alsnog getekend worden, en niet na vervaldatum.
+  const { data: env } = await admin
+    .from("document_envelopes")
+    .select("status, vervalt_op")
+    .eq("id", o.envelope_id)
+    .single();
+  if (!env || ["ingetrokken", "vervallen", "voltooid"].includes(env.status)) {
+    return { ok: false, error: "Dit document is niet meer beschikbaar om te ondertekenen." };
+  }
+  if (env.vervalt_op && new Date(env.vervalt_op) < new Date()) {
+    return { ok: false, error: "De ondertekentermijn voor dit document is verlopen." };
+  }
+
   // Headers ophalen (audit)
   const { headers } = await import("next/headers");
   const h = await headers();

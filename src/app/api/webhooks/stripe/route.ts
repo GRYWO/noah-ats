@@ -22,6 +22,16 @@ export async function POST(req: Request) {
 
   const admin = createAdminClient();
 
+  // IDEMPOTENT: Stripe levert events at-least-once. Markeer dit event als verwerkt;
+  // is het al verwerkt → meteen stoppen (anders worden wachtwoorden opnieuw gereset
+  // en welkomstmails dubbel verstuurd). Degradeert netjes als de tabel ontbreekt.
+  const { error: dupErr } = await admin
+    .from("stripe_webhook_events")
+    .insert({ event_id: event.id, type: event.type });
+  if (dupErr && (dupErr.code === "23505" || /duplicate key/i.test(dupErr.message))) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   try {
     switch (event.type) {
       case "invoice.paid": {
@@ -243,10 +253,11 @@ export async function POST(req: Request) {
 
 async function getAbonnementIdViaCustomer(customerId: string): Promise<string | null> {
   const admin = createAdminClient();
+  // maybeSingle: geen abonnement-rij mag de hele webhook niet laten crashen.
   const { data } = await admin.from("abonnementen")
     .select("id")
     .eq("stripe_customer_id", customerId)
-    .single();
+    .maybeSingle();
   return data?.id ?? null;
 }
 
@@ -255,6 +266,6 @@ async function getTenantIdViaCustomer(customerId: string): Promise<string | null
   const { data } = await admin.from("abonnementen")
     .select("tenant_id")
     .eq("stripe_customer_id", customerId)
-    .single();
+    .maybeSingle();
   return data?.tenant_id ?? null;
 }

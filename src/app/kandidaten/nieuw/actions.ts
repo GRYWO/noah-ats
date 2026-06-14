@@ -110,8 +110,11 @@ export async function maakKandidaatVanWizard(formData: FormData) {
   // CV PDF naar storage uploaden (apart, want client moet 'm via FormData hebben gestuurd)
   const cvFile = formData.get("cv_file") as File | null;
   if (cvFile && cvFile.size > 0) {
-    const ext = cvFile.name.split(".").pop() ?? "pdf";
-    const path = `kandidaten/${nieuw.id}/cv.${ext}`;
+    const ext = (cvFile.name.split(".").pop() ?? "pdf").replace(/[^a-z0-9]/gi, "").toLowerCase() || "pdf";
+    // Pad MOET met tenant_id beginnen (storage-RLS) en we slaan het PAD op (geen
+    // publieke URL); CV's worden privé geserveerd via createSignedUrl. Voorheen
+    // stond het CV buiten de tenant-isolatie en als publieke URL = PII-lek.
+    const path = `${profile.tenant_id}/${nieuw.id}/cv.${ext}`;
     const arrayBuf = await cvFile.arrayBuffer();
     const { error: upErr } = await admin.storage
       .from("cvs")
@@ -120,8 +123,7 @@ export async function maakKandidaatVanWizard(formData: FormData) {
         upsert: true,
       });
     if (!upErr) {
-      const { data: urlData } = admin.storage.from("cvs").getPublicUrl(path);
-      await admin.from("kandidaten").update({ cv_url: urlData.publicUrl }).eq("id", nieuw.id);
+      await admin.from("kandidaten").update({ cv_url: path }).eq("id", nieuw.id);
     }
   }
 

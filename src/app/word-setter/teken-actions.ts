@@ -177,6 +177,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
           user_achternaam: achternaam,
           user_rol: "setter",
           bureau_naam: tenant?.handelsnaam || tenant?.naam || "Noah recruitment",
+          verloopt_op: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         });
 
         // 5. NDA-mail naar persoonlijke email

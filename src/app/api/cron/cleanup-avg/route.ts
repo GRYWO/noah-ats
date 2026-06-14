@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronGeautoriseerd } from "@/utils/cron-auth";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { runCron } from "@/utils/cron-log";
 
@@ -19,9 +20,7 @@ export const maxDuration = 60;
  * 'Authorization: Bearer <CRON_SECRET>'.
  */
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  const expected = `Bearer ${process.env.CRON_SECRET ?? ""}`;
-  if (process.env.CRON_SECRET && auth !== expected) {
+  if (!cronGeautoriseerd(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -77,13 +76,16 @@ export async function GET(req: Request) {
     if (oudeKandidaten && oudeKandidaten.length > 0) {
       // Audit-log voor elke verwijdering
       for (const k of oudeKandidaten) {
-        await admin.from("voorstel_logs").insert({
+        // Kolom heet 'event_type' (niet 'event'); foutieve kolomnaam liet de
+        // hele AVG-cleanup crashen. Audit-fout mag de verwijdering niet blokkeren.
+        const { error: logErr } = await admin.from("voorstel_logs").insert({
           tenant_id: k.tenant_id,
           kandidaat_id: k.id,
-          event: "afwijzing",
+          event_type: "afwijzing",
           beschrijving: `Automatische verwijdering — bewaartermijn van 4 weken voor afgewezen kandidaten overschreden (AVG art. 5).`,
           zichtbaar_voor_kandidaat: false,
         });
+        if (logErr) resultaat.fouten.push(`audit ${k.id}: ${logErr.message}`);
       }
       const { error } = await admin
         .from("kandidaten")

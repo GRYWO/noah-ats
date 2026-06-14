@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronGeautoriseerd } from "@/utils/cron-auth";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendReminderMail, sendKennismakingReminder } from "@/utils/email";
 import { getSetterFrom } from "@/utils/email-helpers";
@@ -7,13 +8,8 @@ import { runCron } from "@/utils/cron-log";
 
 export async function GET(request: Request) {
   // Beveilig: alleen Vercel cron of met secret header
-  const authHeader = request.headers.get("authorization");
-  const url = new URL(request.url);
-  const secretParam = url.searchParams.get("secret");
-
-  const expected = `Bearer ${process.env.CRON_SECRET}`;
-  if (authHeader !== expected && secretParam !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!cronGeautoriseerd(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const run = await runCron("reminders", async () => {

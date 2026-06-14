@@ -44,6 +44,13 @@ export async function savePlan(formData: FormData) {
 
   if (!sleutel || !label || isNaN(prijs)) return { ok: false };
 
+  // De abonnementen-tabel accepteert alleen deze plan-sleutels (DB CHECK).
+  // Een ander plan aanbieden zou bij afrekenen crashen, dus weigeren we het hier.
+  const TOEGESTANE_SLEUTELS = ["starter", "pro", "enterprise"];
+  if (!TOEGESTANE_SLEUTELS.includes(sleutel)) {
+    return { ok: false, error: "Ongeldige plan-sleutel. Gebruik: starter, pro of enterprise." };
+  }
+
   const admin = createAdminClient();
   const data = {
     sleutel,

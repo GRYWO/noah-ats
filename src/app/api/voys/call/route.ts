@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { voysClickToDial } from "@/utils/voys";
+import { rateLimit } from "@/utils/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,10 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // Rate-limit per gebruiker tegen misbruik van click-to-dial (toll fraud).
+  if (!rateLimit(`voys:${user.id}`, 40, 600)) {
+    return NextResponse.json({ error: "Te veel oproepen, probeer het zo opnieuw." }, { status: 429 });
   }
 
   const { data: profile } = await supabase
@@ -34,12 +39,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ongeldige body" }, { status: 400 });
   }
 
-  if (!body.doelNummer) {
-    return NextResponse.json({ error: "doelNummer ontbreekt" }, { status: 400 });
+  // Nummervalidatie: alleen cijfers, spaties en + (geen rare/injectie-invoer),
+  // redelijke lengte. Voorkomt bellen naar geknutselde service-/premium-codes.
+  const doel = String(body.doelNummer ?? "").trim();
+  if (!/^[+0-9][0-9 ()-]{6,19}$/.test(doel)) {
+    return NextResponse.json({ error: "Ongeldig telefoonnummer" }, { status: 400 });
   }
 
   try {
-    const result = await voysClickToDial(eigenNummer, body.doelNummer);
+    const result = await voysClickToDial(eigenNummer, doel);
     return NextResponse.json(result, { status: result.ok ? 200 : 502 });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

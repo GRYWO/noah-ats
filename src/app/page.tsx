@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ShieldCheck, MapPin, BadgeCheck } from "lucide-react";
 
 export default function Home() {
@@ -20,18 +19,20 @@ export default function Home() {
         }}
       />
 
-      {/* Header — klein GRYWO logo */}
+      {/* Header — Powered by Noah launch */}
       <header className="relative z-10 flex items-center justify-between px-8 py-6">
-        <div className="flex items-center gap-2 text-xs text-white/70">
+        <a
+          href="https://noah-launch.vercel.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-baseline gap-2 text-xs text-white/70 hover:text-white transition"
+        >
           <span>Powered by</span>
-          <Image
-            src="/grywo-logo-wit.png"
-            alt="Noah recruitment"
-            width={70}
-            height={20}
-            className="opacity-90"
-          />
-        </div>
+          <span className="text-base font-extrabold tracking-tight text-white">
+            Noah<span style={{ color: "#ffd84d" }}>.</span>
+            <span className="ml-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-white/70">launch</span>
+          </span>
+        </a>
         <div className="flex items-center gap-2 text-xs text-white/50">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           Noah is online
@@ -40,12 +41,12 @@ export default function Home() {
 
       {/* Hero */}
       <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 -mt-12">
-        {/* Noah-logo block */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl px-14 py-12 mb-10 flex items-baseline">
+        {/* Noah ATS logo block */}
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl px-14 py-12 mb-10 flex items-baseline gap-3">
           <span className="text-white text-7xl md:text-8xl font-black tracking-tighter">
-            noah
+            Noah<span className="text-[#ffd84d]">.</span>
           </span>
-          <span className="ml-3 w-5 h-5 rounded-full bg-[#ffd84d] inline-block" />
+          <span className="text-white/80 text-sm md:text-base font-semibold uppercase tracking-[0.35em]">ATS</span>
         </div>
 
         {/* Tagline */}

@@ -51,12 +51,17 @@ export async function checkEnPasAbonnementAan(tenantId: string): Promise<{
   // 3. Lees huidig abonnement
   const { data: ab } = await admin
     .from("abonnementen")
-    .select("plan, status, stripe_subscription_id")
+    .select("plan, status, stripe_subscription_id, plan_handmatig")
     .eq("tenant_id", tenantId)
     .maybeSingle();
 
   if (!ab) {
     return { gewijzigd: false, aantalRecruiters, reden: "Bureau heeft nog geen abonnement" };
+  }
+
+  // Handmatig vastgezet plan: nooit automatisch overschrijven (#29).
+  if (ab.plan_handmatig) {
+    return { gewijzigd: false, aantalRecruiters, vorigPlan: ab.plan as PlanKey, reden: "Plan is handmatig vastgezet" };
   }
 
   // Niet automatisch wijzigen als bureau nog op betaling wacht of inactief is
@@ -67,6 +72,13 @@ export async function checkEnPasAbonnementAan(tenantId: string): Promise<{
   // 4. Geen wijziging nodig?
   if (ab.plan === doelPlan) {
     return { gewijzigd: false, aantalRecruiters, vorigPlan: ab.plan as PlanKey };
+  }
+
+  // Nooit AUTOMATISCH verlagen: een lager plan kan zitplaatsen/functies wegnemen.
+  // Downgraden gebeurt alleen bewust met de hand (savePlan), niet door de teller.
+  const RANG: Record<PlanKey, number> = { starter: 1, pro: 2, enterprise: 3 };
+  if ((RANG[doelPlan] ?? 0) < (RANG[ab.plan as PlanKey] ?? 0)) {
+    return { gewijzigd: false, aantalRecruiters, vorigPlan: ab.plan as PlanKey, nieuwPlan: doelPlan, reden: "Lager plan wordt niet automatisch toegepast" };
   }
 
   if (!ab.stripe_subscription_id) {
@@ -110,14 +122,20 @@ export async function checkEnPasAbonnementAan(tenantId: string): Promise<{
       },
     });
 
-    // 7. Lokaal bijwerken
-    await admin.from("abonnementen").update({
+    // 7. Lokaal bijwerken — error checken: Stripe is al gewijzigd, dus als de
+    //    lokale update faalt staan we uit sync. Dat loggen we expliciet zodat
+    //    het opgemerkt en hersteld kan worden.
+    const { error: lokaalErr } = await admin.from("abonnementen").update({
       plan: doelPlan,
       max_users: planDef.max_users,
       prijs_per_maand_cent: planDef.prijs_per_maand_cent,
       stripe_price_id: price.id,
       updated_at: new Date().toISOString(),
     }).eq("tenant_id", tenantId);
+    if (lokaalErr) {
+      console.error(`[auto-upgrade] DESYNC: Stripe op "${doelPlan}" gezet maar lokale update faalde voor tenant ${tenantId}:`, lokaalErr);
+      return { gewijzigd: false, aantalRecruiters, vorigPlan: ab.plan as PlanKey, nieuwPlan: doelPlan, reden: `Lokale update mislukt (Stripe wel gewijzigd): ${lokaalErr.message}` };
+    }
 
     return {
       gewijzigd: true,

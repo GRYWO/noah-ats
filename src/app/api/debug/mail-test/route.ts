@@ -49,8 +49,7 @@ export async function GET(request: Request) {
     ok: !error,
     from,
     naar,
-    apiKeyLengte: apiKey.length,
-    apiKeyStart: apiKey.slice(0, 5) + "...",
+    apiKeyAanwezig: true, // geen lengte/prefix van het geheim lekken
     resendResponse: response,
     error,
     diagnose: error

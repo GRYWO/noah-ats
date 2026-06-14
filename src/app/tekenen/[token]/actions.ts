@@ -29,6 +29,9 @@ export async function tekenAkkoord(formData: FormData): Promise<Result> {
   if (!row) return { error: "Onbekend of verlopen token" };
   if (row.status === "getekend") return { error: "Deze overeenkomst is al getekend" };
   if (row.status === "ingetrokken") return { error: "Deze uitnodiging is ingetrokken" };
+  if (row.verloopt_op && new Date(row.verloopt_op) < new Date()) {
+    return { error: "Deze uitnodiging is verlopen. Vraag een nieuwe aan bij je contactpersoon." };
+  }
 
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;
@@ -72,8 +75,7 @@ export async function tekenAkkoord(formData: FormData): Promise<Result> {
         cc: ["info@noah-recruitment.nl"],
         subject: `Samenwerkingsovereenkomst getekend: ${naam}`,
         html: `<p>De samenwerkingsovereenkomst is zojuist getekend door <b>${naam}</b>.</p>
-<p>Token: <code>${token}</code><br>
-Bekijk het getekende document via Noah <a href="https://noah-ats.nl/tekenen/${token}">hier</a>.</p>
+<p>Bekijk het getekende document in de beveiligde omgeving: <a href="https://noah-ats.nl/documenten">Noah · Documenten</a> (inloggen vereist).</p>
 <p>Audit-trail: IP ${ip ?? "?"} · ${userAgent ?? "?"}</p>`,
       });
     } catch (e) {

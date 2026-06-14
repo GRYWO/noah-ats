@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { huidigProfiel } from "@/utils/tenant";
 import { parseJobdiggerExcel } from "@/utils/jobdigger-parser";
 import { triggerKanbanMails } from "@/utils/kanban-mails";
 
@@ -51,6 +52,11 @@ export async function uploadBellijst(formData: FormData) {
   }
 
   const admin = createAdminClient();
+  // TENANT-CHECK: de kandidaat moet van DEZE tenant zijn.
+  const { data: kand } = await admin.from("kandidaten").select("tenant_id").eq("id", kandidaatId).single();
+  if (!kand || kand.tenant_id !== profile.tenant_id) {
+    redirect(`/kandidaten/${kandidaatId}?error=Geen+toegang`);
+  }
   const { data: bellijst, error: bErr } = await admin.from("bellijsten").insert({
     tenant_id: profile.tenant_id,
     kandidaat_id: kandidaatId,
@@ -119,13 +125,16 @@ export async function updateBellijstItem(formData: FormData) {
   const status = (formData.get("status") as string) || "open";
   const notitie = (formData.get("notitie") as string)?.trim() || null;
 
+  // Auth + tenant-scope: alleen eigen bellijst-items wijzigen.
+  const prof = await huidigProfiel();
+  if (!prof?.tenant_id) return;
   const admin = createAdminClient();
   await admin.from("bellijst_items").update({
     label,
     status,
     notitie,
     updated_at: new Date().toISOString(),
-  }).eq("id", id);
+  }).eq("id", id).eq("tenant_id", prof.tenant_id);
 
   revalidatePath(`/kandidaten/${kandidaatId}`);
 }
@@ -134,8 +143,10 @@ export async function verwijderBellijstItem(formData: FormData) {
   const id = formData.get("id") as string;
   const kandidaatId = formData.get("kandidaat_id") as string;
 
+  const prof = await huidigProfiel();
+  if (!prof?.tenant_id) return;
   const admin = createAdminClient();
-  await admin.from("bellijst_items").delete().eq("id", id);
+  await admin.from("bellijst_items").delete().eq("id", id).eq("tenant_id", prof.tenant_id);
 
   revalidatePath(`/kandidaten/${kandidaatId}`);
 }
@@ -184,6 +195,7 @@ export async function voegBellijstItemToeAanCrm(formData: FormData) {
     .from("bellijst_items")
     .select("*")
     .eq("id", id)
+    .eq("tenant_id", profile.tenant_id) // TENANT-CHECK: geen cross-tenant item
     .single();
 
   if (!item || !item.bedrijf) return;

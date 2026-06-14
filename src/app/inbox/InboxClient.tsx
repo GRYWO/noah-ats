@@ -710,7 +710,14 @@ export function InboxClient({
 
               {geopendeMail.body_loaded ? (
                 geopendeMail.html ? (
-                  <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: geopendeMail.html }} />
+                  // Mailinhoud is niet-vertrouwd → in een sandboxed iframe tonen zodat
+                  // scripts NIET draaien (voorkomt stored XSS). Links mogen wel openen.
+                  <iframe
+                    title="E-mailinhoud"
+                    sandbox="allow-popups allow-popups-to-escape-sandbox"
+                    srcDoc={geopendeMail.html}
+                    className="w-full min-h-[500px] border-0 bg-white"
+                  />
                 ) : (
                   <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700">{geopendeMail.tekst}</pre>
                 )

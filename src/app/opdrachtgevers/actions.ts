@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { huidigProfiel } from "@/utils/tenant";
 
 export async function nieuweOpdrachtgever(formData: FormData) {
   const supabase = await createClient();
@@ -73,8 +75,10 @@ export async function updateOpdrachtgever(formData: FormData) {
 
 export async function verwijderOpdrachtgever(formData: FormData) {
   const id = formData.get("id") as string;
-  const supabase = await createClient();
-  await supabase.from("opdrachtgevers").delete().eq("id", id);
+  const prof = await huidigProfiel();
+  if (!prof?.tenant_id) redirect("/login");
+  // Expliciete tenant-scope (niet alleen op RLS vertrouwen).
+  await createAdminClient().from("opdrachtgevers").delete().eq("id", id).eq("tenant_id", prof.tenant_id);
   revalidatePath("/opdrachtgevers");
   redirect("/opdrachtgevers?ok=verwijderd");
 }
@@ -120,8 +124,13 @@ export async function nieuweContactpersoon(formData: FormData) {
 export async function verwijderContactpersoon(formData: FormData) {
   const id = formData.get("id") as string;
   const opdrachtgeverId = formData.get("opdrachtgever_id") as string;
-  const supabase = await createClient();
-  await supabase.from("contactpersonen").delete().eq("id", id);
+  const prof = await huidigProfiel();
+  if (!prof?.tenant_id) redirect("/login");
+  const admin = createAdminClient();
+  // Alleen verwijderen als de bijbehorende opdrachtgever van de eigen tenant is.
+  const { data: og } = await admin.from("opdrachtgevers").select("tenant_id").eq("id", opdrachtgeverId).single();
+  if (og?.tenant_id !== prof.tenant_id) redirect(`/opdrachtgevers/${opdrachtgeverId}?error=Geen+toegang`);
+  await admin.from("contactpersonen").delete().eq("id", id).eq("opdrachtgever_id", opdrachtgeverId);
   revalidatePath(`/opdrachtgevers/${opdrachtgeverId}`);
   redirect(`/opdrachtgevers/${opdrachtgeverId}`);
 }

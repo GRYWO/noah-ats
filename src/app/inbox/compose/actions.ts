@@ -11,12 +11,20 @@ export async function stuurMail(formData: FormData) {
   if (!user) redirect("/login");
 
   const naar      = (formData.get("naar") as string)?.trim();
-  const onderwerp = (formData.get("onderwerp") as string)?.trim();
+  // Onderwerp: CR/LF eruit (header-injectie-hardening) en lengte begrenzen.
+  const onderwerp = (formData.get("onderwerp") as string)?.replace(/[\r\n]+/g, " ").trim().slice(0, 255);
   const body      = (formData.get("body") as string)?.trim();
   const accountId = (formData.get("account_id") as string)?.trim();
 
   if (!naar || !onderwerp || !body) {
     redirect("/inbox/compose?error=Alle+velden+verplicht");
+  }
+
+  // Ontvanger moet precies één geldig e-mailadres zijn (geen lijst, geen
+  // CR/LF). Voorkomt onbedoeld massamailen en header-injectie.
+  const EMAIL_RE = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/;
+  if (!EMAIL_RE.test(naar)) {
+    redirect("/inbox/compose?error=Ongeldig+e-mailadres");
   }
 
   const admin = createAdminClient();

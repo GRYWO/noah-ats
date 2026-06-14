@@ -65,7 +65,7 @@ export async function updateSession(request: NextRequest) {
     try {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("rol, abonnement_status, actieve_device_token, laatst_actief_op, tenant_id, proefperiode_eindigt_op")
+        .select("rol, abonnement_status, actieve_device_token, laatst_actief_op, tenant_id, proefperiode_eindigt_op, menu_permissions")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -136,8 +136,36 @@ export async function updateSession(request: NextRequest) {
           return redirectMetUitlog({ key: "reden", value: "inactiviteit" });
         }
       }
+
+      // 4) Menu-permissies server-side afdwingen (#54). De SideBar verbergt
+      //    items client-side, maar een gebruiker kan een verborgen route ook
+      //    direct intypen. Hier blokkeren we dat server-side. (RLS beschermt de
+      //    data sowieso; dit voorkomt dat een bewust verborgen scherm toch laadt.)
+      const perms = profile?.menu_permissions as Record<string, boolean> | null | undefined;
+      if (perms && !isSuperUser) {
+        // Eerste pad-segment → menu-sleutel (let op: /users hoort bij 'setters').
+        const segment = path.split("/").filter(Boolean)[0] ?? "";
+        const SEGMENT_NAAR_MENU: Record<string, string> = {
+          dashboard: "dashboard", bureaus: "bureaus", kandidaten: "kandidaten",
+          kanban: "kanban", voorstellen: "voorstellen", agenda: "agenda",
+          opdrachtgevers: "opdrachtgevers", jobdigger: "jobdigger", robin: "robin",
+          inbox: "inbox", coaching: "coaching", users: "setters", instellingen: "instellingen",
+        };
+        const menuKey = SEGMENT_NAAR_MENU[segment];
+        // Geblokkeerd? Terug naar /dashboard — tenzij dat zelf het geblokkeerde
+        // pad is (dan doorlaten om een redirect-loop te voorkomen).
+        if (menuKey && perms[menuKey] === false && segment !== "dashboard") {
+          const url = request.nextUrl.clone();
+          url.pathname = "/dashboard";
+          url.search = "";
+          return NextResponse.redirect(url);
+        }
+      }
     } catch (e) {
-      // Liever doorlaten dan een 500 — pagina rendert zelf bij echte auth-fouten.
+      // BEWUSTE KEUZE (#55): beveiligings-/device-checks zijn best-effort. Bij een
+      // DB-hiccup laten we de gebruiker liever door dan het hele dashboard met een
+      // 500 plat te leggen of iederéén uit te loggen. De échte databeveiliging zit
+      // in RLS + tenant-checks op de server, niet in deze middleware.
       console.error("[middleware] beveiligingscheck mislukt:", e);
     }
   }

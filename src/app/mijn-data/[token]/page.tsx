@@ -19,9 +19,11 @@ export default async function MijnDataDetailPage({
   }
 
   const admin = createAdminClient();
+  // Alleen kandidaat-eigen velden — GEEN interne kolommen (notitie, rode_vlaggen,
+  // scores e.d.) tonen aan de kandidaat zelf.
   const { data: k } = await admin
     .from("kandidaten")
-    .select("*")
+    .select("voornaam, tussenvoegsel, achternaam, email, telefoon, woonplaats, geboortedatum, opleiding, open_voor, status, profielschets, created_at")
     .eq("id", res.row.kandidaat_id)
     .single();
 
@@ -54,7 +56,6 @@ export default async function MijnDataDetailPage({
             <Veld label="Opleiding" v={k.opleiding} />
             <Veld label="Open voor" v={k.open_voor} />
             <Veld label="Status" v={k.status} />
-            <Veld label="Notitie (intern)" v={k.notitie} />
             <Veld label="Profielschets" v={k.profielschets} />
             <Veld label="Aangemaakt op" v={k.created_at ? new Date(k.created_at).toLocaleString("nl-NL") : null} />
           </div>

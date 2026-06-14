@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: profile } = await supabase.from("profiles").select("rol").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("rol, tenant_id").eq("id", user.id).single();
   if (profile?.rol === "setter") {
     return NextResponse.json({ error: "Alleen recruiters/admins" }, { status: 403 });
   }
@@ -24,11 +24,14 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: k } = await admin
     .from("kandidaten")
-    .select("voornaam, achternaam, leeftijd, woonplaats, opleiding, open_voor, notitie, max_reisafstand_km, cv_geparseerd")
+    .select("voornaam, achternaam, leeftijd, woonplaats, opleiding, open_voor, notitie, max_reisafstand_km, cv_geparseerd, tenant_id")
     .eq("id", id)
     .single();
 
-  if (!k) return NextResponse.json({ error: "Kandidaat niet gevonden" }, { status: 404 });
+  // TENANT-CHECK: alleen een kandidaat van de eigen tenant (geen cross-tenant PII naar AI).
+  if (!k || k.tenant_id !== profile?.tenant_id) {
+    return NextResponse.json({ error: "Geen toegang tot deze kandidaat" }, { status: 403 });
+  }
 
   const cv = (k.cv_geparseerd ?? {}) as { werkervaring?: string; vaardigheden?: string };
   let schets: string;
@@ -46,7 +49,8 @@ export async function POST(request: Request) {
       max_reisafstand_km: k.max_reisafstand_km,
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error("[profielschets] generatie mislukt:", e);
+    return NextResponse.json({ error: "Profielschets kon niet gegenereerd worden. Probeer het later opnieuw." }, { status: 500 });
   }
 
   await admin.from("kandidaten").update({ profielschets: schets }).eq("id", id);

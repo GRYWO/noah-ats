@@ -17,19 +17,25 @@ export async function triggerNuVerlopen(): Promise<{ verwerkt: number; error?: s
   const admin = createAdminClient();
   const { data: viewer } = await admin
     .from("profiles")
-    .select("tenant_id")
+    .select("tenant_id, rol")
     .eq("id", user.id)
     .maybeSingle();
   if (!viewer?.tenant_id) return { verwerkt: 0, error: "Geen tenant" };
 
   const nu = new Date().toISOString();
-  const { data: gepland } = await admin
+  // Een gewone gebruiker mag alleen ZIJN EIGEN geplande herinneringen handmatig
+  // verzilveren (gepland door of gericht aan hemzelf). Alleen een admin mag de
+  // hele tenant-wachtrij triggeren.
+  let q = admin
     .from("geplande_notificaties")
     .select("id, tenant_id, voor_user_id, gepland_door, titel, bericht")
     .eq("tenant_id", viewer.tenant_id)
     .eq("status", "open")
-    .lt("geplande_tijd", nu)
-    .limit(100);
+    .lt("geplande_tijd", nu);
+  if (viewer.rol !== "admin") {
+    q = q.or(`gepland_door.eq.${user.id},voor_user_id.eq.${user.id}`);
+  }
+  const { data: gepland } = await q.limit(100);
 
   let verwerkt = 0;
   for (const g of gepland ?? []) {

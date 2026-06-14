@@ -95,20 +95,48 @@ export async function verwerkContractUpload(formData: FormData) {
     .eq("token", token)
     .single();
   if (lEr || !verzoek) return { ok: false, error: "Verzoek niet gevonden" };
-  if (verzoek.status === "afgerond") {
-    return { ok: false, error: "Dit verzoek is al afgerond." };
+  // #38: alleen een verzoek dat nog op de eerste upload wacht mag verwerkt
+  // worden. Zo voorkomen we dubbele AI-verwerking bij herhaalde uploads.
+  if (verzoek.status !== "verzonden") {
+    return {
+      ok: false,
+      error: verzoek.status === "afgerond"
+        ? "Dit verzoek is al afgerond."
+        : "Dit contract wordt al verwerkt. Een moment geduld.",
+    };
+  }
+  // Grendel: zet direct op 'geupload' (atomair op status=verzonden) zodat een
+  // tweede gelijktijdige upload wordt geweigerd.
+  const { data: vergrendeld } = await admin
+    .from("contract_verzoeken")
+    .update({ status: "geupload", geupload_op: new Date().toISOString() })
+    .eq("id", verzoek.id)
+    .eq("status", "verzonden")
+    .select("id");
+  if (!vergrendeld || vergrendeld.length === 0) {
+    return { ok: false, error: "Dit contract wordt al verwerkt. Een moment geduld." };
   }
 
-  // 1) Origineel opslaan in privé bucket (max 24u)
+  // 1) Origineel opslaan in privé bucket (tijdelijk — wordt na verwerking gewist)
   const ts = Date.now();
   const origPad = `${verzoek.id}/origineel-${ts}.pdf`;
   const bytes = new Uint8Array(await bestand.arrayBuffer());
+
+  // Bij elke vroegtijdige fout: zet status terug op 'verzonden' (zodat de klant
+  // opnieuw kan uploaden) en verwijder het zojuist geüploade origineel.
+  const herstelEnFaal = async (fout: string) => {
+    await admin.storage.from("contracten").remove([origPad]).catch(() => {});
+    await admin.from("contract_verzoeken").update({ status: "verzonden" }).eq("id", verzoek.id);
+    return { ok: false as const, error: fout };
+  };
+
   const upR = await admin.storage.from("contracten").upload(origPad, bytes, {
     contentType: "application/pdf",
     upsert: false,
   });
   if (upR.error) {
     console.error("[contract] storage upload mislukt:", upR.error);
+    await admin.from("contract_verzoeken").update({ status: "verzonden" }).eq("id", verzoek.id);
     if (upR.error.message?.toLowerCase().includes("bucket")) {
       return { ok: false, error: "Storage-bucket 'contracten' ontbreekt. Admin: run sql/049_contract_controle.sql in Supabase." };
     }
@@ -124,24 +152,23 @@ export async function verwerkContractUpload(formData: FormData) {
     const msg = (e as Error).message ?? "onbekend";
     // Probeer specifieker te zijn
     if (msg.includes("JSON")) {
-      return { ok: false, error: "AI kon geen contract-info uit deze PDF halen. Is dit echt een arbeidscontract? Anders: mail backoffice@noah-recruitment.nl." };
+      return herstelEnFaal("AI kon geen contract-info uit deze PDF halen. Is dit echt een arbeidscontract? Anders: mail backoffice@noah-recruitment.nl.");
     }
     if (msg.toLowerCase().includes("rate") || msg.toLowerCase().includes("429")) {
-      return { ok: false, error: "AI is tijdelijk druk — probeer over een minuut opnieuw." };
+      return herstelEnFaal("AI is tijdelijk druk. Probeer over een minuut opnieuw.");
     }
     if (msg.toLowerCase().includes("timeout")) {
-      return { ok: false, error: "PDF te groot of complex (timeout). Probeer een eenvoudigere/kleinere PDF." };
+      return herstelEnFaal("PDF te groot of complex (timeout). Probeer een eenvoudigere/kleinere PDF.");
     }
-    return { ok: false, error: `Verwerking mislukt: ${msg.slice(0, 200)}. Mail backoffice@noah-recruitment.nl voor handmatige verwerking.` };
+    return herstelEnFaal(`Verwerking mislukt: ${msg.slice(0, 200)}. Mail backoffice@noah-recruitment.nl voor handmatige verwerking.`);
   }
 
-  // 3) Samenvattings-PDF opslaan (geredacteerd skippen — duurt te lang)
+  // 3) Samenvattings-PDF opslaan (bevat GEEN volledige PII — alleen salaris/functie)
   const samPad = `${verzoek.id}/samenvatting-${ts}.pdf`;
   await admin.storage.from("contracten").upload(samPad, redactie.samenvattingPdf, {
     contentType: "application/pdf",
     upsert: false,
   });
-  const geredPad = null;
 
   const jaarsalaris = redactie.salaris.brutoJaarsalarisBerekend ?? redactie.salaris.brutoJaarsalarisLetterlijk ?? null;
 
@@ -161,13 +188,19 @@ export async function verwerkContractUpload(formData: FormData) {
     console.error("[contract] mail naar GRYWO mislukt:", e);
   }
 
-  // 5) Update verzoek
+  // 5) AVG (#25/#30): het ORIGINEEL met volledige PII direct verwijderen — we
+  //    bewaren alleen de salaris-samenvatting (geen persoonsgegevens) als bewijs.
+  await admin.storage.from("contracten").remove([origPad]).catch((e) => {
+    console.error("[contract] origineel verwijderen mislukt:", e);
+  });
+
+  // 6) Update verzoek
   await admin
     .from("contract_verzoeken")
     .update({
       status: "afgerond",
-      origineel_pad: origPad,
-      geredacteerd_pad: geredPad,
+      origineel_pad: null,
+      geredacteerd_pad: null,
       samenvatting_pad: samPad,
       contract_salaris: jaarsalaris,
       contract_functie: redactie.functie,

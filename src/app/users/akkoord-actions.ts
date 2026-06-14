@@ -74,6 +74,7 @@ export async function stuurAkkoordUit(formData: FormData) {
       user_achternaam: doel.achternaam,
       user_rol: doel.rol,
       bureau_naam: tenant?.handelsnaam || tenant?.naam || null,
+      verloopt_op: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     });
     if (insErr) redirect(`/users?error=${encodeURIComponent(insErr.message)}`);
 

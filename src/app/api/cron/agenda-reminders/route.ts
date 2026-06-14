@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronGeautoriseerd } from "@/utils/cron-auth";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { maakNotificatie } from "@/utils/notificaties";
 import { runCron } from "@/utils/cron-log";
@@ -18,12 +19,8 @@ export const dynamic = "force-dynamic";
  * Deduplicatie via *_reminder_sent timestamps.
  */
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const url = new URL(request.url);
-  const secretParam = url.searchParams.get("secret");
-  const expected = `Bearer ${process.env.CRON_SECRET}`;
-  if (authHeader !== expected && secretParam !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!cronGeautoriseerd(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const run = await runCron("agenda-reminders", async () => {

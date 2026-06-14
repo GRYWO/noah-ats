@@ -42,12 +42,26 @@ export async function POST(request: Request) {
     .eq("id", kandidaatId)
     .single();
 
+  // TENANT-CHECK: alleen een kandidaat van de EIGEN tenant mag geparseerd worden
+  // (anders lekt PII van een andere klant naar de AI én wordt diens kandidaat gewijzigd).
+  if (!k || (k.tenant_id !== profile?.tenant_id)) {
+    return NextResponse.json({ error: "Geen toegang tot deze kandidaat" }, { status: 403 });
+  }
   if (!k?.cv_url) {
     return NextResponse.json({ error: "Kandidaat heeft geen CV geüpload" }, { status: 400 });
   }
 
-  // Download CV uit Supabase Storage (public URL)
-  const pdfRes = await fetch(k.cv_url);
+  // CV downloaden. cv_url is normaal een PAD in de privé 'cvs'-bucket → signen.
+  // (Legacy: oude records kunnen een volledige URL bevatten → direct fetchen.)
+  let downloadUrl = k.cv_url;
+  if (!/^https?:\/\//i.test(k.cv_url)) {
+    const { data: signed } = await admin.storage.from("cvs").createSignedUrl(k.cv_url, 120);
+    if (!signed?.signedUrl) {
+      return NextResponse.json({ error: "Kon CV niet openen" }, { status: 502 });
+    }
+    downloadUrl = signed.signedUrl;
+  }
+  const pdfRes = await fetch(downloadUrl);
   if (!pdfRes.ok) {
     return NextResponse.json({ error: "Kon CV niet downloaden" }, { status: 502 });
   }
@@ -60,7 +74,8 @@ export async function POST(request: Request) {
   try {
     parsed = await parseCV(buf, fileName, mimeType);
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error("[parse-cv] verwerking mislukt:", e);
+    return NextResponse.json({ error: "CV verwerken mislukt. Probeer het later opnieuw." }, { status: 500 });
   }
 
   // Update kandidaat met geparsede velden (alleen vullen waar nu leeg)
