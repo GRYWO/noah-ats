@@ -46,6 +46,7 @@ export default async function ComposePage({
           defaultNaar={reply_to ?? ""}
           defaultOnderwerp={subject ?? ""}
           defaultHandtekeningHtml={defaultHandtekeningHtml}
+          error={error}
         />
       </div>
     </main>

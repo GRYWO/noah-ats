@@ -51,10 +51,12 @@ export function ComposeForm({
   defaultNaar,
   defaultOnderwerp,
   defaultHandtekeningHtml,
+  error,
 }: {
   defaultNaar: string;
   defaultOnderwerp: string;
   defaultHandtekeningHtml: string;
+  error?: string;
 }) {
   const [naar, setNaar] = useState(defaultNaar);
   const [onderwerp, setOnderwerp] = useState(defaultOnderwerp);
@@ -70,6 +72,12 @@ export function ComposeForm({
   const [aiError, setAiError] = useState<string | null>(null);
   const vorigeRef = useRef<string | null>(null);
 
+  // Optimistic verzend-status. Zodra de gebruiker op "Verzenden" klikt,
+  // verbergen we het formulier en tonen we een korte bevestiging, terwijl
+  // de server-action op de achtergrond afhandelt en uiteindelijk redirect.
+  const [bezig, setBezig] = useState(false);
+  const verzendBezigRef = useRef(false);
+
   // Auto-save concept
   const [conceptId, setConceptId] = useState<string | null>(null);
   const [laatstOpgeslagen, setLaatstOpgeslagen] = useState<string | null>(null);
@@ -84,6 +92,17 @@ export function ComposeForm({
   useEffect(() => { onderwerpRef.current = onderwerp; }, [onderwerp]);
   useEffect(() => { bodyRef.current = body; }, [body]);
   useEffect(() => { conceptIdRef.current = conceptId; }, [conceptId]);
+
+  // Server-action faalde en redirectte naar /inbox/compose?error=... De page
+  // wordt soft-genavigeerd, dezelfde ComposeForm blijft gemount maar krijgt
+  // een nieuwe error-prop. Reset bezig zodat het formulier weer zichtbaar
+  // wordt en de gebruiker kan corrigeren.
+  useEffect(() => {
+    if (error && error.length > 0) {
+      setBezig(false);
+      verzendBezigRef.current = false;
+    }
+  }, [error]);
 
   // Editor-ref voor snippet-invoegen en toolbar-commando's.
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -188,6 +207,10 @@ export function ComposeForm({
   useEffect(() => {
     const interval = setInterval(async () => {
       if (bezigRef.current) return;
+      // Niet meer opslaan zodra de gebruiker op "Verzenden" heeft geklikt:
+      // anders vuurt er nog een laatste PUT terwijl de server-action al bezig
+      // is met versturen en de redirect klaarzet.
+      if (verzendBezigRef.current) return;
 
       const n = naarRef.current;
       const o = onderwerpRef.current;
@@ -260,9 +283,19 @@ export function ComposeForm({
   const huidigeToon = TOON_OPTIES.find((t) => t.value === toon)!;
 
   return (
+    <>
+      {bezig && (
+        <div className="bg-white rounded-t-xl shadow-md max-w-3xl mx-auto p-8 text-center text-sm text-gray-500">
+          Mail verstuurd
+        </div>
+      )}
     <form
       action={stuurMail}
-      className="bg-white rounded-t-xl shadow-md max-w-3xl mx-auto overflow-hidden"
+      onSubmit={() => {
+        verzendBezigRef.current = true;
+        setBezig(true);
+      }}
+      className={`bg-white rounded-t-xl shadow-md max-w-3xl mx-auto overflow-hidden ${bezig ? "hidden" : ""}`}
     >
       {/* Concept-id en hidden body-velden voor de server-action. */}
       <input type="hidden" name="concept_id" value={conceptId ?? ""} />
@@ -322,7 +355,7 @@ export function ComposeForm({
           {/* Verzenden */}
           <button
             type="submit"
-            disabled={ai}
+            disabled={ai || bezig}
             className="bg-[#333399] hover:bg-[#2a2a80] disabled:opacity-50 text-white font-semibold px-6 py-2 rounded-full text-sm"
           >
             Verzenden
@@ -400,5 +433,6 @@ export function ComposeForm({
         </div>
       </div>
     </form>
+    </>
   );
 }
