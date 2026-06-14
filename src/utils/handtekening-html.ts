@@ -14,12 +14,8 @@ const HANDTEKENING_WRAPPER_REGEX =
  * Drie lege regels bovenaan zodat de cursor lekker met ruimte begint, en
  * daaronder de handtekening verpakt in <div data-handtekening="ja">.
  */
-export function bouwInitieleHtml(handtekeningHtml: string): string {
-  const leegBoven = "<div><br></div><div><br></div><div><br></div>";
-  if (!handtekeningHtml || !handtekeningHtml.trim()) {
-    return leegBoven;
-  }
-  return `${leegBoven}<div data-handtekening="ja">${handtekeningHtml}</div>`;
+export function bouwInitieleHtml(_handtekeningHtml?: string): string {
+  return "";
 }
 
 /**

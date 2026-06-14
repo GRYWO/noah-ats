@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { stuurMail } from "./actions";
 import { SnippetPicker } from "@/components/SnippetPicker";
 import { RichTextEditor, RichTextToolbar } from "@/components/RichTextEditor";
-import { bouwInitieleHtml } from "@/utils/handtekening-html";
+import { HandtekeningPreview } from "@/components/HandtekeningPreview";
 
 type Toon = "professioneel" | "vriendelijk" | "kort";
 const TOON_OPTIES: Array<{ value: Toon; label: string; uitleg: string }> = [
@@ -57,8 +57,10 @@ export function ComposeForm({
 }) {
   const [naar, setNaar] = useState(defaultNaar);
   const [onderwerp, setOnderwerp] = useState(defaultOnderwerp);
-  // Body is nu een HTML-string. Initieel: 3 lege regels + handtekening-blok.
-  const initieelBody = bouwInitieleHtml(defaultHandtekeningHtml);
+  // Body is een HTML-string voor alleen de bewerkbare hoofdtekst.
+  // De handtekening leeft als aparte read-only iframe onder de editor en
+  // wordt door de server-action onder de body geplakt bij verzenden.
+  const initieelBody = "";
   const [body, setBody] = useState(initieelBody);
   const [toon, setToon] = useState<Toon>("professioneel");
   const [toonOpen, setToonOpen] = useState(false);
@@ -262,6 +264,7 @@ export function ComposeForm({
       <input type="hidden" name="concept_id" value={conceptId ?? ""} />
       <input type="hidden" name="body_html" value={body} />
       <input type="hidden" name="body" value={bodyPlain} />
+      <input type="hidden" name="handtekening_html" value={defaultHandtekeningHtml ?? ""} />
 
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 bg-[#f6f8fb]">
@@ -306,6 +309,7 @@ export function ComposeForm({
             {aiError}
           </div>
         )}
+        <HandtekeningPreview html={defaultHandtekeningHtml} />
       </div>
 
       {/* Footer */}

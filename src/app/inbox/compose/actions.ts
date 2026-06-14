@@ -16,10 +16,11 @@ export async function stuurMail(formData: FormData) {
   const onderwerp = (formData.get("onderwerp") as string)?.replace(/[\r\n]+/g, " ").trim().slice(0, 255);
   // body_html is de nieuwe WYSIWYG-payload (kan handtekening al bevatten).
   // body is de legacy plain-text-fallback uit oudere clients/tests.
-  const bodyHtml  = (formData.get("body_html") as string | null)?.trim() ?? "";
-  const bodyPlain = (formData.get("body") as string | null)?.trim() ?? "";
-  const accountId = (formData.get("account_id") as string)?.trim();
-  const conceptId = (formData.get("concept_id") as string)?.trim();
+  const bodyHtml          = (formData.get("body_html") as string | null)?.trim() ?? "";
+  const bodyPlain         = (formData.get("body") as string | null)?.trim() ?? "";
+  const handtekeningHtml  = (formData.get("handtekening_html") as string | null)?.trim() ?? "";
+  const accountId         = (formData.get("account_id") as string)?.trim();
+  const conceptId         = (formData.get("concept_id") as string)?.trim();
 
   // Minstens 1 van beide body-velden moet inhoud hebben.
   if (!naar || !onderwerp || (!bodyHtml && !bodyPlain)) {
@@ -66,10 +67,17 @@ export async function stuurMail(formData: FormData) {
     // De body bevat de handtekening al (de user heeft 'm in de editor staan
     // en kan hem aanpassen voor verzenden), dus we slaan auto-appenden over.
     // Voorkeur: body_html (WYSIWYG). Fallback: plain body met <br>-conversie.
-    const ruwHtml = bodyHtml
+    const ruwHoofd = bodyHtml
       ? bodyHtml
       : `<div>${bodyPlain.replace(/\n/g, "<br>")}</div>`;
-    const htmlBody = saneerMailHtml(ruwHtml);
+    const veiligeHoofd = saneerMailHtml(ruwHoofd);
+    const veiligeHandtekening = handtekeningHtml ? saneerMailHtml(handtekeningHtml) : "";
+    // Hoofdtekst en handtekening worden hier samengevoegd. De handtekening
+    // is dezelfde HTML als in /instellingen, dus de ontvanger ziet exact
+    // dezelfde gestylede tabel (paarse balk, logo-wordmark, contactstrook).
+    const htmlBody = veiligeHandtekening
+      ? `${veiligeHoofd}<br><br>${veiligeHandtekening}`
+      : veiligeHoofd;
 
     await verstuurMail({
       vanAdres: account.mail_adres,
