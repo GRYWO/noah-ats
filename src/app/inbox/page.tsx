@@ -69,6 +69,12 @@ export default async function InboxPage({
     type: m.type as "inbox" | "sent" | "drafts" | "trash" | "spam" | "ander",
   }));
 
+  // BELANGRIJK: bepaal of de mappen-tabel echt leeg is VOORDAT we de
+  // INBOX-fallback toevoegen. Anders is isLeeg na de unshift altijd
+  // false en triggert de initiele sync in InboxClient nooit voor een
+  // verse mailbox.
+  const dbMappenLeeg = mappen.length === 0;
+
   // FALLBACK: als de inbox-row ontbreekt in mail_mappen (bv. doordat sync
   // 'm nog niet ontdekt heeft of de row per ongeluk weg is) voegen we 'm
   // hier client-side toe. Anders kan de gebruiker zijn Postvak IN
@@ -145,7 +151,10 @@ export default async function InboxPage({
   }
 
   const huidigeMap = mappen.find(m => m.pad === mapPad) ?? mappen.find(m => m.type === "inbox");
-  const isLeeg = mappen.length === 0;
+  // isLeeg verwijst naar de echte DB-staat, niet naar de array NA de
+  // INBOX-fallback. Zo vuurt de initiele /api/mail/sync-trigger in
+  // InboxClient wel correct af voor een verse mailbox.
+  const isLeeg = dbMappenLeeg;
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">

@@ -8,6 +8,62 @@ import { ImapFlow } from "imapflow";
 import { getMailServers } from "@/utils/mail-provider";
 import { decrypt } from "@/utils/crypto";
 
+/**
+ * Haal het juiste mail_accounts-record op voor deze user. Als formData een
+ * 'account_id' bevat (multi-account: gebruiker zit in een specifiek account)
+ * pakken we dat account, anders het primaire account. Geeft credentials,
+ * IMAP-host/-port en account_id terug. Redirect bij ontbrekende config.
+ */
+async function haalActiefMailAccount(
+  userId: string,
+  accountId?: string | null,
+): Promise<{
+  id: string;
+  mail_adres: string;
+  mail_wachtwoord: string;
+  imap_host: string | null;
+  imap_port: number | null;
+}> {
+  const admin = createAdminClient();
+  let query = admin
+    .from("mail_accounts")
+    .select("id, mail_adres, mail_wachtwoord, imap_host, imap_port, is_primary, user_id")
+    .eq("user_id", userId);
+
+  if (accountId) {
+    query = query.eq("id", accountId);
+  } else {
+    query = query.eq("is_primary", true);
+  }
+
+  const { data: account } = await query.maybeSingle();
+
+  // Fallback: als er geen primary is, pak het eerste actieve account
+  let gekozen = account;
+  if (!gekozen) {
+    const { data: eerste } = await admin
+      .from("mail_accounts")
+      .select("id, mail_adres, mail_wachtwoord, imap_host, imap_port, is_primary, user_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    gekozen = eerste;
+  }
+
+  if (!gekozen?.mail_adres || !gekozen.mail_wachtwoord) {
+    redirect("/inbox?error=Geen+mail-config+voor+dit+account");
+  }
+
+  return {
+    id: gekozen.id,
+    mail_adres: gekozen.mail_adres,
+    mail_wachtwoord: gekozen.mail_wachtwoord,
+    imap_host: gekozen.imap_host,
+    imap_port: gekozen.imap_port,
+  };
+}
+
 export async function maakNieuweMap(formData: FormData) {
   const mapNaam = (formData.get("map_naam") as string)?.trim();
   if (!mapNaam) redirect("/inbox?error=Naam+leeg");
@@ -16,29 +72,15 @@ export async function maakNieuweMap(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("mail_adres")
-    .eq("id", user.id)
-    .single();
+  const accountIdInput = (formData.get("account_id") as string | null)?.trim() || null;
+  const account = await haalActiefMailAccount(user.id, accountIdInput);
 
-  const admin = createAdminClient();
-  const { data: secret } = await admin
-    .from("profiles")
-    .select("mail_wachtwoord")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.mail_adres || !secret?.mail_wachtwoord) {
-    redirect("/inbox?error=Geen+mail-config");
-  }
-
-  const servers = getMailServers(profile.mail_adres);
+  const servers = getMailServers(account.mail_adres);
   const client = new ImapFlow({
-    host: servers.imapHost,
-    port: servers.imapPort,
+    host: account.imap_host ?? servers.imapHost,
+    port: account.imap_port ?? servers.imapPort,
     secure: true,
-    auth: { user: profile.mail_adres, pass: decrypt(secret.mail_wachtwoord) },
+    auth: { user: account.mail_adres, pass: decrypt(account.mail_wachtwoord) },
     logger: false,
   });
 
@@ -47,13 +89,33 @@ export async function maakNieuweMap(formData: FormData) {
     await client.mailboxCreate(mapNaam);
   } catch (e) {
     await client.logout().catch(() => {});
-    redirect(`/inbox?error=${encodeURIComponent((e as Error).message)}`);
+    console.error("[maakNieuweMap] IMAP-fout:", (e as Error).message, "map:", mapNaam);
+    redirect(`/inbox?error=${encodeURIComponent("Map aanmaken mislukt: " + (e as Error).message)}`);
   }
 
   await client.logout().catch(() => {});
 
+  // Direct een mail_mappen-row schrijven zodat de nieuwe map meteen in de
+  // sidebar verschijnt, zonder te hoeven wachten op de volgende auto-sync
+  // (15s). Type 'ander' want het is per definitie een door de user
+  // aangemaakte map, geen systeem-map.
+  const admin = createAdminClient();
+  await admin.from("mail_mappen").upsert(
+    {
+      user_id: user.id,
+      account_id: account.id,
+      pad: mapNaam,
+      label: mapNaam,
+      type: "ander",
+      aantal: 0,
+      ongelezen: 0,
+      last_sync: new Date().toISOString(),
+    },
+    { onConflict: "account_id,pad" },
+  );
+
   revalidatePath("/inbox");
-  redirect(`/inbox?map=${encodeURIComponent(mapNaam)}`);
+  redirect(`/inbox?map=${encodeURIComponent(mapNaam)}&account=${encodeURIComponent(account.id)}`);
 }
 
 export async function verwijderMap(formData: FormData) {
@@ -70,29 +132,16 @@ export async function verwijderMap(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("mail_adres")
-    .eq("id", user.id)
-    .single();
-
+  const accountIdInput = (formData.get("account_id") as string | null)?.trim() || null;
+  const account = await haalActiefMailAccount(user.id, accountIdInput);
   const admin = createAdminClient();
-  const { data: secret } = await admin
-    .from("profiles")
-    .select("mail_wachtwoord")
-    .eq("id", user.id)
-    .single();
 
-  if (!profile?.mail_adres || !secret?.mail_wachtwoord) {
-    redirect("/inbox?error=Geen+mail-config");
-  }
-
-  const servers = getMailServers(profile.mail_adres);
+  const servers = getMailServers(account.mail_adres);
   const client = new ImapFlow({
-    host: servers.imapHost,
-    port: servers.imapPort,
+    host: account.imap_host ?? servers.imapHost,
+    port: account.imap_port ?? servers.imapPort,
     secure: true,
-    auth: { user: profile.mail_adres, pass: decrypt(secret.mail_wachtwoord) },
+    auth: { user: account.mail_adres, pass: decrypt(account.mail_wachtwoord) },
     logger: false,
   });
 
@@ -137,9 +186,12 @@ export async function verwijderMap(formData: FormData) {
     // 3. Probeer de mailbox te verwijderen
     await client.mailboxDelete(mapPad);
 
-    // 4. Lokale cache opruimen zodat map direct verdwijnt in UI
-    await admin.from("mail_mappen").delete().eq("user_id", user.id).eq("pad", mapPad);
-    await admin.from("mail_berichten").delete().eq("user_id", user.id).eq("map_pad", mapPad);
+    // 4. Lokale cache opruimen zodat map direct verdwijnt in UI.
+    // Filter per account_id zodat een gelijknamige map van een ANDER
+    // mail-account van dezelfde user (multi-account) niet ook gewist
+    // wordt.
+    await admin.from("mail_mappen").delete().eq("account_id", account.id).eq("pad", mapPad);
+    await admin.from("mail_berichten").delete().eq("account_id", account.id).eq("map_pad", mapPad);
   } catch (e) {
     foutmelding = (e as Error).message || "Onbekende fout";
     console.error("[verwijderMap] IMAP-fout:", foutmelding, "map:", mapPad);

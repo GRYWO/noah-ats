@@ -53,6 +53,31 @@ export function InboxClient({
   const [syncBezig, setSyncBezig] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [geselecteerd, setGeselecteerd] = useState<Set<number>>(new Set());
+  // Foutmelding-banner zichtbaar maken op basis van ?error=... en met
+  // sluit-knop wegklikbaar. Zo verdwijnt een fout niet 'stilletjes' in
+  // de URL en weet de gebruiker zeker dat er iets mis ging (bv. map
+  // aanmaken zonder mail-config).
+  const [foutZichtbaar, setFoutZichtbaar] = useState<string | null>(fetchError);
+
+  // Bij nieuwe ?error=... in de URL banner weer tonen (router.refresh
+  // levert nieuwe fetchError-prop, maar de close-knop heeft 'm misschien
+  // al verborgen voor een vorige fout).
+  useEffect(() => {
+    setFoutZichtbaar(fetchError);
+  }, [fetchError]);
+
+  const sluitFoutmelding = () => {
+    setFoutZichtbaar(null);
+    // Strip ?error=... uit de URL zodat een refresh de banner niet
+    // opnieuw oppopt.
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("error")) {
+        url.searchParams.delete("error");
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+  };
   // IDLE-status: true zodra de SSE-verbinding 'connected' meldt. Gebruikt
   // voor het visuele bolletje naast de Auto-checkbox.
   const [idleVerbonden, setIdleVerbonden] = useState(false);
@@ -487,6 +512,29 @@ export function InboxClient({
       ))}
     </div>
 
+    {/* Prominente foutmelding-banner: zichtbaar bovenaan met sluit-knop.
+        Vervangt de oude kleine 1-regel-rood banner die makkelijk gemist
+        werd na bv. een mislukte map-creatie. */}
+    {foutZichtbaar && (
+      <div
+        role="alert"
+        className="bg-red-50 border-b-2 border-red-300 text-red-800 px-5 py-3 flex items-start gap-3"
+      >
+        <div className="flex-1 text-sm">
+          <strong className="font-semibold">Er ging iets mis.</strong>{" "}
+          <span>{foutZichtbaar}</span>
+        </div>
+        <button
+          type="button"
+          onClick={sluitFoutmelding}
+          aria-label="Sluit melding"
+          className="text-red-700 hover:text-red-900 text-lg leading-none font-bold px-2"
+        >
+          ×
+        </button>
+      </div>
+    )}
+
     <div className="flex" style={{ height: "calc(100vh - 4rem)" }}>
       {/* Sidebar */}
       <aside
@@ -547,6 +595,7 @@ export function InboxClient({
                     className="pr-2 opacity-0 group-hover:opacity-100"
                   >
                     <input type="hidden" name="map_pad" value={m.pad} />
+                    <input type="hidden" name="account_id" value={accountId} />
                     <button
                       type="submit"
                       title="Map verwijderen"
@@ -571,6 +620,7 @@ export function InboxClient({
               </button>
             ) : (
               <form action={maakNieuweMap} className="space-y-2 py-2">
+                <input type="hidden" name="account_id" value={accountId} />
                 <input
                   name="map_naam"
                   autoFocus
@@ -668,9 +718,8 @@ export function InboxClient({
           </div>
         </div>
 
-        {fetchError && (
-          <div className="m-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md p-3">{fetchError}</div>
-        )}
+        {/* De prominente foutmelding-banner staat nu bovenaan; hier geen
+            duplicaat tonen. */}
 
         {/* Selectie-/bulk-actie balk */}
         {!fetchError && zichtbareBerichten.length > 0 && (

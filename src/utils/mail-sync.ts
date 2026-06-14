@@ -83,7 +83,7 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
         aantal: status.messages ?? 0,
         ongelezen: status.unseen ?? 0,
         last_sync: new Date().toISOString(),
-      }, { onConflict: "user_id,pad" });
+      }, { onConflict: "account_id,pad" });
 
       const lock = await client.getMailboxLock(mapInfo.path);
       try {
@@ -172,6 +172,18 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
         lock.release();
       }
     }
+  } catch (e) {
+    // Log sync-fouten in plaats van ze stil te slikken (oude gedrag).
+    // Hiermee zie je in de serverlog meteen als bv. IMAP-credentials
+    // fout zijn, een mailbox niet selectable is, of de verbinding wegvalt.
+    console.error(
+      "[mail-sync] sync-fout voor account",
+      accountId,
+      account?.mail_adres ?? "?",
+      "->",
+      (e as Error).message,
+    );
+    return { error: (e as Error).message };
   } finally {
     await client.logout().catch(() => {});
   }
