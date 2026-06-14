@@ -19,6 +19,42 @@ export function bouwInitieleHtml(_handtekeningHtml?: string): string {
 }
 
 /**
+ * Verwijder een eerder ingebakken Noah-handtekening uit een legacy
+ * concept-tekst. Eerdere versies van de compose-form plakten de
+ * handtekening direct in de body (plain-text of HTML), waardoor nu
+ * (handtekening leeft als aparte iframe-preview) een dubbele weergave
+ * ontstaat bij het herstellen van een oud concept.
+ *
+ * Strategie:
+ *  1. Knip elk <div data-handtekening="ja">...</div> blok eraf.
+ *  2. Knip elke <table>...</table> die overduidelijk een Noah-handtekening is.
+ *  3. Knip plain-text handtekening na een reeks van 2+ <br>'s die start met
+ *     "Noah.", "RECRUITMENT" of de bekende website-URL.
+ */
+export function stripLegacyHandtekening(html: string): string {
+  if (!html) return "";
+  let resultaat = html;
+
+  resultaat = resultaat.replace(
+    /<div\s+data-handtekening=("|')ja("|')[^>]*>[\s\S]*?<\/div>\s*$/i,
+    "",
+  );
+
+  resultaat = resultaat.replace(
+    /<table[\s\S]*?(Noah\.|RECRUITMENT|noah-recruitment\.nl)[\s\S]*?<\/table>\s*$/i,
+    "",
+  );
+
+  resultaat = resultaat.replace(
+    /(?:<br\s*\/?>\s*){2,}[\s\S]*?(?:Noah\.|RECRUITMENT|noah-recruitment\.nl)[\s\S]*$/i,
+    "",
+  );
+
+  resultaat = resultaat.replace(/(?:<br\s*\/?>\s*)+$/i, "");
+  return resultaat.trim();
+}
+
+/**
  * Splits een mail-HTML in hoofdtekst en handtekening. Zoekt het EERSTE
  * <div data-handtekening="ja">...</div> blok. Alles ervoor wordt
  * hoofdtekst, het blok zelf (zonder wrapper) wordt handtekening.

@@ -5,6 +5,7 @@ import { stuurMail } from "./actions";
 import { SnippetPicker } from "@/components/SnippetPicker";
 import { RichTextEditor, RichTextToolbar } from "@/components/RichTextEditor";
 import { HandtekeningPreview } from "@/components/HandtekeningPreview";
+import { stripLegacyHandtekening } from "@/utils/handtekening-html";
 
 type Toon = "professioneel" | "vriendelijk" | "kort";
 const TOON_OPTIES: Array<{ value: Toon; label: string; uitleg: string }> = [
@@ -118,7 +119,10 @@ export function ComposeForm({
         const alsHtml = lijktOpHtml
           ? ruwe
           : ruwe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
-        setBody(alsHtml);
+        // Knip eventuele legacy handtekening (uit eerdere compose-versies) eraf
+        // zodat we hem niet dubbel zien naast de iframe-preview.
+        const schoon = stripLegacyHandtekening(alsHtml);
+        setBody(schoon);
         setConceptId(c.id ?? null);
       } catch {
         // stil falen
