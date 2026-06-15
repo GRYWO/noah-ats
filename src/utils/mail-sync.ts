@@ -64,6 +64,21 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
 
   try {
     await client.connect();
+
+    // Migadu (en sommige andere IMAP-servers) maken standaard-mappen pas aan
+    // als ze worden gebruikt. Hierdoor zou de inbox-sidebar alleen "Postvak
+    // IN" tonen. We forceren bij elke sync dat de gangbare mappen bestaan,
+    // zodat de gebruiker ze altijd ziet. mailboxCreate is idempotent; bij een
+    // bestaand path gooit ImapFlow een ALREADYEXISTS-fout die we negeren.
+    const STANDAARD_MAPPEN = ["Sent", "Drafts", "Junk", "Trash", "Archive"];
+    for (const naam of STANDAARD_MAPPEN) {
+      try {
+        await client.mailboxCreate(naam);
+      } catch {
+        // Bestaat al of mag niet aangemaakt worden, niet kritiek.
+      }
+    }
+
     const list = await client.list();
 
     for (const mapInfo of list) {
