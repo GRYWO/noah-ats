@@ -3,7 +3,7 @@ import { ImapFlow } from "imapflow";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { decrypt } from "@/utils/crypto";
-import { getMailServers } from "@/utils/mail";
+import { getMailServers } from "@/utils/mail-provider";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
