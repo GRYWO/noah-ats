@@ -23,9 +23,10 @@ export default async function IntakenPage({
     .eq("id", user.id)
     .single();
 
-  // Alleen setter, recruiter en admin mogen een intake starten.
+  // Lockdown: setter is read-only op /kandidaten en mag dus GEEN intake starten.
+  // Alleen recruiter / admin / super-admin krijgen de intake-flow.
   // Bureau-admin niet (die runt geen intakes).
-  if (!profile || (profile.rol !== "setter" && profile.rol !== "recruiter" && profile.rol !== "admin" && profile.rol !== "super_admin")) {
+  if (!profile || (profile.rol !== "recruiter" && profile.rol !== "admin" && profile.rol !== "super_admin")) {
     redirect("/kandidaten?error=Geen+toegang+tot+intake-flow");
   }
 

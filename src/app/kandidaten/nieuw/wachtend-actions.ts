@@ -57,6 +57,14 @@ export async function stuurCvReminder(formData: FormData): Promise<{ ok?: boolea
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Niet ingelogd" };
 
+  // Lockdown: setter is read-only op /kandidaten, geen reminders versturen.
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("rol")
+    .eq("id", user.id)
+    .single();
+  if (prof?.rol === "setter") return { error: "Setters kunnen geen reminders versturen" };
+
   const admin = createAdminClient();
   const { data: w } = await admin
     .from("wachtend_op_cv")
@@ -89,6 +97,13 @@ export async function verwijderWachtend(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
+  // Lockdown: setter is read-only op /kandidaten, geen verwijderingen.
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("rol")
+    .eq("id", user.id)
+    .single();
+  if (prof?.rol === "setter") return;
   const admin = createAdminClient();
   await admin.from("wachtend_op_cv").delete().eq("id", id);
   revalidatePath("/kandidaten/nieuw");

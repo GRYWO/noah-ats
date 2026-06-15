@@ -76,7 +76,7 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
     recruiterId = fallback?.id ?? null;
   }
   if (!recruiterId) {
-    return { error: "Geen recruiter of admin in dit bureau gevonden — neem contact op met info@noah-recruitment.nl." };
+    return { error: "Geen recruiter of admin in dit bureau gevonden, neem contact op met info@noah-recruitment.nl." };
   }
 
   // Recruiter-profiel + e-mailadres
@@ -93,7 +93,7 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
     return { error: `Geen e-mailadres bekend voor ${recruiter.voornaam ?? "recruiter"}. Vul dit in via /users.` };
   }
 
-  // Setter mag meerdere verzoeken sturen — geen blokkade meer op open verzoeken.
+  // Setter mag meerdere verzoeken sturen, geen blokkade meer op open verzoeken.
 
   // Maak verzoek + token
   const token = randomBytes(24).toString("hex");

@@ -26,9 +26,9 @@ function rateLimitOverschreden(userId: string): boolean {
 
 /**
  * Parse een CV zonder dat er al een kandidaat in de DB staat.
- * Wordt gebruikt in de 'nieuwe kandidaat' wizard én door setters in de
- * intake-flow. Toegang: elke ingelogde rol (setter, recruiter, admin,
- * super-admin). Niet ingelogd geeft 401.
+ * Wordt gebruikt in de 'nieuwe kandidaat' wizard.
+ * Lockdown: setter is read-only op /kandidaten, alleen recruiter / admin /
+ * super-admin. Niet ingelogd geeft 401.
  * Accepteert PDF als multipart/form-data 'file'.
  */
 export async function POST(request: Request) {
@@ -45,14 +45,15 @@ export async function POST(request: Request) {
     );
   }
 
-  // Whitelist: setter, recruiter, admin en super-admin mogen parsen.
+  // Whitelist: recruiter, admin en super-admin mogen parsen.
+  // Lockdown: setter is read-only op /kandidaten, uitgesloten.
   const { data: profile } = await supabase
     .from("profiles")
     .select("rol")
     .eq("id", user.id)
     .single();
 
-  const toegestaneRollen = ["setter", "recruiter", "admin", "super-admin"];
+  const toegestaneRollen = ["recruiter", "admin", "super-admin", "super_admin"];
   if (!profile || !toegestaneRollen.includes(profile.rol)) {
     return NextResponse.json({ error: "Geen toegang." }, { status: 403 });
   }

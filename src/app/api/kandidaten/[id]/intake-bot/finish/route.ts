@@ -15,10 +15,9 @@ function jaNee(v: string): boolean | null {
 }
 
 // Rondt de intake-bot af: genereert het profiel en slaat het op de kandidaat op.
-// Toegang: recruiter/admin/super-admin altijd, setter alleen voor eigen
-// aangemaakte kandidaten. Cross-tenant: kandidaat moet binnen dezelfde tenant
-// vallen. Voor setter zetten we kanban_stap automatisch naar 'in_wachtrij'
-// zodat een recruiter de kandidaat oppakt.
+// Lockdown: setter is read-only op /kandidaten, alleen recruiter / admin /
+// super-admin mogen afronden. Cross-tenant: kandidaat moet binnen dezelfde
+// tenant vallen.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
@@ -27,16 +26,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { data: profile } = await supabase.from("profiles").select("rol, tenant_id").eq("id", user.id).single();
   if (!profile) return NextResponse.json({ fout: "Geen toegang." }, { status: 403 });
 
-  // Cross-tenant guard voor elke rol; setter ook eigenaar-check.
-  let kandidaatQuery = supabase
+  // Lockdown: setter mag de intake niet afronden.
+  if (profile.rol === "setter") {
+    return NextResponse.json({ fout: "Setters kunnen de intake niet afronden." }, { status: 403 });
+  }
+
+  // Cross-tenant guard: kandidaat moet binnen tenant vallen.
+  const kandidaatQuery = supabase
     .from("kandidaten")
     .select("id, tenant_id, email, eigenaar_id, cv_geparseerd")
     .eq("id", id)
     .eq("tenant_id", profile.tenant_id);
-
-  if (profile.rol === "setter") {
-    kandidaatQuery = kandidaatQuery.eq("eigenaar_id", user.id);
-  }
 
   const { data: k } = await kandidaatQuery.single();
   if (!k) return NextResponse.json({ fout: "Kandidaat niet gevonden." }, { status: 404 });

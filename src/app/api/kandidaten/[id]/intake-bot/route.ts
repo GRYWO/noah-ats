@@ -3,8 +3,8 @@ import { createClient } from "@/utils/supabase/server";
 import { intakeStap, type IntakeBericht } from "@/utils/intake-bot";
 
 // Eén beurt van de intake-bot.
-// Toegang: recruiter/admin/super-admin altijd, setter alleen voor kandidaten
-// die hij zelf heeft aangemaakt via /kandidaten/intaken (eigenaar_id = user.id).
+// Lockdown: setter is read-only op /kandidaten, alleen recruiter / admin /
+// super-admin mogen de intake-bot aanroepen.
 // Cross-tenant: kandidaat moet altijd binnen dezelfde tenant vallen.
 
 // In-memory rate-limit per user.id. Vensters van 60 seconden, max 30 calls.
@@ -46,16 +46,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .single();
   if (!profile) return NextResponse.json({ klaar: false, bericht: "Geen toegang." }, { status: 403 });
 
-  // Cross-tenant guard voor elke rol: kandidaat moet bestaan binnen tenant.
-  let kandidaatQuery = supabase
+  // Lockdown: setter mag de intake-bot niet meer aanroepen.
+  if (profile.rol === "setter") {
+    return NextResponse.json(
+      { klaar: false, bericht: "Setters kunnen de intake-bot niet gebruiken." },
+      { status: 403 },
+    );
+  }
+
+  // Cross-tenant guard: kandidaat moet bestaan binnen tenant.
+  const kandidaatQuery = supabase
     .from("kandidaten")
     .select("id, tenant_id, eigenaar_id")
     .eq("id", id)
     .eq("tenant_id", profile.tenant_id);
-
-  if (profile.rol === "setter") {
-    kandidaatQuery = kandidaatQuery.eq("eigenaar_id", user.id);
-  }
 
   const { data: kandidaat } = await kandidaatQuery.single();
   if (!kandidaat) {

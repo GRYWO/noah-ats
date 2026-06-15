@@ -16,12 +16,11 @@ function veiligString(v: unknown): string {
 }
 
 // Maakt een nieuwe kandidaat aan op basis van het geparseerde CV uit
-// /api/ai/parse-cv-anon. Zet eigenaar_id = ingelogde user (ook bij setter),
-// upload de PDF naar bucket 'cvs' op pad tenant_id/kandidaatId/cv.pdf en
-// retourneert een korte cvContext-string voor de intake-bot.
+// /api/ai/parse-cv-anon. Zet eigenaar_id = ingelogde user, upload de PDF
+// naar bucket 'cvs' op pad tenant_id/kandidaatId/cv.pdf en retourneert een
+// korte cvContext-string voor de intake-bot.
 //
-// In tegenstelling tot maakKandidaatVanWizard blokkeren we setter NIET:
-// de setter doet hier zelf de intake en levert daarna aan recruiter.
+// Lockdown: setter is read-only op /kandidaten en mag dus GEEN intake starten.
 export async function startIntake(formData: FormData): Promise<StartResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -33,6 +32,9 @@ export async function startIntake(formData: FormData): Promise<StartResult> {
     .eq("id", user.id)
     .single();
   if (!profile?.tenant_id) return { ok: false, fout: "Geen tenant gekoppeld." };
+  if (profile.rol === "setter") {
+    return { ok: false, fout: "Setters kunnen geen intake starten." };
+  }
 
   const cvFile = formData.get("cv_file") as File | null;
   const geparseerdJson = formData.get("geparseerd") as string | null;

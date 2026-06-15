@@ -17,6 +17,17 @@ export async function updateKandidaat(formData: FormData) {
   const id = formData.get("id") as string;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  // Lockdown: setter is read-only op /kandidaten, geen veld-wijzigingen.
+  const { data: viewerProfile } = await supabase
+    .from("profiles")
+    .select("rol")
+    .eq("id", user!.id)
+    .single();
+  if (viewerProfile?.rol === "setter") {
+    redirect(`/kandidaten/${id}?error=${encodeURIComponent("Setters kunnen kandidaten niet bewerken")}`);
+  }
 
   const update = {
     voornaam:      (formData.get("voornaam") as string)?.trim(),
@@ -172,10 +183,10 @@ export async function deleteKandidaat(formData: FormData) {
 
   // Setter mag alleen eigen kandidaten verwijderen; admin alle kandidaten in z'n tenant
   if (kandidaat!.tenant_id !== profile!.tenant_id) {
-    redirect(`/kandidaten/${id}?error=${encodeURIComponent("Geen rechten — andere tenant")}`);
+    redirect(`/kandidaten/${id}?error=${encodeURIComponent("Geen rechten, andere tenant")}`);
   }
   if (profile!.rol === "setter" && kandidaat!.eigenaar_id !== user!.id) {
-    redirect(`/kandidaten/${id}?error=${encodeURIComponent("Geen rechten — niet jouw kandidaat")}`);
+    redirect(`/kandidaten/${id}?error=${encodeURIComponent("Geen rechten, niet jouw kandidaat")}`);
   }
 
   const { error } = await admin.from("kandidaten").delete().eq("id", id);
@@ -190,7 +201,7 @@ export async function deleteKandidaat(formData: FormData) {
 /**
  * Wijzig de eigenaar van een kandidaat.
  * Alleen recruiter / admin / super-admin mogen dit.
- * Setters mogen het NIET — hun rol is uitgesloten in de UI én hier.
+ * Setters mogen het NIET, hun rol is uitgesloten in de UI én hier.
  */
 export async function wijzigEigenaar(formData: FormData): Promise<{ ok?: boolean; error?: string }> {
   const kandidaatId = formData.get("kandidaat_id") as string;
@@ -224,7 +235,7 @@ export async function wijzigEigenaar(formData: FormData): Promise<{ ok?: boolean
     .single();
   if (!kandidaat) return { error: "Kandidaat niet gevonden" };
   if (kandidaat.tenant_id !== viewerProfile.tenant_id) {
-    return { error: "Geen rechten — andere tenant" };
+    return { error: "Geen rechten, andere tenant" };
   }
 
   // Nieuwe eigenaar moet in dezelfde tenant zitten + setter-zijn vereist voor schuiven
