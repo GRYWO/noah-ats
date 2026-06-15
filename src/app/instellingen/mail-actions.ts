@@ -27,21 +27,38 @@ export async function nieuwMailAccount(formData: FormData) {
     await admin.from("mail_accounts").update({ is_primary: false }).eq("user_id", user.id);
   }
 
-  const { error } = await admin.from("mail_accounts").insert({
+  // Als er al een mail_accounts-rij is voor (user_id, mail_adres), dan
+  // werken we die bij in plaats van te falen op de unique-constraint. Zo
+  // kan de user veilig een wachtwoord of display-naam updaten via dit form.
+  const { data: bestaande } = await admin
+    .from("mail_accounts")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("mail_adres", mailAdres)
+    .maybeSingle();
+
+  const payload = {
     user_id: user.id,
     mail_adres: mailAdres,
     mail_wachtwoord: encrypt(mailWachtwoord),
     display_naam: displayNaam,
     is_primary: isPrimary,
     mail_status: "actief",
-  });
+  };
+
+  const { error } = bestaande?.id
+    ? await admin.from("mail_accounts").update(payload).eq("id", bestaande.id)
+    : await admin.from("mail_accounts").insert(payload);
 
   if (error) {
-    redirect(`/instellingen?error=${encodeURIComponent(error.message)}`);
+    const vriendelijk = /duplicate key|unique constraint/i.test(error.message)
+      ? "Dit mailadres staat al gekoppeld aan jouw account."
+      : error.message;
+    redirect(`/instellingen?error=${encodeURIComponent(vriendelijk)}`);
   }
 
   revalidatePath("/instellingen");
-  redirect("/instellingen?ok=account");
+  redirect(`/instellingen?ok=${bestaande?.id ? "bijgewerkt" : "account"}`);
 }
 
 export async function verwijderMailAccount(formData: FormData) {
