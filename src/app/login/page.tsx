@@ -87,6 +87,39 @@ export default async function LoginPage({
           </span>
         </div>
 
+        {/* Aankondiging: naamswijziging GRYWO naar Noah recruitment */}
+        <div className="w-full max-w-md mb-4 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/10 border-l-2 border-l-[#ffd84d] rounded-xl p-5">
+          <p className="text-white text-base font-semibold mb-1.5">
+            Welkom bij Noah recruitment
+          </p>
+          <p className="text-white/70 text-sm leading-relaxed mb-3">
+            GRYWO is verleden tijd. Vanaf vandaag heten we Noah recruitment.
+            Zelfde mensen, zelfde aanpak, een naam die past bij hoe we verder
+            willen groeien.
+          </p>
+          <p className="text-white/80 text-[11px] font-semibold uppercase tracking-wider mb-2">
+            Wat verandert er voor jou
+          </p>
+          <ul className="text-white/70 text-sm space-y-1.5 list-disc pl-5 marker:text-[#ffd84d]">
+            <li>
+              Je nieuwe e-mailadres heeft het patroon{" "}
+              <code className="bg-white/10 px-1.5 py-0.5 rounded text-[#ffd84d] font-mono text-xs">
+                voornaam@noah-recruitment.nl
+              </code>
+              . Inloggen doe je hiermee.
+            </li>
+            <li>
+              De hele tool, mails en voorstelpagina&apos;s dragen de
+              Noah-huisstijl.
+            </li>
+            <li>
+              In het menu staat nu &apos;Vacature aanmaken&apos;. Zet een
+              vacature op noah-recruitment.nl en haal er extra plaatsingen uit,
+              automatisch op jouw naam.
+            </li>
+          </ul>
+        </div>
+
         {/* Form card */}
         <div className="w-full max-w-md bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-8">
           <h1 className="text-2xl font-bold text-white mb-1">Welkom terug</h1>
