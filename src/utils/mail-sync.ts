@@ -74,7 +74,10 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
 
       const status = await client.status(mapInfo.path, { messages: true, unseen: true });
 
-      await admin.from("mail_mappen").upsert({
+      // Manuele upsert (select + update of insert) zodat we niet afhankelijk
+      // zijn van welke unique-constraint er nu op mail_mappen ligt
+      // (user_id,pad in oude schema, account_id,pad in nieuwe schema).
+      const mapRij = {
         user_id: account.user_id,
         account_id: accountId,
         pad: mapInfo.path,
@@ -83,7 +86,19 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
         aantal: status.messages ?? 0,
         ongelezen: status.unseen ?? 0,
         last_sync: new Date().toISOString(),
-      }, { onConflict: "account_id,pad" });
+      };
+      const { data: bestaande } = await admin
+        .from("mail_mappen")
+        .select("id")
+        .eq("account_id", accountId)
+        .eq("pad", mapInfo.path)
+        .maybeSingle();
+      if (bestaande?.id) {
+        await admin.from("mail_mappen").update(mapRij).eq("id", bestaande.id);
+      } else {
+        const { error: insErr } = await admin.from("mail_mappen").insert(mapRij);
+        if (insErr) console.error("mail_mappen insert faalde", mapInfo.path, insErr.message);
+      }
 
       const lock = await client.getMailboxLock(mapInfo.path);
       try {

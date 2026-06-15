@@ -100,19 +100,27 @@ export async function maakNieuweMap(formData: FormData) {
   // (15s). Type 'ander' want het is per definitie een door de user
   // aangemaakte map, geen systeem-map.
   const admin = createAdminClient();
-  await admin.from("mail_mappen").upsert(
-    {
-      user_id: user.id,
-      account_id: account.id,
-      pad: mapNaam,
-      label: mapNaam,
-      type: "ander",
-      aantal: 0,
-      ongelezen: 0,
-      last_sync: new Date().toISOString(),
-    },
-    { onConflict: "account_id,pad" },
-  );
+  const nieuweRij = {
+    user_id: user.id,
+    account_id: account.id,
+    pad: mapNaam,
+    label: mapNaam,
+    type: "ander",
+    aantal: 0,
+    ongelezen: 0,
+    last_sync: new Date().toISOString(),
+  };
+  const { data: bestaande } = await admin
+    .from("mail_mappen")
+    .select("id")
+    .eq("account_id", account.id)
+    .eq("pad", mapNaam)
+    .maybeSingle();
+  if (bestaande?.id) {
+    await admin.from("mail_mappen").update(nieuweRij).eq("id", bestaande.id);
+  } else {
+    await admin.from("mail_mappen").insert(nieuweRij);
+  }
 
   revalidatePath("/inbox");
   redirect(`/inbox?map=${encodeURIComponent(mapNaam)}&account=${encodeURIComponent(account.id)}`);
