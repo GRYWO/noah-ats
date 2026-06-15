@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { maakVacatureNoahAts } from "../actions";
+import { AfsprakenSectie } from "../AfsprakenSectie";
 
 export const metadata = { title: "Nieuwe vacature" };
 
@@ -75,6 +76,8 @@ export default async function NieuweVacaturePage({
             <Tekst label="Wat ga je doen? (taken)" name="taken" placeholder="Beschrijf de belangrijkste taken." />
             <Tekst label="Wat vraag je? (eisen)" name="eisen" placeholder="Diploma's, vaardigheden, rijbewijs, enzovoort." />
           </Sectie>
+
+          <AfsprakenSectie />
 
           <button
             type="submit"

@@ -118,6 +118,47 @@ export async function maakVacatureNoahAts(formData: FormData) {
     bedrijfsnaam: "Noah recruitment",
   };
 
+  // Commerciele afspraken (intern, NIET meegegeven aan AI).
+  const tariefRaw = String(formData.get("afspraak_tarief_type") || "").trim();
+  const TARIEF_TOEGESTAAN = new Set(["ws_10", "ws_15", "ws_anders", "uitzend"]);
+  const afspraak_tarief_type = TARIEF_TOEGESTAAN.has(tariefRaw) ? tariefRaw : null;
+
+  // Percentage server-side forceren op basis van tarief_type. Voorkomt
+  // dat een setter via client-side knutselen 'ws_10' kiest maar percentage
+  // 99 meestuurt. Voor ws_anders pakken we de door de gebruiker getypte waarde.
+  const wsPercRaw = String(formData.get("afspraak_ws_percentage") || "").trim();
+  const wsPercTyped = wsPercRaw === "" ? null : Number(wsPercRaw);
+  const afspraak_ws_percentage =
+    afspraak_tarief_type === "ws_10"
+      ? 10
+      : afspraak_tarief_type === "ws_15"
+        ? 15
+        : afspraak_tarief_type === "ws_anders" && wsPercTyped !== null && Number.isFinite(wsPercTyped)
+          ? wsPercTyped
+          : null;
+
+  const wsToelichtingRaw = String(formData.get("afspraak_ws_toelichting") || "").trim();
+  const afspraak_ws_toelichting =
+    afspraak_tarief_type === "ws_anders" && wsToelichtingRaw ? wsToelichtingRaw : null;
+
+  const uitzendFactorRaw = String(formData.get("afspraak_uitzend_factor") || "").trim();
+  const uitzendFactorNum = uitzendFactorRaw === "" ? null : Number(uitzendFactorRaw);
+  const afspraak_uitzend_factor =
+    afspraak_tarief_type === "uitzend" && uitzendFactorNum !== null && Number.isFinite(uitzendFactorNum)
+      ? uitzendFactorNum
+      : null;
+
+  const uitzendUrenRaw = String(formData.get("afspraak_uitzend_uren_per_week") || "").trim();
+  const afspraak_uitzend_uren_per_week =
+    afspraak_tarief_type === "uitzend" && uitzendUrenRaw ? uitzendUrenRaw : null;
+
+  const overnameRaw = String(formData.get("afspraak_overname_na_uren") || "").trim();
+  const overnameNum = overnameRaw === "" ? null : Number(overnameRaw);
+  const afspraak_overname_na_uren =
+    afspraak_tarief_type === "uitzend" && overnameNum !== null && Number.isFinite(overnameNum)
+      ? Math.round(overnameNum)
+      : null;
+
   if (!input.titel) {
     redirect("/vacature-aanmaken/nieuw?fout=" + encodeURIComponent("Functietitel is verplicht."));
   }
@@ -171,6 +212,12 @@ export async function maakVacatureNoahAts(formData: FormData) {
       contact_naam: contactNaam,
       contact_email: "info@noah-recruitment.nl",
       status: "open",
+      afspraak_tarief_type,
+      afspraak_ws_percentage,
+      afspraak_ws_toelichting,
+      afspraak_uitzend_factor,
+      afspraak_uitzend_uren_per_week,
+      afspraak_overname_na_uren,
     });
 
   if (error) {
