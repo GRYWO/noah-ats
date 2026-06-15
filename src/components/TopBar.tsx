@@ -12,7 +12,7 @@ import { leesViewAs, effectieveRol } from "@/utils/view-as";
 import { isSalesAdmin } from "@/utils/sales-admin";
 
 type Props = {
-  active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "agenda" | "voorstellen" | "opdrachtgevers" | "robin" | "jobdigger" | "inbox" | "mail-setup" | "setters" | "coaching" | "instellingen";
+  active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "agenda" | "voorstellen" | "opdrachtgevers" | "robin" | "jobdigger" | "inbox" | "mail-setup" | "setters" | "coaching" | "instellingen" | "vacature-aanmaken";
 };
 
 export async function TopBar({ active }: Props) {
