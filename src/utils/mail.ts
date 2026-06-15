@@ -1,25 +1,8 @@
 import { ImapFlow } from "imapflow";
 import { simpleParser, type ParsedMail } from "mailparser";
 import nodemailer from "nodemailer";
-import fs from "fs";
-import path from "path";
 import { decrypt } from "./crypto";
 import { getMailServers } from "./mail-provider";
-
-function getLogoAttachment() {
-  try {
-    const logoPath = path.join(process.cwd(), "public", "grywo-logo.png");
-    if (!fs.existsSync(logoPath)) return null;
-    return {
-      filename: "grywo-logo.png",
-      path: logoPath,
-      cid: "grywo-logo",
-      contentDisposition: "inline" as const,
-    };
-  } catch {
-    return null;
-  }
-}
 
 export type InboxBericht = {
   uid: number;

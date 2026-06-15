@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   ShieldCheck,
   MapPin,
@@ -66,12 +65,14 @@ export default function Website() {
         />
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center py-24">
-          {/* GRYWO badge */}
+          {/* Noah recruitment-badge */}
           <Link
             href="/"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm text-xs text-white/80 mb-10 hover:bg-white/10 transition"
           >
-            <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={50} height={14} className="opacity-90" />
+            <span className="text-sm font-extrabold tracking-tight text-white">
+              Noah<span className="text-[#ffd84d]">.</span>
+            </span>
             <span className="text-white/40">·</span>
             <span>Een product van Noah recruitment</span>
           </Link>
@@ -532,7 +533,12 @@ export default function Website() {
             <div>© {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782</div>
             <div className="flex items-center gap-2 mt-3 md:mt-0">
               <span>Powered by</span>
-              <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={60} height={16} className="opacity-90" />
+              <span className="text-sm font-extrabold tracking-tight text-white">
+                Noah<span className="text-[#ffd84d]">.</span>
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/70">
+                RECRUITMENT
+              </span>
             </div>
           </div>
         </div>

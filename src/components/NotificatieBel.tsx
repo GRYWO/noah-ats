@@ -103,7 +103,7 @@ export function NotificatieBel({ userId }: { userId: string }) {
               const eerste = nieuwe[0];
               const notif = new Notification(eerste.titel, {
                 body: eerste.bericht ?? "Nieuwe melding in Noah",
-                icon: "/grywo-icoon.jpg",
+                icon: "/noah-icoon.jpg",
                 tag: "noah-" + eerste.id,
               });
               if (eerste.link_url) {

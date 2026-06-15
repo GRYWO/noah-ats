@@ -26,7 +26,7 @@ export async function uitnodigen(formData: FormData) {
   const datum_2_iso = datum_2 ? new Date(datum_2).toISOString() : null;
   const datum_3_iso = datum_3 ? new Date(datum_3).toISOString() : null;
 
-  // Geen automatische kennismaking_op meer — wacht op kandidaat-keuze via mail-knoppen
+  // Geen automatische kennismaking_op meer; wacht op kandidaat-keuze via mail-knoppen
   const { error } = await admin.from("voorstellen").update({
     status: "uitnodigen",
     reactie_op: new Date().toISOString(),
@@ -134,8 +134,8 @@ export async function uitnodigen(formData: FormData) {
       metadata: { bedrijf, contactpersoon, datum_1: datum_1_iso, datum_2: datum_2_iso, datum_3: datum_3_iso },
     });
     // Notificatie naar setter + team
-    const titel = `🟢 ${bedrijf} wil kennismaken`;
-    const bericht = `Voorstel groen — kandidaat krijgt 3 datums per mail en kiest zelf.`;
+    const titel = `${bedrijf} wil kennismaken`;
+    const bericht = `Voorstel groen, kandidaat krijgt 3 datums per mail en kiest zelf.`;
     const link = `/kandidaten/${voorstel.kandidaat_id}`;
     if (voorstel.setter_id) {
       await maakNotificatie({
@@ -153,7 +153,7 @@ export async function uitnodigen(formData: FormData) {
     });
   }
 
-  // Mail naar kandidaat sturen — vanaf de setter
+  // Mail naar kandidaat sturen, vanaf de setter
   const setterFrom = await getSetterFrom(voorstel?.setter_id);
   if (voorstel?.kandidaat?.email) {
     try {
@@ -219,8 +219,8 @@ export async function uitnodigen(formData: FormData) {
             tenantId: voorstel.tenant_id,
             userId: voorstel.setter_id,
             type: "voorstel_groen",
-            titel: "✨ Nieuwe kandidaat toegewezen",
-            bericht: "Je huidige kandidaat heeft 2 geïnteresseerden — je krijgt een nieuwe kandidaat erbij.",
+            titel: "Nieuwe kandidaat toegewezen",
+            bericht: "Je huidige kandidaat heeft 2 geinteresseerden, je krijgt een nieuwe kandidaat erbij.",
             linkUrl: `/kandidaten/${wachtKandidaat.id}`,
             kandidaatId: wachtKandidaat.id,
           });
@@ -278,7 +278,7 @@ export async function afwijzen(formData: FormData) {
     });
 
     // Notificatie naar setter + team
-    const titel = `🔴 Voorstel afgewezen`;
+    const titel = `Voorstel afgewezen`;
     const bericht = reden ? `Reden: ${reden}` : "Opdrachtgever wil niet verder met de kandidaat.";
     const link = `/kandidaten/${voorstel.kandidaat_id}`;
     if (voorstel.setter_id) {

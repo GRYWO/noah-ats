@@ -76,7 +76,7 @@ export async function vraagContractAan({
 }
 
 /**
- * Klant upload contract. Wij doen redactie + sturen naar GRYWO.
+ * Klant upload contract. Wij doen redactie + sturen naar Noah recruitment-backoffice.
  * Aangeroepen vanaf de publieke /contract-controle/[token] pagina.
  */
 export async function verwerkContractUpload(formData: FormData) {
@@ -172,7 +172,7 @@ export async function verwerkContractUpload(formData: FormData) {
 
   const jaarsalaris = redactie.salaris.brutoJaarsalarisBerekend ?? redactie.salaris.brutoJaarsalarisLetterlijk ?? null;
 
-  // 4) Mail naar GRYWO backoffice met beide attachments
+  // 4) Mail naar Noah recruitment-backoffice met beide attachments
   try {
     await sendContractNaarBackoffice({
       kandidaatNaam: verzoek.kandidaat_naam,
@@ -185,7 +185,7 @@ export async function verwerkContractUpload(formData: FormData) {
       samenvattingPdf: redactie.samenvattingPdf,
     });
   } catch (e) {
-    console.error("[contract] mail naar GRYWO mislukt:", e);
+    console.error("[contract] mail naar Noah recruitment mislukt:", e);
   }
 
   // 5) AVG (#25/#30): het ORIGINEEL met volledige PII direct verwijderen — we

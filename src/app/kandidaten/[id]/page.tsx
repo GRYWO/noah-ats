@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { updateKandidaat } from "./actions";
+import { IntakeBot } from "./IntakeBot";
 import { stuurVoorstel } from "./voorstel-actions";
 import { DeleteButton } from "./DeleteButton";
 import { VerwijderAanvraagKnop } from "./VerwijderAanvraagKnop";
@@ -146,6 +147,16 @@ export default async function KandidaatDetail({
   const initials = `${k.voornaam?.[0] ?? ""}${k.achternaam?.[0] ?? ""}`.toUpperCase();
   // Score is uit het systeem gehaald — variabele blijft als no-op weg.
 
+  // Context voor de intake-bot uit een eventueel al geparseerd CV.
+  const _cvg = (k.cv_geparseerd ?? {}) as Record<string, unknown>;
+  const botCvContext = [
+    k.voornaam && `Naam: ${k.voornaam} ${k.achternaam ?? ""}`.trim(),
+    _cvg.werkervaring && `Werkervaring: ${_cvg.werkervaring}`,
+    (_cvg.opleiding || _cvg.diplomas) && `Opleiding: ${_cvg.opleiding || _cvg.diplomas}`,
+    _cvg.talen && `Talen: ${_cvg.talen}`,
+    _cvg.vaardigheden && `Vaardigheden: ${_cvg.vaardigheden}`,
+  ].filter(Boolean).join("\n");
+
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="kandidaten" />
@@ -269,6 +280,32 @@ export default async function KandidaatDetail({
           }} />
         )}
 
+        {/* Afkeurpunten — automatische screeningssignalen uit de intake (recruiter/admin). */}
+        {!isSetter && (() => {
+          const flags: string[] = [];
+          if (k.leeftijd != null && (k.leeftijd < 18 || k.leeftijd > 55)) flags.push("Leeftijd valt buiten 18 tot 55 jaar");
+          if (k.uren_per_week != null && k.uren_per_week < 20) flags.push("Minder dan 20 uur per week beschikbaar");
+          if (k.werkvergunning === false) flags.push("Geen werkvergunning in Nederland");
+          if (k.nederlands_voldoende === false) flags.push("Onvoldoende Nederlands");
+          if (flags.length === 0) return null;
+          return (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+              <h2 className="font-bold text-red-700 text-sm">Afkeurpunten om na te kijken</h2>
+              <ul className="mt-2 list-disc pl-5 text-sm text-red-700 space-y-0.5">
+                {flags.map((f) => <li key={f}>{f}</li>)}
+              </ul>
+              <p className="mt-2 text-xs text-red-600/80">Kijk deze punten na voordat je de kandidaat doorzet naar de wachtrij.</p>
+            </div>
+          );
+        })()}
+
+        {/* Intake via de bot — stelt de vragen, toont profiel, keuze wachtrij/wachten. */}
+        {!isSetter && (
+          <div className="mb-6">
+            <IntakeBot kandidaatId={k.id} cvContext={botCvContext} />
+          </div>
+        )}
+
         {/* Intake-wizard banner — verschijnt zolang intake niet is afgerond.
             Klik = nieuwe 4-stappen wizard op /kandidaten/[id]/intake. */}
         {toonIntakeFormulier && (
@@ -346,7 +383,10 @@ export default async function KandidaatDetail({
               <div><label className="block text-xs font-semibold text-gray-600 mb-1">Opleiding</label><input name="opleiding" defaultValue={k.opleiding ?? ""} placeholder="bv HBO Software Engineer" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" /></div>
               <div><label className="block text-xs font-semibold text-gray-600 mb-1">Tarief W&S</label><input name="tarief_ws" defaultValue={k.tarief_ws ?? ""} placeholder="bv 15% bruto jaarsalaris" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" /></div>
               <div><label className="block text-xs font-semibold text-gray-600 mb-1">Rijbewijs</label><input name="rijbewijs" defaultValue={k.rijbewijs ?? ""} placeholder="bv Ja, B" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" /></div>
+              <div><label className="block text-xs font-semibold text-gray-600 mb-1">Uren per week</label><input name="uren_per_week" type="number" min="0" max="60" defaultValue={k.uren_per_week ?? ""} placeholder="bv 38" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" /></div>
               <div className="flex items-center"><label className="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" name="eigen_vervoer" defaultChecked={k.eigen_vervoer ?? false} className="w-4 h-4 accent-[#333399]" />Eigen vervoer</label></div>
+              <div className="flex items-center"><label className="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" name="werkvergunning" defaultChecked={k.werkvergunning ?? false} className="w-4 h-4 accent-[#333399]" />Werkvergunning in NL</label></div>
+              <div className="flex items-center"><label className="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" name="nederlands_voldoende" defaultChecked={k.nederlands_voldoende ?? false} className="w-4 h-4 accent-[#333399]" />Voldoende Nederlands</label></div>
             </div>
           </div>
 

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { HOOFDSTUKKEN } from "../data";
 
@@ -62,7 +61,12 @@ export default async function HoofdstukPage({
             </Link>
             <Link href="/" className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition">
               <span>Powered by</span>
-              <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={70} height={20} className="opacity-90" />
+              <span className="text-base font-extrabold tracking-tight text-white">
+                Noah<span className="text-[#ffd84d]">.</span>
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/70">
+                RECRUITMENT
+              </span>
             </Link>
           </div>
 

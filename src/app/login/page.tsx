@@ -87,7 +87,7 @@ export default async function LoginPage({
           </span>
         </div>
 
-        {/* Aankondiging: naamswijziging GRYWO naar Noah recruitment */}
+        {/* Aankondiging: welkomstblok Noah recruitment */}
         <div className="w-full max-w-md mb-4 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/10 border-l-2 border-l-[#ffd84d] rounded-xl p-5">
           <p className="text-white text-base font-semibold mb-1.5">
             Welkom bij Noah recruitment

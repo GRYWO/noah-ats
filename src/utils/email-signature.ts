@@ -1,7 +1,5 @@
-import { getGrywoLogoDataUri } from "@/utils/grywo-logo";
-
-const GRYWO_PAARS = "#333399";
-const GRYWO_GEEL = "#ffd84d";
+const NOAH_PAARS = "#333399";
+const NOAH_GEEL = "#ffd84d";
 
 export type SignatureInput = {
   voornaam: string;
@@ -15,7 +13,7 @@ export type SignatureInput = {
 /**
  * Bouw een nette email-banner voor onder elke mail.
  *
- * - Paarse banner-balk met wit GRYWO-logo + geel puntje.
+ * - Paarse banner-balk met "Noah." wordmark + geel puntje.
  * - Witte info-strook met naam, contact en website.
  * - Functie-regel verschijnt ALLEEN voor admins (recruiters/setters niet,
  *   tenzij ze zelf expliciet een functie-titel invullen).
@@ -28,14 +26,7 @@ export function bouwHandtekening({
   mailAdres,
   functieTitel,
 }: SignatureInput): string {
-  // Logo wordt geladen van een publieke URL i.p.v. base64 data-URI,
-  // omdat Gmail (en sommige andere clients) data-URIs in <img> blokkeren
-  // uit veiligheid. URL absoluut zodat hij in elke client werkt.
-  const logoUrl = "https://www.noah-ats.nl/grywo-logo-wit.png";
-  // Data-URI fallback wordt niet meer gebruikt, maar we laten 'm hier
-  // zodat de import niet ongebruikt is en gebruiken hem als safety net
-  // mocht de URL ooit niet bereikbaar zijn tijdens build.
-  void getGrywoLogoDataUri;
+  void mailAdres; // adres staat al in From-header, niet meer in de zichtbare regel
   const naam = `${voornaam} ${achternaam}`.trim();
 
   // Functie zichtbaar voor admin altijd (fallback "Admin bij Noah recruitment").
@@ -47,21 +38,21 @@ export function bouwHandtekening({
       (rol === "admin" ? "Admin bij Noah recruitment" : ""))
     : "";
 
-  // Tekst-wordmark voor Noah recruitment: werkt in elke mail-client zonder externe afhankelijkheid.
-  // "Noah." in extra-bold wit + gele punt (#ffd84d) + " RECRUITMENT " in spatie-uppercase.
+  // Tekst-wordmark voor Noah recruitment, werkt in elke mail-client zonder externe afhankelijkheid.
+  // "Noah." in extra-bold wit + gele punt + " RECRUITMENT " in spatie-uppercase.
   const logoBlok = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
     <tr>
-      <td style="padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:32px;font-weight:900;letter-spacing:-1px;color:#ffffff;line-height:1;vertical-align:baseline;">Noah<span style="color:${GRYWO_GEEL};">.</span></td>
+      <td style="padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:32px;font-weight:900;letter-spacing:-1px;color:#ffffff;line-height:1;vertical-align:baseline;">Noah<span style="color:${NOAH_GEEL};">.</span></td>
       <td style="padding:0 0 0 12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;color:rgba(255,255,255,0.7);text-transform:uppercase;vertical-align:baseline;">RECRUITMENT</td>
     </tr>
   </table>`;
 
   // Brede twee-koloms handtekening (640px): links logo-vlak met
-  // GRYWO-merk, rechts contact-info. Mobiele clients vallen terug op
+  // Noah recruitment-merk, rechts contact-info. Mobiele clients vallen terug op
   // single-column omdat we max-width:100% gebruiken.
   return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-top:28px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;border-collapse:separate;width:640px;max-width:100%;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(51,51,153,0.08);">
   <tr>
-    <td style="background:linear-gradient(135deg,${GRYWO_PAARS} 0%,#4a4ab8 100%);background-color:${GRYWO_PAARS};padding:22px 28px;width:200px;vertical-align:middle;border-right:3px solid ${GRYWO_GEEL};">
+    <td style="background:linear-gradient(135deg,${NOAH_PAARS} 0%,#4a4ab8 100%);background-color:${NOAH_PAARS};padding:22px 28px;width:200px;vertical-align:middle;border-right:3px solid ${NOAH_GEEL};">
       ${logoBlok}
     </td>
     <td style="background-color:#ffffff;padding:22px 28px;vertical-align:middle;">
@@ -69,17 +60,17 @@ export function bouwHandtekening({
         ${naam}
       </div>
       ${functieRegel
-        ? `<div style="font-size:13px;color:${GRYWO_PAARS};font-weight:700;margin-top:3px;letter-spacing:0.2px;">${functieRegel}</div>`
+        ? `<div style="font-size:13px;color:${NOAH_PAARS};font-weight:700;margin-top:3px;letter-spacing:0.2px;">${functieRegel}</div>`
         : ""}
       <div style="height:1px;background-color:#ececf2;margin:14px 0;"></div>
       <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="font-size:13px;line-height:1.6;">
         ${voysNummer ? `<tr>
-          <td style="padding:2px 8px 2px 0;color:#9a9aa8;width:18px;vertical-align:middle;">📞</td>
+          <td style="padding:2px 8px 2px 0;color:#9a9aa8;width:18px;vertical-align:middle;font-weight:700;">tel</td>
           <td style="padding:2px 0;color:#444;"><a href="tel:${voysNummer}" style="color:#444;text-decoration:none;font-weight:500;">${voysNummer}</a></td>
         </tr>` : ""}
         <tr>
-          <td style="padding:2px 8px 2px 0;color:#9a9aa8;width:18px;vertical-align:middle;">🌐</td>
-          <td style="padding:2px 0;"><a href="https://www.noah-recruitment.nl" style="color:${GRYWO_PAARS};text-decoration:none;font-weight:700;">www.noah-recruitment.nl</a></td>
+          <td style="padding:2px 8px 2px 0;color:#9a9aa8;width:18px;vertical-align:middle;font-weight:700;">web</td>
+          <td style="padding:2px 0;"><a href="https://www.noah-recruitment.nl" style="color:${NOAH_PAARS};text-decoration:none;font-weight:700;">www.noah-recruitment.nl</a></td>
         </tr>
       </table>
     </td>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { GrywoLogo } from "@/components/GrywoLogo";
+import { NoahRecruitmentLogo } from "@/components/NoahRecruitmentLogo";
 import { TekenForm } from "./TekenForm";
 import { CheckCircle2 } from "lucide-react";
 
@@ -40,7 +40,7 @@ export default async function TekenPage({
         {/* Header banner */}
         <div className="bg-[#333399] rounded-2xl p-5 mb-4 flex items-center justify-between flex-wrap gap-3">
           <div className="inline-flex items-center gap-3">
-            <GrywoLogo size="md" wit={true} />
+            <NoahRecruitmentLogo variant="dark" size="md" label="ATS" />
             <span className="text-white/70 text-xs">Verwerkersovereenkomst — Noah ATS</span>
           </div>
           <StatusBadge status={row.status} />

@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/mijn-data") ||     // publieke inzage/wis-flow voor kandidaten (AVG art. 15+17)
     path.startsWith("/contract-controle") || // publieke contract-upload door opdrachtgever
     path.startsWith("/kies-datum") ||         // kandidaat kiest datum uit mail
-    path.startsWith("/reageer") ||            // GRYWO reply op aanvraag (token)
+    path.startsWith("/reageer") ||            // Noah recruitment-admin reply op aanvraag (token)
     path.startsWith("/teken/") ||             // publieke document-tekenflow (token)
     path.startsWith("/verwijder/") ||         // publieke verwijder-verzoek goedkeur-link voor recruiter
     path.startsWith("/api/webhooks") ||       // Stripe webhooks
@@ -97,18 +97,14 @@ export async function updateSession(request: NextRequest) {
       }
 
       // 1b) Bureau-leden (admin/recruiter) zonder actief bureau-abonnement.
-      //     Intern GRYWO-personeel (Yorith, Pepijn, Wouter) wordt nooit geblokkeerd.
+      //     Intern Noah recruitment-personeel (Yorith, Pepijn, Wouter) wordt nooit geblokkeerd.
       const userEmail = (user.email ?? "").toLowerCase();
-      const internGrywo = new Set([
-        "yorith@grywo.nl",
+      const internNoah = new Set([
         "yorith@noah-recruitment.nl",
-        "yorith@grywo.com",
-        "pepijn@grywo.nl",
         "pepijn@noah-recruitment.nl",
-        "wouter@grywo.nl",
         "wouter@noah-recruitment.nl",
       ]);
-      const isSuperUser = internGrywo.has(userEmail);
+      const isSuperUser = internNoah.has(userEmail);
       if (!isSuperUser && profile?.tenant_id && (profile.rol === "admin" || profile.rol === "recruiter")) {
         const { data: ab } = await supabase
           .from("abonnementen")

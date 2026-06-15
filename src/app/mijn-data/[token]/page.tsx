@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GrywoLogo } from "@/components/GrywoLogo";
+import { NoahRecruitmentLogo } from "@/components/NoahRecruitmentLogo";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { valideerToken, verwijderMij } from "../actions";
 import { AlertCircle, Trash2 } from "lucide-react";
@@ -35,7 +35,7 @@ export default async function MijnDataDetailPage({
     <main className="min-h-screen bg-[#f4f4f7] py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="bg-[#333399] rounded-2xl p-5 mb-4 flex items-center justify-center">
-          <GrywoLogo size="md" wit={true} />
+          <NoahRecruitmentLogo variant="dark" size="md" label="ATS" />
         </div>
 
         <div className="bg-white rounded-2xl shadow-md p-8 mb-4">
@@ -103,7 +103,7 @@ function FoutPage({ melding }: { melding: string }) {
     <main className="min-h-screen bg-[#f4f4f7] py-12 px-4 flex items-center justify-center">
       <div className="max-w-md w-full text-center">
         <div className="bg-[#333399] rounded-2xl p-6 mb-6 inline-flex items-center justify-center w-full">
-          <GrywoLogo size="lg" wit={true} />
+          <NoahRecruitmentLogo variant="dark" size="lg" label="ATS" />
         </div>
         <div className="bg-white rounded-2xl shadow-md p-10">
           <div className="w-14 h-14 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">

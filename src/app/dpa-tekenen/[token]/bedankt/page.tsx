@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GrywoLogo } from "@/components/GrywoLogo";
+import { NoahRecruitmentLogo } from "@/components/NoahRecruitmentLogo";
 import { CheckCircle2 } from "lucide-react";
 
 export default async function BedanktPage({
@@ -12,7 +12,7 @@ export default async function BedanktPage({
     <main className="min-h-screen bg-[#f4f4f7] py-12 px-4 flex items-center justify-center">
       <div className="max-w-md w-full text-center">
         <div className="bg-[#333399] rounded-2xl p-6 mb-6 inline-flex items-center justify-center w-full">
-          <GrywoLogo size="lg" wit={true} />
+          <NoahRecruitmentLogo variant="dark" size="lg" label="ATS" />
         </div>
 
         <div className="bg-white rounded-2xl shadow-md p-10">

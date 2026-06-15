@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { FileSignature, ShieldCheck, MapPin, BadgeCheck } from "lucide-react";
 import { AanmeldForm } from "../word-setter/AanmeldForm";
 
@@ -30,7 +29,12 @@ export default function ContractPagina() {
           </Link>
           <div className="flex items-center gap-2 text-xs text-white/70">
             <span>Powered by</span>
-            <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={70} height={20} className="opacity-90" />
+            <span className="text-base font-extrabold tracking-tight text-white">
+              Noah<span className="text-[#ffd84d]">.</span>
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/70">
+              RECRUITMENT
+            </span>
           </div>
         </div>
 

@@ -51,8 +51,8 @@ export async function TopBar({ active }: Props) {
   const isSuperAdmin = echteIsSuperAdmin && !demoActief;
   const isSetter = actieveRol === "setter";
   const isRecruiter = actieveRol === "recruiter";
-  // Intern GRYWO-personeel (zoals Wouter): geen super-admin, maar ook geen bureau-admin
-  // — moet de volle admin-sidebar zien (Jobdigger, Robin, Kandidaten, etc.)
+  // Intern Noah recruitment-personeel (zoals Wouter): geen super-admin, maar ook geen bureau-admin.
+  // Moet de volle admin-sidebar zien (Jobdigger, Robin, Kandidaten, etc.)
   const isInternPersoneel = !!profile?.is_intern_personeel || !!profile?.kan_abonnementen_beheren;
   // Bureau-admin = admin rol zonder super-admin én geen intern personeel, of demo "bureau_admin"
   const isBureauAdmin = viewAs === "bureau_admin" || (actieveRol === "admin" && !isSuperAdmin && !isInternPersoneel && !demoActief);

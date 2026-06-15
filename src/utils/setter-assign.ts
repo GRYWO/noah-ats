@@ -1,11 +1,12 @@
 import { createAdminClient } from "./supabase/admin";
 
 /**
- * Vind de GRYWO-pool tenant (centraal bureau dat setters levert aan alle
- * andere bureaus). Markering: tenants.is_grywo_pool = true.
- * Fallback: tenant met naam 'GRYWO'.
+ * Vind de Noah recruitment-pool tenant (centraal bureau dat setters levert aan
+ * alle andere bureaus). Markering: tenants.is_grywo_pool = true (legacy
+ * kolomnaam, behouden voor DB-stabiliteit, betekenis is nu Noah recruitment-pool).
+ * Fallback: tenant met naam 'Noah recruitment'.
  */
-export async function getGrywoPoolTenantId(): Promise<string | null> {
+export async function getNoahPoolTenantId(): Promise<string | null> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("tenants")
@@ -17,25 +18,25 @@ export async function getGrywoPoolTenantId(): Promise<string | null> {
   if (data?.id) return data.id;
 
   // Fallback voor systemen waar de flag nog niet gezet is
-  const { data: gFallback } = await admin
+  const { data: fallback } = await admin
     .from("tenants")
     .select("id")
-    .ilike("naam", "grywo")
+    .ilike("naam", "noah recruitment")
     .limit(1)
     .maybeSingle();
-  return gFallback?.id ?? null;
+  return fallback?.id ?? null;
 }
 
 /**
- * Vind een beschikbare setter (0 actieve kandidaten) uit de GRYWO-pool.
- * Setters zijn cross-tenant — ze bedienen kandidaten van ALLE bureaus.
- * Fallback: setters uit de eigen tenant als er geen GRYWO-pool is.
+ * Vind een beschikbare setter (0 actieve kandidaten) uit de Noah recruitment-pool.
+ * Setters zijn cross-tenant, ze bedienen kandidaten van ALLE bureaus.
+ * Fallback: setters uit de eigen tenant als er geen pool is.
  */
 export async function vindBeschikbareSetter(tenantId: string): Promise<string | null> {
   const admin = createAdminClient();
 
-  // 1. Bepaal uit welke tenant de setters komen: GRYWO-pool indien beschikbaar
-  const poolTenantId = await getGrywoPoolTenantId();
+  // 1. Bepaal uit welke tenant de setters komen: Noah recruitment-pool indien beschikbaar
+  const poolTenantId = await getNoahPoolTenantId();
   const setterTenantId = poolTenantId ?? tenantId;
 
   // 2. Alle setters in de pool-tenant
@@ -48,7 +49,7 @@ export async function vindBeschikbareSetter(tenantId: string): Promise<string | 
 
   if (!setters || setters.length === 0) return null;
 
-  // 3. Aantal actieve kandidaten per setter — CROSS-TENANT, want één setter
+  // 3. Aantal actieve kandidaten per setter, CROSS-TENANT, want één setter
   //    kan kandidaten uit meerdere bureaus hebben
   const setterIds = setters.map(s => s.id);
   const { data: actieveKandidaten } = await admin
@@ -62,7 +63,7 @@ export async function vindBeschikbareSetter(tenantId: string): Promise<string | 
     if (k.eigenaar_id) counts.set(k.eigenaar_id, (counts.get(k.eigenaar_id) ?? 0) + 1);
   });
 
-  // 4. Setters met 0 kandidaten — kies wie 't langst geleden voor 't laatst is toegewezen
+  // 4. Setters met 0 kandidaten, kies wie het langst geleden voor het laatst is toegewezen
   const beschikbaar = setters
     .filter(s => (counts.get(s.id) ?? 0) === 0)
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
@@ -72,7 +73,7 @@ export async function vindBeschikbareSetter(tenantId: string): Promise<string | 
 
 /**
  * Probeer kandidaat automatisch toe te wijzen aan een setter met 0 kandidaten.
- * Als geen beschikbaar → blijft in wachtrij (eigenaar_id = null).
+ * Als geen beschikbaar -> blijft in wachtrij (eigenaar_id = null).
  */
 export async function autoWijsKandidaatToe(kandidaatId: string): Promise<{ toegewezen: string | null }> {
   const admin = createAdminClient();
@@ -103,8 +104,8 @@ export async function autoWijsKandidaatToe(kandidaatId: string): Promise<{ toege
 
 /**
  * Bij verwijderen van een setter: herverdeel alle actieve kandidaten.
- * Voor elke kandidaat zoekt 't een nieuwe setter met 0 kandidaten.
- * Geen beschikbaar? → eigenaar_id = null (wachtrij, wacht op nieuwe setter).
+ * Voor elke kandidaat zoekt het een nieuwe setter met 0 kandidaten.
+ * Geen beschikbaar? -> eigenaar_id = null (wachtrij, wacht op nieuwe setter).
  */
 export async function herverdeelKandidaten(verwijderdeSetterId: string, tenantId: string) {
   const admin = createAdminClient();
@@ -142,9 +143,9 @@ export async function herverdeelKandidaten(verwijderdeSetterId: string, tenantId
 export async function verwerkWachtrij(tenantId: string) {
   const admin = createAdminClient();
 
-  // Setter zit in de GRYWO-pool tenant, maar de wachtende kandidaten zitten in
-  // andere bureau-tenants. Pak de wachtrij over alle non-pool tenants.
-  const poolTenantId = await getGrywoPoolTenantId();
+  // Setter zit in de Noah recruitment-pool tenant, maar de wachtende kandidaten
+  // zitten in andere bureau-tenants. Pak de wachtrij over alle non-pool tenants.
+  const poolTenantId = await getNoahPoolTenantId();
 
   let query = admin
     .from("kandidaten")

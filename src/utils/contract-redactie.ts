@@ -9,7 +9,6 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { getGrywoLogoWitDataUri } from "@/utils/grywo-logo";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -45,7 +44,7 @@ export type RedactieResultaat = {
   samenvattingPdf: Uint8Array;
 };
 
-const REDACT_PROMPT = `Je bent een AVG/GDPR-expert die arbeidscontracten analyseert voor een Nederlands recruitment bureau (GRYWO).
+const REDACT_PROMPT = `Je bent een AVG/GDPR-expert die arbeidscontracten analyseert voor een Nederlands recruitment-bureau (Noah recruitment).
 
 Je krijgt een arbeidscontract als PDF. Extract de volgende velden — GEEN volledige tekst-redactie nodig.
 
@@ -490,5 +489,3 @@ function renderRegelMetRedactieBalken(
   }
 }
 
-// gebruiken om unused-import warning te voorkomen
-export { getGrywoLogoWitDataUri };

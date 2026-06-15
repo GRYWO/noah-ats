@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 /**
  * Regenereert handtekening_html voor ALLE users in profiles op basis van
  * de huidige bouwHandtekening() code. Nodig na de rebrand omdat oude HTML
- * nog naar 'GRYWO' wordmark verwees.
+ * nog naar het oude logo verwees.
  *
  * Super-admin only. POST: voert update uit. GET: dry-run (toont aantal).
  */

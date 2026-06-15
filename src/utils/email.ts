@@ -1,6 +1,5 @@
 import { Resend } from "resend";
 import { renderMailTemplate } from "@/utils/mail-templates";
-import { getGrywoLogoWitDataUri } from "@/utils/grywo-logo";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 // Default afzender. Vereist dat noah-recruitment.nl in Resend geverifieerd is
@@ -38,7 +37,7 @@ function bepaalAppUrl(): string {
 }
 const APP_URL = bepaalAppUrl();
 
-const GRYWO_KLEUR = "#333399";
+const NOAH_PAARS = "#333399";
 
 /**
  * Pak naam + email uit een "Voornaam Achternaam <email@domein>" of "email" string.
@@ -53,44 +52,44 @@ function parseFrom(from: string | undefined): { naam?: string; email?: string } 
 function brandedLayout({
   titel,
   body,
-  merk = "grywo",
+  merk = "recruitment",
   afzenderNaam,
   afzenderEmail,
 }: {
   titel: string;
   body: string;
-  merk?: "grywo" | "noah";
+  /**
+   * Welke Noah-merk-variant in de header tonen.
+   * - "recruitment": Noah recruitment (kandidaten + opdrachtgevers)
+   * - "ats": Noah ATS (interne mails, bureau-onboarding, ondertekening)
+   */
+  merk?: "recruitment" | "ats";
   afzenderNaam?: string;
   afzenderEmail?: string;
 }) {
-  // Inline tekst-wordmark — werkt in elke mailclient zonder externe afhankelijkheid.
+  // Inline tekst-wordmark, werkt in elke mailclient zonder externe afhankelijkheid.
   // Gmail blokkeert data-URI's in <img>, dus we tekenen het logo met HTML/CSS.
-  void getGrywoLogoWitDataUri; // legacy import — niet meer gebruikt
-  const header = merk === "noah"
-    ? `<table cellpadding="0" cellspacing="0" border="0" align="center" role="presentation" style="border-collapse:collapse;"><tr>
+  const subLabel = merk === "ats" ? "ATS" : "RECRUITMENT";
+  const header = `<table cellpadding="0" cellspacing="0" border="0" align="center" role="presentation" style="border-collapse:collapse;"><tr>
         <td style="padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;line-height:1;vertical-align:baseline;">Noah<span style="color:#ffd84d;">.</span></td>
-        <td style="padding:0 0 0 14px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:3px;color:rgba(255,255,255,0.75);text-transform:uppercase;vertical-align:baseline;">ATS</td>
-      </tr></table>`
-    : `<table cellpadding="0" cellspacing="0" border="0" align="center" role="presentation" style="border-collapse:collapse;"><tr>
-        <td style="padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-2px;color:#ffffff;line-height:1;vertical-align:baseline;">Noah<span style="color:#ffd84d;">.</span></td>
-        <td style="padding:0 0 0 14px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:3px;color:rgba(255,255,255,0.75);text-transform:uppercase;vertical-align:baseline;">RECRUITMENT</td>
+        <td style="padding:0 0 0 14px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:3px;color:rgba(255,255,255,0.75);text-transform:uppercase;vertical-align:baseline;">${subLabel}</td>
       </tr></table>`;
-  const footer = merk === "noah"
-    ? `Noah ATS · het ATS-platform voor recruitment bureaus`
+  const footer = merk === "ats"
+    ? `Noah ATS · het ATS-platform voor recruitment-bureaus · <a href="https://www.noah-recruitment.nl" style="color:#888;text-decoration:underline;">www.noah-recruitment.nl</a>`
     : afzenderEmail
-      ? `${afzenderNaam ? `${afzenderNaam} · ` : ""}<a href="mailto:${afzenderEmail}" style="color:#888;text-decoration:underline;">${afzenderEmail}</a>`
-      : `Noah recruitment`;
+      ? `${afzenderNaam ? `${afzenderNaam} · ` : ""}<a href="mailto:${afzenderEmail}" style="color:#888;text-decoration:underline;">${afzenderEmail}</a> · <a href="https://www.noah-recruitment.nl" style="color:#888;text-decoration:underline;">www.noah-recruitment.nl</a>`
+      : `Noah recruitment · <a href="https://www.noah-recruitment.nl" style="color:#888;text-decoration:underline;">www.noah-recruitment.nl</a>`;
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background-color:#f4f4f7;">
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f4f4f7;padding:20px 0;">
     <tr><td align="center">
       <table cellpadding="0" cellspacing="0" border="0" width="600" style="background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-        <tr><td style="background-color:${GRYWO_KLEUR};padding:32px 24px;text-align:center;">
+        <tr><td style="background:linear-gradient(135deg,${NOAH_PAARS} 0%,#4a4ab8 100%);background-color:${NOAH_PAARS};padding:32px 24px;text-align:center;border-bottom:3px solid #ffd84d;">
           ${header}
         </td></tr>
         <tr><td style="padding:32px;color:#1a1a2e;">
-          <h2 style="color:${GRYWO_KLEUR};margin:0 0 16px 0;font-size:22px;">${titel}</h2>
+          <h2 style="color:${NOAH_PAARS};margin:0 0 16px 0;font-size:22px;">${titel}</h2>
           ${body}
         </td></tr>
         <tr><td style="background-color:#f4f4f7;padding:16px;text-align:center;font-size:12px;color:#888;">
@@ -163,7 +162,7 @@ ${intro}
 
 ${voorstelprofielToken ? `
 <p style="margin:24px 0 8px 0;text-align:center;">
-  <a href="${APP_URL}/voorstelprofiel/${voorstelprofielToken}" style="display:inline-block;background-color:#fff;color:${GRYWO_KLEUR};border:2px solid ${GRYWO_KLEUR};text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">Bekijk volledig voorstelprofiel</a>
+  <a href="${APP_URL}/voorstelprofiel/${voorstelprofielToken}" style="display:inline-block;background-color:#fff;color:${NOAH_PAARS};border:2px solid ${NOAH_PAARS};text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">Bekijk volledig voorstelprofiel</a>
 </p>
 ` : ""}
 
@@ -300,7 +299,7 @@ export async function sendKandidaatBevestiging({
   const kleinKnopje = (nr: 1 | 2 | 3, datum: string | null) => {
     if (!datum || !voorstelToken) return "";
     const url = `${APP_URL}/kies-datum/${voorstelToken}/${nr}`;
-    return `<a href="${url}" style="display:inline-block;background:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:bold;font-size:14px;margin:0 4px 4px 0;">Datum ${nr}</a>`;
+    return `<a href="${url}" style="display:inline-block;background:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:bold;font-size:14px;margin:0 4px 4px 0;">Datum ${nr}</a>`;
   };
 
   const body = `
@@ -311,7 +310,7 @@ ${intro}
   <tr><td style="padding:6px 0;color:#666;">Contactpersoon</td><td style="padding:6px 0;font-weight:600;">${contactpersoon}</td></tr>
   <tr><td style="padding:6px 0;color:#666;">Telefoon</td><td style="padding:6px 0;font-weight:600;">${contact_telefoon}</td></tr>
   <tr><td style="padding:6px 0;color:#666;">E-mail</td><td style="padding:6px 0;font-weight:600;">${contact_email}</td></tr>
-  <tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;"><a href="${locatie_url}" style="color:${GRYWO_KLEUR};">Bekijk op Google Maps</a></td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;"><a href="${locatie_url}" style="color:${NOAH_PAARS};">Bekijk op Google Maps</a></td></tr>
 </table>
 
 <p style="margin:16px 0 8px 0;font-weight:600;font-size:15px;">Voorgestelde datums:</p>
@@ -419,7 +418,7 @@ ${intro}
   <tr><td style="padding:6px 0;color:#666;width:35%;">Tijdstip</td><td style="padding:6px 0;font-weight:600;">${tijd}</td></tr>
   ${contactpersoon ? `<tr><td style="padding:6px 0;color:#666;">Contactpersoon</td><td style="padding:6px 0;font-weight:600;">${contactpersoon}</td></tr>` : ""}
   ${contact_telefoon ? `<tr><td style="padding:6px 0;color:#666;">Telefoon</td><td style="padding:6px 0;font-weight:600;">${contact_telefoon}</td></tr>` : ""}
-  ${locatie_url ? `<tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;"><a href="${locatie_url}" style="color:${GRYWO_KLEUR};">Bekijk op Google Maps</a></td></tr>` : ""}
+  ${locatie_url ? `<tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;"><a href="${locatie_url}" style="color:${NOAH_PAARS};">Bekijk op Google Maps</a></td></tr>` : ""}
 </table>
 <p style="margin:16px 0 0 0;color:#666;">Veel succes — je kunt het!</p>`;
   return resend.emails.send({
@@ -488,7 +487,7 @@ export async function sendPlaatsingNaarBackoffice({
   const body = `
 <p>Nieuwe plaatsing aangemeld door <b>${aangemeldDoor.voornaam} ${aangemeldDoor.achternaam}</b> (${aangemeldDoor.email}).</p>
 
-<h3 style="color:${GRYWO_KLEUR};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Kandidaat</h3>
+<h3 style="color:${NOAH_PAARS};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${NOAH_PAARS};padding-bottom:4px;">Kandidaat</h3>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
   ${rij("Naam", fullnaam)}
   ${rij("E-mail", kandidaat.email)}
@@ -496,7 +495,7 @@ export async function sendPlaatsingNaarBackoffice({
   ${rij("Woonplaats", kandidaat.woonplaats)}
 </table>
 
-<h3 style="color:${GRYWO_KLEUR};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Klant</h3>
+<h3 style="color:${NOAH_PAARS};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${NOAH_PAARS};padding-bottom:4px;">Klant</h3>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
   ${rij("Bedrijf", klant.bedrijf)}
   ${rij("Contactpersoon", klant.contactpersoon)}
@@ -504,7 +503,7 @@ export async function sendPlaatsingNaarBackoffice({
   ${rij("Telefoon", klant.contact_telefoon)}
 </table>
 
-<h3 style="color:${GRYWO_KLEUR};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Afspraken</h3>
+<h3 style="color:${NOAH_PAARS};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${NOAH_PAARS};padding-bottom:4px;">Afspraken</h3>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
   ${rij("Basis", basisLabel)}
   ${rij("Tarief", tariefLabel)}
@@ -522,7 +521,7 @@ export async function sendPlaatsingNaarBackoffice({
     to: "backoffice@noah-recruitment.nl",
     cc: aangemeldDoor.email ? [aangemeldDoor.email] : undefined,
     subject: `Nieuwe plaatsing: ${fullnaam} bij ${klant.bedrijf}`,
-    html: brandedLayout({ titel: `Plaatsing: ${fullnaam}`, body, merk: "noah" }),
+    html: brandedLayout({ titel: `Plaatsing: ${fullnaam}`, body, merk: "ats" }),
   });
   if (result.error) {
     throw new Error(`Resend afgewezen: ${result.error.message}`);
@@ -558,7 +557,7 @@ export async function sendInloggegevensOpnieuw({
     from: from ?? FROM,
     to: naar,
     subject: "Je nieuwe inloggegevens voor Noah ATS",
-    html: brandedLayout({ titel: "Nieuwe inloggegevens", body: `${intro}\n${loginBlok}`, merk: "noah" }),
+    html: brandedLayout({ titel: "Nieuwe inloggegevens", body: `${intro}\n${loginBlok}`, merk: "ats" }),
   });
   if (result.error) {
     throw new Error(`Resend afgewezen: ${result.error.message}`);
@@ -632,7 +631,7 @@ export async function sendPlaatsingAfgekeurdNaarBackoffice({
     to: "backoffice@noah-recruitment.nl",
     cc: afgekeurdDoor.email ? [afgekeurdDoor.email] : undefined,
     subject: `Plaatsing afgekeurd: ${kandidaatNaam} bij ${bedrijf}`,
-    html: brandedLayout({ titel: `Plaatsing afgekeurd`, body, merk: "noah" }),
+    html: brandedLayout({ titel: `Plaatsing afgekeurd`, body, merk: "ats" }),
   });
   if (result.error) {
     throw new Error(`Resend afgewezen: ${result.error.message}`);
@@ -657,14 +656,14 @@ export async function sendHelpVraagNaarYorith({
   naar: string;
 }) {
   const typeLabel = type === "vraag" ? "Vraag" : "Probleem";
-  const accentKleur = type === "probleem" ? "#b91c1c" : GRYWO_KLEUR;
+  const accentKleur = type === "probleem" ? "#b91c1c" : NOAH_PAARS;
 
   const body = `
 <p><b>Er is een ${typeLabel.toLowerCase()} binnengekomen via Noah ATS.</b></p>
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:16px;">
   <tr><td style="padding:6px 0;color:#666;width:35%;">Van</td><td style="padding:6px 0;font-weight:600;">${afzender.naam} (${afzender.rol})</td></tr>
-  <tr><td style="padding:6px 0;color:#666;">E-mail</td><td style="padding:6px 0;"><a href="mailto:${afzender.email}" style="color:${GRYWO_KLEUR};">${afzender.email}</a></td></tr>
+  <tr><td style="padding:6px 0;color:#666;">E-mail</td><td style="padding:6px 0;"><a href="mailto:${afzender.email}" style="color:${NOAH_PAARS};">${afzender.email}</a></td></tr>
   <tr><td style="padding:6px 0;color:#666;">Bureau</td><td style="padding:6px 0;font-weight:600;">${tenantNaam}</td></tr>
   <tr><td style="padding:6px 0;color:#666;">Type</td><td style="padding:6px 0;font-weight:600;color:${accentKleur};">${typeLabel}</td></tr>
 </table>
@@ -680,7 +679,7 @@ export async function sendHelpVraagNaarYorith({
     to: naar,
     replyTo: afzender.email || undefined,
     subject: `[${typeLabel}] ${afzender.naam} — ${tenantNaam}`,
-    html: brandedLayout({ titel: `${typeLabel} via Noah ATS`, body, merk: "noah" }),
+    html: brandedLayout({ titel: `${typeLabel} via Noah ATS`, body, merk: "ats" }),
   });
   if (result.error) {
     throw new Error(`Resend afgewezen: ${result.error.message}`);
@@ -770,7 +769,7 @@ export async function sendGesprek1Bevestiging({
   ${bedrijf ? `<tr><td style="padding:6px 0;color:#666;">Bedrijf</td><td style="padding:6px 0;font-weight:600;">${bedrijf}</td></tr>` : ""}
   ${contactpersoon ? `<tr><td style="padding:6px 0;color:#666;">Contactpersoon</td><td style="padding:6px 0;font-weight:600;">${contactpersoon}</td></tr>` : ""}
   ${contact_telefoon ? `<tr><td style="padding:6px 0;color:#666;">Telefoon</td><td style="padding:6px 0;font-weight:600;">${contact_telefoon}</td></tr>` : ""}
-  ${locatie_url ? `<tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;"><a href="${locatie_url}" style="color:${GRYWO_KLEUR};">Bekijk op Google Maps</a></td></tr>` : ""}
+  ${locatie_url ? `<tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;"><a href="${locatie_url}" style="color:${NOAH_PAARS};">Bekijk op Google Maps</a></td></tr>` : ""}
 </table>
 <p>Veel succes! Laat het weten als er iets onverwachts gebeurt.</p>`;
   return resend.emails.send({
@@ -841,12 +840,12 @@ const CHROME_EXTENSIE_URL =
 function extensieBlok(): string {
   return `
 <div style="background-color:#eef0ff;border:1px solid #d4d7f5;border-radius:8px;padding:18px 20px;margin:20px 0;">
-  <div style="font-size:14px;font-weight:700;color:${GRYWO_KLEUR};margin-bottom:6px;">📥 Installeer de Chrome-extensie</div>
+  <div style="font-size:14px;font-weight:700;color:${NOAH_PAARS};margin-bottom:6px;">📥 Installeer de Chrome-extensie</div>
   <p style="margin:0 0 12px 0;font-size:13px;color:#444;line-height:1.5;">
     Maakt <b>Robin</b> en <b>Jobdigger</b> direct bruikbaar binnen Noah ATS.
     Vacature-exports uit Jobdigger worden automatisch toegevoegd aan je bellijst in Noah.
   </p>
-  <a href="${CHROME_EXTENSIE_URL}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:bold;font-size:13px;">
+  <a href="${CHROME_EXTENSIE_URL}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:bold;font-size:13px;">
     Installeer in Chrome
   </a>
   <p style="margin:10px 0 0 0;font-size:11px;color:#888;">
@@ -880,7 +879,7 @@ export async function sendWelkomstmailUser({
     from: FROM,
     to: naar,
     subject: `Welkom bij Noah ATS — ${bedrijf}`,
-    html: brandedLayout({ titel: "Welkom bij Noah ATS", body, merk: "noah" }),
+    html: brandedLayout({ titel: "Welkom bij Noah ATS", body, merk: "ats" }),
   });
 }
 
@@ -908,18 +907,18 @@ export async function sendWelkomstmailBureau({
   const dashboardKnop = `
 <div style="text-align:center;margin:24px 0;">
   <a href="${APP_URL}/dashboard"
-     style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+     style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
     Open je dashboard
   </a>
 </div>`;
 
   const eersteStappen = `
-<h3 style="color:${GRYWO_KLEUR};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">In 4 stappen klaar</h3>
+<h3 style="color:${NOAH_PAARS};margin:24px 0 8px 0;font-size:15px;border-bottom:2px solid ${NOAH_PAARS};padding-bottom:4px;">In 4 stappen klaar</h3>
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0;">
-  <tr><td style="padding:8px 0;width:30px;font-weight:bold;color:${GRYWO_KLEUR};">1.</td><td style="padding:8px 0;">Vul je bedrijfsgegevens aan op het dashboard (contactpersoon, telefoon, adres).</td></tr>
-  <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">2.</td><td style="padding:8px 0;">Voeg je recruiters toe via &quot;Users&quot;.</td></tr>
-  <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">3.</td><td style="padding:8px 0;">Koppel je zakelijke mailbox via Instellingen, zodat voorstellen vanaf jouw domein vertrekken.</td></tr>
-  <tr><td style="padding:8px 0;font-weight:bold;color:${GRYWO_KLEUR};">4.</td><td style="padding:8px 0;">Vragen of hulp nodig? Bel <a href="tel:0854016082" style="color:${GRYWO_KLEUR};font-weight:bold;">085-4016082</a> &mdash; wij regelen de rest achter de schermen.</td></tr>
+  <tr><td style="padding:8px 0;width:30px;font-weight:bold;color:${NOAH_PAARS};">1.</td><td style="padding:8px 0;">Vul je bedrijfsgegevens aan op het dashboard (contactpersoon, telefoon, adres).</td></tr>
+  <tr><td style="padding:8px 0;font-weight:bold;color:${NOAH_PAARS};">2.</td><td style="padding:8px 0;">Voeg je recruiters toe via &quot;Users&quot;.</td></tr>
+  <tr><td style="padding:8px 0;font-weight:bold;color:${NOAH_PAARS};">3.</td><td style="padding:8px 0;">Koppel je zakelijke mailbox via Instellingen, zodat voorstellen vanaf jouw domein vertrekken.</td></tr>
+  <tr><td style="padding:8px 0;font-weight:bold;color:${NOAH_PAARS};">4.</td><td style="padding:8px 0;">Vragen of hulp nodig? Bel <a href="tel:0854016082" style="color:${NOAH_PAARS};font-weight:bold;">085-4016082</a> &mdash; wij regelen de rest achter de schermen.</td></tr>
 </table>`;
 
   const body = `${intro}\n${loginBlok}\n${dashboardKnop}\n${eersteStappen}\n${extensieBlok()}`;
@@ -927,7 +926,7 @@ export async function sendWelkomstmailBureau({
     from: from ?? FROM,
     to: naar,
     subject: `Welkom bij Noah ATS — ${bedrijf}`,
-    html: brandedLayout({ titel: "Welkom bij Noah ATS", body, merk: "noah" }),
+    html: brandedLayout({ titel: "Welkom bij Noah ATS", body, merk: "ats" }),
   });
   if (result.error) {
     throw new Error(`Resend afgewezen: ${result.error.message}`);
@@ -959,14 +958,14 @@ Dit is wettelijk verplicht en regelt hoe wij namens <b>${bureauNaam}</b> jullie 
 <p>Klik op de knop hieronder om de overeenkomst door te lezen en digitaal te ondertekenen — duurt minder dan 2 minuten.</p>
 
 <div style="margin:20px 0;text-align:center;">
-  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+  <a href="${url}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
     Onderteken de verwerkersovereenkomst
   </a>
 </div>
 
 <p style="font-size:13px;color:#666;">
 Of kopieer deze link in je browser:<br>
-<a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
+<a href="${url}" style="color:${NOAH_PAARS};">${url}</a>
 </p>
 
 <p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail info@noah-recruitment.nl of bel 085-4016082.</p>`;
@@ -1002,7 +1001,7 @@ export async function sendDpaGetekendBevestiging({
 <p>Een kopie van de getekende DPA blijft toegankelijk via onderstaande link. Beide partijen hebben nu een rechtsgeldige overeenkomst.</p>
 
 <div style="margin:20px 0;text-align:center;">
-  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">
+  <a href="${url}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">
     Bekijk getekende DPA
   </a>
 </div>
@@ -1018,7 +1017,7 @@ export async function sendDpaGetekendBevestiging({
 }
 
 /**
- * Interne notificatie naar GRYWO dat een bureau heeft getekend.
+ * Interne notificatie naar Noah recruitment dat een bureau heeft getekend.
  */
 export async function sendDpaGetekendIntern({
   bureauNaam,
@@ -1045,7 +1044,7 @@ export async function sendDpaGetekendIntern({
 </table>
 
 <div style="margin:20px 0;text-align:center;">
-  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">
+  <a href="${url}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">
     Bekijk getekende DPA
   </a>
 </div>`;
@@ -1089,14 +1088,14 @@ export async function sendAkkoordTerOndertekening({
 <p>${uitleg}</p>
 
 <div style="margin:20px 0;text-align:center;">
-  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+  <a href="${url}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
     Lees en onderteken
   </a>
 </div>
 
 <p style="font-size:13px;color:#666;">
 Of kopieer deze link in je browser:<br>
-<a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
+<a href="${url}" style="color:${NOAH_PAARS};">${url}</a>
 </p>
 
 <p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail info@noah-recruitment.nl of bel 085-4016082.</p>`;
@@ -1105,7 +1104,7 @@ Of kopieer deze link in je browser:<br>
     from: FROM,
     to: naar,
     subject: `${titel} — ondertekening vereist`,
-    html: brandedLayout({ titel, body, merk: "noah" }),
+    html: brandedLayout({ titel, body, merk: "ats" }),
   });
   if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
   return result;
@@ -1146,13 +1145,13 @@ export async function sendBureauStripeMail({
     <tr><td style="padding:4px 0;">Setup-fee (eenmalig)</td><td style="padding:4px 0;text-align:right;">${setup}</td></tr>
     <tr><td style="padding:4px 0;">Maand 1 — ${planLabel}</td><td style="padding:4px 0;text-align:right;">${maand}</td></tr>
     <tr><td colspan="2" style="border-top:1px solid #ccc;padding-top:8px;"></td></tr>
-    <tr><td style="padding:4px 0;font-weight:700;">Te betalen nu</td><td style="padding:4px 0;text-align:right;font-weight:700;color:${GRYWO_KLEUR};">${totaal}</td></tr>
+    <tr><td style="padding:4px 0;font-weight:700;">Te betalen nu</td><td style="padding:4px 0;text-align:right;font-weight:700;color:${NOAH_PAARS};">${totaal}</td></tr>
   </table>
   <div style="font-size:11px;color:#888;margin-top:10px;">Daarna ${maand} per maand — automatisch geïncasseerd. Maandelijks opzegbaar.</div>
 </div>
 
 <div style="text-align:center;margin:24px 0;">
-  <a href="${betaalUrl}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:bold;font-size:15px;">
+  <a href="${betaalUrl}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:bold;font-size:15px;">
     Veilig betalen via Stripe
   </a>
 </div>
@@ -1176,7 +1175,7 @@ Vragen? Mail <a href="mailto:info@noah-recruitment.nl">info@noah-recruitment.nl<
     from: FROM,
     to: naar,
     subject: `Noah ATS — activeer je ${planLabel} abonnement (${totaal})`,
-    html: brandedLayout({ titel: "Activeer je abonnement", body, merk: "noah" }),
+    html: brandedLayout({ titel: "Activeer je abonnement", body, merk: "ats" }),
   });
   if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
   return result;
@@ -1204,12 +1203,12 @@ export async function sendSetterStripeMail({
 
 <div style="background:#f8f9ff;border:1px solid #d4d7f5;border-radius:8px;padding:18px 20px;margin:18px 0;">
   <div style="font-size:14px;color:#333;margin-bottom:4px;">Setter-stoel — maandelijks</div>
-  <div style="font-size:28px;font-weight:800;color:${GRYWO_KLEUR};">${prijs}<span style="font-size:14px;font-weight:400;color:#666;"> / mnd</span></div>
+  <div style="font-size:28px;font-weight:800;color:${NOAH_PAARS};">${prijs}<span style="font-size:14px;font-weight:400;color:#666;"> / mnd</span></div>
   <div style="font-size:12px;color:#888;margin-top:6px;">Automatisch maandelijks geïncasseerd · Maandelijks opzegbaar</div>
 </div>
 
 <div style="text-align:center;margin:22px 0;">
-  <a href="${betaalUrl}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:bold;font-size:15px;">
+  <a href="${betaalUrl}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:bold;font-size:15px;">
     Abonnement afsluiten
   </a>
 </div>
@@ -1238,7 +1237,7 @@ Vragen? Mail <a href="mailto:info@noah-recruitment.nl">info@noah-recruitment.nl<
     from: FROM,
     to: naar,
     subject: "Noah ATS — sluit je setter-abonnement af",
-    html: brandedLayout({ titel: "Setter-abonnement", body, merk: "noah" }),
+    html: brandedLayout({ titel: "Setter-abonnement", body, merk: "ats" }),
   });
   if (result.error) throw new Error(`Resend afgewezen: ${result.error.message}`);
   return result;
@@ -1269,7 +1268,7 @@ export async function sendAkkoordBevestiging({
 <p>Bedankt voor het ondertekenen van de ${titel.toLowerCase()}. Je kunt nu volledig gebruikmaken van Noah ATS.</p>
 
 <div style="margin:20px 0;text-align:center;">
-  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">
+  <a href="${url}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">
     Bekijk getekende versie
   </a>
 </div>
@@ -1280,7 +1279,7 @@ export async function sendAkkoordBevestiging({
     from: FROM,
     to: naar,
     subject: `✓ ${titel} getekend`,
-    html: brandedLayout({ titel: `${titel} getekend`, body, merk: "noah" }),
+    html: brandedLayout({ titel: `${titel} getekend`, body, merk: "ats" }),
   });
 }
 
@@ -1303,14 +1302,14 @@ export async function sendMijnDataLink({
 <p>Klik op de knop hieronder. De link is <b>1 uur geldig</b> en kan eenmalig gebruikt worden.</p>
 
 <div style="margin:20px 0;text-align:center;">
-  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+  <a href="${url}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
     Bekijk mijn gegevens
   </a>
 </div>
 
 <p style="font-size:13px;color:#666;">
 Of kopieer deze link in je browser:<br>
-<a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
+<a href="${url}" style="color:${NOAH_PAARS};">${url}</a>
 </p>
 
 <p style="font-size:12px;color:#888;margin-top:18px;">
@@ -1321,7 +1320,7 @@ Geen verzoek ingediend? Negeer deze mail. Bij vragen: info@noah-recruitment.nl
     from: FROM,
     to: naar,
     subject: "Je inzage-link — Noah ATS",
-    html: brandedLayout({ titel: "Je persoonlijke inzage-link", body, merk: "noah" }),
+    html: brandedLayout({ titel: "Je persoonlijke inzage-link", body, merk: "ats" }),
   });
 }
 
@@ -1330,7 +1329,7 @@ function inlogBlok(email: string, wachtwoord: string) {
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f9fb;border-radius:8px;padding:16px;margin:16px 0;border-collapse:separate;">
   <tr><td style="padding:6px 0;color:#666;width:30%;">E-mail</td><td style="padding:6px 0;font-weight:600;">${email}</td></tr>
   <tr><td style="padding:6px 0;color:#666;">Wachtwoord</td><td style="padding:6px 0;font-family:monospace;font-weight:600;">${wachtwoord}</td></tr>
-  <tr><td style="padding:6px 0;color:#666;">Inloggen</td><td style="padding:6px 0;"><a href="${APP_URL}/login" style="color:${GRYWO_KLEUR};font-weight:600;">${APP_URL}/login</a></td></tr>
+  <tr><td style="padding:6px 0;color:#666;">Inloggen</td><td style="padding:6px 0;"><a href="${APP_URL}/login" style="color:${NOAH_PAARS};font-weight:600;">${APP_URL}/login</a></td></tr>
 </table>
 <p style="font-size:12px;color:#888;margin:8px 0 0 0;">Tip: wijzig je wachtwoord na de eerste keer inloggen via Instellingen.</p>`;
 }
@@ -1373,8 +1372,8 @@ export async function sendContractControleUitnodiging({
 <p>Hallo ${contactNaam || ""},</p>
 <p>Bedankt voor de plaatsing van <b>${kandidaatNaam}</b>! Voor het opmaken van de factuur (15% van het bruto jaarsalaris) hebben we een kopie van het arbeidscontract nodig ter verificatie van het overeengekomen salaris.</p>
 
-<div style="background:#f4f4f7;border-left:4px solid ${GRYWO_KLEUR};padding:14px 16px;margin:18px 0;font-size:13px;color:#333;">
-  <b style="color:${GRYWO_KLEUR};">⚖ Strenge AVG-regels</b><br>
+<div style="background:#f4f4f7;border-left:4px solid ${NOAH_PAARS};padding:14px 16px;margin:18px 0;font-size:13px;color:#333;">
+  <b style="color:${NOAH_PAARS};">⚖ Strenge AVG-regels</b><br>
   Wij hanteren strikte privacy-waarborgen conform de AVG:
   <ul style="margin:8px 0 0 18px;padding:0;color:#444;font-size:12.5px;">
     <li>Het contract wordt geautomatiseerd geanalyseerd; <b>alle PII wordt zwart gemaakt</b> (BSN, IBAN, privé-adres, geboortedatum, telefoon, etc.).</li>
@@ -1387,14 +1386,14 @@ export async function sendContractControleUitnodiging({
 <p>Klik op de knop hieronder om het contract veilig te uploaden — duurt minder dan 2 minuten.</p>
 
 <div style="margin:20px 0;text-align:center;">
-  <a href="${url}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
+  <a href="${url}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:14px;">
     Upload contract veilig
   </a>
 </div>
 
 <p style="font-size:13px;color:#666;">
 Of kopieer deze link in je browser:<br>
-<a href="${url}" style="color:${GRYWO_KLEUR};">${url}</a>
+<a href="${url}" style="color:${NOAH_PAARS};">${url}</a>
 </p>
 
 <p style="font-size:12px;color:#888;margin-top:18px;">Vragen? Mail backoffice@noah-recruitment.nl of bel 085-4016082.</p>`;
@@ -1410,7 +1409,7 @@ Of kopieer deze link in je browser:<br>
 }
 
 /**
- * Mail naar GRYWO backoffice met de geredacteerde PDF + samenvatting als attachments.
+ * Mail naar Noah recruitment-backoffice met de geredacteerde PDF + samenvatting als attachments.
  * Bevat een uitgebreid salaris-overzicht met alle componenten + fee-berekening per percentage.
  */
 type SalarisInfo = {
@@ -1470,7 +1469,7 @@ export async function sendContractNaarBackoffice({
   const body = `
 <p>Een opdrachtgever heeft een arbeidscontract aangeleverd. Hieronder de geverifieerde salaris-opbouw en fee-berekening.</p>
 
-<h3 style="color:${GRYWO_KLEUR};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Basisgegevens</h3>
+<h3 style="color:${NOAH_PAARS};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${NOAH_PAARS};padding-bottom:4px;">Basisgegevens</h3>
 <table style="width:100%;font-size:13px;color:#333;">
   <tr><td style="padding:3px 0;color:#666;width:170px;">Kandidaat</td><td style="padding:3px 0;"><b>${kandidaatNaam}</b></td></tr>
   <tr><td style="padding:3px 0;color:#666;">Werkgever</td><td style="padding:3px 0;">${werkgever ?? "—"}</td></tr>
@@ -1480,19 +1479,19 @@ export async function sendContractNaarBackoffice({
   <tr><td style="padding:3px 0;color:#666;">Uren/week</td><td style="padding:3px 0;">${salaris.urenPerWeek ? `${salaris.urenPerWeek} uur` : "—"}</td></tr>
 </table>
 
-<h3 style="color:${GRYWO_KLEUR};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Salaris-opbouw</h3>
+<h3 style="color:${NOAH_PAARS};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${NOAH_PAARS};padding-bottom:4px;">Salaris-opbouw</h3>
 <table style="width:100%;font-size:13px;color:#333;">
   <tr><td style="padding:3px 0;color:#666;">Bruto maandsalaris × 12</td><td style="padding:3px 0;text-align:right;">${eur(maand)} × 12 = <b>${eur(jaarBasis)}</b></td></tr>
   <tr><td style="padding:3px 0;color:#666;">Vakantiegeld (${vakPct}%)</td><td style="padding:3px 0;text-align:right;">+ ${eur(vakgeld)}</td></tr>
   <tr><td style="padding:3px 0;color:#666;">13e maand${salaris.dertiendeMaand ? "" : " (n.v.t.)"}</td><td style="padding:3px 0;text-align:right;">${dertiende ? "+ " + eur(dertiende) : "—"}</td></tr>
   <tr><td style="padding:3px 0;color:#666;">Eindejaarsuitkering${salaris.eindejaarsuitkering ? "" : " (n.v.t.)"}</td><td style="padding:3px 0;text-align:right;">${eindejaar ? "+ " + eur(eindejaar) : "—"}</td></tr>
   <tr><td style="padding:3px 0;color:#666;">Vaste jaarbonus</td><td style="padding:3px 0;text-align:right;">${bonus ? "+ " + eur(bonus) : "—"}</td></tr>
-  <tr><td colspan="2" style="padding:8px 0 0 0;"><div style="border-top:2px solid ${GRYWO_KLEUR};"></div></td></tr>
-  <tr><td style="padding:8px 0;color:${GRYWO_KLEUR};font-weight:bold;font-size:14px;">BRUTO JAARSALARIS</td><td style="padding:8px 0;text-align:right;color:${GRYWO_KLEUR};font-weight:bold;font-size:16px;">${eur(totaal)}</td></tr>
+  <tr><td colspan="2" style="padding:8px 0 0 0;"><div style="border-top:2px solid ${NOAH_PAARS};"></div></td></tr>
+  <tr><td style="padding:8px 0;color:${NOAH_PAARS};font-weight:bold;font-size:14px;">BRUTO JAARSALARIS</td><td style="padding:8px 0;text-align:right;color:${NOAH_PAARS};font-weight:bold;font-size:16px;">${eur(totaal)}</td></tr>
 </table>
 ${verschilWaarschuwing}
 
-<h3 style="color:${GRYWO_KLEUR};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${GRYWO_KLEUR};padding-bottom:4px;">Fee-berekening</h3>
+<h3 style="color:${NOAH_PAARS};margin:20px 0 8px 0;font-size:15px;border-bottom:2px solid ${NOAH_PAARS};padding-bottom:4px;">Fee-berekening</h3>
 <table style="width:100%;font-size:13px;color:#333;">
   <tr><td style="padding:4px 0;color:#666;">15% W&S-fee</td><td style="padding:4px 0;text-align:right;color:#10b981;font-weight:bold;">${eur(totaal * 0.15)}</td></tr>
   <tr><td style="padding:4px 0;color:#666;">16% W&S-fee</td><td style="padding:4px 0;text-align:right;color:#10b981;font-weight:bold;">${eur(totaal * 0.16)}</td></tr>
@@ -1686,7 +1685,7 @@ export async function sendGesprek1BevestigingOpdrachtgever({
   ${bedrijf ? `<tr><td style="padding:6px 0;color:#666;">Bedrijf</td><td style="padding:6px 0;font-weight:600;">${bedrijf}</td></tr>` : ""}
   <tr><td style="padding:6px 0;color:#666;">Kandidaat</td><td style="padding:6px 0;font-weight:600;">${kandidaatVoornaam}</td></tr>
   ${contactpersoon ? `<tr><td style="padding:6px 0;color:#666;">Contactpersoon</td><td style="padding:6px 0;font-weight:600;">${contactpersoon}</td></tr>` : ""}
-  ${locatie_url ? `<tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;font-weight:600;"><a href="${locatie_url}" style="color:${GRYWO_KLEUR};">Bekijk op Google Maps</a></td></tr>` : ""}
+  ${locatie_url ? `<tr><td style="padding:6px 0;color:#666;">Locatie</td><td style="padding:6px 0;font-weight:600;"><a href="${locatie_url}" style="color:${NOAH_PAARS};">Bekijk op Google Maps</a></td></tr>` : ""}
 </table>
 
 <p style="margin:16px 0;">Mocht het toch niet schikken, neem dan contact met ons op zodat we kunnen herplannen.</p>
@@ -1740,7 +1739,7 @@ ${reden ? `
 ` : ""}
 
 <p style="margin:24px 0 16px 0;text-align:center;">
-  <a href="${link}" style="display:inline-block;background-color:${GRYWO_KLEUR};color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:bold;font-size:15px;">
+  <a href="${link}" style="display:inline-block;background-color:${NOAH_PAARS};color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:bold;font-size:15px;">
     Open Noah om toe te wijzen
   </a>
 </p>

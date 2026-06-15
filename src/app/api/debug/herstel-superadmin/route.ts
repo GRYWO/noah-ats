@@ -19,19 +19,21 @@ export async function GET() {
 
   const admin = createAdminClient();
 
-  // 1) Zoek of maak GRYWO-pool tenant
+  // 1) Zoek of maak Noah recruitment-pool tenant (vlag is_grywo_pool is legacy
+  // kolomnaam, behouden voor DB-stabiliteit, betekenis is nu Noah recruitment-pool).
   let { data: tenant } = await admin
     .from("tenants")
     .select("id")
     .eq("is_grywo_pool", true)
     .maybeSingle();
 
-  // Fallback: tenant met naam/handelsnaam GRYWO (case-insensitive) en upgrade naar pool
+  // Fallback: tenant met naam/handelsnaam 'Noah recruitment' (case-insensitive)
+  // en upgrade naar pool.
   if (!tenant) {
     const { data: byNaam } = await admin
       .from("tenants")
       .select("id")
-      .or("naam.ilike.grywo,handelsnaam.ilike.grywo")
+      .or("naam.ilike.noah recruitment,handelsnaam.ilike.noah recruitment")
       .maybeSingle();
     if (byNaam) {
       await admin.from("tenants").update({ is_grywo_pool: true }).eq("id", byNaam.id);

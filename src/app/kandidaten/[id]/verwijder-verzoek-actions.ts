@@ -124,7 +124,7 @@ export async function vraagVerwijderingAan(formData: FormData): Promise<Result> 
     return { error: `Mail naar recruiter mislukt: ${(e as Error).message}` };
   }
 
-  // Failsafe-kopie naar info@noah-recruitment.nl zodat GRYWO altijd op de hoogte is
+  // Failsafe-kopie naar info@noah-recruitment.nl zodat het Noah recruitment-team altijd op de hoogte is
   // (en kan ingrijpen als de recruiter niet reageert).
   try {
     await sendKandidaatVerwijderVerzoek({

@@ -3,7 +3,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { afwijzen } from "./actions";
 import { logVoorstelEvent } from "@/utils/voorstel-log";
 import Link from "next/link";
-import { GrywoLogo } from "@/components/GrywoLogo";
+import { NoahRecruitmentLogo } from "@/components/NoahRecruitmentLogo";
 
 export default async function VoorstelPage({
   params,
@@ -54,7 +54,7 @@ export default async function VoorstelPage({
       <main className="min-h-screen flex items-center justify-center bg-[#f4f4f7] p-6">
         <div className="bg-white rounded-2xl shadow-xl max-w-md p-8 text-center">
           <div className="bg-[#333399] rounded-xl px-5 py-3 mb-6 inline-block">
-            <GrywoLogo size="md" />
+            <NoahRecruitmentLogo variant="dark" size="md" />
           </div>
           <h1 className="text-xl font-bold text-gray-800 mb-2">
             {voorstel.status === "uitnodigen" ? "Je hebt deze kandidaat uitgenodigd" :
@@ -73,8 +73,8 @@ export default async function VoorstelPage({
     <main className="min-h-screen bg-[#f4f4f7] py-8 px-6">
       <div className="max-w-2xl mx-auto">
         <div className="bg-[#333399] rounded-t-2xl p-6 text-center">
-          <GrywoLogo size="lg" />
-          {t?.naam && t.naam.toLowerCase() !== "grywo" && (
+          <NoahRecruitmentLogo variant="dark" size="lg" />
+          {t?.naam && t.naam.toLowerCase() !== "noah recruitment" && (
             <p className="text-white/80 text-sm mt-2">via {t.naam}</p>
           )}
         </div>
@@ -143,6 +143,13 @@ export default async function VoorstelPage({
           <p className="text-xs text-gray-400 text-center mt-6">
             Bij uitnodigen vul je in 1 minuut je bedrijfsgegevens + 3 voorkeursdata in.
           </p>
+        </div>
+
+        <div className="text-center text-xs text-gray-500 mt-6">
+          Noah recruitment ·{" "}
+          <a href="https://www.noah-recruitment.nl" className="text-[#333399] hover:underline">
+            www.noah-recruitment.nl
+          </a>
         </div>
       </div>
     </main>

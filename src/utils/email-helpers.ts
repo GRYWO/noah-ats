@@ -35,10 +35,10 @@ export async function getSetterFrom(
   // Voorkeur: mail_adres als dat een @noah-recruitment.nl-adres is — zo werkt elke
   // Hostnet-mailbox zoals 'p.zwartenberg@noah-recruitment.nl', 'pepijn.zw@noah-recruitment.nl', etc.
   // Anders fallback op auto-generated voornaam@noah-recruitment.nl.
-  const ingevuldGrywo = data.mail_adres?.trim().toLowerCase().endsWith(`@${MAIL_DOMEIN}`)
+  const ingevuldNoah = data.mail_adres?.trim().toLowerCase().endsWith(`@${MAIL_DOMEIN}`)
     ? data.mail_adres.trim()
     : null;
-  const email = ingevuldGrywo || standaardEmail;
+  const email = ingevuldNoah || standaardEmail;
 
   const naam = `${data.voornaam ?? ""} ${data.achternaam ?? ""}`.trim();
   return naam ? `${naam} <${email}>` : email;

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Check, X, AlertTriangle } from "lucide-react";
 import { behandelVerwijderVerzoek } from "./actions";
 
@@ -30,7 +29,12 @@ export default async function VerwijderVerzoekPagina({
         </Link>
         <div className="flex items-center gap-2 text-xs text-white/60">
           <span>Powered by</span>
-          <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={60} height={16} className="opacity-80" />
+          <span className="text-sm font-extrabold tracking-tight text-white">
+            Noah<span className="text-[#ffd84d]">.</span>
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/60">
+            RECRUITMENT
+          </span>
         </div>
       </header>
 

@@ -251,7 +251,7 @@ export function InboxClient({
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
       new Notification(`Nieuwe e-mail van ${van}`, {
         body: onderwerp,
-        icon: "/grywo-logo.png",
+        icon: "/noah-logo.png",
         tag: `noah-mail-${van}-${onderwerp}`.slice(0, 100),
       });
     }

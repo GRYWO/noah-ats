@@ -84,13 +84,15 @@ export function HuisstijlSectie({
                 style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }}
               />
             ) : (
-              // Default: GRYWO logo wit (vervangen door upload)
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src="/grywo-logo-wit.png"
-                alt="Noah recruitment logo (standaard)"
-                className="h-12 max-w-[180px] object-contain opacity-90"
-              />
+              // Default: Noah recruitment-tekstwordmark als bureau nog geen eigen logo heeft.
+              <span className="inline-flex items-baseline gap-2 h-12">
+                <span className="text-2xl font-extrabold tracking-tight text-white">
+                  Noah<span style={{ color: "#ffd84d" }}>.</span>
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/70">
+                  RECRUITMENT
+                </span>
+              </span>
             )}
             <div className="text-white/80 text-sm ml-auto">
               <span style={{ color: accent }}>●</span> Voorbeeld accent-kleur

@@ -1,4 +1,5 @@
 export type KanbanStap =
+  | "website"
   | "interne_intake"
   | "in_afwachting_cv"
   | "in_wachtrij"
@@ -19,6 +20,7 @@ export type KanbanOptie = {
 };
 
 export const KANBAN_STAPPEN: KanbanOptie[] = [
+  { key: "website",                   label: "Website (nieuwe intake)",    kortLabel: "Website",                rand: "border-yellow-500", vink: "bg-yellow-500" },
   { key: "interne_intake",            label: "1. Interne intake",          kortLabel: "Interne intake",         rand: "border-blue-500",   vink: "bg-blue-500"   },
   { key: "in_afwachting_cv",          label: "2. In afwachting van CV",    kortLabel: "Wacht op CV",            rand: "border-cyan-500",   vink: "bg-cyan-500"   },
   { key: "in_wachtrij",               label: "3. In wachtrij",             kortLabel: "Wachtrij",               rand: "border-indigo-500", vink: "bg-indigo-500" },

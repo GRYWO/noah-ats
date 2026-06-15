@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TekenForm } from "./TekenForm";
 import { CheckCircle2 } from "lucide-react";
@@ -60,7 +59,12 @@ export default async function TekenPage({
       <header className="relative z-10 flex items-center justify-between px-8 py-6">
         <div className="flex items-center gap-2 text-xs text-white/70">
           <span>Powered by</span>
-          <Image src="/grywo-logo-wit.png" alt="Noah recruitment" width={70} height={20} className="opacity-90" />
+          <span className="text-base font-extrabold tracking-tight text-white">
+            Noah<span className="text-[#ffd84d]">.</span>
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/70">
+            RECRUITMENT
+          </span>
         </div>
         <div className="text-xs text-white/50">
           Verloopt {new Date(env.vervalt_op).toLocaleDateString("nl-NL")}

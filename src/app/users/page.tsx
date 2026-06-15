@@ -27,8 +27,8 @@ export default async function SettersPage({
   // Sales-admin (Pepijn) krijgt dezelfde brede toegang als super-admin op /users
   // — hij beheert alle bureaus, dus moet alle users + alle rollen kunnen zien.
   const isSales = await isSalesAdmin(user);
-  // Intern personeel (Wouter) ziet ook alle setters cross-tenant —
-  // nieuwe setters komen in GRYWO-pool, niet in zijn eigen bureau-tenant.
+  // Intern personeel (Wouter) ziet ook alle setters cross-tenant,
+  // nieuwe setters komen in de Noah recruitment-pool, niet in zijn eigen bureau-tenant.
   const { data: viewerProfile } = await supabase
     .from("profiles")
     .select("is_intern_personeel")
@@ -59,7 +59,7 @@ export default async function SettersPage({
   const { data: settersRuw } = await settersQuery;
 
   // Filter voor bureau-admin: alleen recruiters tonen
-  // (setters worden centraal door GRYWO geregeld).
+  // (setters worden centraal door Noah recruitment geregeld).
   // Super-/sales-admin zien iedereen.
   const setters = breedheidstoegang
     ? settersRuw

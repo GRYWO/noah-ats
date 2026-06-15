@@ -1,7 +1,7 @@
 /**
  * Bepaalt IMAP/SMTP servers op basis van het mailadres.
  *
- * @grywo.nl en @noah-recruitment.nl → Migadu (sinds verhuizing van Hostnet)
+ * @noah-recruitment.nl → Migadu (sinds verhuizing van Hostnet)
  * Alle andere → Hostnet (legacy default)
  */
 
@@ -29,7 +29,7 @@ const HOSTNET: MailServers = {
   smtpSecure: true,
 };
 
-const MIGADU_DOMAINS = ["grywo.nl", "noah-recruitment.nl"] as const;
+const MIGADU_DOMAINS = ["noah-recruitment.nl"] as const;
 
 export function getMailServers(mailAdres: string | null | undefined): MailServers {
   if (mailAdres) {

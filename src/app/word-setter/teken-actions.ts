@@ -63,15 +63,15 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
   // (Pepijn krijgt sowieso de mail en kan handmatig ingrijpen).
   try {
     const { randomBytes } = await import("crypto");
-    const { getGrywoPoolTenantId } = await import("@/utils/setter-assign");
+    const { getNoahPoolTenantId } = await import("@/utils/setter-assign");
     const { maakNoahMailbox } = await import("@/utils/migadu");
     const { encrypt } = await import("@/utils/crypto");
     const { werkdagenLater } = await import("@/utils/voorstel-log");
     const { sendAkkoordTerOndertekening } = await import("@/utils/email");
 
-    const tenantId = await getGrywoPoolTenantId();
+    const tenantId = await getNoahPoolTenantId();
     if (!tenantId) {
-      console.error("[setter-aanmelding] geen GRYWO-pool tenant gevonden");
+      console.error("[setter-aanmelding] geen Noah recruitment-pool tenant gevonden");
     } else {
       // EÉN wachtwoord voor zowel Noah-login als Migadu-mailbox.
       const inlogPw =
@@ -81,7 +81,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
       //    het inlog-adres voor Noah-ATS. Bij conflict probeert hij
       //    voornaam.achternaam@noah-recruitment.nl.
       let mailboxOk = false;
-      let grywoEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@noah-recruitment.nl`;
+      let werkEmail = `${voornaam.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "")}@noah-recruitment.nl`;
       let gebruikteAchternaam = false;
       try {
         const mb = await maakNoahMailbox({
@@ -90,7 +90,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
           wachtwoord: inlogPw,
         });
         mailboxOk = mb.ok || !!mb.alBestaat;
-        grywoEmail = mb.email;
+        werkEmail = mb.email;
         gebruikteAchternaam = !!mb.gebruikteAchternaam;
         if (!mb.ok && !mb.alBestaat) {
           console.error("[setter-aanmelding] Migadu:", mb.error);
@@ -99,12 +99,12 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
         console.error("[setter-aanmelding] Migadu uitzondering:", e);
       }
 
-      bevestigingMailbox = grywoEmail;
+      bevestigingMailbox = werkEmail;
       bevestigingMetAchternaam = gebruikteAchternaam;
 
       // 2. Auth-user aanmaken met @noah-recruitment.nl als login (NIET de persoonlijke email)
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
-        email: grywoEmail,
+        email: werkEmail,
         password: inlogPw,
         email_confirm: true,
       });
@@ -115,7 +115,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
         console.warn("[setter-aanmelding] createUser:", createErr.message);
         const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
         const bestaand = list?.users.find(
-          (u) => u.email?.toLowerCase() === grywoEmail.toLowerCase(),
+          (u) => u.email?.toLowerCase() === werkEmail.toLowerCase(),
         );
         if (bestaand) {
           userId = bestaand.id;
@@ -126,7 +126,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
         // Bewaar voor in de bevestigingsmail
         inlogWachtwoord = inlogPw;
 
-        // 3. Profile aanmaken in GRYWO-pool met 14-werkdagen proefperiode.
+        // 3. Profile aanmaken in Noah recruitment-pool met 14-werkdagen proefperiode.
         // Upsert want bij dubbele aanmelding kan profile al bestaan.
         const proefEinde = werkdagenLater(14);
         await admin.from("profiles").upsert({
@@ -136,7 +136,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
           achternaam,
           rol: "setter",
           telefoon: telefoon ?? null,
-          mail_adres: grywoEmail,
+          mail_adres: werkEmail,
           mail_wachtwoord: mailboxOk ? encrypt(inlogPw) : null,
           mail_status: mailboxOk ? "actief" : "niet_geconfigureerd",
           abonnement_status: "proefperiode",
@@ -150,7 +150,7 @@ export async function tekenSetterAanmelding(formData: FormData): Promise<Result>
           await admin.from("mail_accounts").update({ is_primary: false }).eq("user_id", userId);
           await admin.from("mail_accounts").upsert({
             user_id: userId,
-            mail_adres: grywoEmail,
+            mail_adres: werkEmail,
             mail_wachtwoord: encrypt(inlogPw),
             display_naam: "Werk",
             is_primary: true,

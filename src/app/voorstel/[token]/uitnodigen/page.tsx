@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { uitnodigen } from "../actions";
-import { GrywoLogo } from "@/components/GrywoLogo";
+import { NoahRecruitmentLogo } from "@/components/NoahRecruitmentLogo";
 
 export default async function UitnodigenPage({
   params,
@@ -22,7 +22,7 @@ export default async function UitnodigenPage({
     <main className="min-h-screen bg-[#f4f4f7] py-8 px-6">
       <div className="max-w-2xl mx-auto">
         <div className="bg-[#333399] rounded-t-2xl p-5 text-center">
-          <GrywoLogo size="md" />
+          <NoahRecruitmentLogo variant="dark" size="md" />
         </div>
         <div className="bg-white rounded-b-2xl shadow-xl p-8">
           <h1 className="text-2xl font-bold text-[#333399] mb-1">
@@ -86,9 +86,16 @@ export default async function UitnodigenPage({
             </div>
 
             <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-lg text-base transition">
-              Verzenden — {voorstel.kandidaat.voornaam} krijgt direct alle info
+              Verzenden, {voorstel.kandidaat.voornaam} krijgt direct alle info
             </button>
           </form>
+        </div>
+
+        <div className="text-center text-xs text-gray-500 mt-6">
+          Noah recruitment ·{" "}
+          <a href="https://www.noah-recruitment.nl" className="text-[#333399] hover:underline">
+            www.noah-recruitment.nl
+          </a>
         </div>
       </div>
     </main>

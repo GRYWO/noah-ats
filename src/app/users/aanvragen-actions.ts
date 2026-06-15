@@ -186,7 +186,7 @@ export async function stuurBevestiging({
 }
 
 /**
- * GRYWO verstuurt antwoord via /reageer/[token] pagina.
+ * Noah recruitment-admin verstuurt antwoord via /reageer/[token] pagina.
  */
 export async function verstuurReply({
   token,

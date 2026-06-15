@@ -3,14 +3,14 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { PrintKnop } from "./PrintKnop";
-import { GrywoLogo } from "@/components/GrywoLogo";
+import { NoahRecruitmentLogo } from "@/components/NoahRecruitmentLogo";
 
 /**
  * Genereert een volledige verwerkersovereenkomst (DPA) met alle
  * gegevens van het bureau vooraf ingevuld. Print-vriendelijke layout:
  * Cmd+P / Ctrl+P → 'Opslaan als PDF' geeft een nette PDF.
  *
- * Alleen super-admin (GRYWO) kan deze pagina openen.
+ * Alleen super-admin (Noah recruitment) kan deze pagina openen.
  */
 export default async function DpaPage({
   params,
@@ -62,7 +62,7 @@ export default async function DpaPage({
             <div className="text-[#333399] text-3xl font-bold tracking-tight">Verwerkersovereenkomst</div>
             <div className="text-sm text-gray-600 mt-1">Conform artikel 28 AVG · Datum: {vandaag}</div>
           </div>
-          <GrywoLogo size="md" wit={false} />
+          <NoahRecruitmentLogo variant="light" size="md" label="RECRUITMENT" />
         </header>
 
         <section className="mb-6">

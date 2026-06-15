@@ -44,8 +44,8 @@ export function VoorkeurenSectie() {
       localStorage.setItem(DESKTOP_NOTIF_KEY, "1");
       // Test-notificatie
       new Notification("Noah ATS", {
-        body: "Desktop-notificaties zijn aan ✓",
-        icon: "/grywo-icoon.jpg",
+        body: "Desktop-notificaties zijn aan",
+        icon: "/noah-icoon.jpg",
       });
     } else {
       setDesktopAan(false);
