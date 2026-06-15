@@ -93,9 +93,8 @@ export default async function LoginPage({
             Welkom bij Noah recruitment
           </p>
           <p className="text-white/70 text-sm leading-relaxed mb-3">
-            GRYWO is verleden tijd. Vanaf vandaag heten we Noah recruitment.
-            Zelfde mensen, zelfde aanpak, een naam die past bij hoe we verder
-            willen groeien.
+            Vanaf vandaag heten we Noah recruitment. Zelfde mensen, zelfde
+            aanpak, een naam die past bij hoe we verder willen groeien.
           </p>
           <p className="text-white/80 text-[11px] font-semibold uppercase tracking-wider mb-2">
             Wat verandert er voor jou
