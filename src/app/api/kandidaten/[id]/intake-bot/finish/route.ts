@@ -15,20 +15,31 @@ function jaNee(v: string): boolean | null {
 }
 
 // Rondt de intake-bot af: genereert het profiel en slaat het op de kandidaat op.
+// Toegang: recruiter/admin/super-admin altijd, setter alleen voor eigen
+// aangemaakte kandidaten. Cross-tenant: kandidaat moet binnen dezelfde tenant
+// vallen. Voor setter zetten we kanban_stap automatisch naar 'in_wachtrij'
+// zodat een recruiter de kandidaat oppakt.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ fout: "Niet ingelogd." }, { status: 401 });
   const { data: profile } = await supabase.from("profiles").select("rol, tenant_id").eq("id", user.id).single();
-  if (!profile || profile.rol === "setter") return NextResponse.json({ fout: "Geen toegang." }, { status: 403 });
+  if (!profile) return NextResponse.json({ fout: "Geen toegang." }, { status: 403 });
 
-  const { data: k } = await supabase
+  // Cross-tenant guard voor elke rol; setter ook eigenaar-check.
+  let kandidaatQuery = supabase
     .from("kandidaten")
-    .select("id, tenant_id, email, cv_geparseerd")
+    .select("id, tenant_id, email, eigenaar_id, cv_geparseerd")
     .eq("id", id)
-    .single();
-  if (!k || k.tenant_id !== profile.tenant_id) return NextResponse.json({ fout: "Geen toegang." }, { status: 403 });
+    .eq("tenant_id", profile.tenant_id);
+
+  if (profile.rol === "setter") {
+    kandidaatQuery = kandidaatQuery.eq("eigenaar_id", user.id);
+  }
+
+  const { data: k } = await kandidaatQuery.single();
+  if (!k) return NextResponse.json({ fout: "Kandidaat niet gevonden." }, { status: 404 });
 
   const { profiel } = (await req.json()) as { profiel: IntakeProfiel };
 
@@ -60,6 +71,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     uren_per_week: getal(profiel.uren_per_week),
     werkvergunning: jaNee(profiel.werkvergunning),
     nederlands_voldoende: jaNee(profiel.taal_ok),
+    talen: vp.talen || null,
+    beschikbaarheid: profiel.beschikbaarheid || null,
     profielschets: vp.profielschets || null,
     cv_geparseerd: {
       ...cvg,
@@ -72,8 +85,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   };
   if (!k.email && profiel.email) update.email = profiel.email;
 
+  // Setter mag intake voltooien, maar levert daarna door aan recruiter via wachtrij.
+  if (profile.rol === "setter") {
+    update.kanban_stap = "in_wachtrij";
+  }
+
   const { error } = await admin.from("kandidaten").update(update).eq("id", id);
   if (error) return NextResponse.json({ fout: error.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true, voorstel: { naam: profiel.naam, woonplaats: profiel.woonplaats, ...vp } });
+  return NextResponse.json({ ok: true, voorstel: { naam: profiel.naam, woonplaats: profiel.woonplaats, ...vp }, rol: profile.rol });
 }

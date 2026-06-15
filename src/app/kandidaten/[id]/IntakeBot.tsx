@@ -18,9 +18,9 @@ function lijst(t?: string): string[] {
   return (t.includes("\n") ? t.split("\n") : t.split(/[;•]/)).map(s => s.replace(/^[-•\s]+/, "").trim()).filter(Boolean);
 }
 
-export function IntakeBot({ kandidaatId, cvContext }: { kandidaatId: string; cvContext?: string }) {
+export function IntakeBot({ kandidaatId, cvContext, autoStart = false, rolIsSetter = false }: { kandidaatId: string; cvContext?: string; autoStart?: boolean; rolIsSetter?: boolean }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoStart);
   const [messages, setMessages] = useState<Bericht[]>([]);
   const [input, setInput] = useState("");
   const [bezig, setBezig] = useState(false);
@@ -59,7 +59,11 @@ export function IntakeBot({ kandidaatId, cvContext }: { kandidaatId: string; cvC
         const d = await r.json();
         setVoorstel(d.voorstel ?? {});
         setFinishing(false);
-        router.refresh();
+        // /kandidaten/intaken toont geen lijst die ververst moet worden;
+        // een refresh daar veroorzaakt alleen onnodige roundtrip en flicker.
+        if (typeof window !== "undefined" && !window.location.pathname.includes("/kandidaten/intaken")) {
+          router.refresh();
+        }
       })();
     }
   }, [profiel, voorstel, finishing, kandidaatId, router]);
@@ -129,7 +133,9 @@ export function IntakeBot({ kandidaatId, cvContext }: { kandidaatId: string; cvC
           </div>
         </div>
 
-        {keuze === "wachtrij" || keuze === "wachten" ? (
+        {rolIsSetter ? (
+          <p className="text-sm font-semibold text-emerald-700 inline-flex items-center gap-2"><Check size={14} /> Kandidaat staat klaar in de wachtrij. Een recruiter pakt de kandidaat verder op.</p>
+        ) : keuze === "wachtrij" || keuze === "wachten" ? (
           <p className="text-sm font-semibold text-emerald-700 inline-flex items-center gap-2"><Check size={14} /> Kandidaat {keuze === "wachtrij" ? "naar de wachtrij gezet" : "op wachten gezet"}.</p>
         ) : (
           <div className="flex flex-wrap gap-3">

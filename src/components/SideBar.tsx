@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Building2,
   Users,
+  UserPlus,
   KanbanSquare,
   Contact,
   Mail,
@@ -22,7 +23,6 @@ import {
   Send,
   Calendar,
   CalendarClock,
-  Sparkles as SparklesIcon,
   FileSignature,
   Archive,
   CreditCard,
@@ -84,7 +84,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
   }, []);
 
   useEffect(() => {
-    // Alleen in handmatige modus persisten — anders dicteert de modus zelf
+    // Alleen in handmatige modus persisten , anders dicteert de modus zelf
     if (modus === "handmatig") {
       localStorage.setItem("noah-sidebar-open", open ? "1" : "0");
     }
@@ -96,8 +96,9 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
     { key: "dashboard",    href: "/dashboard",    label: "Dashboard",   Icon: LayoutDashboard, sectie: 1 },
     ...(isSuperAdmin || isSalesAdmin ? [{ key: "bureaus", href: "/bureaus", label: "Bureaus", Icon: Building2, sectie: 1 } as Item] : []),
 
-    // Sectie 2: Werkstroom — recruitment
+    // Sectie 2: Werkstroom , recruitment
     ...(!isBureauAdmin ? [{ key: "kandidaten", href: "/kandidaten", label: "Kandidaten", Icon: Users, sectie: 2 } as Item] : []),
+    ...(!isBureauAdmin ? [{ key: "intaken", href: "/kandidaten/intaken", label: "Intake starten", Icon: UserPlus, sectie: 2 } as Item] : []),
     { key: "kanban",         href: "/kanban",         label: "Kanban",       Icon: KanbanSquare,  sectie: 2 },
     { key: "voorstellen",    href: "/voorstellen",    label: "Voorstellen",  Icon: Send,          sectie: 2 } as Item,
     { key: "agenda",         href: "/agenda",         label: "Agenda",       Icon: Calendar,      sectie: 2 },
@@ -117,7 +118,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
     { key: "mail-setup",     href: "/mail-setup",     label: "Mail-instellen", Icon: AtSign,      sectie: 4 },
 
     // Sectie 5: Team & beheer
-    ...(!isRecruiter && !isBureauAdmin ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: SparklesIcon, sectie: 5 } as Item] : []),
+    ...(!isRecruiter && !isBureauAdmin ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: Sparkles, sectie: 5 } as Item] : []),
     ...(!isSetter && !isRecruiter ? [{ key: "setters", href: "/users", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "documenten", href: "/documenten", label: "Documenten", Icon: FileSignature, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "archief", href: "/archief", label: "Archief", Icon: Archive, sectie: 5 } as Item] : []),

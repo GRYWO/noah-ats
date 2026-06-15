@@ -12,7 +12,7 @@ import { leesViewAs, effectieveRol } from "@/utils/view-as";
 import { isSalesAdmin } from "@/utils/sales-admin";
 
 type Props = {
-  active?: "dashboard" | "bureaus" | "kandidaten" | "kanban" | "agenda" | "voorstellen" | "opdrachtgevers" | "robin" | "jobdigger" | "inbox" | "mail-setup" | "setters" | "coaching" | "instellingen" | "vacature-aanmaken";
+  active?: "dashboard" | "bureaus" | "kandidaten" | "intaken" | "kanban" | "agenda" | "voorstellen" | "opdrachtgevers" | "robin" | "jobdigger" | "inbox" | "mail-setup" | "setters" | "coaching" | "instellingen" | "vacature-aanmaken";
 };
 
 export async function TopBar({ active }: Props) {
@@ -21,7 +21,7 @@ export async function TopBar({ active }: Props) {
 
   // Was: 3 sequentiële queries (profile, viewAs cookie, isSalesAdmin → eigen profile-fetch)
   // Nu: 1 grotere profile query met kan_abonnementen_beheren erbij + viewAs parallel.
-  // Bespaart ~50-100ms per pageload — TopBar rendert op ELKE page.
+  // Bespaart ~50-100ms per pageload , TopBar rendert op ELKE page.
   const [profileRes, viewAs] = await Promise.all([
     supabase
       .from("profiles")
@@ -32,11 +32,11 @@ export async function TopBar({ active }: Props) {
   ]);
   const profile = profileRes.data;
 
-  // Throttled "wie-is-online" tracking — max 1 update per minuut per user
+  // Throttled "wie-is-online" tracking , max 1 update per minuut per user
   if (user && profile) {
     const laatste = profile.laatst_actief_op ? new Date(profile.laatst_actief_op).getTime() : 0;
     if (Date.now() - laatste > 60 * 1000) {
-      // Fire-and-forget — geen await zodat page load niet vertraagd
+      // Fire-and-forget , geen await zodat page load niet vertraagd
       supabase.from("profiles")
         .update({ laatst_actief_op: new Date().toISOString() })
         .eq("id", user.id)
@@ -57,11 +57,11 @@ export async function TopBar({ active }: Props) {
   // Bureau-admin = admin rol zonder super-admin én geen intern personeel, of demo "bureau_admin"
   const isBureauAdmin = viewAs === "bureau_admin" || (actieveRol === "admin" && !isSuperAdmin && !isInternPersoneel && !demoActief);
   // Sales-admin (Pepijn): super-admin OF kan_abonnementen_beheren=true.
-  // Geen aparte DB-call meer — komt uit dezelfde profile-query.
+  // Geen aparte DB-call meer , komt uit dezelfde profile-query.
   const isSalesAdminFlag = !demoActief && (echteIsSuperAdmin || !!profile?.kan_abonnementen_beheren);
   // Silence unused-import warning na bovenstaande refactor
   void isSalesAdmin;
-  // In demo-modus negeren we eigen menu_permissions — anders worden Yorith's
+  // In demo-modus negeren we eigen menu_permissions , anders worden Yorith's
   // persoonlijke menu-toggles toegepast op de demo-rol (= incorrecte preview).
   const menuPermissions = demoActief
     ? null
