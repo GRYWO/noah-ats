@@ -69,8 +69,31 @@ export async function GET() {
     .from("tenants")
     .select("id, naam");
 
+  // Voor wie deze 7 zijn: namen + email + kanban_stap zodat we kunnen zien
+  // of het oude intake-doorzetters zijn of handmatige toevoegingen.
+  const atsList = (atsKandidaten ?? []).slice(0, 25).map((k) => {
+    const row = k as { voornaam: string | null; achternaam: string | null; email: string | null; kanban_stap: string | null; created_at: string };
+    return {
+      naam: `${row.voornaam ?? ""} ${row.achternaam ?? ""}`.trim() || "(zonder naam)",
+      email: row.email,
+      kanban_stap: row.kanban_stap,
+      created_at: row.created_at,
+    };
+  });
+
+  // Tellen zonder enige datum-filter zodat we ook archief zien.
+  const { count: recKandidatenTotaal } = await admin
+    .from("rec_kandidaten")
+    .select("id", { count: "exact", head: true });
+  const { count: kandidatenTotaal } = await admin
+    .from("kandidaten")
+    .select("id", { count: "exact", head: true });
+
   return NextResponse.json({
     atsTenantIdGebruiktDoorMirror: ATS_TENANT_ID,
+    recKandidatenTotaal: recKandidatenTotaal ?? 0,
+    kandidatenTotaal: kandidatenTotaal ?? 0,
+    atsList,
     kandidatenInDeze_tenant: kandidatenInTenant ?? 0,
     tenants,
     recKandidaten30d: recKandidaten?.length ?? 0,
