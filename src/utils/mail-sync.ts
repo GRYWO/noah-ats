@@ -189,14 +189,29 @@ export async function syncMailsVoorAccount(accountId: string, mailLimitPerMap = 
         }
 
         if (nieuweBerichten.length > 0) {
-          await admin.from("mail_berichten").upsert(nieuweBerichten, {
-            onConflict: "user_id,map_pad,uid",
-          });
-          totaalNieuw += nieuweBerichten.length;
+          // Constraint-onafhankelijke upsert: haal bestaande uids op en
+          // splits in update vs insert. Werkt of de unique-constraint nu
+          // op (user_id,map_pad,uid) of (account_id,map_pad,uid) staat.
+          const uids = nieuweBerichten.map((b) => b.uid);
+          const { data: bestaand } = await admin
+            .from("mail_berichten")
+            .select("id, uid")
+            .eq("account_id", accountId)
+            .eq("map_pad", mapInfo.path)
+            .in("uid", uids);
+          const bestaandeMap = new Map<number, string>(
+            (bestaand ?? []).map((r) => [r.uid as number, r.id as string]),
+          );
+          const inserts = nieuweBerichten.filter((b) => !bestaandeMap.has(b.uid));
+          if (inserts.length > 0) {
+            const { error: insErr } = await admin.from("mail_berichten").insert(inserts);
+            if (insErr) console.error("mail_berichten insert faalde", insErr.message);
+          }
+          totaalNieuw += inserts.length;
           // Push alleen sturen als de nieuwe mail in INBOX zit, anders
           // krijgt user notificaties voor mails die hij net naar trash
           // verplaatste of die in Sent terechtkwamen.
-          if (type === "inbox") nieuwInbox += nieuweBerichten.length;
+          if (type === "inbox") nieuwInbox += inserts.length;
         }
       } finally {
         lock.release();

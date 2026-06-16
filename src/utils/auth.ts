@@ -11,6 +11,10 @@
  */
 const SUPER_ADMIN_EMAILS: ReadonlySet<string> = new Set([
   "yorith@noah-recruitment.nl",
+  // Backwards-compat: oude mailadressen blijven super-admin zodat een
+  // accidentele login met legacy-adres niet de access verliest.
+  "yorith@grywo.nl",
+  "yorithh93@gmail.com",
 ]);
 
 export function isSuperAdminEmail(email: string | null | undefined): boolean {
