@@ -21,6 +21,7 @@ import { KANBAN_OPTIES } from "@/utils/kanban";
 import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
 import { EigenaarKnop } from "./EigenaarKnop";
 import { getViewerRol } from "@/utils/view-as";
+import { zetWebsiteIntakeDoorNaarWachtrij, keurWebsiteIntakeAf } from "./website-intake-actions";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -142,6 +143,8 @@ export default async function KandidaatDetail({
     plaatsing:             { label: "Geplaatst",              kleur: "bg-emerald-600 text-white" },
     afwijzing:             { label: "Afgewezen",              kleur: "bg-red-100 text-red-800" },
     verlopen:              { label: "Verlopen",               kleur: "bg-gray-100 text-gray-600" },
+    website_doorgezet:     { label: "Website doorgezet",      kleur: "bg-emerald-100 text-emerald-800" },
+    website_afgekeurd:     { label: "Website afgekeurd",      kleur: "bg-red-100 text-red-800" },
   };
 
   const initials = `${k.voornaam?.[0] ?? ""}${k.achternaam?.[0] ?? ""}`.toUpperCase();
@@ -200,6 +203,92 @@ export default async function KandidaatDetail({
           </div>
         </div>
 
+        {/* Website-intake beslissingsbalk — alleen voor admin/recruiter wanneer
+            de kandidaat nog in de kanban-kolom 'website' staat. Wouter ziet
+            hier het AI-oordeel uit noah-recruitment en kan in één klik
+            doorzetten naar de wachtrij of afkeuren. */}
+        {!isSetter && k.kanban_stap === "website" && (() => {
+          const oordeel = (k.website_intake_ai_oordeel ?? "").toString().toLowerCase();
+          // Fallback: oude kandidaten zonder eigen kolom. Lees uit notitie
+          // (regel "AI-oordeel: goedgekeurd" of "AI-oordeel: afgekeurd (reden1; reden2).")
+          let fallbackOordeel = "";
+          let fallbackRedenen = "";
+          if (!oordeel && typeof k.notitie === "string") {
+            const m = k.notitie.match(/AI-oordeel:\s*(goedgekeurd|afgekeurd)(?:\s*\(([^)]*)\))?/i);
+            if (m) {
+              fallbackOordeel = m[1].toLowerCase();
+              fallbackRedenen = (m[2] ?? "").trim();
+            }
+          }
+          const definitiefOordeel = oordeel || fallbackOordeel;
+          const redenenRaw = k.website_intake_ai_redenen ?? fallbackRedenen ?? "";
+          const redenen = (typeof redenenRaw === "string" ? redenenRaw : "")
+            .split(/[;\n]/)
+            .map(s => s.trim())
+            .filter(Boolean);
+          const isAfgekeurd = definitiefOordeel === "afgekeurd";
+          const isGoedgekeurd = definitiefOordeel === "goedgekeurd";
+
+          return (
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border-2 border-[#333399]/30">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                    <h2 className="font-bold text-gray-800 text-lg">Website-intake: jouw beslissing</h2>
+                    {isGoedgekeurd && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        AI-oordeel: goedgekeurd
+                      </span>
+                    )}
+                    {isAfgekeurd && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                        AI-oordeel: afgekeurd
+                      </span>
+                    )}
+                    {!isGoedgekeurd && !isAfgekeurd && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                        AI-oordeel: onbekend
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Deze kandidaat is via de website binnengekomen en wacht op jouw beoordeling.
+                    Zet door naar de wachtrij zodat een setter aan de slag kan, of keur af als de match niet klopt.
+                  </p>
+                  {isAfgekeurd && redenen.length > 0 && (
+                    <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                      <div className="text-xs font-semibold text-red-800 mb-1">Reden(en) van de AI</div>
+                      <ul className="list-disc pl-5 text-xs text-red-700 space-y-0.5">
+                        {redenen.map((r) => <li key={r}>{r}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <form action={zetWebsiteIntakeDoorNaarWachtrij}>
+                    <input type="hidden" name="id" value={k.id} />
+                    <button
+                      type="submit"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-md text-sm shadow"
+                    >
+                      Doorzetten naar wachtrij
+                    </button>
+                  </form>
+                  <form action={keurWebsiteIntakeAf}>
+                    <input type="hidden" name="id" value={k.id} />
+                    <button
+                      type="submit"
+                      className="bg-white hover:bg-red-50 text-red-700 border border-red-300 font-semibold px-5 py-2 rounded-md text-sm"
+                    >
+                      Afkeuren
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Intake zoekfilters — alleen voor recruiter/admin (setter mag niet aanpassen) */}
         {!isSetter && (
           <IntakeFiltersBanner
@@ -252,7 +341,7 @@ export default async function KandidaatDetail({
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@noah-recruitment.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : ok === "intake_afgerond" ? "Interne intake afgerond — kandidaat heeft mail ontvangen" : ok === "intake_opgeslagen" ? "Intake opgeslagen — controleer de profielschets" : ok === "tweede_gesprek" ? "2e gesprek-datum opgeslagen" : ok === "intake_afgewezen" ? "Kandidaat afgekeurd — afwijzings-mail verstuurd" : "Opgeslagen"}
+            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@noah-recruitment.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : ok === "intake_afgerond" ? "Interne intake afgerond — kandidaat heeft mail ontvangen" : ok === "intake_opgeslagen" ? "Intake opgeslagen — controleer de profielschets" : ok === "tweede_gesprek" ? "2e gesprek-datum opgeslagen" : ok === "intake_afgewezen" ? "Kandidaat afgekeurd — afwijzings-mail verstuurd" : ok === "website_doorgezet" ? "Website-intake doorgezet naar de wachtrij" : ok === "website_afgekeurd" ? "Website-intake afgekeurd" : "Opgeslagen"}
           </div>
         )}
         {error && (

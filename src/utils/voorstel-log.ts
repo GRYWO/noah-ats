@@ -11,7 +11,9 @@ export type VoorstelEvent =
   | "plaatsing"
   | "plaatsing_ongedaan"
   | "afwijzing"
-  | "verlopen";
+  | "verlopen"
+  | "website_doorgezet"
+  | "website_afgekeurd";
 
 export async function logVoorstelEvent(opts: {
   tenantId: string;
