@@ -387,7 +387,7 @@ export function RecruiterIntake() {
           <label className="mt-6 block cursor-pointer rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-10 transition hover:border-[#333399] hover:bg-[#eef0ff]/30">
             <input
               type="file"
-              accept=".pdf,application/pdf"
+              accept=".pdf,.docx,.doc,.rtf,.txt,.jpg,.jpeg,.png,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/rtf,text/plain,image/jpeg,image/png,image/webp"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -400,7 +400,7 @@ export function RecruiterIntake() {
                 : "Klik om het CV te uploaden"}
             </div>
             <div className="mt-1 text-xs text-gray-500">
-              PDF, max ongeveer 10 MB
+              PDF, Word, RTF, tekst of foto van het CV (max 15 MB)
             </div>
           </label>
           {uploadFout && (
