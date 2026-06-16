@@ -2,11 +2,15 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
-import { IntakeStarter } from "./IntakeStarter";
+import { RecruiterIntake } from "./RecruiterIntake";
 
-// Nieuwe CV-first intake-flow. Setter, recruiter en admin mogen hier
-// een kandidaat aanmaken; de setter doet de intake en levert daarna
-// door aan een recruiter (kanban-stap 'in_wachtrij').
+// Recruiter-intake-flow, geport van de publieke /werk-intake op
+// noah-recruitment.nl. De recruiter doorloopt deze samen met de
+// kandidaat aan de telefoon. Na finish landt de kandidaat in BOTH
+// rec_kandidaten (publieke site) en de noah-ats kandidaten-tabel via
+// de bestaande mirror in /api/intake/finish op noah-recruitment.
+//
+// Toegang: recruiter, admin, super_admin. Setter en bureau_admin niet.
 export default async function IntakenPage({
   searchParams,
 }: {
@@ -23,10 +27,12 @@ export default async function IntakenPage({
     .eq("id", user.id)
     .single();
 
-  // Lockdown: setter is read-only op /kandidaten en mag dus GEEN intake starten.
-  // Alleen recruiter / admin / super-admin krijgen de intake-flow.
-  // Bureau-admin niet (die runt geen intakes).
-  if (!profile || (profile.rol !== "recruiter" && profile.rol !== "admin" && profile.rol !== "super_admin")) {
+  if (
+    !profile ||
+    (profile.rol !== "recruiter" &&
+      profile.rol !== "admin" &&
+      profile.rol !== "super_admin")
+  ) {
     redirect("/kandidaten?error=Geen+toegang+tot+intake-flow");
   }
 
@@ -35,14 +41,28 @@ export default async function IntakenPage({
       <TopBar active="intaken" />
 
       <div className="p-8 max-w-4xl mx-auto">
-        <Link href="/kandidaten" className="text-sm text-gray-600 hover:text-[#333399] mb-3 inline-block">
+        <Link
+          href="/kandidaten"
+          className="text-sm text-gray-600 hover:text-[#333399] mb-3 inline-block"
+        >
           Terug naar kandidaten
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Intake starten</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Recruiter intake</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Upload het CV, Noah leest het uit en voert daarna direct het intakegesprek met je.
+            Doorloop deze samen met de kandidaat aan de telefoon.
+          </p>
+        </div>
+
+        <div className="mb-6 rounded-xl border border-[#333399]/15 bg-[#eef0ff]/50 p-4 text-sm text-gray-700">
+          <p className="font-semibold text-gray-800">Zo werkt het</p>
+          <p className="mt-1 leading-relaxed">
+            Upload het CV van de kandidaat. Noah leest het uit en stelt
+            daarna gerichte vragen die je samen met de kandidaat aan de
+            lijn beantwoordt. Na afronden verschijnt de kandidaat
+            automatisch in het kandidaten-overzicht op stap website en
+            tegelijk op noah-recruitment.nl met passende vacatures.
           </p>
         </div>
 
@@ -52,7 +72,7 @@ export default async function IntakenPage({
           </div>
         )}
 
-        <IntakeStarter rolIsSetter={profile.rol === "setter"} />
+        <RecruiterIntake />
       </div>
     </main>
   );

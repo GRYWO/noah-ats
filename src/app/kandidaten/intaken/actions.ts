@@ -1,5 +1,12 @@
 "use server";
 
+// DEPRECATED: deze server-action hoort bij de oude IntakeStarter-flow die
+// een kandidaat lokaal in noah-ats aanmaakte en daarna IntakeBot draaide.
+// De nieuwe RecruiterIntake gebruikt de proxy-routes onder
+// /api/kandidaten/intaken/proxy/* en de mirror in /api/intake/finish op
+// noah-recruitment om de kandidaat in BOTH databases te zetten. Deze file
+// blijft staan als legacy maar wordt niet meer aangeroepen vanuit de UI.
+
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
