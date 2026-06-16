@@ -110,13 +110,23 @@ export async function GET() {
     .from("rec-cvs")
     .list("intake", { limit: 100, sortBy: { column: "created_at", order: "desc" } });
 
+  // rec_profielen content (mogelijk een aparte intake-route)
+  let recProfielenInhoud: unknown[] = [];
+  try {
+    const { data } = await admin.from("rec_profielen").select("*").limit(10);
+    recProfielenInhoud = data ?? [];
+  } catch {
+    // tabel ontbreekt
+  }
+
   return NextResponse.json({
     atsTenantIdGebruiktDoorMirror: ATS_TENANT_ID,
     recSollicitaties: recSollicitaties ?? 0,
     recVacatures: recVacatures ?? 0,
     recProfielen,
+    recProfielenInhoud,
     storageCvFiles: storageFiles?.length ?? 0,
-    laatsteCvFiles: storageFiles?.slice(0, 10).map((f) => ({ naam: f.name, gemaakt: f.created_at })),
+    laatsteCvFiles: storageFiles?.slice(0, 20).map((f) => ({ naam: f.name, gemaakt: f.created_at })),
     recKandidatenTotaal: recKandidatenTotaal ?? 0,
     kandidatenTotaal: kandidatenTotaal ?? 0,
     atsList,
