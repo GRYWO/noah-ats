@@ -2,7 +2,6 @@ import { createClient } from "@/utils/supabase/server";
 import { isSuperAdminEmail } from "@/utils/auth";
 import { logout } from "@/app/login/actions";
 import { SideBar } from "./SideBar";
-import { EodHerinneringBanner } from "./EodHerinneringBanner";
 import { SnelZoeken } from "./SnelZoeken";
 import { AutoRefresh } from "./AutoRefresh";
 import { DemoModusBanner } from "./DemoModusBanner";
@@ -72,7 +71,6 @@ export async function TopBar({ active }: Props) {
       <HuisstijlInjector />
       <DemoModusBanner />
       <ProefperiodeBanner />
-      <EodHerinneringBanner />
       <SideBar
         active={active}
         userEmail={user?.email ?? ""}
