@@ -89,8 +89,34 @@ export async function GET() {
     .from("kandidaten")
     .select("id", { count: "exact", head: true });
 
+  // Sollicitaties + storage-files - misschien staan intakes daar
+  const { count: recSollicitaties } = await admin
+    .from("rec_sollicitaties")
+    .select("id", { count: "exact", head: true });
+  const { count: recVacatures } = await admin
+    .from("rec_vacatures")
+    .select("id", { count: "exact", head: true });
+  let recProfielen: number | string = "tabel niet gevonden";
+  try {
+    const { count } = await admin
+      .from("rec_profielen")
+      .select("id", { count: "exact", head: true });
+    if (typeof count === "number") recProfielen = count;
+  } catch {
+    // tabel kan ontbreken in deze Supabase
+  }
+
+  const { data: storageFiles } = await admin.storage
+    .from("rec-cvs")
+    .list("intake", { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+
   return NextResponse.json({
     atsTenantIdGebruiktDoorMirror: ATS_TENANT_ID,
+    recSollicitaties: recSollicitaties ?? 0,
+    recVacatures: recVacatures ?? 0,
+    recProfielen,
+    storageCvFiles: storageFiles?.length ?? 0,
+    laatsteCvFiles: storageFiles?.slice(0, 10).map((f) => ({ naam: f.name, gemaakt: f.created_at })),
     recKandidatenTotaal: recKandidatenTotaal ?? 0,
     kandidatenTotaal: kandidatenTotaal ?? 0,
     atsList,
