@@ -22,7 +22,7 @@ export async function GET() {
   }
 
   const admin = createAdminClient();
-  const sindsIso = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+  const sindsIso = new Date(Date.now() - 180 * 24 * 3600 * 1000).toISOString();
 
   const ATS_TENANT_ID = "ab2b55d9-5208-43e7-8d9c-e42d49bedecb";
 
