@@ -343,16 +343,39 @@ async function voltooidEnvelope(envelopeId: string) {
 
   // Mail iedereen
   for (const o of onds ?? []) {
+    let signedUrl: string | null = null;
+    try {
+      const { data: signed, error: signedErr } = await admin
+        .storage
+        .from("documenten")
+        .createSignedUrl(voltooidPad, 60 * 60 * 24 * 30);
+      if (signedErr) {
+        console.error("[document] signed-url voor voltooid-mail mislukt:", signedErr);
+      } else {
+        signedUrl = signed?.signedUrl ?? null;
+      }
+    } catch (e) {
+      console.error("[document] signed-url voor voltooid-mail exception:", e);
+    }
+
+    const knopHtml = signedUrl
+      ? `
+  <p style="margin:20px 0 8px 0;">Klik hieronder om het getekende document te openen. Deze link is 30 dagen geldig.</p>
+  <p style="margin:16px 0;text-align:center;">
+    <a href="${signedUrl}" style="display:inline-block;background-color:#10b981;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">Open getekend document</a>
+  </p>`
+      : "";
+
     try {
       await resend.emails.send({
         from: FROM,
         to: o.email,
-        subject: `✓ ${env.titel} — volledig getekend`,
+        subject: `${env.titel}: volledig getekend`,
         html: `
 <div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-  <h2 style="color:#10b981;margin:0 0 16px 0;">✓ Document volledig getekend</h2>
+  <h2 style="color:#10b981;margin:0 0 16px 0;">Document volledig getekend</h2>
   <p>Hallo ${o.voornaam},</p>
-  <p>Het document <b>${env.titel}</b> is door alle partijen ondertekend. Bewaar deze mail als bewijs.</p>
+  <p>Het document <b>${env.titel}</b> is door alle partijen ondertekend. Bewaar deze mail als bewijs.</p>${knopHtml}
   <p style="margin-top:16px;font-size:12px;color:#666;">
     De definitieve versie met audit-trail is opgeslagen in Noah ATS.
   </p>

@@ -186,6 +186,16 @@ export default async function KandidaatDetail({
           </div>
           <div className="flex flex-col items-end gap-3">
             {/* Score is uit het systeem gehaald — geen toegevoegde waarde. */}
+            {!isSetter && k.website_cv_pad && (
+              <a
+                href={`/api/kandidaten/${k.id}/website-cv`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white hover:bg-gray-50 text-[#333399] border border-[#333399] font-semibold px-4 py-1.5 rounded-md text-xs"
+              >
+                Open CV (website-intake)
+              </a>
+            )}
             {!isSetter && (
               <EigenaarKnop
                 kandidaatId={k.id}
@@ -265,6 +275,16 @@ export default async function KandidaatDetail({
                   )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                  {k.website_cv_pad && (
+                    <a
+                      href={`/api/kandidaten/${k.id}/website-cv`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-white hover:bg-gray-50 text-[#333399] border border-[#333399] font-semibold px-5 py-2 rounded-md text-sm"
+                    >
+                      Open CV
+                    </a>
+                  )}
                   <form action={zetWebsiteIntakeDoorNaarWachtrij}>
                     <input type="hidden" name="id" value={k.id} />
                     <button
@@ -482,6 +502,32 @@ export default async function KandidaatDetail({
           {/* Notitie */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="font-bold text-gray-800 mb-4 pb-2 border-b">Notitie</h2>
+            {/* Read-only preview met klikbare URLs. Notitie bevat soms een
+                CV-link uit een website-intake (oude kandidaten zonder
+                website_cv_pad). Door URLs hier als <a> te renderen kan
+                Wouter zo'n link nog steeds openen. */}
+            {k.notitie && /\bhttps?:\/\/\S+/.test(k.notitie) && (() => {
+              const delen = (k.notitie as string).split(/(\bhttps?:\/\/[^\s]+)/g);
+              return (
+                <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 whitespace-pre-wrap break-words">
+                  {delen.map((stuk, i) =>
+                    /^https?:\/\//.test(stuk) ? (
+                      <a
+                        key={i}
+                        href={stuk}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#333399] underline hover:text-[#2a2a80] break-all"
+                      >
+                        {stuk}
+                      </a>
+                    ) : (
+                      <span key={i}>{stuk}</span>
+                    ),
+                  )}
+                </div>
+              );
+            })()}
             <textarea name="notitie" defaultValue={k.notitie ?? ""} rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#333399]" placeholder="Eigen opmerkingen over deze kandidaat..."></textarea>
           </div>
 
