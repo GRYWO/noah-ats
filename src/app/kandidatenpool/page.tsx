@@ -282,10 +282,7 @@ export default async function KandidatenpoolPage({
             </table>
           ) : (
             <div className="p-12 text-center text-gray-500">
-              <h2 className="text-base font-semibold text-gray-700 mb-1">Pool is leeg</h2>
-              <p className="text-sm">
-                Nog geen kandidaten in de pool. Wouter kan vanuit website-intakes kandidaten in de pool plaatsen.
-              </p>
+              <h2 className="text-base font-semibold text-gray-700">Pool is leeg</h2>
             </div>
           )}
         </div>
