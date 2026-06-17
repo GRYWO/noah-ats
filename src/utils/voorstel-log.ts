@@ -13,7 +13,10 @@ export type VoorstelEvent =
   | "afwijzing"
   | "verlopen"
   | "website_doorgezet"
-  | "website_afgekeurd";
+  | "website_afgekeurd"
+  | "naar_kandidatenpool"
+  | "uit_kandidatenpool"
+  | "pool_naar_wachtrij";
 
 export async function logVoorstelEvent(opts: {
   tenantId: string;

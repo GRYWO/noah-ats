@@ -21,7 +21,7 @@ import { KANBAN_OPTIES } from "@/utils/kanban";
 import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
 import { EigenaarKnop } from "./EigenaarKnop";
 import { getViewerRol } from "@/utils/view-as";
-import { zetWebsiteIntakeDoorNaarWachtrij, keurWebsiteIntakeAf } from "./website-intake-actions";
+import { zetWebsiteIntakeDoorNaarWachtrij, keurWebsiteIntakeAf, zetWebsiteIntakeInPool } from "./website-intake-actions";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -145,6 +145,9 @@ export default async function KandidaatDetail({
     verlopen:              { label: "Verlopen",               kleur: "bg-gray-100 text-gray-600" },
     website_doorgezet:     { label: "Website doorgezet",      kleur: "bg-emerald-100 text-emerald-800" },
     website_afgekeurd:     { label: "Website afgekeurd",      kleur: "bg-red-100 text-red-800" },
+    naar_kandidatenpool:   { label: "In kandidatenpool",      kleur: "bg-indigo-100 text-indigo-800" },
+    uit_kandidatenpool:    { label: "Uit kandidatenpool",     kleur: "bg-gray-100 text-gray-700" },
+    pool_naar_wachtrij:    { label: "Pool naar wachtrij",     kleur: "bg-emerald-100 text-emerald-800" },
   };
 
   const initials = `${k.voornaam?.[0] ?? ""}${k.achternaam?.[0] ?? ""}`.toUpperCase();
@@ -263,7 +266,7 @@ export default async function KandidaatDetail({
                   </div>
                   <p className="text-sm text-gray-600">
                     Deze kandidaat is via de website binnengekomen en wacht op jouw beoordeling.
-                    Zet door naar de wachtrij zodat een setter aan de slag kan, of keur af als de match niet klopt.
+                    Goedgekeurd gaat naar de wachtrij. Kandidatenpool is een talentpool voor latere matches. Afgekeurd komt niet meer terug.
                   </p>
                   {isAfgekeurd && redenen.length > 0 && (
                     <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
@@ -292,6 +295,15 @@ export default async function KandidaatDetail({
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-md text-sm shadow"
                     >
                       Doorzetten naar wachtrij
+                    </button>
+                  </form>
+                  <form action={zetWebsiteIntakeInPool}>
+                    <input type="hidden" name="id" value={k.id} />
+                    <button
+                      type="submit"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2 rounded-md text-sm shadow"
+                    >
+                      In kandidatenpool
                     </button>
                   </form>
                   <form action={keurWebsiteIntakeAf}>
@@ -361,7 +373,7 @@ export default async function KandidaatDetail({
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
-            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@noah-recruitment.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : ok === "intake_afgerond" ? "Interne intake afgerond — kandidaat heeft mail ontvangen" : ok === "intake_opgeslagen" ? "Intake opgeslagen — controleer de profielschets" : ok === "tweede_gesprek" ? "2e gesprek-datum opgeslagen" : ok === "intake_afgewezen" ? "Kandidaat afgekeurd — afwijzings-mail verstuurd" : ok === "website_doorgezet" ? "Website-intake doorgezet naar de wachtrij" : ok === "website_afgekeurd" ? "Website-intake afgekeurd" : "Opgeslagen"}
+            {ok === "voorstel" ? "Voorstel verzonden — opdrachtgever krijgt een mail" : ok === "bellijst" ? "Bellijst geïmporteerd" : ok === "kennismaking" ? "Kennismaking-datum opgeslagen" : ok === "plaatsing" ? "Plaatsing aangemeld bij backoffice@noah-recruitment.nl" : ok === "plaatsing_ongedaan" ? "Plaatsing ongedaan gemaakt" : ok === "intake_afgerond" ? "Interne intake afgerond — kandidaat heeft mail ontvangen" : ok === "intake_opgeslagen" ? "Intake opgeslagen — controleer de profielschets" : ok === "tweede_gesprek" ? "2e gesprek-datum opgeslagen" : ok === "intake_afgewezen" ? "Kandidaat afgekeurd — afwijzings-mail verstuurd" : ok === "website_doorgezet" ? "Website-intake doorgezet naar de wachtrij" : ok === "website_afgekeurd" ? "Website-intake afgekeurd" : ok === "in_pool" ? "Kandidaat in de kandidatenpool geplaatst" : "Opgeslagen"}
           </div>
         )}
         {error && (

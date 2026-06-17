@@ -11,7 +11,7 @@ import { leesViewAs, effectieveRol } from "@/utils/view-as";
 import { isSalesAdmin } from "@/utils/sales-admin";
 
 type Props = {
-  active?: "dashboard" | "bureaus" | "kandidaten" | "intaken" | "kanban" | "agenda" | "voorstellen" | "opdrachtgevers" | "robin" | "jobdigger" | "inbox" | "mail-setup" | "setters" | "coaching" | "instellingen" | "vacature-aanmaken";
+  active?: "dashboard" | "bureaus" | "kandidaten" | "kandidatenpool" | "intaken" | "kanban" | "agenda" | "voorstellen" | "opdrachtgevers" | "robin" | "jobdigger" | "inbox" | "mail-setup" | "setters" | "coaching" | "instellingen" | "vacature-aanmaken";
 };
 
 export async function TopBar({ active }: Props) {
