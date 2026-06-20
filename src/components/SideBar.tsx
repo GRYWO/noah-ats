@@ -7,7 +7,6 @@ import { MailBadge } from "./MailBadge";
 import { HelpKnop } from "./HelpKnop";
 import {
   LayoutDashboard,
-  Building2,
   Users,
   UserPlus,
   KanbanSquare,
@@ -94,7 +93,6 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
   const alleItems: Item[] = [
     // Sectie 1: Overzicht
     { key: "dashboard",    href: "/dashboard",    label: "Dashboard",   Icon: LayoutDashboard, sectie: 1 },
-    ...(isSuperAdmin || isSalesAdmin ? [{ key: "bureaus", href: "/bureaus", label: "Bureaus", Icon: Building2, sectie: 1 } as Item] : []),
 
     // Sectie 2: Werkstroom , recruitment
     ...(!isBureauAdmin ? [{ key: "kandidaten", href: "/kandidaten", label: "Kandidaten", Icon: Users, sectie: 2 } as Item] : []),
