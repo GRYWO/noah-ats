@@ -46,9 +46,8 @@ export async function runJobdiggerZoek(beroep) {
 
     // De zoekknop klikken (paarse vergrootglas). Mist 'ie? Dan Enter als terugval.
     const zoekKnop = await vindZichtbaarVeld(page, [
-      'button[aria-label*="zoek" i]',
-      'button[aria-label*="search" i]',
-      'button[title*="zoek" i]',
+      "button.search-v3__submit-bt",
+      "button.search-v3__submit-btn",
       'button[type="submit"]',
     ]);
     if (zoekKnop) {
