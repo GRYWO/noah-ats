@@ -9,6 +9,28 @@ import path from "node:path";
 const PROFIEL_DIR = process.env.ROBIN_PROFIEL_DIR || path.join(process.cwd(), "robin-profiel");
 const ROBIN_URL = "https://app.recruitrobin.com";
 
+// Robin heeft een grote natuurlijke-taal zoekbalk (placeholder als
+// "vb. Operator in Utrecht met MBO, ..."). We zoeken het eerste ZICHTBARE veld.
+const ZOEKVELD_SELECTORS = [
+  'textarea[placeholder*="vb." i]',
+  'input[placeholder*="vb." i]',
+  'textarea[placeholder*="operator" i]',
+  'input[placeholder*="zoek" i]',
+  'input[placeholder*="search" i]',
+  '[contenteditable="true"]',
+  "textarea",
+  'input[type="search"]',
+  'input[type="text"]',
+];
+
+async function vindZoekveld(page) {
+  for (const sel of ZOEKVELD_SELECTORS) {
+    const loc = page.locator(`${sel}:visible`).first();
+    if (await loc.count().catch(() => 0)) return loc;
+  }
+  return null;
+}
+
 export async function runRobinZoek(zoekterm) {
   const context = await chromium.launchPersistentContext(PROFIEL_DIR, {
     headless: process.env.HEADLESS !== "false",
@@ -18,18 +40,17 @@ export async function runRobinZoek(zoekterm) {
 
   try {
     await page.goto(ROBIN_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(2000);
 
-    // Zoekveld vullen (selectors heuristisch — finetune tegen de echte Robin-UI).
-    const input = await page.$(
-      'input[type="search"], input[placeholder*="zoek" i], input[placeholder*="search" i], input[type="text"]'
-    );
-    if (!input) throw new Error("Zoekveld niet gevonden op Robin (selector finetunen)");
-    await input.fill(zoekterm);
-    await input.press("Enter");
-    await page.waitForTimeout(5000); // wachten tot resultaten geladen zijn
+    const veld = await vindZoekveld(page);
+    if (!veld) throw new Error("Zoekveld niet gevonden op Robin (selector finetunen)");
+    await veld.click();
+    await veld.fill(zoekterm);
+    await veld.press("Enter");
+    await page.waitForTimeout(6000); // wachten tot de resultaten geladen zijn
 
-    // Kandidaten scrapen — zelfde heuristiek als content-robin.js.
+    // Kandidaten scrapen — heuristisch, finetune na de eerste zichtbare test.
     const kandidaten = await page.evaluate(() => {
       function norm(el) {
         try {
