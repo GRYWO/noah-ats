@@ -2,3 +2,5 @@ node_modules/
 robin-profiel/
 .env
 heartbeat.txt
+debug-*.png
+debug-*.txt
