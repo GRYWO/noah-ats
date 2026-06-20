@@ -67,14 +67,22 @@ export async function runJobdiggerZoek(beroep) {
     // Diagnose: toon de HTML-structuur van een paar resultaatrijen, zodat we
     // de uitlezing precies kunnen schrijven (functie/bedrijf/plaats/link/datum).
     const voorbeeldRijen = await page.evaluate(() => {
-      const kandidaten = [
-        ...document.querySelectorAll("tr, li, [class*='row' i], [class*='result' i], [class*='vacancy' i], [class*='list' i] > div"),
-      ];
-      const metInhoud = kandidaten.filter((el) => {
-        const t = (el.textContent || "").trim();
-        return t.length > 25 && t.length < 500;
-      });
-      return metInhoud.slice(0, 3).map((el) => el.outerHTML.replace(/\s+/g, " ").slice(0, 900));
+      const WEB = /(?:www\.[^\s,]+)|\b[a-z0-9-]+\.(?:nl|com|be|jobs|co|org|eu|io|net)\b/i;
+      const DATE = /\b\d{1,2}\s+(?:jan|feb|mrt|maa|apr|mei|jun|jul|aug|sep|okt|nov|dec)[a-z]*\s*['’]?\d{2}\b/i;
+      const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+      const out = [];
+      for (const el of document.querySelectorAll("div, li, tr")) {
+        const t = clean(el.textContent);
+        if (t.length < 12 || t.length > 250) continue;
+        if (!WEB.test(t) || !DATE.test(t)) continue;
+        if ([...el.children].some((c) => {
+          const ct = clean(c.textContent);
+          return ct.length > 12 && ct.length < 250 && WEB.test(ct) && DATE.test(ct);
+        })) continue;
+        out.push(el.outerHTML.replace(/\s+/g, " ").slice(0, 1600));
+        if (out.length >= 2) break;
+      }
+      return out;
     });
     console.log("[jobdigger] voorbeeld-rijen:", JSON.stringify(voorbeeldRijen));
     try {
@@ -90,10 +98,12 @@ export async function runJobdiggerZoek(beroep) {
       const JUNK = /helpdesk|mail naar jobdigger|geverifieerde|unieke vacatures|naam gebruiker|naar team|nieuwe zoekopdracht|verborgen|cookie|inloggen|abonnement|reistijd|opslaan|deselecteer|selecteer alles|geen resultaten/i;
 
       const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+      const ICON = /image\/svg|svg\+xml|xml version|illustrator|generator:/i;
       const leaves = (el) =>
         [...el.querySelectorAll("*")]
-          .filter((n) => n.children.length === 0 && clean(n.textContent))
-          .map((n) => clean(n.textContent));
+          .filter((n) => n.children.length === 0 && clean(n.textContent) && !n.closest("svg") && !ICON.test(n.textContent))
+          .map((n) => clean(n.textContent))
+          .filter((s) => s.length > 1);
 
       const out = [];
       const gezien = new Set();
