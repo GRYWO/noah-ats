@@ -61,4 +61,7 @@ pm2 startup   # volg de instructie om bij opstarten te laden
   Zet `HEADLESS=false` in `.env` om mee te kijken tijdens het zoeken.
 - **Eén bot tegelijk.** De wachtrij claimt opdrachten atomisch; draai niet
   meerdere bots op hetzelfde geheim tenzij je dat bewust wilt.
-- **`jobdigger`-opdrachten** worden nog niet verwerkt (stap 2/3).
+- **Jobdigger** wordt ondersteund (`jobdigger.mjs`): de zoekbalk in de ATS zet
+  een 'jobdigger'-opdracht in de wachtrij; de bot scrapet de gevonden vacatures
+  en levert ze als "vondsten" terug. Zorg dat Jobdigger (via OTYS) is ingelogd in
+  hetzelfde profiel. Selectors zijn ook hier best-effort.

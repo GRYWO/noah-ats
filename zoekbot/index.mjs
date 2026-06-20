@@ -4,6 +4,7 @@
 // als Yorith via een persistent browserprofiel) en meldt het resultaat terug.
 
 import { runRobinZoek } from "./robin.mjs";
+import { runJobdiggerZoek } from "./jobdigger.mjs";
 
 const BASE = process.env.NOAH_BASE_URL || "https://noah-ats.nl";
 const SECRET = process.env.BOT_SECRET;
@@ -44,8 +45,11 @@ async function verwerk(job) {
       const kandidaten = await runRobinZoek(job.zoekterm);
       console.log(`  → ${kandidaten.length} kandidaten gevonden`);
       await meldResultaat(job.id, { kandidaten });
+    } else if (job.type === "jobdigger") {
+      const vondsten = await runJobdiggerZoek(job.zoekterm);
+      console.log(`  → ${vondsten.length} vacatures gevonden`);
+      await meldResultaat(job.id, { vondsten });
     } else {
-      // 'jobdigger' volgt in stap 2/3.
       await meldResultaat(job.id, { fout: `Type nog niet ondersteund: ${job.type}` });
     }
   } catch (e) {

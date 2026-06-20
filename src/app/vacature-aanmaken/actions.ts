@@ -276,3 +276,31 @@ export async function maakRobinZoekJob(formData: FormData) {
 
   revalidatePath("/vacature-aanmaken");
 }
+
+// Zoekbalk "Vacatures zoeken": zet een Jobdigger-zoekopdracht (beroep) in de
+// wachtrij. De bot scrapet Jobdigger en levert de gevonden vacatures terug.
+export async function maakJobdiggerZoekJob(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const beroep = String(formData.get("beroep") || "").trim();
+  if (!beroep) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  await admin.from("zoek_jobs").insert({
+    tenant_id: profile.tenant_id,
+    type: "jobdigger",
+    zoekterm: beroep,
+    aangemaakt_door: user.id,
+  });
+
+  revalidatePath("/vacature-aanmaken");
+}

@@ -12,7 +12,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { jobId?: string; kandidaten?: RobinKandidaat[]; fout?: string };
+  let body: {
+    jobId?: string;
+    kandidaten?: RobinKandidaat[];
+    vondsten?: { titel?: string; bedrijf?: string; plaats?: string; url?: string }[];
+    fout?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -93,16 +98,45 @@ export async function POST(request: Request) {
     }
   }
 
-  // 'jobdigger'-resultaatverwerking volgt in stap 2/3.
+  // 'jobdigger': de gevonden vacatures opslaan als vondsten.
+  if (!job.tenant_id) {
+    await admin
+      .from("zoek_jobs")
+      .update({ status: "fout", fout: "Job mist tenant_id", klaar_at: nu, updated_at: nu })
+      .eq("id", jobId);
+    return NextResponse.json({ error: "Job mist tenant_id" }, { status: 400 });
+  }
+
+  const vondsten = Array.isArray(body.vondsten) ? body.vondsten : [];
+  if (vondsten.length > 0) {
+    const rows = vondsten.slice(0, 200).map((v) => ({
+      job_id: jobId,
+      tenant_id: job.tenant_id,
+      titel: (v.titel ?? "").toString().trim().slice(0, 300) || null,
+      bedrijf: (v.bedrijf ?? "").toString().trim().slice(0, 300) || null,
+      plaats: (v.plaats ?? "").toString().trim().slice(0, 200) || null,
+      url: (v.url ?? "").toString().trim().slice(0, 500) || null,
+      raw_data: v,
+    }));
+    const { error: vErr } = await admin.from("jobdigger_vondsten").insert(rows);
+    if (vErr) {
+      await admin
+        .from("zoek_jobs")
+        .update({ status: "fout", fout: vErr.message.slice(0, 500), klaar_at: nu, updated_at: nu })
+        .eq("id", jobId);
+      return NextResponse.json({ error: vErr.message }, { status: 500 });
+    }
+  }
+
   await admin
     .from("zoek_jobs")
     .update({
       status: "klaar",
-      resultaat: { aantal: kandidaten.length },
+      resultaat: { aantal: vondsten.length },
       klaar_at: nu,
       updated_at: nu,
     })
     .eq("id", jobId);
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, aantal: vondsten.length });
 }

@@ -20,7 +20,7 @@ const DIENSTVERBANDEN = ["Uitzenden", "Detachering", "Werving & selectie", "Tijd
 export default async function NieuweVacaturePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ fout?: string }>;
+  searchParams?: Promise<{ fout?: string; titel?: string; locatie?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -60,10 +60,10 @@ export default async function NieuweVacaturePage({
 
         <form action={maakVacatureNoahAts} className="space-y-6">
           <Sectie titel="De functie">
-            <Rij label="Functietitel" name="titel" placeholder="bv. Allround timmerman" required />
+            <Rij label="Functietitel" name="titel" placeholder="bv. Allround timmerman" required defaultValue={sp.titel} />
             <div className="grid gap-4 sm:grid-cols-2">
               <Select label="Sector" name="sector" opties={SECTOREN} />
-              <Rij label="Locatie / regio" name="locatie" placeholder="bv. regio Tilburg" />
+              <Rij label="Locatie / regio" name="locatie" placeholder="bv. regio Tilburg" defaultValue={sp.locatie} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Select label="Dienstverband" name="dienstverband" opties={DIENSTVERBANDEN} />
