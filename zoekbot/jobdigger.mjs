@@ -6,7 +6,7 @@ import path from "node:path";
 import { diagnoseVelden, vindZichtbaarVeld } from "./velden.mjs";
 
 const PROFIEL_DIR = process.env.ROBIN_PROFIEL_DIR || path.join(process.cwd(), "robin-profiel");
-const JOBDIGGER_URL = process.env.JOBDIGGER_URL || "https://jobdigger.nl";
+const JOBDIGGER_URL = process.env.JOBDIGGER_URL || "https://www.jobdigger.nl/search/dashboard";
 
 // Trefwoord-/functieveld; bewust NIET het 'locatie'-veld.
 const VELD_SELECTORS = [
