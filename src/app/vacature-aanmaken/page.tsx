@@ -13,6 +13,8 @@ type JobdiggerVondst = {
   bedrijf: string | null;
   plaats: string | null;
   url: string | null;
+  telefoon: string | null;
+  datum: string | null;
 };
 
 type Vacature = {
@@ -129,7 +131,7 @@ export default async function VacatureAanmakenLijst() {
 
     const { data: vd } = await admin
       .from("jobdigger_vondsten")
-      .select("id, titel, bedrijf, plaats, url")
+      .select("id, titel, bedrijf, plaats, url, telefoon, datum")
       .eq("tenant_id", tenantId)
       .eq("geplaatst", false)
       .order("created_at", { ascending: false })
@@ -195,6 +197,9 @@ export default async function VacatureAanmakenLijst() {
                     <th className="px-4 py-2 text-left">Functie</th>
                     <th className="px-4 py-2 text-left">Bedrijf</th>
                     <th className="px-4 py-2 text-left">Plaats</th>
+                    <th className="px-4 py-2 text-left">Telefoon</th>
+                    <th className="px-4 py-2 text-left">Website</th>
+                    <th className="px-4 py-2 text-left">Datum</th>
                     <th className="px-4 py-2 text-right">Actie</th>
                   </tr>
                 </thead>
@@ -212,6 +217,19 @@ export default async function VacatureAanmakenLijst() {
                       </td>
                       <td className="px-4 py-2 text-gray-600">{vd.bedrijf ?? "-"}</td>
                       <td className="px-4 py-2 text-gray-600">{vd.plaats ?? "-"}</td>
+                      <td className="px-4 py-2 text-gray-600">
+                        {vd.telefoon ? (
+                          <a href={`tel:${vd.telefoon}`} className="text-[#333399] hover:underline">{vd.telefoon}</a>
+                        ) : "-"}
+                      </td>
+                      <td className="px-4 py-2 text-gray-600">
+                        {vd.url ? (
+                          <a href={vd.url.startsWith("http") ? vd.url : `https://${vd.url}`} target="_blank" rel="noopener noreferrer" className="text-[#333399] hover:underline">
+                            {vd.url.replace(/^https?:\/\//, "")}
+                          </a>
+                        ) : "-"}
+                      </td>
+                      <td className="px-4 py-2 text-gray-500">{vd.datum ?? "-"}</td>
                       <td className="px-4 py-2 text-right">
                         <Link
                           href={`/vacature-aanmaken/nieuw?titel=${encodeURIComponent(vd.titel ?? "")}&locatie=${encodeURIComponent(vd.plaats ?? "")}`}

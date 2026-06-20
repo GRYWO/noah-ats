@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   let body: {
     jobId?: string;
     kandidaten?: RobinKandidaat[];
-    vondsten?: { titel?: string; bedrijf?: string; plaats?: string; url?: string }[];
+    vondsten?: { titel?: string; bedrijf?: string; plaats?: string; url?: string; telefoon?: string; datum?: string }[];
     fout?: string;
   };
   try {
@@ -116,6 +116,8 @@ export async function POST(request: Request) {
       bedrijf: (v.bedrijf ?? "").toString().trim().slice(0, 300) || null,
       plaats: (v.plaats ?? "").toString().trim().slice(0, 200) || null,
       url: (v.url ?? "").toString().trim().slice(0, 500) || null,
+      telefoon: (v.telefoon ?? "").toString().trim().slice(0, 60) || null,
+      datum: (v.datum ?? "").toString().trim().slice(0, 60) || null,
       raw_data: v,
     }));
     const { error: vErr } = await admin.from("jobdigger_vondsten").insert(rows);
