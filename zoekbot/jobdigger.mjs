@@ -77,32 +77,48 @@ export async function runJobdiggerZoek(beroep) {
     });
     console.log("[jobdigger] voorbeeld-rijen:", JSON.stringify(voorbeeldRijen));
 
-    // Gevonden vacatures scrapen (heuristisch — finetune na de eerste test).
+    // Alleen ECHTE vacaturerijen uitlezen: een rij heeft een website + datum,
+    // en bevat geen rommel-woorden (helpdesk, mail naar Jobdigger, etc.).
     const vondsten = await page.evaluate(() => {
-      function norm(el) {
-        try {
-          return (el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\s+/g, " ");
-        } catch (_) {
-          return "";
-        }
-      }
-      const kaarten = [
-        ...document.querySelectorAll('[data-testid*="vacancy" i], [class*="vacancy" i], [class*="result" i], article, li'),
-      ];
-      const gezien = new Set();
+      const WEB = /(?:www\.[^\s,]+)|\b[a-z0-9-]+\.(?:nl|com|be|jobs|co|org|eu|io|net)\b/i;
+      const DATE = /\b\d{1,2}\s+(?:jan|feb|mrt|maa|apr|mei|jun|jul|aug|sep|okt|nov|dec)[a-z]*\s*['’]?\d{2}\b/i;
+      const JUNK = /helpdesk|mail naar jobdigger|geverifieerde|unieke vacatures|naam gebruiker|naar team|nieuwe zoekopdracht|verborgen|cookie|inloggen|abonnement|reistijd|opslaan|deselecteer|selecteer alles|geen resultaten/i;
+
+      const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+      const leaves = (el) =>
+        [...el.querySelectorAll("*")]
+          .filter((n) => n.children.length === 0 && clean(n.textContent))
+          .map((n) => clean(n.textContent));
+
       const out = [];
-      for (const k of kaarten) {
-        const titel = norm(k.querySelector('h1,h2,h3,h4,[class*="title" i]') || k).slice(0, 120);
-        const bedrijf = norm(k.querySelector('[class*="company" i], [class*="bedrijf" i]')).slice(0, 120) || null;
-        const plaats =
-          norm(k.querySelector('[class*="location" i], [class*="plaats" i], [class*="city" i]')).slice(0, 80) || null;
-        const link = k.querySelector("a[href]");
-        const url = link ? link.href : "";
+      const gezien = new Set();
+      for (const el of document.querySelectorAll("div, li, tr")) {
+        const t = clean(el.textContent);
+        if (t.length < 12 || t.length > 250) continue;
+        if (JUNK.test(t)) continue;
+        if (!WEB.test(t) || !DATE.test(t)) continue; // echte vacaturerij
+        // Alleen de INNERSTE rij (niet de omhullende container).
+        if ([...el.children].some((c) => {
+          const ct = clean(c.textContent);
+          return ct.length > 12 && ct.length < 250 && WEB.test(ct) && DATE.test(ct);
+        })) continue;
+        if (gezien.has(t)) continue;
+        gezien.add(t);
+
+        const stukjes = leaves(el).filter((s) => !JUNK.test(s));
+        const url = (t.match(WEB) || [null])[0];
+        const datum = (t.match(DATE) || [null])[0];
+        const telLink = el.querySelector('a[href^="tel:"]');
+        const telefoon = telLink ? telLink.getAttribute("href").replace(/^tel:/, "") : null;
+
+        const titel = stukjes[0] || "";
+        const rest = stukjes.slice(1).filter((s) => s && !WEB.test(s) && !DATE.test(s));
+        const bedrijf = rest[0] || null;
+        const plaats = rest[1] || null;
+
         if (!titel) continue;
-        if (url && gezien.has(url)) continue;
-        if (url) gezien.add(url);
-        out.push({ titel, bedrijf, plaats, url });
-        if (out.length >= 50) break;
+        out.push({ titel, bedrijf, plaats, url, datum, telefoon });
+        if (out.length >= 80) break;
       }
       return out;
     });
