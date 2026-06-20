@@ -8,14 +8,13 @@ import { diagnoseVelden, vindZichtbaarVeld } from "./velden.mjs";
 const PROFIEL_DIR = process.env.ROBIN_PROFIEL_DIR || path.join(process.cwd(), "robin-profiel");
 const JOBDIGGER_URL = process.env.JOBDIGGER_URL || "https://www.jobdigger.nl/search/dashboard";
 
-// Trefwoord-/functieveld; bewust NIET het 'locatie'-veld.
+// Het HOOFD-zoekveld ("Zoek op functietitel(s), skills en/of organisatie(s)").
+// Bewust NIET het locatie- of het trefwoorden-filterveld.
 const VELD_SELECTORS = [
-  'input[placeholder*="trefwoord" i]',
-  'input[placeholder*="functie" i]',
-  'input[placeholder*="beroep" i]',
-  'input[placeholder*="zoek" i]:not([placeholder*="locatie" i])',
-  'input[type="search"]:not([placeholder*="locatie" i])',
-  'input[type="text"]:not([placeholder*="locatie" i])',
+  'input[placeholder*="functietitel" i]',
+  'input[placeholder*="skills" i]',
+  'input[placeholder*="organisatie" i]',
+  'input[type="text"]:not([placeholder*="locatie" i]):not([placeholder*="trefwoord" i]):not([placeholder*="branche" i]):not([placeholder*="beroepsklasse" i])',
 ];
 
 export async function runJobdiggerZoek(beroep) {
@@ -33,11 +32,18 @@ export async function runJobdiggerZoek(beroep) {
     await diagnoseVelden(page, "jobdigger");
 
     const veld = await vindZichtbaarVeld(page, VELD_SELECTORS);
-    if (!veld) throw new Error("Zoekveld niet gevonden op Jobdigger (zie debug-jobdigger.png + velden hierboven)");
+    if (!veld) throw new Error("Hoofd-zoekveld niet gevonden op Jobdigger (zie debug-jobdigger.png + velden hierboven)");
     await veld.click();
     await veld.fill(beroep);
+    // Locatie bewust leeg laten = heel Nederland.
     await veld.press("Enter");
-    await page.waitForTimeout(6000);
+
+    // Wachten tot de resultaten geladen zijn, daarna een screenshot van de
+    // resultatenpagina zodat we de echte vacaturekaarten + export kunnen zien.
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(4000);
+    await page.screenshot({ path: "debug-jobdigger-resultaten.png", fullPage: true }).catch(() => {});
+    console.log("[jobdigger] resultaten-screenshot: debug-jobdigger-resultaten.png");
 
     // Gevonden vacatures scrapen (heuristisch — finetune na de eerste test).
     const vondsten = await page.evaluate(() => {
