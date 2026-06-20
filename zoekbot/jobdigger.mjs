@@ -3,6 +3,7 @@
 
 import { chromium } from "playwright";
 import path from "node:path";
+import { writeFileSync } from "node:fs";
 import { diagnoseVelden, vindZichtbaarVeld } from "./velden.mjs";
 
 const PROFIEL_DIR = process.env.ROBIN_PROFIEL_DIR || path.join(process.cwd(), "robin-profiel");
@@ -76,6 +77,10 @@ export async function runJobdiggerZoek(beroep) {
       return metInhoud.slice(0, 3).map((el) => el.outerHTML.replace(/\s+/g, " ").slice(0, 900));
     });
     console.log("[jobdigger] voorbeeld-rijen:", JSON.stringify(voorbeeldRijen));
+    try {
+      writeFileSync("debug-jobdigger-rijen.txt", voorbeeldRijen.join("\n\n========\n\n"));
+      console.log("[jobdigger] rij-structuur opgeslagen: debug-jobdigger-rijen.txt");
+    } catch (_) {}
 
     // Alleen ECHTE vacaturerijen uitlezen: een rij heeft een website + datum,
     // en bevat geen rommel-woorden (helpdesk, mail naar Jobdigger, etc.).
