@@ -63,6 +63,20 @@ export async function runJobdiggerZoek(beroep) {
     await page.screenshot({ path: "debug-jobdigger-resultaten.png", fullPage: true }).catch(() => {});
     console.log("[jobdigger] resultaten-screenshot: debug-jobdigger-resultaten.png");
 
+    // Diagnose: toon de HTML-structuur van een paar resultaatrijen, zodat we
+    // de uitlezing precies kunnen schrijven (functie/bedrijf/plaats/link/datum).
+    const voorbeeldRijen = await page.evaluate(() => {
+      const kandidaten = [
+        ...document.querySelectorAll("tr, li, [class*='row' i], [class*='result' i], [class*='vacancy' i], [class*='list' i] > div"),
+      ];
+      const metInhoud = kandidaten.filter((el) => {
+        const t = (el.textContent || "").trim();
+        return t.length > 25 && t.length < 500;
+      });
+      return metInhoud.slice(0, 3).map((el) => el.outerHTML.replace(/\s+/g, " ").slice(0, 900));
+    });
+    console.log("[jobdigger] voorbeeld-rijen:", JSON.stringify(voorbeeldRijen));
+
     // Gevonden vacatures scrapen (heuristisch — finetune na de eerste test).
     const vondsten = await page.evaluate(() => {
       function norm(el) {
