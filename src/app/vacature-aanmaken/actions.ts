@@ -246,3 +246,33 @@ export async function zetVacatureStatus(formData: FormData) {
 
   revalidatePath("/vacature-aanmaken");
 }
+
+// "Zoek kandidaten": zet een Robin-zoekopdracht in de wachtrij. De altijd-aan
+// machine (bot) pakt 'm op, draait de zoekopdracht en meldt de bellijst terug.
+export async function maakRobinZoekJob(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const vacatureId = String(formData.get("vacature") || "").trim();
+  const functie = String(formData.get("functie") || "").trim();
+  if (!vacatureId || !functie) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  await admin.from("zoek_jobs").insert({
+    tenant_id: profile.tenant_id,
+    type: "robin",
+    zoekterm: functie,
+    vacature_id: vacatureId,
+    aangemaakt_door: user.id,
+  });
+
+  revalidatePath("/vacature-aanmaken");
+}

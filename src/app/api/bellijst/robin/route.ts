@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { maakRobinBellijst, type RobinKandidaat } from "@/utils/robin-bellijst";
 
 export const dynamic = "force-dynamic";
 
-type RobinKandidaat = { naam?: string; url?: string; telefoon?: string };
-
-// Ontvangt de door content-robin.js gescrapete kandidaten (via de extensie)
-// en slaat ze op als bellijst die aan de vacature gekoppeld is.
+// Door een ingelogde gebruiker (extensie/handmatig) aangeleverde Robin-kandidaten
+// opslaan als bellijst bij de vacature. De bot gebruikt /api/bot/jobs/resultaat.
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -55,37 +54,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Geen toegang tot deze vacature" }, { status: 403 });
   }
 
-  const { data: bellijst, error: bErr } = await admin
-    .from("bellijsten")
-    .insert({
-      tenant_id: profile.tenant_id,
-      vacature_id: vacatureId,
-      setter_id: user.id,
-      naam: `Robin: ${functie || vac.titel}`,
-      aantal_items: kandidaten.length,
-      bron: "robin",
-    })
-    .select("id")
-    .single();
-
-  if (bErr || !bellijst) {
-    return NextResponse.json({ error: bErr?.message ?? "Insert mislukt" }, { status: 500 });
+  try {
+    const res = await maakRobinBellijst(admin, {
+      tenantId: profile.tenant_id,
+      vacatureId,
+      functie,
+      vacatureTitel: vac.titel,
+      setterId: user.id,
+      kandidaten,
+    });
+    return NextResponse.json({ ok: true, bellijst_id: res.bellijstId, aantal: res.aantal });
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
-
-  const items = kandidaten.slice(0, 200).map((k, idx) => ({
-    bellijst_id: bellijst.id,
-    tenant_id: profile.tenant_id,
-    naam: (k.naam ?? "").toString().trim().slice(0, 200) || null,
-    telefoon: (k.telefoon ?? "").toString().trim().slice(0, 60) || null,
-    website: (k.url ?? "").toString().trim().slice(0, 500) || null,
-    raw_data: k,
-    volgorde: idx,
-  }));
-
-  const { error: iErr } = await admin.from("bellijst_items").insert(items);
-  if (iErr) {
-    return NextResponse.json({ error: iErr.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true, bellijst_id: bellijst.id, aantal: items.length });
 }

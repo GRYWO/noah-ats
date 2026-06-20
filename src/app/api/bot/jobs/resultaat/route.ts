@@ -1,0 +1,108 @@
+import { NextResponse } from "next/server";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { botGeautoriseerd } from "@/utils/bot-auth";
+import { maakRobinBellijst, type RobinKandidaat } from "@/utils/robin-bellijst";
+
+export const dynamic = "force-dynamic";
+
+// De bot meldt het resultaat van een zoekopdracht terug. Voor 'robin' wordt een
+// bellijst bij de vacature aangemaakt; bij een fout wordt de job op 'fout' gezet.
+export async function POST(request: Request) {
+  if (!botGeautoriseerd(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: { jobId?: string; kandidaten?: RobinKandidaat[]; fout?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Ongeldige JSON" }, { status: 400 });
+  }
+
+  const jobId = (body.jobId ?? "").trim();
+  if (!jobId) {
+    return NextResponse.json({ error: "jobId vereist" }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+  const nu = new Date().toISOString();
+
+  const { data: job } = await admin
+    .from("zoek_jobs")
+    .select("id, type, zoekterm, vacature_id, tenant_id, aangemaakt_door")
+    .eq("id", jobId)
+    .maybeSingle();
+  if (!job) {
+    return NextResponse.json({ error: "Job niet gevonden" }, { status: 404 });
+  }
+
+  // Bot meldt een fout.
+  if (body.fout) {
+    await admin
+      .from("zoek_jobs")
+      .update({ status: "fout", fout: String(body.fout).slice(0, 500), klaar_at: nu, updated_at: nu })
+      .eq("id", jobId);
+    return NextResponse.json({ ok: true });
+  }
+
+  const kandidaten = Array.isArray(body.kandidaten) ? body.kandidaten : [];
+
+  if (job.type === "robin") {
+    if (!job.vacature_id || !job.tenant_id) {
+      await admin
+        .from("zoek_jobs")
+        .update({ status: "fout", fout: "Job mist vacature_id of tenant_id", klaar_at: nu, updated_at: nu })
+        .eq("id", jobId);
+      return NextResponse.json({ error: "Job mist vacature_id of tenant_id" }, { status: 400 });
+    }
+
+    try {
+      const { data: vac } = await admin
+        .from("rec_vacatures")
+        .select("titel")
+        .eq("id", job.vacature_id)
+        .maybeSingle();
+
+      const res = await maakRobinBellijst(admin, {
+        tenantId: job.tenant_id,
+        vacatureId: job.vacature_id,
+        functie: job.zoekterm,
+        vacatureTitel: vac?.titel,
+        setterId: job.aangemaakt_door ?? null,
+        kandidaten,
+      });
+
+      await admin
+        .from("zoek_jobs")
+        .update({
+          status: "klaar",
+          resultaat: { bellijst_id: res.bellijstId, aantal: res.aantal },
+          klaar_at: nu,
+          updated_at: nu,
+        })
+        .eq("id", jobId);
+
+      return NextResponse.json({ ok: true, bellijst_id: res.bellijstId, aantal: res.aantal });
+    } catch (e) {
+      const msg = (e as Error).message;
+      await admin
+        .from("zoek_jobs")
+        .update({ status: "fout", fout: msg.slice(0, 500), klaar_at: nu, updated_at: nu })
+        .eq("id", jobId);
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+  }
+
+  // 'jobdigger'-resultaatverwerking volgt in stap 2/3.
+  await admin
+    .from("zoek_jobs")
+    .update({
+      status: "klaar",
+      resultaat: { aantal: kandidaten.length },
+      klaar_at: nu,
+      updated_at: nu,
+    })
+    .eq("id", jobId);
+
+  return NextResponse.json({ ok: true });
+}

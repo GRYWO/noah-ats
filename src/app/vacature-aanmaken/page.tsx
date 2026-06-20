@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus } from "./actions";
+import { zetVacatureStatus, maakRobinZoekJob } from "./actions";
 
 export const metadata = { title: "Vacature aanmaken" };
 
@@ -194,12 +194,16 @@ export default async function VacatureAanmakenLijst() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
                           {v.status === "open" && (
-                            <a
-                              href={`/robin?vacature=${v.id}&functie=${encodeURIComponent(v.titel)}`}
-                              className="text-xs font-semibold text-emerald-700 hover:underline"
-                            >
-                              Zoek kandidaten
-                            </a>
+                            <form action={maakRobinZoekJob}>
+                              <input type="hidden" name="vacature" value={v.id} />
+                              <input type="hidden" name="functie" value={v.titel} />
+                              <button
+                                type="submit"
+                                className="text-xs font-semibold text-emerald-700 hover:underline"
+                              >
+                                Zoek kandidaten
+                              </button>
+                            </form>
                           )}
                           <a
                             href={`https://noah-recruitment.nl/vacatures/${v.id}`}
