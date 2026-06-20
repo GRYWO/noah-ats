@@ -126,10 +126,15 @@ export async function runJobdiggerZoek(beroep) {
         const telLink = el.querySelector('a[href^="tel:"]');
         const telefoon = telLink ? telLink.getAttribute("href").replace(/^tel:/, "") : null;
 
+        const NIVEAU = /^(vmbo|mbo|hbo|wo|mbo\+|hbo\+|geen|onbekend)\b/i;
         const titel = stukjes[0] || "";
-        const rest = stukjes.slice(1).filter((s) => s && !WEB.test(s) && !DATE.test(s));
-        const bedrijf = rest[0] || null;
-        const plaats = rest[1] || null;
+        const rest = stukjes
+          .slice(1)
+          .filter((s) => s && !WEB.test(s) && !DATE.test(s) && !NIVEAU.test(s));
+        // Plaats = stukje in HOOFDLETTERS (zo toont Jobdigger plaatsnamen).
+        const plaats = rest.find((s) => s.length >= 2 && s === s.toUpperCase() && /[A-ZÀ-Þ]/.test(s)) || null;
+        // Bedrijf = stukje met kleine letters (dus geen plaats/niveau).
+        const bedrijf = rest.find((s) => s !== plaats && /[a-zà-þ]/.test(s)) || null;
 
         if (!titel) continue;
         out.push({ titel, bedrijf, plaats, url, datum, telefoon });
