@@ -54,6 +54,36 @@ pm2 save
 pm2 startup   # volg de instructie om bij opstarten te laden
 ```
 
+## Draaien op een gratis Oracle Cloud VM (Linux, altijd aan)
+
+Oracle Cloud "Always Free" geeft een ARM-VM die 24/7 gratis blijft draaien.
+
+1. Maak een **Ubuntu** VM aan (Ampere/ARM, Always Free). Inkomende poorten zijn
+   niet nodig — de bot belt zelf naar buiten (polling).
+2. Installeer Node 20+ en de code:
+   ```bash
+   sudo apt update && sudo apt install -y nodejs npm git
+   git clone https://github.com/GRYWO/noah-ats.git
+   cd noah-ats && git checkout herstel/vacatures-robin-flow && cd zoekbot
+   npm install
+   npx playwright install --with-deps chromium   # --with-deps: systeem-libs voor Chromium
+   cp .env.example .env                            # vul BOT_SECRET in
+   ```
+3. **Login-sessie overzetten** (geen scherm op de server): log één keer in op je
+   **eigen Mac** met `npm run login:robin`, en kopieer dan de map mee:
+   ```bash
+   scp -r robin-profiel ubuntu@<vm-ip>:/home/ubuntu/noah-ats/zoekbot/
+   ```
+4. **Automatisch starten** met systemd (zie `noah-zoekbot.service`):
+   ```bash
+   sudo cp noah-zoekbot.service /etc/systemd/system/
+   # pas zo nodig User/WorkingDirectory/node-pad aan in dat bestand
+   sudo systemctl enable --now noah-zoekbot
+   sudo journalctl -u noah-zoekbot -f          # live logs bekijken
+   ```
+
+Controleren of 'ie leeft: `cat heartbeat.txt` (tijdstempel ververst elke 5 min).
+
 ## Aandachtspunten
 
 - **Selectors zijn heuristisch.** De zoekveld- en kandidaat-selectors in
@@ -61,6 +91,9 @@ pm2 startup   # volg de instructie om bij opstarten te laden
   Zet `HEADLESS=false` in `.env` om mee te kijken tijdens het zoeken.
 - **Eén bot tegelijk.** De wachtrij claimt opdrachten atomisch; draai niet
   meerdere bots op hetzelfde geheim tenzij je dat bewust wilt.
+- **Datacenter-IP (cloud).** Robin/Jobdigger kunnen een cloud-IP eerder als bot
+  zien dan een kantoor-IP → kans op captcha's of uitloggen. Werkt het niet
+  betrouwbaar vanaf de VM, draai de bot dan op een kantoor-machine.
 - **Jobdigger** wordt ondersteund (`jobdigger.mjs`): de zoekbalk in de ATS zet
   een 'jobdigger'-opdracht in de wachtrij; de bot scrapet de gevonden vacatures
   en levert ze als "vondsten" terug. Zorg dat Jobdigger (via OTYS) is ingelogd in

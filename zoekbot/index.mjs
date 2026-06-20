@@ -3,6 +3,7 @@
 // Pollt de ATS voor openstaande zoekopdrachten, draait ze in Robin (ingelogd
 // als Yorith via een persistent browserprofiel) en meldt het resultaat terug.
 
+import { writeFileSync } from "node:fs";
 import { runRobinZoek } from "./robin.mjs";
 import { runJobdiggerZoek } from "./jobdigger.mjs";
 
@@ -72,6 +73,18 @@ async function tick() {
   }
 }
 
+// Heartbeat: schrijf periodiek een tijdstempel zodat je kunt zien dat de bot
+// nog leeft (cat heartbeat.txt, of in de systemd-logs).
+function heartbeat() {
+  const stamp = new Date().toISOString();
+  try {
+    writeFileSync("heartbeat.txt", stamp + "\n");
+  } catch (_) {}
+  console.log(`[heartbeat] ${stamp}`);
+}
+
 console.log(`Noah zoekbot gestart. Pollt ${BASE} elke ${INTERVAL}ms.`);
 setInterval(tick, INTERVAL);
+setInterval(heartbeat, 5 * 60 * 1000);
+heartbeat();
 tick();
