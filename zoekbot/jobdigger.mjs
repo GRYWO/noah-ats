@@ -1,11 +1,22 @@
 // Jobdigger-zoekopdracht via Playwright met hetzelfde persistent profiel als
-// Robin (ingelogd als Yorith, Jobdigger gekoppeld via OTYS).
+// Robin (ingelogd als Yorith).
 
 import { chromium } from "playwright";
 import path from "node:path";
+import { diagnoseVelden, vindZichtbaarVeld } from "./velden.mjs";
 
 const PROFIEL_DIR = process.env.ROBIN_PROFIEL_DIR || path.join(process.cwd(), "robin-profiel");
 const JOBDIGGER_URL = process.env.JOBDIGGER_URL || "https://jobdigger.nl";
+
+// Trefwoord-/functieveld; bewust NIET het 'locatie'-veld.
+const VELD_SELECTORS = [
+  'input[placeholder*="trefwoord" i]',
+  'input[placeholder*="functie" i]',
+  'input[placeholder*="beroep" i]',
+  'input[placeholder*="zoek" i]:not([placeholder*="locatie" i])',
+  'input[type="search"]:not([placeholder*="locatie" i])',
+  'input[type="text"]:not([placeholder*="locatie" i])',
+];
 
 export async function runJobdiggerZoek(beroep) {
   const context = await chromium.launchPersistentContext(PROFIEL_DIR, {
@@ -16,17 +27,19 @@ export async function runJobdiggerZoek(beroep) {
 
   try {
     await page.goto(JOBDIGGER_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(2000);
 
-    const input = await page.$(
-      'input[type="search"], input[placeholder*="zoek" i], input[placeholder*="search" i], input[type="text"]'
-    );
-    if (!input) throw new Error("Zoekveld niet gevonden op Jobdigger (selector finetunen)");
-    await input.fill(beroep);
-    await input.press("Enter");
-    await page.waitForTimeout(5000);
+    await diagnoseVelden(page, "jobdigger");
 
-    // Gevonden vacatures scrapen (heuristisch — finetune tegen de echte UI).
+    const veld = await vindZichtbaarVeld(page, VELD_SELECTORS);
+    if (!veld) throw new Error("Zoekveld niet gevonden op Jobdigger (zie debug-jobdigger.png + velden hierboven)");
+    await veld.click();
+    await veld.fill(beroep);
+    await veld.press("Enter");
+    await page.waitForTimeout(6000);
+
+    // Gevonden vacatures scrapen (heuristisch — finetune na de eerste test).
     const vondsten = await page.evaluate(() => {
       function norm(el) {
         try {
@@ -36,9 +49,7 @@ export async function runJobdiggerZoek(beroep) {
         }
       }
       const kaarten = [
-        ...document.querySelectorAll(
-          '[data-testid*="vacancy" i], [class*="vacancy" i], [class*="result" i], article, li'
-        ),
+        ...document.querySelectorAll('[data-testid*="vacancy" i], [class*="vacancy" i], [class*="result" i], article, li'),
       ];
       const gezien = new Set();
       const out = [];

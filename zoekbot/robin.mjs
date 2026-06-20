@@ -5,13 +5,14 @@
 
 import { chromium } from "playwright";
 import path from "node:path";
+import { diagnoseVelden, vindZichtbaarVeld } from "./velden.mjs";
 
 const PROFIEL_DIR = process.env.ROBIN_PROFIEL_DIR || path.join(process.cwd(), "robin-profiel");
 const ROBIN_URL = "https://app.recruitrobin.com";
 
 // Robin heeft een grote natuurlijke-taal zoekbalk (placeholder als
-// "vb. Operator in Utrecht met MBO, ..."). We zoeken het eerste ZICHTBARE veld.
-const ZOEKVELD_SELECTORS = [
+// "vb. Operator in Utrecht met MBO, ...").
+const VELD_SELECTORS = [
   'textarea[placeholder*="vb." i]',
   'input[placeholder*="vb." i]',
   'textarea[placeholder*="operator" i]',
@@ -22,14 +23,6 @@ const ZOEKVELD_SELECTORS = [
   'input[type="search"]',
   'input[type="text"]',
 ];
-
-async function vindZoekveld(page) {
-  for (const sel of ZOEKVELD_SELECTORS) {
-    const loc = page.locator(`${sel}:visible`).first();
-    if (await loc.count().catch(() => 0)) return loc;
-  }
-  return null;
-}
 
 export async function runRobinZoek(zoekterm) {
   const context = await chromium.launchPersistentContext(PROFIEL_DIR, {
@@ -43,8 +36,10 @@ export async function runRobinZoek(zoekterm) {
     await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
     await page.waitForTimeout(2000);
 
-    const veld = await vindZoekveld(page);
-    if (!veld) throw new Error("Zoekveld niet gevonden op Robin (selector finetunen)");
+    await diagnoseVelden(page, "robin");
+
+    const veld = await vindZichtbaarVeld(page, VELD_SELECTORS);
+    if (!veld) throw new Error("Zoekveld niet gevonden op Robin (zie debug-robin.png + velden hierboven)");
     await veld.click();
     await veld.fill(zoekterm);
     await veld.press("Enter");
