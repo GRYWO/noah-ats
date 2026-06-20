@@ -52,7 +52,8 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/teken/") ||             // publieke document-tekenflow (token)
     path.startsWith("/verwijder/") ||         // publieke verwijder-verzoek goedkeur-link voor recruiter
     path.startsWith("/api/webhooks") ||       // Stripe webhooks
-    path.startsWith("/api/cron");   // cron jobs (eigen secret)
+    path.startsWith("/api/cron") ||   // cron jobs (eigen secret)
+    path.startsWith("/api/bot");      // altijd-aan machine (eigen bot-secret)
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
