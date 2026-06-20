@@ -51,6 +51,18 @@ chrome.runtime.onMessage.addListener((msg) => {
     chrome.storage.local.set({ noah_jobdigger_filters: msg.filters });
     console.log("[Noah] Jobdigger-filters opgeslagen:", msg.filters);
   }
+  // Robin-zoekopdracht vanuit een vacature (knop "Zoek kandidaten").
+  if (msg?.type === "noah-set-robin-zoek" && msg.zoek) {
+    chrome.storage.local.set({ noah_robin_zoek: msg.zoek, noah_robin_zoek_ts: Date.now() });
+    console.log("[Noah] Robin-zoekopdracht opgeslagen:", msg.zoek);
+  }
+  // Kandidatenlijst die content-robin.js van Robin heeft gescrapet.
+  if (msg?.type === "noah-robin-kandidaten" && Array.isArray(msg.kandidaten)) {
+    console.log("[Noah] Robin-kandidaten ontvangen:", msg.kandidaten.length, "voor vacature", msg.vacatureId);
+    // TODO: POST naar een Noah-endpoint om deze kandidaten bij de vacature op
+    //       te slaan (analoog aan uploadNaarNoah / /api/bellijst/upload).
+    //       Doel-endpoint nog te bepalen samen met de backend.
+  }
 });
 
 async function fetchMetTimeout(url, opts = {}, ms = 15000) {

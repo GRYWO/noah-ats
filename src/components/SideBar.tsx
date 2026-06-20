@@ -105,8 +105,8 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
 
     // Sectie 3: Relaties & tools
     { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",          Icon: Contact,       sectie: 3 },
-    // Vacature aanmaken: setter + super-admin (niet bureau-admin)
-    ...(!isBureauAdmin && (isSetter || isSuperAdmin) ? [{ key: "vacature-aanmaken", href: "/vacature-aanmaken", label: "Vacature aanmaken", Icon: Briefcase, sectie: 3 } as Item] : []),
+    // Vacatures: setter + super-admin (niet bureau-admin)
+    ...(!isBureauAdmin && (isSetter || isSuperAdmin) ? [{ key: "vacature-aanmaken", href: "/vacature-aanmaken", label: "Vacatures", Icon: Briefcase, sectie: 3 } as Item] : []),
     // Jobdigger: setter + admin (echt, niet bureau-admin) + super-admin
     ...(!isRecruiter && !isBureauAdmin ? [{ key: "jobdigger", href: "/jobdigger", label: "Jobdigger", Icon: PhoneCall, sectie: 3 } as Item] : []),
 

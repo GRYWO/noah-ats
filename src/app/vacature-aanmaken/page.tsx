@@ -193,6 +193,14 @@ export default async function VacatureAanmakenLijst() {
                       <td className="px-4 py-3 text-xs text-gray-500">{formatDatum(v.aangemaakt)}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
+                          {v.status === "open" && (
+                            <a
+                              href={`/robin?vacature=${v.id}&functie=${encodeURIComponent(v.titel)}`}
+                              className="text-xs font-semibold text-emerald-700 hover:underline"
+                            >
+                              Zoek kandidaten
+                            </a>
+                          )}
                           <a
                             href={`https://noah-recruitment.nl/vacatures/${v.id}`}
                             target="_blank"
