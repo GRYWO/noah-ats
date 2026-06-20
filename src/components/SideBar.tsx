@@ -109,8 +109,6 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
     ...(!isBureauAdmin && (isSetter || isSuperAdmin) ? [{ key: "vacature-aanmaken", href: "/vacature-aanmaken", label: "Vacature aanmaken", Icon: Briefcase, sectie: 3 } as Item] : []),
     // Jobdigger: setter + admin (echt, niet bureau-admin) + super-admin
     ...(!isRecruiter && !isBureauAdmin ? [{ key: "jobdigger", href: "/jobdigger", label: "Jobdigger", Icon: PhoneCall, sectie: 3 } as Item] : []),
-    // Robin: recruiter + admin (echt, niet bureau-admin) + super-admin
-    ...(!isSetter && !isBureauAdmin ? [{ key: "robin", href: "/robin", label: "Robin", Icon: Sparkles, sectie: 3 } as Item] : []),
 
     // Sectie 4: Communicatie
     { key: "inbox",          href: "/inbox",          label: "E-mail",       Icon: Mail,          sectie: 4 },
