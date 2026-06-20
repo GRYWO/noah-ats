@@ -1,0 +1,4 @@
+node_modules/
+robin-profiel/
+.env
+heartbeat.txt

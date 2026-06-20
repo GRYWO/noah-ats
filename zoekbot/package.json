@@ -1,0 +1,17 @@
+{
+  "name": "noah-zoekbot",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Altijd-aan machine: pollt de ATS voor zoekopdrachten en draait ze in Robin (ingelogd als Yorith).",
+  "scripts": {
+    "start": "node --env-file=.env index.mjs",
+    "login:robin": "node --env-file=.env login.mjs"
+  },
+  "engines": {
+    "node": ">=20.6"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}

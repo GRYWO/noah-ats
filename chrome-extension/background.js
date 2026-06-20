@@ -2,6 +2,7 @@
 // als er een /jobdigger?kandidaat=... tab openstaat.
 
 const NOAH_API = "https://noah-ats.nl/api/bellijst/upload";
+const NOAH_ROBIN_API = "https://noah-ats.nl/api/bellijst/robin";
 const NOAH_TAB_PATTERN = "https://noah-ats.nl/jobdigger*";
 
 function shouldProcess(item) {
@@ -51,7 +52,43 @@ chrome.runtime.onMessage.addListener((msg) => {
     chrome.storage.local.set({ noah_jobdigger_filters: msg.filters });
     console.log("[Noah] Jobdigger-filters opgeslagen:", msg.filters);
   }
+  // Robin-zoekopdracht vanuit een vacature (knop "Zoek kandidaten").
+  if (msg?.type === "noah-set-robin-zoek" && msg.zoek) {
+    chrome.storage.local.set({ noah_robin_zoek: msg.zoek, noah_robin_zoek_ts: Date.now() });
+    console.log("[Noah] Robin-zoekopdracht opgeslagen:", msg.zoek);
+  }
+  // Kandidatenlijst die content-robin.js van Robin heeft gescrapet:
+  // opslaan als bellijst bij de vacature.
+  if (msg?.type === "noah-robin-kandidaten" && Array.isArray(msg.kandidaten)) {
+    console.log("[Noah] Robin-kandidaten ontvangen:", msg.kandidaten.length, "voor vacature", msg.vacatureId);
+    if (msg.vacatureId && msg.kandidaten.length > 0) {
+      uploadRobinKandidaten(msg).catch((e) => console.error("[Noah] Robin-upload fout:", e));
+    }
+  }
 });
+
+async function uploadRobinKandidaten(msg) {
+  const r = await fetchMetTimeout(
+    NOAH_ROBIN_API,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vacatureId: msg.vacatureId,
+        functie: msg.functie,
+        kandidaten: msg.kandidaten,
+      }),
+      credentials: "include",
+    },
+    20000
+  );
+  const data = await r.json().catch(() => ({}));
+  if (r.ok) {
+    console.log("[Noah] Robin-bellijst aangemaakt:", data);
+  } else {
+    console.error("[Noah] Robin-bellijst mislukt:", r.status, data);
+  }
+}
 
 async function fetchMetTimeout(url, opts = {}, ms = 15000) {
   const ctrl = new AbortController();

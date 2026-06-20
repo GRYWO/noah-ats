@@ -5,7 +5,11 @@ import { ExternalLink } from "lucide-react";
 
 const ROBIN_URL = "https://app.recruitrobin.com";
 
-export default async function RobinPage() {
+export default async function RobinPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ functie?: string; vacature?: string }>;
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -18,15 +22,37 @@ export default async function RobinPage() {
 
   if (profile?.rol === "setter") redirect("/dashboard");
 
+  const sp = (await searchParams) ?? {};
+  const functie = (sp.functie ?? "").trim();
+  const vacatureId = (sp.vacature ?? "").trim();
+  // Payload die de Noah-extensie (content-script op /robin) oppakt en via de
+  // achtergrond doorgeeft aan content-robin.js, zodat Robin de zoekopdracht start.
+  const robinZoek = functie ? { functie, vacatureId } : null;
+
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="robin" />
+
+      {/* Onzichtbare payload voor de Noah-extensie */}
+      {robinZoek && (
+        <script
+          id="noah-robin-zoek"
+          type="application/json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(robinZoek) }}
+        />
+      )}
 
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-xl font-bold text-gray-800">Robin</h1>
-            <p className="text-xs text-gray-500">Werkt alleen met de Noah-extensie. Wit scherm? Installeer de extensie.</p>
+            {functie ? (
+              <p className="text-xs font-semibold text-emerald-700">
+                Zoekt kandidaten voor: {functie}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500">Werkt alleen met de Noah-extensie. Wit scherm? Installeer de extensie.</p>
+            )}
           </div>
           <a
             href={ROBIN_URL}

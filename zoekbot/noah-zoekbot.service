@@ -1,0 +1,18 @@
+[Unit]
+Description=Noah zoekbot (Robin/Jobdigger automatisering)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Pas User en WorkingDirectory aan naar jouw VM (op Oracle vaak 'ubuntu' of 'opc').
+User=ubuntu
+WorkingDirectory=/home/ubuntu/noah-ats/zoekbot
+# Pad naar node kan afwijken: controleer met `which node` en vul dat hier in.
+ExecStart=/usr/bin/node --env-file=.env index.mjs
+Restart=always
+RestartSec=10
+Environment=HEADLESS=true
+
+[Install]
+WantedBy=multi-user.target

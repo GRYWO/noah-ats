@@ -3,9 +3,17 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus } from "./actions";
+import { zetVacatureStatus, maakRobinZoekJob, maakJobdiggerZoekJob } from "./actions";
 
 export const metadata = { title: "Vacature aanmaken" };
+
+type JobdiggerVondst = {
+  id: string;
+  titel: string | null;
+  bedrijf: string | null;
+  plaats: string | null;
+  url: string | null;
+};
 
 type Vacature = {
   id: string;
@@ -65,12 +73,13 @@ export default async function VacatureAanmakenLijst() {
 
   const { data: ownProfiel } = await supabase
     .from("profiles")
-    .select("rol")
+    .select("rol, tenant_id")
     .eq("id", user.id)
     .single();
 
   const rol = (ownProfiel?.rol ?? "").toString().toLowerCase();
   const isAdmin = rol === "admin" || rol === "super-admin" || rol === "super_admin";
+  const tenantId = (ownProfiel as { tenant_id?: string } | null)?.tenant_id ?? null;
 
   const admin = createAdminClient();
 
@@ -105,6 +114,29 @@ export default async function VacatureAanmakenLijst() {
     }
   }
 
+  // Jobdigger-zoekbalk: loopt er een opdracht + welke vondsten zijn nog niet geplaatst?
+  let jobdiggerLoopt = false;
+  let vondsten: JobdiggerVondst[] = [];
+  if (tenantId) {
+    const { data: lopend } = await admin
+      .from("zoek_jobs")
+      .select("status")
+      .eq("tenant_id", tenantId)
+      .eq("type", "jobdigger")
+      .in("status", ["open", "bezig"])
+      .limit(1);
+    jobdiggerLoopt = (lopend ?? []).length > 0;
+
+    const { data: vd } = await admin
+      .from("jobdigger_vondsten")
+      .select("id, titel, bedrijf, plaats, url")
+      .eq("tenant_id", tenantId)
+      .eq("geplaatst", false)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    vondsten = (vd ?? []) as unknown as JobdiggerVondst[];
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="vacature-aanmaken" />
@@ -126,6 +158,74 @@ export default async function VacatureAanmakenLijst() {
           >
             Nieuwe vacature
           </Link>
+        </div>
+
+        {/* Stap 2/3: Jobdigger-zoekbalk + gevonden vacatures */}
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5">
+          <h2 className="text-sm font-bold text-gray-800">Vacatures zoeken via Jobdigger</h2>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Zoek op beroep. De machine draait de zoekopdracht op de achtergrond en levert hier de gevonden vacatures aan.
+          </p>
+          <form action={maakJobdiggerZoekJob} className="mt-3 flex gap-2">
+            <input
+              name="beroep"
+              required
+              placeholder="bv. Allround monteur, Heftruckchauffeur, Administratief medewerker"
+              className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#333399]"
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-[#333399] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#27277a] transition"
+            >
+              Vacatures zoeken
+            </button>
+          </form>
+
+          {jobdiggerLoopt && (
+            <p className="mt-3 text-xs font-semibold text-amber-700">
+              Zoekopdracht loopt… de resultaten verschijnen hier zodra de machine klaar is.
+            </p>
+          )}
+
+          {vondsten.length > 0 && (
+            <div className="mt-4 overflow-hidden rounded-lg border border-gray-100">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                  <tr>
+                    <th className="px-4 py-2 text-left">Functie</th>
+                    <th className="px-4 py-2 text-left">Bedrijf</th>
+                    <th className="px-4 py-2 text-left">Plaats</th>
+                    <th className="px-4 py-2 text-right">Actie</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vondsten.map((vd) => (
+                    <tr key={vd.id} className="border-t border-gray-100">
+                      <td className="px-4 py-2 text-gray-800">
+                        {vd.url ? (
+                          <a href={vd.url} target="_blank" rel="noopener noreferrer" className="hover:text-[#333399] hover:underline">
+                            {vd.titel ?? "Onbekende functie"}
+                          </a>
+                        ) : (
+                          vd.titel ?? "Onbekende functie"
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-gray-600">{vd.bedrijf ?? "-"}</td>
+                      <td className="px-4 py-2 text-gray-600">{vd.plaats ?? "-"}</td>
+                      <td className="px-4 py-2 text-right">
+                        <Link
+                          href={`/vacature-aanmaken/nieuw?titel=${encodeURIComponent(vd.titel ?? "")}&locatie=${encodeURIComponent(vd.plaats ?? "")}`}
+                          className="text-xs font-semibold text-emerald-700 hover:underline"
+                        >
+                          Controleer en plaats
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -193,6 +293,18 @@ export default async function VacatureAanmakenLijst() {
                       <td className="px-4 py-3 text-xs text-gray-500">{formatDatum(v.aangemaakt)}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
+                          {v.status === "open" && (
+                            <form action={maakRobinZoekJob}>
+                              <input type="hidden" name="vacature" value={v.id} />
+                              <input type="hidden" name="functie" value={v.titel} />
+                              <button
+                                type="submit"
+                                className="text-xs font-semibold text-emerald-700 hover:underline"
+                              >
+                                Zoek kandidaten
+                              </button>
+                            </form>
+                          )}
                           <a
                             href={`https://noah-recruitment.nl/vacatures/${v.id}`}
                             target="_blank"
