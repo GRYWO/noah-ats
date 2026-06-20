@@ -17,6 +17,22 @@ export async function diagnoseVelden(page, naam) {
         .slice(0, 25)
     );
     console.log(`[${naam}] zichtbare velden:`, JSON.stringify(velden));
+
+    const knoppen = await page.evaluate(() =>
+      [...document.querySelectorAll("button, input[type='submit'], [role='button']")]
+        .filter((el) => el.offsetParent !== null)
+        .map((el) => ({
+          tag: el.tagName,
+          type: el.type || "",
+          text: (el.textContent || "").trim().slice(0, 30),
+          aria: el.getAttribute("aria-label") || "",
+          title: el.getAttribute("title") || "",
+          cls: (el.className || "").toString().slice(0, 50),
+        }))
+        .slice(0, 30)
+    );
+    console.log(`[${naam}] knoppen:`, JSON.stringify(knoppen));
+
     await page.screenshot({ path: `debug-${naam}.png`, fullPage: true }).catch(() => {});
     console.log(`[${naam}] screenshot opgeslagen: debug-${naam}.png`);
   } catch (e) {

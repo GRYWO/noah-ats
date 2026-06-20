@@ -34,9 +34,28 @@ export async function runJobdiggerZoek(beroep) {
     const veld = await vindZichtbaarVeld(page, VELD_SELECTORS);
     if (!veld) throw new Error("Hoofd-zoekveld niet gevonden op Jobdigger (zie debug-jobdigger.png + velden hierboven)");
     await veld.click();
-    await veld.fill(beroep);
-    // Locatie bewust leeg laten = heel Nederland.
+    await veld.fill("");
+    // Jobdigger's veld is een typeahead: teken voor teken typen triggert de
+    // suggestielijst; daarna de eerste suggestie kiezen registreert de zoekterm.
+    await veld.pressSequentially(beroep, { delay: 80 });
+    await page.waitForTimeout(1800);
+    await veld.press("ArrowDown");
     await veld.press("Enter");
+    await page.waitForTimeout(1000);
+    // Locatie bewust leeg laten = heel Nederland.
+
+    // De zoekknop klikken (paarse vergrootglas). Mist 'ie? Dan Enter als terugval.
+    const zoekKnop = await vindZichtbaarVeld(page, [
+      'button[aria-label*="zoek" i]',
+      'button[aria-label*="search" i]',
+      'button[title*="zoek" i]',
+      'button[type="submit"]',
+    ]);
+    if (zoekKnop) {
+      await zoekKnop.click().catch(() => {});
+    } else {
+      await veld.press("Enter").catch(() => {});
+    }
 
     // Wachten tot de resultaten geladen zijn, daarna een screenshot van de
     // resultatenpagina zodat we de echte vacaturekaarten + export kunnen zien.
