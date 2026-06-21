@@ -32,13 +32,14 @@ export default async function NieuweVacaturePage({
 
   // Komt het vanuit een Jobdigger-vondst? Laad dan de gevonden vacature en vul
   // het formulier voor met alles wat we hebben (incl. de uitgelezen tekst).
-  let vondst: {
+  type Vondst = {
     titel: string | null;
     plaats: string | null;
     telefoon: string | null;
     bedrijf: string | null;
     detail_tekst: string | null;
-  } | null = null;
+  };
+  let vondst: Vondst | null = null;
   if (sp.vondst) {
     const admin = createAdminClient();
     const { data } = await admin
@@ -46,7 +47,7 @@ export default async function NieuweVacaturePage({
       .select("titel, plaats, telefoon, bedrijf, detail_tekst")
       .eq("id", sp.vondst)
       .maybeSingle();
-    vondst = (data as unknown as typeof vondst) ?? null;
+    vondst = (data as unknown as Vondst) ?? null;
   }
 
   // Voorgevulde waarden: vondst heeft voorrang, anders losse URL-parameters.
