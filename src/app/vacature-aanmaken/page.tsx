@@ -15,6 +15,7 @@ type JobdiggerVondst = {
   url: string | null;
   telefoon: string | null;
   datum: string | null;
+  jobdigger_url: string | null;
 };
 
 type Vacature = {
@@ -131,7 +132,7 @@ export default async function VacatureAanmakenLijst() {
 
     const { data: vd } = await admin
       .from("jobdigger_vondsten")
-      .select("id, titel, bedrijf, plaats, url, telefoon, datum")
+      .select("id, titel, bedrijf, plaats, url, telefoon, datum, jobdigger_url")
       .eq("tenant_id", tenantId)
       .eq("geplaatst", false)
       .order("created_at", { ascending: false })
@@ -207,8 +208,8 @@ export default async function VacatureAanmakenLijst() {
                   {vondsten.map((vd) => (
                     <tr key={vd.id} className="border-t border-gray-100">
                       <td className="px-4 py-2 text-gray-800">
-                        {vd.url ? (
-                          <a href={vd.url} target="_blank" rel="noopener noreferrer" className="hover:text-[#333399] hover:underline">
+                        {vd.jobdigger_url ? (
+                          <a href={vd.jobdigger_url} target="_blank" rel="noopener noreferrer" className="hover:text-[#333399] hover:underline" title="Bekijk de vacature op Jobdigger">
                             {vd.titel ?? "Onbekende functie"}
                           </a>
                         ) : (
