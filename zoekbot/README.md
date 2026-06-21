@@ -40,12 +40,42 @@ Vereist **Node 20.6+**.
 
 ## Starten / draaiend houden
 
+**Even handmatig (test):**
 ```bash
 npm start
 ```
+Dit draait alleen zolang het Terminal-venster open blijft. Voor "in de kast,
+nooit meer naar omkijken" → zie hieronder.
 
-Voor "altijd aan": laat dit draaien onder een process-manager zodat het na
-herstart automatisch opstart, bv. `pm2`:
+## Automatisch opstarten op de Mac (aanbevolen — één keer instellen)
+
+Met dit script start de bot **vanzelf op** als de Mac aangaat en **herstart hij
+vanzelf** als hij ooit crasht. Je hoeft daarna niets meer in de Terminal te typen.
+
+```bash
+cd zoekbot
+bash installeer-mac.sh
+```
+
+Het script vult zelf de juiste paden in en zet de bot aan. Controleren:
+```bash
+launchctl list | grep noah.zoekbot     # een regel = geregistreerd
+tail -f bot.log                         # live meekijken (Ctrl+C om te stoppen)
+```
+
+Voor écht "deksel dicht":
+- **Automatisch inloggen aan** (Systeeminstellingen → Gebruikers), zodat de bot
+  na een herstart opstart zonder dat iemand het wachtwoord intypt.
+- **Automatisch slapen uit** (Systeeminstellingen → Batterij/Energie) terwijl de
+  Mac op stroom zit, anders pauzeert de bot.
+
+Stoppen of opnieuw laden kan met:
+```bash
+launchctl unload ~/Library/LaunchAgents/com.noah.zoekbot.plist   # stoppen
+launchctl load   ~/Library/LaunchAgents/com.noah.zoekbot.plist   # weer starten
+```
+
+### Alternatief: pm2 (ook prima)
 
 ```bash
 npm i -g pm2
