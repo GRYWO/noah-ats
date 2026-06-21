@@ -290,7 +290,7 @@ export default async function VacatureAanmakenLijst() {
                           <td className="px-4 py-2 text-gray-500">{vd.datum ?? "-"}</td>
                           <td className="px-4 py-2 text-right">
                             <Link
-                              href={`/vacature-aanmaken/nieuw?titel=${encodeURIComponent(vd.titel ?? "")}&locatie=${encodeURIComponent(vd.plaats ?? "")}&telefoon=${encodeURIComponent(vd.telefoon ?? "")}&bedrijf=${encodeURIComponent(vd.bedrijf ?? "")}`}
+                              href={`/vacature-aanmaken/nieuw?vondst=${vd.id}`}
                               className="text-xs font-semibold text-emerald-700 hover:underline"
                             >
                               Controleer en plaats

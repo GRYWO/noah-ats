@@ -142,6 +142,36 @@ export async function runJobdiggerZoek(beroep) {
       return out;
     });
 
+    // Detailpagina van de eerste resultaten uitlezen (de volledige vacaturetekst),
+    // zodat "Controleer en plaats" het formulier kan voor-invullen. Beperkt aantal
+    // om het zoeken snel te houden.
+    const MAX_DETAIL = 12;
+    for (let i = 0; i < vondsten.length && i < MAX_DETAIL; i++) {
+      const v = vondsten[i];
+      if (!v.jobdigger_url) continue;
+      try {
+        const dp = await context.newPage();
+        await dp.goto(v.jobdigger_url, { waitUntil: "domcontentloaded", timeout: 45000 });
+        await dp.waitForTimeout(2500);
+        v.detail_tekst = await dp.evaluate(() => {
+          const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+          // Pak het grootste zinvolle tekstblok als vacaturebeschrijving.
+          const kandidaten = [
+            ...document.querySelectorAll("article, main, [class*='content' i], [class*='vacancy' i], [class*='description' i], [class*='detail' i], section, div"),
+          ];
+          let beste = "";
+          for (const el of kandidaten) {
+            const t = clean(el.textContent);
+            if (t.length > beste.length && t.length < 6000) beste = t;
+          }
+          return beste.slice(0, 4000) || null;
+        });
+        await dp.close();
+      } catch (e) {
+        console.warn("[jobdigger] detail-uitlezen mislukt:", e?.message || e);
+      }
+    }
+
     return vondsten;
   } finally {
     await context.close();
