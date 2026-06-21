@@ -28,12 +28,6 @@ export default async function NieuweVacaturePage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profiel } = await supabase
-    .from("profiles")
-    .select("voornaam, achternaam, mail_adres")
-    .eq("id", user.id)
-    .single();
-
   const sp = (await searchParams) ?? {};
 
   // Komt het vanuit een Jobdigger-vondst? Laad dan de gevonden vacature en vul
@@ -52,7 +46,7 @@ export default async function NieuweVacaturePage({
       .select("titel, plaats, telefoon, bedrijf, detail_tekst")
       .eq("id", sp.vondst)
       .maybeSingle();
-    vondst = (data as typeof vondst) ?? null;
+    vondst = (data as unknown as typeof vondst) ?? null;
   }
 
   // Voorgevulde waarden: vondst heeft voorrang, anders losse URL-parameters.
@@ -61,10 +55,6 @@ export default async function NieuweVacaturePage({
   const vTelefoon = vondst?.telefoon ?? sp.telefoon ?? "";
   const vBedrijf = vondst?.bedrijf ?? sp.bedrijf ?? "";
   const vTaken = vondst?.detail_tekst ?? "";
-
-  const voornaam = profiel?.voornaam ?? "";
-  const achternaam = profiel?.achternaam ?? "";
-  const volledigeNaam = [voornaam, achternaam].filter(Boolean).join(" ") || "Noah recruitment";
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
