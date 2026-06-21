@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
 import { maakVacatureNoahAts } from "../actions";
 import { AfsprakenSectie } from "../AfsprakenSectie";
@@ -16,27 +17,44 @@ const SECTOREN = [
   "Productie & Food",
   "Anders",
 ];
-const DIENSTVERBANDEN = ["Uitzenden", "Detachering", "Werving & selectie", "Tijdelijk", "Vast"];
+const DIENSTVERBANDEN = ["Uitzendbasis", "Werving & selectie"];
 
 export default async function NieuweVacaturePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ fout?: string; titel?: string; locatie?: string; telefoon?: string; bedrijf?: string }>;
+  searchParams?: Promise<{ fout?: string; titel?: string; locatie?: string; telefoon?: string; bedrijf?: string; vondst?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profiel } = await supabase
-    .from("profiles")
-    .select("voornaam, achternaam, mail_adres")
-    .eq("id", user.id)
-    .single();
-
   const sp = (await searchParams) ?? {};
-  const voornaam = profiel?.voornaam ?? "";
-  const achternaam = profiel?.achternaam ?? "";
-  const volledigeNaam = [voornaam, achternaam].filter(Boolean).join(" ") || "Noah recruitment";
+
+  // Komt het vanuit een Jobdigger-vondst? Laad dan de gevonden vacature en vul
+  // het formulier voor met alles wat we hebben (incl. de uitgelezen tekst).
+  let vondst: {
+    titel: string | null;
+    plaats: string | null;
+    telefoon: string | null;
+    bedrijf: string | null;
+    detail_tekst: string | null;
+  } | null = null;
+  if (sp.vondst) {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("jobdigger_vondsten")
+      .select("titel, plaats, telefoon, bedrijf, detail_tekst")
+      .eq("id", sp.vondst)
+      .maybeSingle();
+    vondst = (data as unknown as typeof vondst) ?? null;
+  }
+
+  // Voorgevulde waarden: vondst heeft voorrang, anders losse URL-parameters.
+  const vTitel = vondst?.titel ?? sp.titel ?? "";
+  const vLocatie = vondst?.plaats ?? sp.locatie ?? "";
+  const vTelefoon = vondst?.telefoon ?? sp.telefoon ?? "";
+  const vBedrijf = vondst?.bedrijf ?? sp.bedrijf ?? "";
+  const vTaken = vondst?.detail_tekst ?? "";
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -61,10 +79,10 @@ export default async function NieuweVacaturePage({
 
         <form action={maakVacatureNoahAts} className="space-y-6">
           <Sectie titel="De functie">
-            <Rij label="Functietitel" name="titel" placeholder="bv. Allround timmerman" required defaultValue={sp.titel} />
+            <Rij label="Functietitel" name="titel" placeholder="bv. Allround timmerman" required defaultValue={vTitel} />
             <div className="grid gap-4 sm:grid-cols-2">
               <Select label="Sector" name="sector" opties={SECTOREN} />
-              <Rij label="Locatie / regio" name="locatie" placeholder="bv. regio Tilburg" defaultValue={sp.locatie} />
+              <Rij label="Locatie / regio" name="locatie" placeholder="bv. regio Tilburg" defaultValue={vLocatie} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Select label="Dienstverband" name="dienstverband" opties={DIENSTVERBANDEN} />
@@ -74,21 +92,15 @@ export default async function NieuweVacaturePage({
               <Rij label="Gevraagde ervaring" name="ervaring" placeholder="bv. 2 tot 5 jaar" />
               <Rij label="Salarisindicatie" name="salaris" placeholder="bv. 2800 tot 3400 euro" />
             </div>
-            <Tekst label="Wat ga je doen? (taken)" name="taken" placeholder="Beschrijf de belangrijkste taken." />
+            <Tekst label="Wat ga je doen? (taken)" name="taken" placeholder="Beschrijf de belangrijkste taken." defaultValue={vTaken} />
             <Tekst label="Wat vraag je? (eisen)" name="eisen" placeholder="Diploma's, vaardigheden, rijbewijs, enzovoort." />
           </Sectie>
 
           <Sectie titel="Contactgegevens — alleen voor ons (niet op de website)">
-            {sp.bedrijf && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                Gevonden bedrijf: <span className="font-semibold">{sp.bedrijf}</span>. Dit blijft{" "}
-                <span className="font-semibold">intern</span> — het komt nooit op noah-recruitment.nl.
-                <input type="hidden" name="intern_bedrijf" value={sp.bedrijf} />
-              </div>
-            )}
+            {vBedrijf && <input type="hidden" name="intern_bedrijf" value={vBedrijf} />}
             <div className="grid gap-4 sm:grid-cols-2">
               <Rij label="Contactpersoon" name="contactpersoon" placeholder="Naam contactpersoon" required />
-              <Rij label="Telefoonnummer" name="contact_telefoon" placeholder="bv. 06-12345678" required defaultValue={sp.telefoon} />
+              <Rij label="Telefoonnummer" name="contact_telefoon" placeholder="bv. 06-12345678" required defaultValue={vTelefoon} />
             </div>
             <Rij
               label="E-mailadres (voor de automatische mail)"
@@ -152,14 +164,15 @@ function Rij({
   );
 }
 
-function Tekst({ label, name, placeholder }: { label: string; name: string; placeholder?: string }) {
+function Tekst({ label, name, placeholder, defaultValue }: { label: string; name: string; placeholder?: string; defaultValue?: string }) {
   return (
     <label className="block">
       <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</span>
       <textarea
         name={name}
         placeholder={placeholder}
-        rows={3}
+        defaultValue={defaultValue}
+        rows={defaultValue ? 8 : 3}
         className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#333399]"
       />
     </label>
