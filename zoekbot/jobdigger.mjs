@@ -128,8 +128,15 @@ export async function runJobdiggerZoek(beroep) {
         const plaats = rest.find((s) => s.length >= 2 && s === s.toUpperCase() && /[A-ZÀ-Þ]/.test(s)) || null;
         const bedrijf = rest.find((s) => s !== plaats && /[a-zà-þ]/.test(s)) || null;
 
+        // Link naar de échte vacature op Jobdigger (cabinet-link).
+        const detailLink = el.querySelector("a.cabinet-link, a[href*='focuscontent'], a[href]");
+        let jobdigger_url = detailLink ? detailLink.getAttribute("href") : null;
+        if (jobdigger_url && jobdigger_url.startsWith("/")) {
+          jobdigger_url = "https://www.jobdigger.nl" + jobdigger_url;
+        }
+
         if (!titel) continue;
-        out.push({ titel, bedrijf, plaats, url, datum, telefoon });
+        out.push({ titel, bedrijf, plaats, url, datum, telefoon, jobdigger_url });
         if (out.length >= 80) break;
       }
       return out;
