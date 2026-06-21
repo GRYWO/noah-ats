@@ -147,17 +147,19 @@ export default async function VacatureAanmakenLijst() {
       .limit(20);
 
     const jobIds = (jobs ?? []).map((j) => j.id as string);
-    const { data: vd } = jobIds.length
-      ? await admin
-          .from("jobdigger_vondsten")
-          .select("id, titel, bedrijf, plaats, url, telefoon, datum, jobdigger_url, job_id")
-          .in("job_id", jobIds)
-          .eq("geplaatst", false)
-          .order("created_at", { ascending: false })
-      : { data: [] as Array<JobdiggerVondst & { job_id: string }> };
+    let vd: Array<JobdiggerVondst & { job_id: string }> = [];
+    if (jobIds.length) {
+      const res = await admin
+        .from("jobdigger_vondsten")
+        .select("id, titel, bedrijf, plaats, url, telefoon, datum, jobdigger_url, job_id")
+        .in("job_id", jobIds)
+        .eq("geplaatst", false)
+        .order("created_at", { ascending: false });
+      vd = (res.data ?? []) as unknown as Array<JobdiggerVondst & { job_id: string }>;
+    }
 
     const perJob = new Map<string, JobdiggerVondst[]>();
-    for (const v of (vd ?? []) as Array<JobdiggerVondst & { job_id: string }>) {
+    for (const v of vd) {
       const arr = perJob.get(v.job_id) ?? [];
       arr.push(v);
       perJob.set(v.job_id, arr);
