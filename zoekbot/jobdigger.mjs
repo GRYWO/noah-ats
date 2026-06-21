@@ -67,19 +67,9 @@ export async function runJobdiggerZoek(beroep) {
     // Diagnose: toon de HTML-structuur van een paar resultaatrijen, zodat we
     // de uitlezing precies kunnen schrijven (functie/bedrijf/plaats/link/datum).
     const voorbeeldRijen = await page.evaluate(() => {
-      const WEB = /(?:www\.[^\s,]+)|\b[a-z0-9-]+\.(?:nl|com|be|jobs|co|org|eu|io|net)\b/i;
-      const DATE = /\b\d{1,2}\s+(?:jan|feb|mrt|maa|apr|mei|jun|jul|aug|sep|okt|nov|dec)[a-z]*\s*['’]?\d{2}\b/i;
-      const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
       const out = [];
-      for (const el of document.querySelectorAll("div, li, tr")) {
-        const t = clean(el.textContent);
-        if (t.length < 12 || t.length > 250) continue;
-        if (!WEB.test(t) || !DATE.test(t)) continue;
-        if ([...el.children].some((c) => {
-          const ct = clean(c.textContent);
-          return ct.length > 12 && ct.length < 250 && WEB.test(ct) && DATE.test(ct);
-        })) continue;
-        out.push(el.outerHTML.replace(/\s+/g, " ").slice(0, 1600));
+      for (const el of document.querySelectorAll(".cabinet-card")) {
+        out.push(el.outerHTML.replace(/\s+/g, " ").slice(0, 3500));
         if (out.length >= 2) break;
       }
       return out;
@@ -93,47 +83,49 @@ export async function runJobdiggerZoek(beroep) {
     // Alleen ECHTE vacaturerijen uitlezen: een rij heeft een website + datum,
     // en bevat geen rommel-woorden (helpdesk, mail naar Jobdigger, etc.).
     const vondsten = await page.evaluate(() => {
-      const WEB = /(?:www\.[^\s,]+)|\b[a-z0-9-]+\.(?:nl|com|be|jobs|co|org|eu|io|net)\b/i;
+      const WEB = /(?:www\.[^\s,<"]+)|\b[a-z0-9-]+\.(?:nl|com|be|jobs|co|org|eu|io|net)\b/i;
       const DATE = /\b\d{1,2}\s+(?:jan|feb|mrt|maa|apr|mei|jun|jul|aug|sep|okt|nov|dec)[a-z]*\s*['’]?\d{2}\b/i;
-      const JUNK = /helpdesk|mail naar jobdigger|geverifieerde|unieke vacatures|naam gebruiker|naar team|nieuwe zoekopdracht|verborgen|cookie|inloggen|abonnement|reistijd|opslaan|deselecteer|selecteer alles|geen resultaten/i;
-
-      const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+      const NIVEAU = /^(vmbo|mbo|hbo|wo|mbo\+|hbo\+|geen|onbekend)\b/i;
+      // Nederlands telefoonnummer (mobiel of vast).
+      const TEL = /(?:\+31[\s-]?|0)(?:6[\s-]?\d{8}|\d{2,3}[\s-]?\d{6,7})/;
       const ICON = /image\/svg|svg\+xml|xml version|illustrator|generator:/i;
+      const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
       const leaves = (el) =>
         [...el.querySelectorAll("*")]
           .filter((n) => n.children.length === 0 && clean(n.textContent) && !n.closest("svg") && !ICON.test(n.textContent))
           .map((n) => clean(n.textContent))
           .filter((s) => s.length > 1);
 
+      // Echte vacaturerijen hebben class 'cabinet-card'. Fallback: oude heuristiek.
+      let rijen = [...document.querySelectorAll(".cabinet-card")];
+      if (rijen.length === 0) {
+        rijen = [...document.querySelectorAll("div, li, tr")].filter((el) => {
+          const t = clean(el.textContent);
+          return t.length > 12 && t.length < 250 && WEB.test(t) && DATE.test(t);
+        });
+      }
+
       const out = [];
       const gezien = new Set();
-      for (const el of document.querySelectorAll("div, li, tr")) {
+      for (const el of rijen) {
         const t = clean(el.textContent);
-        if (t.length < 12 || t.length > 250) continue;
-        if (JUNK.test(t)) continue;
-        if (!WEB.test(t) || !DATE.test(t)) continue; // echte vacaturerij
-        // Alleen de INNERSTE rij (niet de omhullende container).
-        if ([...el.children].some((c) => {
-          const ct = clean(c.textContent);
-          return ct.length > 12 && ct.length < 250 && WEB.test(ct) && DATE.test(ct);
-        })) continue;
-        if (gezien.has(t)) continue;
-        gezien.add(t);
+        const ref = el.getAttribute("data-reference") || t;
+        if (!t || gezien.has(ref)) continue;
+        gezien.add(ref);
 
-        const stukjes = leaves(el).filter((s) => !JUNK.test(s));
+        const titelEl = el.querySelector(".cabinet-title h3, h3, h2");
+        const titel = titelEl ? clean(titelEl.textContent) : (leaves(el)[0] || "");
+
         const url = (t.match(WEB) || [null])[0];
         const datum = (t.match(DATE) || [null])[0];
-        const telLink = el.querySelector('a[href^="tel:"]');
-        const telefoon = telLink ? telLink.getAttribute("href").replace(/^tel:/, "") : null;
+        // Telefoon: zoek in zichtbare én verborgen tekst van de hele kaart.
+        const telMatch = (el.textContent.match(TEL) || el.innerHTML.match(TEL) || [null])[0];
+        const telefoon = telMatch ? clean(telMatch) : null;
 
-        const NIVEAU = /^(vmbo|mbo|hbo|wo|mbo\+|hbo\+|geen|onbekend)\b/i;
-        const titel = stukjes[0] || "";
-        const rest = stukjes
-          .slice(1)
-          .filter((s) => s && !WEB.test(s) && !DATE.test(s) && !NIVEAU.test(s));
-        // Plaats = stukje in HOOFDLETTERS (zo toont Jobdigger plaatsnamen).
+        const rest = leaves(el).filter(
+          (s) => s && s !== titel && !WEB.test(s) && !DATE.test(s) && !NIVEAU.test(s) && !TEL.test(s)
+        );
         const plaats = rest.find((s) => s.length >= 2 && s === s.toUpperCase() && /[A-ZÀ-Þ]/.test(s)) || null;
-        // Bedrijf = stukje met kleine letters (dus geen plaats/niveau).
         const bedrijf = rest.find((s) => s !== plaats && /[a-zà-þ]/.test(s)) || null;
 
         if (!titel) continue;

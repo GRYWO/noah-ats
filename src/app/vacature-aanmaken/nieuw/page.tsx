@@ -20,7 +20,7 @@ const DIENSTVERBANDEN = ["Uitzenden", "Detachering", "Werving & selectie", "Tijd
 export default async function NieuweVacaturePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ fout?: string; titel?: string; locatie?: string }>;
+  searchParams?: Promise<{ fout?: string; titel?: string; locatie?: string; telefoon?: string; bedrijf?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -75,6 +75,27 @@ export default async function NieuweVacaturePage({
             </div>
             <Tekst label="Wat ga je doen? (taken)" name="taken" placeholder="Beschrijf de belangrijkste taken." />
             <Tekst label="Wat vraag je? (eisen)" name="eisen" placeholder="Diploma's, vaardigheden, rijbewijs, enzovoort." />
+          </Sectie>
+
+          <Sectie titel="Contactgegevens — alleen voor ons (niet op de website)">
+            {sp.bedrijf && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                Gevonden bedrijf: <span className="font-semibold">{sp.bedrijf}</span>. Dit blijft{" "}
+                <span className="font-semibold">intern</span> — het komt nooit op noah-recruitment.nl.
+                <input type="hidden" name="intern_bedrijf" value={sp.bedrijf} />
+              </div>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Rij label="Contactpersoon" name="contactpersoon" placeholder="Naam contactpersoon" required />
+              <Rij label="Telefoonnummer" name="contact_telefoon" placeholder="bv. 06-12345678" required defaultValue={sp.telefoon} />
+            </div>
+            <Rij
+              label="E-mailadres (voor de automatische mail)"
+              name="contact_mailadres"
+              type="email"
+              placeholder="naam@bedrijf.nl"
+              required
+            />
           </Sectie>
 
           <AfsprakenSectie />

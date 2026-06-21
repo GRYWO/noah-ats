@@ -118,6 +118,13 @@ export async function maakVacatureNoahAts(formData: FormData) {
     bedrijfsnaam: "Noah recruitment",
   };
 
+  // Interne contactgegevens — ALLEEN voor ons, komen nooit op de website
+  // en gaan NIET naar de AI (die maakt een anonieme tekst).
+  const intern_contactpersoon = String(formData.get("contactpersoon") || "").trim() || null;
+  const intern_telefoon = String(formData.get("contact_telefoon") || "").trim() || null;
+  const intern_mailadres = String(formData.get("contact_mailadres") || "").trim() || null;
+  const intern_bedrijf = String(formData.get("intern_bedrijf") || "").trim() || null;
+
   // Commerciele afspraken (intern, NIET meegegeven aan AI).
   const tariefRaw = String(formData.get("afspraak_tarief_type") || "").trim();
   const TARIEF_TOEGESTAAN = new Set(["ws_10", "ws_15", "ws_anders", "uitzend"]);
@@ -211,6 +218,10 @@ export async function maakVacatureNoahAts(formData: FormData) {
       bedrijfsnaam: "Noah recruitment",
       contact_naam: contactNaam,
       contact_email: "info@noah-recruitment.nl",
+      intern_contactpersoon,
+      intern_telefoon,
+      intern_mailadres,
+      intern_bedrijf,
       status: "open",
       afspraak_tarief_type,
       afspraak_ws_percentage,
