@@ -315,3 +315,56 @@ export async function maakJobdiggerZoekJob(formData: FormData) {
 
   revalidatePath("/vacature-aanmaken");
 }
+
+// Jobdigger-lijst hernoemen (de naam van de zoekopdracht).
+export async function hernoemJobdiggerLijst(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const jobId = String(formData.get("jobId") || "").trim();
+  const naam = String(formData.get("naam") || "").trim();
+  if (!jobId) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  await admin
+    .from("zoek_jobs")
+    .update({ lijst_naam: naam || null })
+    .eq("id", jobId)
+    .eq("tenant_id", profile.tenant_id);
+
+  revalidatePath("/vacature-aanmaken");
+}
+
+// Jobdigger-lijst verwijderen (de zoekopdracht; vondsten verdwijnen mee via cascade).
+export async function verwijderJobdiggerLijst(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const jobId = String(formData.get("jobId") || "").trim();
+  if (!jobId) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  await admin
+    .from("zoek_jobs")
+    .delete()
+    .eq("id", jobId)
+    .eq("tenant_id", profile.tenant_id);
+
+  revalidatePath("/vacature-aanmaken");
+}

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, maakRobinZoekJob, maakJobdiggerZoekJob } from "./actions";
+import { zetVacatureStatus, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst } from "./actions";
 
 export const metadata = { title: "Vacature aanmaken" };
 
@@ -16,6 +16,12 @@ type JobdiggerVondst = {
   telefoon: string | null;
   datum: string | null;
   jobdigger_url: string | null;
+};
+
+type JobdiggerLijst = {
+  id: string;
+  naam: string;
+  vondsten: JobdiggerVondst[];
 };
 
 type Vacature = {
@@ -117,9 +123,9 @@ export default async function VacatureAanmakenLijst() {
     }
   }
 
-  // Jobdigger-zoekbalk: loopt er een opdracht + welke vondsten zijn nog niet geplaatst?
+  // Jobdigger: lopende opdracht + de gevonden vacatures gegroepeerd per zoeklijst.
   let jobdiggerLoopt = false;
-  let vondsten: JobdiggerVondst[] = [];
+  let lijsten: JobdiggerLijst[] = [];
   if (tenantId) {
     const { data: lopend } = await admin
       .from("zoek_jobs")
@@ -130,14 +136,39 @@ export default async function VacatureAanmakenLijst() {
       .limit(1);
     jobdiggerLoopt = (lopend ?? []).length > 0;
 
-    const { data: vd } = await admin
-      .from("jobdigger_vondsten")
-      .select("id, titel, bedrijf, plaats, url, telefoon, datum, jobdigger_url")
+    const { data: jobs } = await admin
+      .from("zoek_jobs")
+      .select("id, lijst_naam, zoekterm, created_at")
       .eq("tenant_id", tenantId)
-      .eq("geplaatst", false)
+      .eq("type", "jobdigger")
+      .eq("status", "klaar")
       .order("created_at", { ascending: false })
-      .limit(50);
-    vondsten = (vd ?? []) as unknown as JobdiggerVondst[];
+      .limit(20);
+
+    const jobIds = (jobs ?? []).map((j) => j.id as string);
+    const { data: vd } = jobIds.length
+      ? await admin
+          .from("jobdigger_vondsten")
+          .select("id, titel, bedrijf, plaats, url, telefoon, datum, jobdigger_url, job_id")
+          .in("job_id", jobIds)
+          .eq("geplaatst", false)
+          .order("created_at", { ascending: false })
+      : { data: [] as Array<JobdiggerVondst & { job_id: string }> };
+
+    const perJob = new Map<string, JobdiggerVondst[]>();
+    for (const v of (vd ?? []) as Array<JobdiggerVondst & { job_id: string }>) {
+      const arr = perJob.get(v.job_id) ?? [];
+      arr.push(v);
+      perJob.set(v.job_id, arr);
+    }
+
+    lijsten = (jobs ?? [])
+      .map((j) => ({
+        id: j.id as string,
+        naam: ((j.lijst_naam as string | null) ?? (j.zoekterm as string)) || "Zoeklijst",
+        vondsten: perJob.get(j.id as string) ?? [],
+      }))
+      .filter((l) => l.vondsten.length > 0);
   }
 
   return (
@@ -190,61 +221,88 @@ export default async function VacatureAanmakenLijst() {
             </p>
           )}
 
-          {vondsten.length > 0 && (
-            <div className="mt-4 overflow-hidden rounded-lg border border-gray-100">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Functie</th>
-                    <th className="px-4 py-2 text-left">Bedrijf</th>
-                    <th className="px-4 py-2 text-left">Plaats</th>
-                    <th className="px-4 py-2 text-left">Telefoon</th>
-                    <th className="px-4 py-2 text-left">Website</th>
-                    <th className="px-4 py-2 text-left">Datum</th>
-                    <th className="px-4 py-2 text-right">Actie</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {vondsten.map((vd) => (
-                    <tr key={vd.id} className="border-t border-gray-100">
-                      <td className="px-4 py-2 text-gray-800">
-                        {vd.jobdigger_url ? (
-                          <a href={vd.jobdigger_url} target="_blank" rel="noopener noreferrer" className="hover:text-[#333399] hover:underline" title="Bekijk de vacature op Jobdigger">
-                            {vd.titel ?? "Onbekende functie"}
-                          </a>
-                        ) : (
-                          vd.titel ?? "Onbekende functie"
-                        )}
-                      </td>
-                      <td className="px-4 py-2 text-gray-600">{vd.bedrijf ?? "-"}</td>
-                      <td className="px-4 py-2 text-gray-600">{vd.plaats ?? "-"}</td>
-                      <td className="px-4 py-2 text-gray-600">
-                        {vd.telefoon ? (
-                          <a href={`tel:${vd.telefoon}`} className="text-[#333399] hover:underline">{vd.telefoon}</a>
-                        ) : "-"}
-                      </td>
-                      <td className="px-4 py-2 text-gray-600">
-                        {vd.url ? (
-                          <a href={vd.url.startsWith("http") ? vd.url : `https://${vd.url}`} target="_blank" rel="noopener noreferrer" className="text-[#333399] hover:underline">
-                            {vd.url.replace(/^https?:\/\//, "")}
-                          </a>
-                        ) : "-"}
-                      </td>
-                      <td className="px-4 py-2 text-gray-500">{vd.datum ?? "-"}</td>
-                      <td className="px-4 py-2 text-right">
-                        <Link
-                          href={`/vacature-aanmaken/nieuw?titel=${encodeURIComponent(vd.titel ?? "")}&locatie=${encodeURIComponent(vd.plaats ?? "")}&telefoon=${encodeURIComponent(vd.telefoon ?? "")}&bedrijf=${encodeURIComponent(vd.bedrijf ?? "")}`}
-                          className="text-xs font-semibold text-emerald-700 hover:underline"
-                        >
-                          Controleer en plaats
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {lijsten.map((lijst) => (
+            <details key={lijst.id} open className="mt-4 rounded-lg border border-gray-200">
+              <summary className="cursor-pointer select-none px-4 py-3 font-semibold text-gray-800">
+                {lijst.naam} <span className="text-gray-400 font-normal">· {lijst.vondsten.length} vacatures</span>
+              </summary>
+              <div className="border-t border-gray-100 p-3">
+                <div className="mb-3 flex flex-wrap items-center gap-3">
+                  <form action={hernoemJobdiggerLijst} className="flex items-center gap-2">
+                    <input type="hidden" name="jobId" value={lijst.id} />
+                    <input
+                      name="naam"
+                      defaultValue={lijst.naam}
+                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 outline-none focus:border-[#333399]"
+                    />
+                    <button type="submit" className="text-xs font-semibold text-[#333399] hover:underline">
+                      Naam opslaan
+                    </button>
+                  </form>
+                  <form action={verwijderJobdiggerLijst}>
+                    <input type="hidden" name="jobId" value={lijst.id} />
+                    <button type="submit" className="text-xs font-semibold text-red-600 hover:underline">
+                      Lijst verwijderen
+                    </button>
+                  </form>
+                </div>
+
+                <div className="overflow-hidden rounded-lg border border-gray-100">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Functie</th>
+                        <th className="px-4 py-2 text-left">Bedrijf</th>
+                        <th className="px-4 py-2 text-left">Plaats</th>
+                        <th className="px-4 py-2 text-left">Telefoon</th>
+                        <th className="px-4 py-2 text-left">Website</th>
+                        <th className="px-4 py-2 text-left">Datum</th>
+                        <th className="px-4 py-2 text-right">Actie</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lijst.vondsten.map((vd) => (
+                        <tr key={vd.id} className="border-t border-gray-100">
+                          <td className="px-4 py-2 text-gray-800">
+                            {vd.jobdigger_url ? (
+                              <a href={vd.jobdigger_url} target="_blank" rel="noopener noreferrer" className="hover:text-[#333399] hover:underline" title="Bekijk de vacature op Jobdigger">
+                                {vd.titel ?? "Onbekende functie"}
+                              </a>
+                            ) : (
+                              vd.titel ?? "Onbekende functie"
+                            )}
+                          </td>
+                          <td className="px-4 py-2 text-gray-600">{vd.bedrijf ?? "-"}</td>
+                          <td className="px-4 py-2 text-gray-600">{vd.plaats ?? "-"}</td>
+                          <td className="px-4 py-2 text-gray-600">
+                            {vd.telefoon ? (
+                              <a href={`tel:${vd.telefoon}`} className="text-[#333399] hover:underline">{vd.telefoon}</a>
+                            ) : "-"}
+                          </td>
+                          <td className="px-4 py-2 text-gray-600">
+                            {vd.url ? (
+                              <a href={vd.url.startsWith("http") ? vd.url : `https://${vd.url}`} target="_blank" rel="noopener noreferrer" className="text-[#333399] hover:underline">
+                                {vd.url.replace(/^https?:\/\//, "")}
+                              </a>
+                            ) : "-"}
+                          </td>
+                          <td className="px-4 py-2 text-gray-500">{vd.datum ?? "-"}</td>
+                          <td className="px-4 py-2 text-right">
+                            <Link
+                              href={`/vacature-aanmaken/nieuw?titel=${encodeURIComponent(vd.titel ?? "")}&locatie=${encodeURIComponent(vd.plaats ?? "")}&telefoon=${encodeURIComponent(vd.telefoon ?? "")}&bedrijf=${encodeURIComponent(vd.bedrijf ?? "")}`}
+                              className="text-xs font-semibold text-emerald-700 hover:underline"
+                            >
+                              Controleer en plaats
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </details>
+          ))}
         </div>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
