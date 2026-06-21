@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { maakVacatureNoahAts } from "../actions";
 import { AfsprakenSectie } from "../AfsprakenSectie";
+import { SubmitKnop } from "../SubmitKnop";
 
 export const metadata = { title: "Nieuwe vacature" };
 
@@ -100,12 +101,12 @@ export default async function NieuweVacaturePage({
 
           <AfsprakenSectie />
 
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-[#333399] py-3 font-semibold text-white hover:bg-[#27277a] transition"
+          <SubmitKnop
+            bezigTekst="Vacature aanmaken…"
+            className="w-full rounded-xl bg-[#333399] py-3 font-semibold text-white hover:bg-[#27277a]"
           >
             Vacature aanmaken
-          </button>
+          </SubmitKnop>
         </form>
       </div>
     </main>
