@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
 import { zetVacatureStatus, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst } from "./actions";
+import { SubmitKnop } from "./SubmitKnop";
 
 export const metadata = { title: "Vacature aanmaken" };
 
@@ -207,12 +208,12 @@ export default async function VacatureAanmakenLijst() {
               placeholder="bv. Allround monteur, Heftruckchauffeur, Administratief medewerker"
               className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#333399]"
             />
-            <button
-              type="submit"
-              className="rounded-lg bg-[#333399] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#27277a] transition"
+            <SubmitKnop
+              bezigTekst="Zoeken…"
+              className="rounded-lg bg-[#333399] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#27277a]"
             >
               Vacatures zoeken
-            </button>
+            </SubmitKnop>
           </form>
 
           {jobdiggerLoopt && (
@@ -235,15 +236,15 @@ export default async function VacatureAanmakenLijst() {
                       defaultValue={lijst.naam}
                       className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-800 outline-none focus:border-[#333399]"
                     />
-                    <button type="submit" className="text-xs font-semibold text-[#333399] hover:underline">
+                    <SubmitKnop bezigTekst="Opslaan…" className="text-xs font-semibold text-[#333399] hover:underline">
                       Naam opslaan
-                    </button>
+                    </SubmitKnop>
                   </form>
                   <form action={verwijderJobdiggerLijst}>
                     <input type="hidden" name="jobId" value={lijst.id} />
-                    <button type="submit" className="text-xs font-semibold text-red-600 hover:underline">
+                    <SubmitKnop bezigTekst="Verwijderen…" className="text-xs font-semibold text-red-600 hover:underline">
                       Lijst verwijderen
-                    </button>
+                    </SubmitKnop>
                   </form>
                 </div>
 
@@ -374,12 +375,12 @@ export default async function VacatureAanmakenLijst() {
                             <form action={maakRobinZoekJob}>
                               <input type="hidden" name="vacature" value={v.id} />
                               <input type="hidden" name="functie" value={v.titel} />
-                              <button
-                                type="submit"
+                              <SubmitKnop
+                                bezigTekst="Bezig…"
                                 className="text-xs font-semibold text-emerald-700 hover:underline"
                               >
                                 Zoek kandidaten
-                              </button>
+                              </SubmitKnop>
                             </form>
                           )}
                           <a
@@ -394,12 +395,12 @@ export default async function VacatureAanmakenLijst() {
                             <form action={zetVacatureStatus}>
                               <input type="hidden" name="id" value={v.id} />
                               <input type="hidden" name="status" value="gesloten" />
-                              <button
-                                type="submit"
+                              <SubmitKnop
+                                bezigTekst="Sluiten…"
                                 className="text-xs text-red-600 hover:underline"
                               >
                                 Sluiten
-                              </button>
+                              </SubmitKnop>
                             </form>
                           )}
                         </div>
