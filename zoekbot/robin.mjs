@@ -70,8 +70,9 @@ async function leesKandidaatDetail(context, url) {
 export async function runRobinZoek(zoekterm, opties = {}) {
   const straal = Number(opties.straal) || 40;
   const plaats = (opties.plaats || "").toString().trim();
-  // Robin is een natuurlijke-taal zoekbalk: locatie + straal meegeven in de tekst.
-  const query = plaats ? `${zoekterm} in ${plaats} (binnen ${straal} km)` : zoekterm;
+  // Robin is een natuurlijke-taal zoekbalk. We zoeken op functie + plaats; de
+  // straal (40 km) geven we als hint mee.
+  const query = plaats ? `${zoekterm} ${plaats} binnen ${straal} km` : zoekterm;
 
   const context = await chromium.launchPersistentContext(PROFIEL_DIR, {
     headless: process.env.HEADLESS !== "false",
@@ -142,34 +143,26 @@ export async function runRobinZoek(zoekterm, opties = {}) {
       console.log("[robin] diagnose opgeslagen: debug-robin-rijen.txt");
     } catch {}
 
-    // Kandidaten scrapen uit de resultatenlijst. Robin gebruikt emotion-classes
-    // (css-...). De naam staat in '.css-1qia2qg'; de kaart eromheen bevat
-    // woonplaats, afstand en de volledige ervaring/opleiding/voorkeuren.
+    // Kandidaten scrapen uit de resultatenlijst. De echte kandidaatkaarten zijn
+    // 'css-mq6390' (de naam staat in '.css-1qia2qg'). Zo pakken we NIET de
+    // opgeslagen zoekopdrachten uit de zijbalk mee.
     const kandidaten = await page.evaluate(() => {
       const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
       const TEL = /(?:\+31[\s-]?|0)(?:6[\s-]?\d{8}|\d{2,3}[\s-]?\d{6,7})/;
 
-      // Naam-elementen; val terug op een bredere selector als de class wijzigt.
-      let naamEls = [...document.querySelectorAll(".css-1qia2qg")];
-      if (naamEls.length === 0) {
-        // Terugval: zoek divs die direct gevolgd worden door 'X KM ... GELEDEN'.
-        naamEls = [...document.querySelectorAll("div")].filter((d) =>
-          d.children.length === 0 && /KM\b/.test(clean(d.parentElement?.textContent || "")),
-        );
+      let cards = [...document.querySelectorAll(".css-mq6390")];
+      if (cards.length === 0) {
+        const cont = document.querySelector(".css-s9lhpd");
+        if (cont) cards = [...cont.children];
       }
 
       const out = [];
       const gezien = new Set();
-      for (const ne of naamEls) {
-        const naam = clean(ne.textContent).slice(0, 100);
+      for (const card of cards) {
+        const naamEl = card.querySelector(".css-1qia2qg");
+        const naam = clean(naamEl ? naamEl.textContent : "").slice(0, 100);
         if (!naam || naam.length < 2) continue;
 
-        // Kaart = voorouder met flink wat meer tekst dan alleen de naam.
-        let card = ne;
-        for (let i = 0; i < 6 && card.parentElement; i++) {
-          card = card.parentElement;
-          if (clean(card.textContent).length > naam.length + 40) break;
-        }
         const txt = clean(card.textContent);
         const key = naam + "|" + txt.slice(0, 50);
         if (gezien.has(key)) continue;
@@ -186,10 +179,8 @@ export async function runRobinZoek(zoekterm, opties = {}) {
           afstand = Number(m[2]);
         }
 
-        // Externe link (LinkedIn e.d.), niet de '#'-iconen.
         const a = [...card.querySelectorAll('a[href^="http"]')].find((x) => !/^#/.test(x.getAttribute("href") || ""));
         const url = a ? a.href : "";
-
         const tel = (txt.match(TEL) || [null])[0];
 
         out.push({
