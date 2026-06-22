@@ -5,6 +5,7 @@
 
 import { chromium } from "playwright";
 import path from "node:path";
+import { writeFileSync } from "node:fs";
 import { diagnoseVelden, vindZichtbaarVeld } from "./velden.mjs";
 
 const PROFIEL_DIR = process.env.ROBIN_PROFIEL_DIR || path.join(process.cwd(), "robin-profiel");
@@ -89,9 +90,52 @@ export async function runRobinZoek(zoekterm, opties = {}) {
     if (!veld) throw new Error("Zoekveld niet gevonden op Robin (zie debug-robin.png + velden hierboven)");
     await veld.click();
     await veld.fill(query);
-    await veld.press("Enter");
-    await page.waitForTimeout(6000); // wachten tot de resultaten geladen zijn
+
+    // Robin's veld is een TEXTAREA: Enter voegt een regel toe i.p.v. zoeken.
+    // De zoekknop (aria-label "Zoeken") klikken start de zoekopdracht echt.
+    const zoekKnop = await vindZichtbaarVeld(page, [
+      'button[aria-label="Zoeken" i]',
+      'button[aria-label*="zoek" i]',
+      'button[title*="zoek" i]',
+    ]);
+    if (zoekKnop) {
+      await zoekKnop.click().catch(() => {});
+    } else {
+      await veld.press("Enter").catch(() => {});
+    }
+
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(7000); // wachten tot de resultaten geladen zijn
     await page.screenshot({ path: "debug-robin-resultaten.png", fullPage: true }).catch(() => {});
+
+    // Diagnose: tel kandidaat-achtige elementen en schrijf voorbeelden weg,
+    // zodat de selectors getuned kunnen worden tegen de echte Robin-DOM.
+    try {
+      const diag = await page.evaluate(() => {
+        const sels = [
+          '[data-testid*="candidate" i]',
+          '[class*="candidate" i]',
+          '[class*="result" i]',
+          '[class*="profile" i]',
+          '[role="row"]',
+          "article",
+          "li",
+          "table tr",
+        ];
+        const counts = {};
+        for (const s of sels) counts[s] = document.querySelectorAll(s).length;
+        const samples = [];
+        for (const s of sels) {
+          const el = document.querySelector(s);
+          if (el) samples.push(s + " => " + el.outerHTML.replace(/\s+/g, " ").slice(0, 1800));
+          if (samples.length >= 4) break;
+        }
+        return { counts, samples };
+      });
+      console.log("[robin] resultaat-diagnose:", JSON.stringify(diag.counts));
+      writeFileSync("debug-robin-rijen.txt", diag.samples.join("\n\n========\n\n"));
+      console.log("[robin] rij-structuur opgeslagen: debug-robin-rijen.txt");
+    } catch {}
 
     // Kandidaten scrapen — heuristisch, finetune na de eerste zichtbare test.
     const kandidaten = await page.evaluate(() => {
