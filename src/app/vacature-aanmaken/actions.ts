@@ -185,28 +185,46 @@ async function maakPubliekeContent(input: VacatureInput): Promise<{
   tags: string[];
   publiek_secties: VacatureUitvoer["secties"];
 }> {
-  try {
-    const ai = await genereerVacature(input);
-    return { publiek_tekst: ai.publiek_tekst, samenvatting: ai.samenvatting, tags: ai.tags, publiek_secties: ai.secties };
-  } catch {
-    const bieden = [
+  const biedenUitVelden = (() => {
+    const d = [
       input.salaris ? `Je verdient ${input.salaris}` : "",
       input.uren ? `op basis van ${input.uren}` : "",
       input.dienstverband ? `(${input.dienstverband})` : "",
     ].filter(Boolean).join(" ");
+    return d ? `${d}.` : "";
+  })();
+  const introTerugval = `Voor een opdrachtgever in de regio ${input.locatie || "Nederland"} zoeken wij een ${input.titel}.`;
+
+  try {
+    const ai = await genereerVacature(input);
+    // Secties altijd vullen: AI-versie waar aanwezig, anders uit de ingevulde
+    // velden. Zo valt de website nooit terug op één tekstblok.
+    const s = ai.secties ?? ({} as VacatureUitvoer["secties"]);
+    return {
+      publiek_tekst: ai.publiek_tekst,
+      samenvatting: ai.samenvatting,
+      tags: ai.tags,
+      publiek_secties: {
+        intro: (s.intro || ai.samenvatting || introTerugval).trim(),
+        taken: (s.taken || input.taken || "").trim(),
+        eisen: (s.eisen || input.eisen || "").trim(),
+        bieden: (s.bieden || biedenUitVelden).trim(),
+      },
+    };
+  } catch {
     return {
       publiek_tekst:
-        `Voor een opdrachtgever in de regio ${input.locatie || "Nederland"} zoeken wij een ${input.titel}.\n\n` +
+        `${introTerugval}\n\n` +
         (input.taken ? `Wat ga je doen?\n${input.taken}\n\n` : "") +
         (input.eisen ? `Wat vragen we?\n${input.eisen}\n\n` : "") +
         (input.salaris ? `Salarisindicatie: ${input.salaris}\n` : ""),
       samenvatting: `${input.titel}${input.locatie ? ", " + input.locatie : ""}`,
       tags: [input.titel, input.sector, input.locatie].filter(Boolean) as string[],
       publiek_secties: {
-        intro: `Voor een opdrachtgever in de regio ${input.locatie || "Nederland"} zoeken wij een ${input.titel}.`,
+        intro: introTerugval,
         taken: input.taken || "",
         eisen: input.eisen || "",
-        bieden: bieden ? `${bieden}.` : "",
+        bieden: biedenUitVelden,
       },
     };
   }
