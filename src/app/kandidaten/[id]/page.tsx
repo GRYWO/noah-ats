@@ -23,6 +23,7 @@ import { IntakeAfrondKnop } from "./IntakeAfrondKnop";
 import { EigenaarKnop } from "./EigenaarKnop";
 import { getViewerRol } from "@/utils/view-as";
 import { zetWebsiteIntakeDoorNaarWachtrij, keurWebsiteIntakeAf, zetWebsiteIntakeInPool } from "./website-intake-actions";
+import { slaIntakeNotitieOp } from "./kandidaat-setter-actions";
 
 const STATUS_OPTIES = [
   { value: "nieuw", label: "Nieuw" },
@@ -163,6 +164,98 @@ export default async function KandidaatDetail({
     _cvg.talen && `Talen: ${_cvg.talen}`,
     _cvg.vaardigheden && `Vaardigheden: ${_cvg.vaardigheden}`,
   ].filter(Boolean).join("\n");
+
+  // ── Setter-weergave: bewust simpel ─────────────────────────────────────────
+  // Alleen contactgegevens, een aanpasbaar intake-veld (hoe de intake is/wordt
+  // gedaan) en het profiel om te bekijken. De rest (recruiter/admin-tools) is
+  // hier niet relevant.
+  if (isSetter) {
+    const cvg = (k.cv_geparseerd ?? {}) as Record<string, unknown>;
+    const profielRijen: Array<[string, string | null | undefined]> = [
+      ["Profielschets", k.profielschets],
+      ["Werkervaring", (cvg.werkervaring as string) ?? null],
+      ["Opleidingen", (cvg.diplomas as string) ?? k.opleiding],
+      ["Talen", (cvg.talen as string) ?? null],
+      ["Vaardigheden", (cvg.vaardigheden as string) ?? null],
+      ["Rijbewijs", k.rijbewijs],
+      ["Eigen vervoer", k.eigen_vervoer ? "Ja" : null],
+    ];
+    const naam = `${k.voornaam ?? ""}${k.tussenvoegsel ? " " + k.tussenvoegsel : ""} ${k.achternaam ?? ""}`.trim();
+    return (
+      <main className="min-h-screen bg-[#f4f4f7] pl-16">
+        <TopBar active="kandidaten" />
+        <div className="p-8 max-w-2xl mx-auto">
+          <Link href="/vacature-aanmaken" className="text-sm text-gray-600 hover:text-[#333399] mb-3 inline-block">
+            ← Terug naar dashboard
+          </Link>
+
+          {ok === "intake_opgeslagen" && (
+            <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+              Intake-informatie opgeslagen.
+            </div>
+          )}
+
+          {/* Contact */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-5">
+            <h1 className="text-2xl font-bold text-gray-800">{naam || "Kandidaat"}</h1>
+            {k.woonplaats && <p className="text-sm text-gray-500 mt-0.5">{k.woonplaats}</p>}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {k.telefoon ? (
+                <a href={`tel:${k.telefoon}`} className="rounded-lg bg-[#333399] px-4 py-2 text-sm font-semibold text-white hover:bg-[#27277a]">
+                  Bellen · {k.telefoon}
+                </a>
+              ) : (
+                <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-gray-500">Geen telefoonnummer</span>
+              )}
+              {k.email && (
+                <a href={`mailto:${k.email}`} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-[#333399]">
+                  E-mail · {k.email}
+                </a>
+              )}
+              {k.website_cv_pad && (
+                <a href={`/api/kandidaten/${k.id}/website-cv`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-[#333399]">
+                  Open CV
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* Intake-informatie (aanpasbaar) */}
+          <form action={slaIntakeNotitieOp} className="bg-white rounded-xl shadow-sm p-6 mb-5">
+            <input type="hidden" name="kandidaatId" value={k.id} />
+            <h2 className="font-bold text-gray-800">Intake</h2>
+            <p className="mt-0.5 text-xs text-gray-500">Hoe is of wordt de intake gedaan? Pas deze tekst gerust aan.</p>
+            <textarea
+              name="notitie"
+              defaultValue={k.notitie ?? ""}
+              rows={6}
+              placeholder="Bijv. intake telefonisch afgerond op …, of: nog bellen om te controleren."
+              className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 outline-none focus:border-[#333399]"
+            />
+            <button type="submit" className="mt-3 rounded-lg bg-[#333399] px-4 py-2 text-sm font-semibold text-white hover:bg-[#27277a]">
+              Intake opslaan
+            </button>
+          </form>
+
+          {/* Profiel bekijken */}
+          <details className="bg-white rounded-xl shadow-sm p-6">
+            <summary className="cursor-pointer select-none font-bold text-gray-800">Profiel bekijken</summary>
+            <div className="mt-4 space-y-3">
+              {profielRijen.filter(([, v]) => v && String(v).trim()).map(([label, v]) => (
+                <div key={label}>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
+                  <div className="mt-0.5 whitespace-pre-wrap text-sm text-gray-800">{v}</div>
+                </div>
+              ))}
+              {profielRijen.every(([, v]) => !v || !String(v).trim()) && (
+                <p className="text-sm text-gray-500">Nog geen profielgegevens beschikbaar.</p>
+              )}
+            </div>
+          </details>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
