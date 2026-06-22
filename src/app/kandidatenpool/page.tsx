@@ -5,6 +5,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
 import { matchTalentpool, type TalentKandidaatIn } from "@/utils/talentpool-match";
 import { claimKandidaat } from "./actions";
+import { VacatureZoeker } from "./VacatureZoeker";
 
 type SearchParams = { vacature?: string; ok?: string; error?: string };
 
@@ -121,29 +122,10 @@ export default async function KandidatenpoolPage({ searchParams }: { searchParam
         )}
 
         {/* Vacature kiezen -> AI-matches */}
-        <form method="get" className="mb-5 flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white p-4">
-          <label className="flex-1 min-w-[240px]">
-            <span className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Jouw vacature</span>
-            <select
-              name="vacature"
-              defaultValue={gekozenVacatureId ?? ""}
-              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-[#333399]"
-            >
-              <option value="">Kies een openstaande vacature…</option>
-              {eigenVacatures.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.titel}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className="rounded-lg bg-[#333399] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#27277a]">
-            Toon AI-matches
-          </button>
-          {eigenVacatures.length === 0 && (
-            <span className="text-xs text-amber-700">Je hebt nog geen openstaande vacatures. Maak er eerst één aan.</span>
-          )}
-        </form>
+        <VacatureZoeker
+          vacatures={eigenVacatures.map((v) => ({ id: v.id, titel: v.titel }))}
+          gekozenId={gekozenVacatureId}
+        />
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           {kandidaten.length > 0 ? (
