@@ -143,32 +143,39 @@ export async function runRobinZoek(zoekterm, opties = {}) {
       console.log("[robin] diagnose opgeslagen: debug-robin-rijen.txt");
     } catch {}
 
-    // Kandidaten scrapen uit de resultatenlijst. De echte kandidaatkaarten zijn
-    // 'css-mq6390' (de naam staat in '.css-1qia2qg'). Zo pakken we NIET de
-    // opgeslagen zoekopdrachten uit de zijbalk mee.
+    // Kandidaten scrapen. De naam staat in '.css-1qia2qg'; we lopen omhoog naar
+    // het volledige kandidaatblok (dat 'X KM' of 'GELEDEN' bevat) zodat we ook
+    // woonplaats + volledige ervaring meekrijgen. Blokken zonder die markers
+    // (zoals de opgeslagen zoekopdrachten in de zijbalk) slaan we over.
     const kandidaten = await page.evaluate(() => {
       const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
       const TEL = /(?:\+31[\s-]?|0)(?:6[\s-]?\d{8}|\d{2,3}[\s-]?\d{6,7})/;
 
-      let cards = [...document.querySelectorAll(".css-mq6390")];
-      if (cards.length === 0) {
-        const cont = document.querySelector(".css-s9lhpd");
-        if (cont) cards = [...cont.children];
-      }
-
+      const naamEls = [...document.querySelectorAll(".css-1qia2qg")];
       const out = [];
       const gezien = new Set();
-      for (const card of cards) {
-        const naamEl = card.querySelector(".css-1qia2qg");
-        const naam = clean(naamEl ? naamEl.textContent : "").slice(0, 100);
+      for (const ne of naamEls) {
+        const naam = clean(ne.textContent).slice(0, 100);
         if (!naam || naam.length < 2) continue;
 
-        const txt = clean(card.textContent);
-        const key = naam + "|" + txt.slice(0, 50);
+        // Omhoog naar het volledige kandidaatblok.
+        let blok = ne;
+        let gevonden = false;
+        for (let i = 0; i < 8 && blok.parentElement; i++) {
+          blok = blok.parentElement;
+          const t = clean(blok.textContent);
+          if (/\d+\s*KM\b/i.test(t) || /GELEDEN/i.test(t)) {
+            gevonden = true;
+            break;
+          }
+        }
+        if (!gevonden) continue; // zijbalk / niet-kandidaat overslaan
+
+        const txt = clean(blok.textContent);
+        const key = naam + "|" + txt.slice(0, 60);
         if (gezien.has(key)) continue;
         gezien.add(key);
 
-        // Woonplaats + afstand: alles tussen de naam en het eerste 'X KM'.
         let rest = txt.startsWith(naam) ? txt.slice(naam.length).trim() : txt;
         rest = rest.replace(/^GECHECKT\s*/i, "").trim();
         const m = rest.match(/^(.*?)\s+(\d+)\s*KM\b/i);
@@ -179,7 +186,7 @@ export async function runRobinZoek(zoekterm, opties = {}) {
           afstand = Number(m[2]);
         }
 
-        const a = [...card.querySelectorAll('a[href^="http"]')].find((x) => !/^#/.test(x.getAttribute("href") || ""));
+        const a = [...blok.querySelectorAll('a[href^="http"]')].find((x) => !/^#/.test(x.getAttribute("href") || ""));
         const url = a ? a.href : "";
         const tel = (txt.match(TEL) || [null])[0];
 
