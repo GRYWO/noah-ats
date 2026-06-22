@@ -158,20 +158,23 @@ export async function runRobinZoek(zoekterm, opties = {}) {
         const naam = clean(ne.textContent).slice(0, 100);
         if (!naam || naam.length < 2) continue;
 
-        // Omhoog naar het volledige kandidaatblok.
+        // Omhoog naar het volledige kandidaatblok (mét ervaring/opleiding), maar
+        // niet zo ver dat we de hele lijst pakken (grootte-grens).
+        let beste = null;
         let blok = ne;
-        let gevonden = false;
-        for (let i = 0; i < 8 && blok.parentElement; i++) {
+        for (let i = 0; i < 10 && blok.parentElement; i++) {
           blok = blok.parentElement;
           const t = clean(blok.textContent);
-          if (/\d+\s*KM\b/i.test(t) || /GELEDEN/i.test(t)) {
-            gevonden = true;
-            break;
+          if (t.length > 3000) break; // te groot = de hele lijst
+          if (/\d+\s*KM\b/i.test(t) || /GELEDEN/i.test(t)) beste = blok;
+          if (/ervaring|opleiding|voorkeuren/i.test(t)) {
+            beste = blok;
+            break; // volledige kandidaatrij
           }
         }
-        if (!gevonden) continue; // zijbalk / niet-kandidaat overslaan
+        if (!beste) continue; // zijbalk / niet-kandidaat overslaan
 
-        const txt = clean(blok.textContent);
+        const txt = clean(beste.textContent);
         const key = naam + "|" + txt.slice(0, 60);
         if (gezien.has(key)) continue;
         gezien.add(key);
@@ -186,7 +189,7 @@ export async function runRobinZoek(zoekterm, opties = {}) {
           afstand = Number(m[2]);
         }
 
-        const a = [...blok.querySelectorAll('a[href^="http"]')].find((x) => !/^#/.test(x.getAttribute("href") || ""));
+        const a = [...beste.querySelectorAll('a[href^="http"]')].find((x) => !/^#/.test(x.getAttribute("href") || ""));
         const url = a ? a.href : "";
         const tel = (txt.match(TEL) || [null])[0];
 
