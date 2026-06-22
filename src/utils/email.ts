@@ -13,6 +13,7 @@ type ResendSendRet = ReturnType<typeof echteResend.emails.send>;
 type MailGlobals = {
   __NOAH_MAIL_DRYRUN?: boolean;
   __NOAH_MAIL_CAPTURED?: Array<{ to: string; subject: string }>;
+  __NOAH_MAIL_FORCE_TO?: string;
 };
 const resend = {
   emails: {
@@ -26,6 +27,12 @@ const resend = {
           subject: String(p.subject ?? ""),
         });
         return Promise.resolve({ data: { id: "dryrun" }, error: null }) as unknown as ResendSendRet;
+      }
+      // Test-modus: stuur élke mail naar één vast adres (en geen cc/bcc naar echte
+      // ontvangers). Voor de "stuur alle testmails naar mijn Gmail"-knop.
+      const forceTo = g.__NOAH_MAIL_FORCE_TO;
+      if (forceTo) {
+        payload = { ...(payload as unknown as Record<string, unknown>), to: forceTo, cc: undefined, bcc: undefined } as unknown as ResendSendArg;
       }
       return echteResend.emails.send(payload);
     },
