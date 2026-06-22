@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -309,16 +308,14 @@ export default async function VacatureAanmakenLijst() {
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <AutoVernieuw snel={jobdiggerLoopt || robinLoopt || telefoonLoopt} />
       <TopBar active="vacature-aanmaken" />
-      <div className="p-8 max-w-6xl mx-auto">
+      <div className="px-6 py-8">
         <div className="gold-hr mb-6 rounded-full" />
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="gold-chip inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]">
               Noah<span className="text-gold">.</span>&nbsp;recruitment
             </span>
-            <h1 className="mt-3 text-3xl font-bold text-gray-800">
-              Hoi {setterVoornaam || "daar"} <span className="align-middle">👋</span>
-            </h1>
+            <h1 className="mt-3 text-3xl font-bold text-gray-800">Hoi {setterVoornaam || "daar"}</h1>
             <p className="text-gray-500 text-sm mt-1">Welkom op je dashboard — beheer je vacatures en kandidaten.</p>
           </div>
           <Link href="/vacature-aanmaken/nieuw" className="btn-gold px-5 py-2.5 text-sm">
@@ -454,12 +451,12 @@ export default async function VacatureAanmakenLijst() {
         {/* Te claimen: openstaande aanvragen (o.a. via Noah launch) zonder setter. */}
         {claimbaar.length > 0 && (
           <div className="mb-6 rounded-xl border border-[#f5c84d]/50 bg-[#fffdf5] p-5">
-            <h2 className="text-sm font-bold text-gray-800">
-              Openstaande aanvragen <span className="font-normal text-gray-400">· {claimbaar.length} te claimen</span>
+            <h2 className="text-base font-bold text-gray-800">
+              Te claimen vacatures <span className="font-normal text-gray-400">· {claimbaar.length}</span>
             </h2>
             <p className="mt-0.5 text-xs text-gray-500">
-              Nieuwe vacatures die nog geen setter hebben. Claim er een — daarna staat hij op jouw naam en zoeken we
-              automatisch kandidaten.
+              Alles wat via de website of het Noah launch-dashboard binnenkomt en nog geen setter heeft. Claim er een —
+              daarna staat hij op jouw naam en zoeken we automatisch kandidaten.
             </p>
             <div className="mt-3 overflow-x-auto rounded-lg border border-gray-100">
               <table className="w-full min-w-[640px] text-sm">
@@ -493,150 +490,128 @@ export default async function VacatureAanmakenLijst() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          {lijst.length === 0 ? (
-            <div className="p-10 text-center text-gray-500 text-sm">
-              Je hebt nog geen vacatures aangemaakt. Klik op &quot;Nieuwe vacature&quot; om te beginnen.
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="text-xs text-gray-500 uppercase bg-gray-50">
-                <tr>
-                  <th className="text-left px-4 py-3">Titel</th>
-                  <th className="text-left px-4 py-3">Locatie</th>
-                  <th className="text-left px-4 py-3">Dienstverband</th>
-                  {isAdmin && <th className="text-left px-4 py-3">Eigenaar</th>}
-                  <th className="text-left px-4 py-3">Afspraak</th>
-                  <th className="text-left px-4 py-3">Status</th>
-                  <th className="text-left px-4 py-3">Aangemaakt</th>
-                  <th className="text-right px-4 py-3">Acties</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lijst.map((v) => {
-                  const eigenaar = v.eigenaar ? eigenaarNamen.get(v.eigenaar) : undefined;
-                  const kandidaten = kandidatenPerVac.get(v.id) ?? [];
-                  const pijplijnKandidaten = pijplijnPerVac.get(v.id) ?? [];
-                  const kolommen = isAdmin ? 8 : 7;
-                  return (
-                    <Fragment key={v.id}>
-                    <tr className="border-t border-gray-100 align-top">
-                      <td className="px-4 py-3 font-semibold text-gray-800">
-                        <a
-                          href={`https://noah-recruitment.nl/vacatures/${v.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:text-[#333399] hover:underline"
-                        >
-                          {v.titel}
-                        </a>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">{v.locatie ?? "-"}</td>
-                      <td className="px-4 py-3 text-gray-600">{v.dienstverband ?? "-"}</td>
-                      {isAdmin && (
-                        <td className="px-4 py-3 text-gray-600">{naamVoor(eigenaar)}</td>
-                      )}
-                      <td className="px-4 py-3">
-                        <details className="group">
-                          <summary className="cursor-pointer list-none text-xs font-semibold text-[#333399] hover:underline">
-                            {korteAfspraak(v)}
-                            <span className="ml-1 text-gray-400 group-open:hidden">(toon)</span>
-                            <span className="ml-1 text-gray-400 hidden group-open:inline">(verberg)</span>
-                          </summary>
-                          <div className="mt-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-700 space-y-1">
-                            <AfspraakDetails v={v} />
-                          </div>
-                        </details>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={
-                            v.status === "open"
-                              ? "inline-block text-xs font-semibold px-2 py-1 rounded-full bg-emerald-100 text-emerald-800"
-                              : "inline-block text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600"
-                          }
-                        >
-                          {v.status === "open" ? "Open" : "Gesloten"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{formatDatum(v.aangemaakt)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {v.status === "open" && (
-                            <form action={maakRobinZoekJob}>
-                              <input type="hidden" name="vacature" value={v.id} />
-                              <input type="hidden" name="functie" value={v.titel} />
-                              <SubmitKnop
-                                bezigTekst="Bezig…"
-                                className="text-xs font-semibold text-emerald-700 hover:underline"
-                              >
-                                Zoek kandidaten
-                              </SubmitKnop>
-                            </form>
-                          )}
-                          <Link
-                            href={`/vacature-aanmaken/${v.id}/bewerken`}
-                            className="text-xs font-semibold text-[#333399] hover:underline"
-                          >
-                            Bewerken
-                          </Link>
-                          <a
-                            href={`https://noah-recruitment.nl/vacatures/${v.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-[#333399] hover:underline"
-                          >
-                            Bekijk live
-                          </a>
-                          {v.status === "open" && (
-                            <form action={zetVacatureStatus}>
-                              <input type="hidden" name="id" value={v.id} />
-                              <input type="hidden" name="status" value="gesloten" />
-                              <SubmitKnop
-                                bezigTekst="Sluiten…"
-                                className="text-xs text-gray-500 hover:underline"
-                              >
-                                Sluiten
-                              </SubmitKnop>
-                            </form>
-                          )}
-                          <form
-                            action={verwijderVacature}
-                          >
-                            <input type="hidden" name="id" value={v.id} />
-                            <SubmitKnop
-                              bezigTekst="Verwijderen…"
-                              className="text-xs font-semibold text-red-600 hover:underline"
-                            >
-                              Verwijderen
-                            </SubmitKnop>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                    {pijplijnKandidaten.length > 0 && (
-                      <tr className="bg-gray-50/60">
-                        <td colSpan={kolommen} className="px-4 pb-4">
-                          <PijplijnBord vacatureId={v.id} kandidaten={pijplijnKandidaten} afspraakType={v.afspraak_tarief_type} />
-                        </td>
-                      </tr>
-                    )}
-                    {(kandidaten.length > 0 || robinLoopt) && (
-                      <tr className="bg-gray-50/40">
-                        <td colSpan={kolommen} className="px-4 pb-4">
-                          <KandidatenPaneel kandidaten={kandidaten} loopt={robinLoopt} vacatureId={v.id} vacatureTitel={v.titel} setterVoornaam={setterVoornaam} />
-                        </td>
-                      </tr>
-                    )}
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <h2 className="mb-3 mt-2 text-lg font-bold text-gray-800">Mijn vacatures</h2>
+        {lijst.length === 0 ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-gray-500 text-sm">
+            Je hebt nog geen vacatures. Klik op &quot;+ Nieuwe vacature&quot; of claim er een hierboven.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {lijst.map((v) => (
+              <VacatureKaart
+                key={v.id}
+                v={v}
+                eigenaarNaam={isAdmin ? naamVoor(v.eigenaar ? eigenaarNamen.get(v.eigenaar) : undefined) : ""}
+                isAdmin={isAdmin}
+                kandidaten={kandidatenPerVac.get(v.id) ?? []}
+                pijplijnKandidaten={pijplijnPerVac.get(v.id) ?? []}
+                robinLoopt={robinLoopt}
+                setterVoornaam={setterVoornaam}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </main>
+  );
+}
+
+// Eén vacature als ingeklapt, uitklapbaar vlak. Kop = naam + locatie + status.
+// Uitgeklapt: acties, afspraak-details, de pijplijn (kanban) én de kandidaten —
+// alles in één overzicht per vacature.
+function VacatureKaart({
+  v,
+  eigenaarNaam,
+  isAdmin,
+  kandidaten,
+  pijplijnKandidaten,
+  robinLoopt,
+  setterVoornaam,
+}: {
+  v: Vacature;
+  eigenaarNaam: string;
+  isAdmin: boolean;
+  kandidaten: Kandidaat[];
+  pijplijnKandidaten: PijplijnKandidaat[];
+  robinLoopt: boolean;
+  setterVoornaam: string;
+}) {
+  return (
+    <details className="group rounded-xl border border-gray-200 bg-white">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-3 px-5 py-4 hover:bg-gray-50">
+        <span className="text-gray-400 transition-transform group-open:rotate-90">▸</span>
+        <span className="font-semibold text-gray-800">{v.titel}</span>
+        {v.locatie && <span className="text-sm text-gray-500">· {v.locatie}</span>}
+        <span
+          className={
+            v.status === "open"
+              ? "inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800"
+              : "inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600"
+          }
+        >
+          {v.status === "open" ? "Open" : "Gesloten"}
+        </span>
+        <span className="ml-auto flex items-center gap-3 text-xs text-gray-500">
+          {isAdmin && eigenaarNaam && <span>{eigenaarNaam}</span>}
+          <span>{korteAfspraak(v)}</span>
+          <span className="text-gray-400">{formatDatum(v.aangemaakt)}</span>
+        </span>
+      </summary>
+
+      <div className="space-y-4 border-t border-gray-100 px-5 py-4">
+        {/* Acties */}
+        <div className="flex flex-wrap gap-2">
+          {v.status === "open" && (
+            <form action={maakRobinZoekJob}>
+              <input type="hidden" name="vacature" value={v.id} />
+              <input type="hidden" name="functie" value={v.titel} />
+              <SubmitKnop bezigTekst="Bezig…" className="rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+                Zoek kandidaten
+              </SubmitKnop>
+            </form>
+          )}
+          <Link href={`/vacature-aanmaken/${v.id}/bewerken`} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-[#333399] hover:bg-gray-50">
+            Bewerken
+          </Link>
+          <a href={`https://noah-recruitment.nl/vacatures/${v.id}`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-[#333399] hover:bg-gray-50">
+            Bekijk live
+          </a>
+          {v.status === "open" && (
+            <form action={zetVacatureStatus}>
+              <input type="hidden" name="id" value={v.id} />
+              <input type="hidden" name="status" value="gesloten" />
+              <SubmitKnop bezigTekst="Sluiten…" className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50">
+                Sluiten
+              </SubmitKnop>
+            </form>
+          )}
+          <form action={verwijderVacature}>
+            <input type="hidden" name="id" value={v.id} />
+            <SubmitKnop bezigTekst="Verwijderen…" className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50">
+              Verwijderen
+            </SubmitKnop>
+          </form>
+        </div>
+
+        {/* Afspraak-details */}
+        <details className="text-xs">
+          <summary className="cursor-pointer list-none font-semibold text-[#333399]">Interne afspraak: {korteAfspraak(v)}</summary>
+          <div className="mt-2 rounded-lg bg-gray-50 p-3 text-gray-700">
+            <AfspraakDetails v={v} />
+          </div>
+        </details>
+
+        {/* Pijplijn (kanban) */}
+        {pijplijnKandidaten.length > 0 && (
+          <PijplijnBord vacatureId={v.id} kandidaten={pijplijnKandidaten} afspraakType={v.afspraak_tarief_type} />
+        )}
+
+        {/* Gevonden kandidaten */}
+        {(kandidaten.length > 0 || robinLoopt) && (
+          <KandidatenPaneel kandidaten={kandidaten} loopt={robinLoopt} vacatureId={v.id} vacatureTitel={v.titel} setterVoornaam={setterVoornaam} />
+        )}
+      </div>
+    </details>
   );
 }
 
