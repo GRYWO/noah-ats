@@ -6,6 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 // verdeelt die netjes over de formuliervelden. Bedrijfsnaam wordt bewust NIET
 // overgenomen (de vacature blijft anoniem).
 export type GestructureerdeVacature = {
+  sector: string;
   taken: string;
   eisen: string;
   uren: string;
@@ -24,6 +25,7 @@ export async function structureerVacatureTekst(
   ruw: string,
   titel: string,
   plaats: string,
+  sectoren: string[],
 ): Promise<GestructureerdeVacature> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY ontbreekt");
@@ -50,7 +52,10 @@ export async function structureerVacatureTekst(
         role: "user",
         content:
           `Functietitel: ${titel}\nPlaats: ${plaats}\n\nRuwe tekst (alleen als hints):\n${ruw.slice(0, 4000)}\n\n` +
+          `Kies de best passende sector — antwoord met EXACT één van deze waarden: ${JSON.stringify(sectoren)}. ` +
+          "Gebruik 'Anders' alleen als echt niets past.\n\n" +
           'Lever JSON: { ' +
+          '"sector": string (exact één uit de lijst hierboven), ' +
           '"taken": string (een overtuigende alinea van 3 tot 5 zinnen: wat ga je doen en waarom is deze functie aantrekkelijk), ' +
           '"eisen": string (kort en concreet wat we vragen: opleiding, ervaring, vaardigheden, rijbewijs), ' +
           '"uren": string (bv. "32-40 uur" of "Fulltime"), ' +
@@ -62,7 +67,9 @@ export async function structureerVacatureTekst(
 
   const tekst = res.content.find((b) => b.type === "text")?.text ?? "{}";
   const data = leesJson<Partial<GestructureerdeVacature>>(tekst);
+  const gekozenSector = (data.sector ?? "").toString().trim();
   return {
+    sector: sectoren.includes(gekozenSector) ? gekozenSector : "",
     taken: (data.taken ?? "").toString().trim(),
     eisen: (data.eisen ?? "").toString().trim(),
     uren: (data.uren ?? "").toString().trim(),
