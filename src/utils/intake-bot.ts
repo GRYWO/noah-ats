@@ -20,7 +20,8 @@ function leesJson<T>(tekst: string): T {
 
 export type IntakeBericht = { role: "user" | "assistant"; content: string };
 export type IntakeProfiel = {
-  naam: string;
+  voornaam: string;
+  achternaam: string;
   email: string;
   telefoon: string;
   woonplaats: string;
@@ -41,11 +42,12 @@ export type IntakeStap =
 
 const INTAKE_SYSTEM =
   `Je bent Noah, een vriendelijke maar efficiënte intake-recruiter. ${STIJL} ` +
-  "Je voert samen met een recruiter de intake van een kandidaat. Stel telkens ÉÉN vraag tegelijk en bevestig kort wat je hoort. Vraag niet naar dingen die al uit de context bekend zijn. " +
-  "Verzamel in elk geval: naam, e-mail, telefoon, woonplaats, leeftijd, gewenste functie of sector, maximale reisafstand in kilometers, uren per week beschikbaar, of de kandidaat in Nederland mag werken (werkvergunning), rijbewijs en eigen vervoer. " +
+  "Je voert samen met een recruiter de intake van een kandidaat. Stel telkens ÉÉN vraag tegelijk en bevestig kort wat je hoort. " +
+  "Vraag ALTIJD naar: voornaam, achternaam, telefoonnummer en e-mailadres — ook als die al uit de context bekend lijken, want ze moeten kloppen. Lees een bekend e-mailadres of telefoonnummer hardop terug en vraag om bevestiging of correctie. " +
+  "Verzamel verder: woonplaats, leeftijd, gewenste functie of sector, maximale reisafstand in kilometers, uren per week beschikbaar, of de kandidaat in Nederland mag werken (werkvergunning), rijbewijs en eigen vervoer. " +
   "Beoordeel of de kandidaat voldoende Nederlands beheerst (taal_ok). Engels is niet vereist. " +
   "Zodra je alles hebt, rond je warm af (zeg dat je het profiel nu opmaakt) en zet je klaar op true. " +
-  "Antwoord ELKE beurt UITSLUITEND met JSON: { \"klaar\": boolean, \"bericht\": string, \"profiel\"?: {naam,email,telefoon,woonplaats,leeftijd,max_km,gewenste_functies,uren_per_week,werkvergunning,taal_ok,rijbewijs,eigen_vervoer,beschikbaarheid,opmerking} }. " +
+  "Antwoord ELKE beurt UITSLUITEND met JSON: { \"klaar\": boolean, \"bericht\": string, \"profiel\"?: {voornaam,achternaam,email,telefoon,woonplaats,leeftijd,max_km,gewenste_functies,uren_per_week,werkvergunning,taal_ok,rijbewijs,eigen_vervoer,beschikbaarheid,opmerking} }. " +
   "leeftijd, max_km en uren_per_week zijn alleen het getal als string. werkvergunning, taal_ok en eigen_vervoer zijn 'ja' of 'nee'. Vul 'profiel' alleen als klaar=true.";
 
 export async function intakeStap(messages: IntakeBericht[], cvContext?: string): Promise<IntakeStap> {
