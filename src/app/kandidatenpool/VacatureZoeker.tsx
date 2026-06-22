@@ -45,9 +45,9 @@ export function VacatureZoeker({
         type="submit"
         disabled={pending || !val}
         aria-busy={pending}
-        className="inline-flex items-center gap-2 rounded-lg bg-[#333399] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#27277a] active:scale-95 disabled:cursor-wait disabled:opacity-70"
+        className="btn-gold inline-flex items-center gap-2 px-5 py-2.5 text-sm active:scale-95 disabled:cursor-wait disabled:opacity-70"
       >
-        {pending && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
+        {pending && <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#2a2785]/30 border-t-[#2a2785]" />}
         {pending ? "Zoeken…" : "Toon AI-matches"}
       </button>
       {vacatures.length === 0 && (
