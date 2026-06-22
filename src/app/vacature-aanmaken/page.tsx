@@ -70,11 +70,14 @@ type PoolKandidaat = {
   woonplaats: string | null;
 };
 
-type PijplijnKandidaat = PoolKandidaat & { kanban_stap: string | null };
+type PijplijnKandidaat = PoolKandidaat & { kanban_stap: string | null; voorstel_status: string | null };
 
 // Korte, leesbare fase-labels voor het pijplijn-overzicht onder de vacature.
-function faseLabel(stap: string | null): { label: string; kleur: string } {
-  switch (stap) {
+// De voorstel-status (voorgesteld/gezien/op_gesprek/afgewezen) gaat vóór op de
+// kanban-fase.
+function faseLabel(k: PijplijnKandidaat): { label: string; kleur: string } {
+  const eff = k.voorstel_status || k.kanban_stap;
+  switch (eff) {
     case "nieuwe_sollicitatie":
     case "interne_intake":
     case "in_afwachting_cv":
@@ -82,14 +85,19 @@ function faseLabel(stap: string | null): { label: string; kleur: string } {
     case "in_wachtrij":
     case "bij_setter":
       return { label: "Wachtrij", kleur: "bg-sky-100 text-sky-800" };
+    case "voorgesteld":
     case "in_proces":
       return { label: "Voorgesteld", kleur: "bg-[#333399]/10 text-[#333399]" };
-    case "geplaatst":
-      return { label: "Geplaatst", kleur: "bg-emerald-100 text-emerald-800" };
+    case "gezien":
+      return { label: "Gezien", kleur: "bg-indigo-100 text-indigo-800" };
+    case "op_gesprek":
+      return { label: "Op gesprek", kleur: "bg-emerald-100 text-emerald-800" };
     case "afgewezen":
-      return { label: "Afgewezen", kleur: "bg-gray-100 text-gray-500" };
+      return { label: "Afgewezen", kleur: "bg-red-100 text-red-700" };
+    case "geplaatst":
+      return { label: "Geplaatst", kleur: "bg-emerald-600 text-white" };
     default:
-      return { label: stap || "Onbekend", kleur: "bg-gray-100 text-gray-600" };
+      return { label: eff || "Onbekend", kleur: "bg-gray-100 text-gray-600" };
   }
 }
 
@@ -312,7 +320,7 @@ export default async function VacatureAanmakenLijst() {
     const vacIds = lijst.map((v) => v.id);
     const { data: kand } = await admin
       .from("kandidaten")
-      .select("id, voornaam, achternaam, woonplaats, vacature_id, kanban_stap")
+      .select("id, voornaam, achternaam, woonplaats, vacature_id, kanban_stap, voorstel_status")
       .in("vacature_id", vacIds);
     for (const p of kand ?? []) {
       const vid = (p as { vacature_id: string }).vacature_id;
@@ -634,7 +642,7 @@ function PijplijnPaneel({ kandidaten }: { kandidaten: PijplijnKandidaat[] }) {
       <div className="border-t border-gray-100 p-3">
         <div className="flex flex-col gap-1.5">
           {kandidaten.map((k) => {
-            const fase = faseLabel(k.kanban_stap);
+            const fase = faseLabel(k);
             return (
               <a
                 key={k.id}
