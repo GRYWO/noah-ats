@@ -5,6 +5,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
 import { zetVacatureStatus, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
+import { AutoVernieuw } from "./AutoVernieuw";
 
 export const metadata = { title: "Vacature aanmaken" };
 
@@ -153,7 +154,6 @@ export default async function VacatureAanmakenLijst() {
         .from("jobdigger_vondsten")
         .select("id, titel, bedrijf, plaats, url, telefoon, datum, jobdigger_url, job_id")
         .in("job_id", jobIds)
-        .eq("geplaatst", false)
         .order("created_at", { ascending: false });
       vd = (res.data ?? []) as unknown as Array<JobdiggerVondst & { job_id: string }>;
     }
@@ -176,6 +176,7 @@ export default async function VacatureAanmakenLijst() {
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
+      <AutoVernieuw snel={jobdiggerLoopt} />
       <TopBar active="vacature-aanmaken" />
       <div className="p-8 max-w-6xl mx-auto">
         <div className="flex justify-between items-start mb-6">
