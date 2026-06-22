@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, maakVoorstelprofielVanKandidaat, onthulTelefoon, stelKandidaatVoor } from "./actions";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 import { LinkedInKnop } from "./LinkedInKnop";
@@ -59,6 +59,7 @@ type Kandidaat = {
   telefoon_status: string | null;
   email: string | null;
   voorgesteld_at: string | null;
+  kandidaat_id: string | null;
   bezig?: boolean;
 };
 
@@ -258,7 +259,7 @@ export default async function VacatureAanmakenLijst() {
     if (blIds.length) {
       const { data: items } = await admin
         .from("bellijst_items")
-        .select("id, bellijst_id, naam, plaats, telefoon, website, cv_url, match_score, match_reden, volgorde, voorstelprofiel_token, telefoon_status, email, voorgesteld_at")
+        .select("id, bellijst_id, naam, plaats, telefoon, website, cv_url, match_score, match_reden, volgorde, voorstelprofiel_token, telefoon_status, email, voorgesteld_at, kandidaat_id")
         .in("bellijst_id", blIds)
         .order("volgorde", { ascending: true });
       for (const it of items ?? []) {
@@ -600,8 +601,8 @@ function KandidatenPaneel({
                   <th className="px-3 py-2 text-left">Match</th>
                   <th className="px-3 py-2 text-left">Naam</th>
                   <th className="px-3 py-2 text-left">Plaats</th>
-                  <th className="px-3 py-2 text-left">Telefoon</th>
-                  <th className="px-3 py-2 text-left">CV / profiel</th>
+                  <th className="px-3 py-2 text-left">Contact</th>
+                  <th className="px-3 py-2 text-left">Intake</th>
                   <th className="px-3 py-2 text-left">Waarom</th>
                 </tr>
               </thead>
@@ -674,32 +675,18 @@ function KandidatenPaneel({
                     </td>
                     <td className="px-3 py-2 align-top">
                       <div className="flex flex-col items-start gap-1.5">
-                        {k.voorstelprofiel_token ? (
+                        {k.kandidaat_id ? (
                           <a
-                            href={`https://noah-recruitment.nl/voorstelprofiel/${k.voorstelprofiel_token}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href={`/kandidaten/${k.kandidaat_id}`}
                             className="inline-flex items-center rounded-full border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
                           >
-                            Voorstelprofiel
+                            Open kandidaat →
                           </a>
                         ) : (
-                          <form action={maakVoorstelprofielVanKandidaat}>
+                          <form action={startIntakeVanKandidaat}>
                             <input type="hidden" name="itemId" value={k.id} />
-                            <SubmitKnop bezigTekst="Bezig…" className="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-[#333399] hover:bg-gray-50">
-                              Maak voorstelprofiel
-                            </SubmitKnop>
-                          </form>
-                        )}
-                        {k.voorgesteld_at ? (
-                          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                            Voorgesteld ✓
-                          </span>
-                        ) : (
-                          <form action={stelKandidaatVoor}>
-                            <input type="hidden" name="itemId" value={k.id} />
-                            <SubmitKnop bezigTekst="Versturen…" className="inline-flex items-center rounded-full bg-[#333399] px-3 py-1 text-xs font-semibold text-white hover:bg-[#27277a]">
-                              Stel voor
+                            <SubmitKnop bezigTekst="Bezig…" className="inline-flex items-center rounded-full bg-[#333399] px-3 py-1 text-xs font-semibold text-white hover:bg-[#27277a]">
+                              Intake
                             </SubmitKnop>
                           </form>
                         )}
