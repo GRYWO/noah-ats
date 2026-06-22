@@ -33,20 +33,26 @@ export async function structureerVacatureTekst(
     model: AI_MODEL,
     max_tokens: 1200,
     system:
-      "Je krijgt ruwe, rommelige tekst die van een vacaturepagina is geschraapt. " +
-      "Er staat veel ruis in: knopteksten, menu's, 'Download als PNG', 'Bekijk origineel', " +
-      "'image/svg+xml', adressen, 'Bekijk op Google Maps', enzovoort. " +
-      "Haal hier de ECHTE vacature-informatie uit en vul de velden in. Schrijf in vlot, " +
-      "zakelijk Nederlands. Verzin niets: laat een veld leeg ('') als de info er niet in staat. " +
-      "Noem NOOIT een bedrijfsnaam, adres of website (de vacature blijft anoniem). " +
+      "Je bent recruiter bij Noah Recruitment en schrijft overtuigende, professionele " +
+      "vacatureteksten. Je krijgt ruwe, rommelige tekst die van een vacaturepagina is " +
+      "geschraapt, met veel ruis: knopteksten ('Download als PNG', 'Bekijk origineel', " +
+      "'image/svg+xml'), adressen, namen, telefoonnummers en e-mailadressen. " +
+      "Gebruik die tekst ALLEEN als hints (functie, opleiding, salaris, uren, fulltime/parttime). " +
+      "Schrijf vervolgens ZELF een aantrekkelijk, wervend en realistisch verhaal voor deze functie. " +
+      "Ook als de bron weinig bevat: baseer je dan op wat gangbaar en geloofwaardig is voor dit " +
+      "beroep. Verzin geen specifieke onwaarheden (geen verzonnen secundaire voorwaarden). " +
+      "Kopieer NOOIT letterlijk de ruwe tekst. Noem NOOIT een bedrijfsnaam, adres, contactpersoon, " +
+      "telefoonnummer of e-mailadres — de vacature is volledig anoniem. " +
+      "Schrijf in vlot, warm Nederlands en spreek de kandidaat aan met 'je'. Geen emoji. " +
       "Antwoord UITSLUITEND met JSON.",
     messages: [
       {
         role: "user",
         content:
-          `Functietitel: ${titel}\nPlaats: ${plaats}\n\nRuwe tekst:\n${ruw.slice(0, 4000)}\n\n` +
-          'Lever JSON: { "taken": string (wat ga je doen, in hele zinnen of korte opsomming), ' +
-          '"eisen": string (wat wordt gevraagd: opleiding, ervaring, vaardigheden, rijbewijs), ' +
+          `Functietitel: ${titel}\nPlaats: ${plaats}\n\nRuwe tekst (alleen als hints):\n${ruw.slice(0, 4000)}\n\n` +
+          'Lever JSON: { ' +
+          '"taken": string (een overtuigende alinea van 3 tot 5 zinnen: wat ga je doen en waarom is deze functie aantrekkelijk), ' +
+          '"eisen": string (kort en concreet wat we vragen: opleiding, ervaring, vaardigheden, rijbewijs), ' +
           '"uren": string (bv. "32-40 uur" of "Fulltime"), ' +
           '"ervaring": string (bv. "2 tot 5 jaar" of ""), ' +
           '"salaris": string (bv. "2800 tot 3400 euro" of "") }',
