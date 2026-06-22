@@ -212,3 +212,80 @@ export async function runRobinZoek(zoekterm, opties = {}) {
     await context.close();
   }
 }
+
+// Telefoon onthullen voor één kandidaat: opnieuw zoeken, de kandidaat met de
+// juiste naam aanklikken, 'contact onthullen' klikken en het nummer scrapen.
+// Schrijft een diagnose weg (debug-robin-profiel.txt) zodat de reveal-knop
+// getuned kan worden tegen de echte Robin-profielpagina.
+export async function runRobinTelefoon(zoekterm, opties = {}) {
+  const plaats = (opties.plaats || "").toString().trim();
+  const naam = (opties.naam || "").toString().trim();
+  const query = plaats ? `${zoekterm} ${plaats} binnen 40 km` : zoekterm;
+
+  const context = await chromium.launchPersistentContext(PROFIEL_DIR, {
+    headless: process.env.HEADLESS !== "false",
+    viewport: { width: 1440, height: 900 },
+  });
+  const page = context.pages()[0] || (await context.newPage());
+
+  try {
+    await page.goto(ROBIN_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+
+    const veld = await vindZichtbaarVeld(page, VELD_SELECTORS);
+    if (!veld) throw new Error("Zoekveld niet gevonden op Robin");
+    await veld.click();
+    await veld.fill(query);
+    const zoekKnop = await vindZichtbaarVeld(page, ['button[aria-label="Zoeken" i]', 'button[aria-label*="zoek" i]']);
+    if (zoekKnop) await zoekKnop.click().catch(() => {});
+    else await veld.press("Enter").catch(() => {});
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(7000);
+
+    // De kandidaatkaart met deze naam aanklikken om het profiel te openen.
+    let geklikt = false;
+    if (naam) {
+      const loc = page.locator(".css-1qia2qg", { hasText: naam }).first();
+      if (await loc.count().catch(() => 0)) {
+        await loc.click().catch(() => {});
+        geklikt = true;
+      }
+    }
+    await page.waitForTimeout(3500);
+    await page.screenshot({ path: "debug-robin-profiel.png", fullPage: true }).catch(() => {});
+
+    // 'Contact onthullen'-knop zoeken en klikken (best effort).
+    for (const re of [/onthul/i, /toon (telefoon|nummer|contact)/i, /bekijk (telefoon|contact)/i, /contactgegevens/i, /reveal/i, /show (phone|contact)/i]) {
+      const knop = page.getByRole("button", { name: re }).first();
+      if (await knop.count().catch(() => 0)) {
+        await knop.click().catch(() => {});
+        await page.waitForTimeout(2500);
+        break;
+      }
+    }
+
+    const res = await page.evaluate(() => {
+      const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
+      const TEL = /(?:\+31[\s-]?|0)(?:6[\s-]?\d{8}|\d{2,3}[\s-]?\d{6,7})/;
+      const bron = (document.body.innerText || "") + " " + (document.body.innerHTML || "");
+      const tel = (bron.match(TEL) || [null])[0];
+      const knoppen = [...document.querySelectorAll("button")]
+        .map((b) => clean(b.getAttribute("aria-label") || b.textContent || b.title || ""))
+        .filter(Boolean)
+        .slice(0, 50);
+      return { telefoon: tel ? clean(tel) : "", body: clean(document.body.innerText || "").slice(0, 4000), knoppen };
+    });
+
+    try {
+      writeFileSync(
+        "debug-robin-profiel.txt",
+        `GEKLIKT: ${geklikt}\nNAAM: ${naam}\nTEL: ${res.telefoon}\n\nKNOPPEN:\n${JSON.stringify(res.knoppen)}\n\nBODY:\n${res.body}`,
+      );
+    } catch {}
+    console.log(`[robin-telefoon] ${naam}: geklikt=${geklikt} telefoon=${res.telefoon || "(geen)"}`);
+    return { telefoon: res.telefoon };
+  } finally {
+    await context.close();
+  }
+}

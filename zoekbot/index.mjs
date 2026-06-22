@@ -4,7 +4,7 @@
 // als Yorith via een persistent browserprofiel) en meldt het resultaat terug.
 
 import { writeFileSync } from "node:fs";
-import { runRobinZoek } from "./robin.mjs";
+import { runRobinZoek, runRobinTelefoon } from "./robin.mjs";
 import { runJobdiggerZoek } from "./jobdigger.mjs";
 
 const BASE = process.env.NOAH_BASE_URL || "https://noah-ats.nl";
@@ -46,6 +46,10 @@ async function verwerk(job) {
       const kandidaten = await runRobinZoek(job.zoekterm, { straal: job.straal_km || 40, plaats: job.plaats || "" });
       console.log(`  → ${kandidaten.length} kandidaten gevonden`);
       await meldResultaat(job.id, { kandidaten });
+    } else if (job.type === "robin_telefoon") {
+      const { telefoon } = await runRobinTelefoon(job.zoekterm, { plaats: job.plaats || "", naam: job.doel_naam || "" });
+      console.log(`  → telefoon: ${telefoon || "(geen)"}`);
+      await meldResultaat(job.id, { telefoon });
     } else if (job.type === "jobdigger") {
       const vondsten = await runJobdiggerZoek(job.zoekterm, job.limiet || 50);
       console.log(`  → ${vondsten.length} vacatures gevonden`);
