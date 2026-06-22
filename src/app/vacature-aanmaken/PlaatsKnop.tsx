@@ -24,21 +24,21 @@ export function PlaatsKnop({
   vacatureId,
   kandidaatId,
   naam,
+  isUitzend,
 }: {
   vacatureId: string;
   kandidaatId: string;
   naam: string;
+  isUitzend?: boolean;
 }) {
   return (
     <form
       action={plaatsKandidaatVanuitVacature}
       onSubmit={(e) => {
-        if (
-          !window.confirm(
-            `Weet je zeker dat je ${naam} wilt plaatsen?\n\n` +
-              "Er gaat automatisch een mail naar de backoffice en — bij W&S — een contract-verzoek naar de opdrachtgever.",
-          )
-        ) {
+        const wat = isUitzend
+          ? "Er gaat automatisch een mail naar de backoffice met de afspraken en gegevens."
+          : "Er gaat automatisch een mail naar de backoffice én een contract-verzoek naar de opdrachtgever.";
+        if (!window.confirm(`Weet je zeker dat je ${naam} wilt plaatsen?\n\n${wat}`)) {
           e.preventDefault();
         }
       }}
