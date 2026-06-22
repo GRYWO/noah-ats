@@ -157,3 +157,97 @@ input[type="week"] {
 .rte-editor[data-empty="ja"]:focus::before {
   content: "";
 }
+
+/* ============================================================
+   NOAH LAUNCH — premium-huisstijl (overgenomen uit noah-launch.nl)
+   Diep indigo + GOUD. Wordt gebruikt voor de inlog + nieuwe schermen.
+   ============================================================ */
+:root {
+  --noah-ink: #14132b;
+  --noah-muted: #5b5b7a;
+  --noah-accent: #3a37c9;
+  --noah-deep: #2a2785;
+  --noah-night: #0c0b1f;
+  --noah-gold: #f5c84d;
+  --noah-gold-soft: #ffd97a;
+  --noah-gold-deep: #c79a2e;
+  --gold-line: linear-gradient(90deg, #c79a2e 0%, #f5c84d 35%, #fff0c2 50%, #f5c84d 65%, #c79a2e 100%);
+  --gold-fill: linear-gradient(135deg, #ffe7a0 0%, #f5c84d 45%, #d9a73a 100%);
+}
+
+@theme inline {
+  --color-ink: var(--noah-ink);
+  --color-muted: var(--noah-muted);
+  --color-accent: var(--noah-accent);
+  --color-deep: var(--noah-deep);
+  --color-night: var(--noah-night);
+  --color-gold: var(--noah-gold);
+  --color-gold-soft: var(--noah-gold-soft);
+  --color-gold-deep: var(--noah-gold-deep);
+}
+
+/* gouden tekst-accent */
+.text-goldgrad {
+  background: linear-gradient(95deg, #f5c84d 0%, #fff0c2 45%, #e9b53c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* dunne gouden hairline */
+.gold-hr {
+  height: 2px;
+  border: 0;
+  background: var(--gold-line);
+}
+
+/* donkere kaart (dashboard) */
+.noah-card {
+  position: relative;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  transition: border-color .35s ease, background .35s ease, transform .35s ease;
+}
+.noah-card:hover { border-color: rgba(245, 200, 77, .40); }
+
+/* permanent gouden rand (uitgelichte kaart) */
+.gold-edge { position: relative; border-radius: 1.25rem; }
+.gold-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: var(--gold-line);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* gouden knop */
+.btn-gold {
+  background: var(--gold-fill);
+  color: #2a2785;
+  font-weight: 700;
+  border-radius: 9999px;
+  box-shadow: 0 10px 30px -10px rgba(245, 200, 77, .65), inset 0 1px 0 rgba(255,255,255,.6);
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.btn-gold:hover { transform: translateY(-2px); filter: brightness(1.04); box-shadow: 0 16px 38px -10px rgba(245, 200, 77, .8); }
+
+/* gouden chip/badge */
+.gold-chip {
+  border: 1px solid rgba(245, 200, 77, .55);
+  background: linear-gradient(180deg, rgba(245,200,77,.16), rgba(245,200,77,.06));
+  color: var(--noah-gold);
+}
+
+/* gouden gloed-achtergrond voor donkere secties */
+.night-gold {
+  background:
+    radial-gradient(1100px 520px at 85% -10%, rgba(245,200,77,.16), transparent 60%),
+    radial-gradient(900px 600px at 5% 110%, rgba(58,55,201,.55), transparent 55%),
+    linear-gradient(160deg, #100e29 0%, #0c0b1f 55%, #08071a 100%);
+}
