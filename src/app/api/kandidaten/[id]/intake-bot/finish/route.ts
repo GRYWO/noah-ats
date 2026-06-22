@@ -83,7 +83,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     },
     intake_voltooid: true,
   };
-  if (!k.email && profiel.email) update.email = profiel.email;
+  // Naam, e-mail en telefoon uit de intake overnemen (intake bevestigt dat ze kloppen).
+  if (profiel.voornaam && profiel.voornaam.trim()) update.voornaam = profiel.voornaam.trim();
+  if (profiel.achternaam && profiel.achternaam.trim()) update.achternaam = profiel.achternaam.trim();
+  if (profiel.email && profiel.email.trim()) update.email = profiel.email.trim();
 
   // Setter mag intake voltooien, maar levert daarna door aan recruiter via wachtrij.
   if (profile.rol === "setter") {
@@ -93,5 +96,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { error } = await admin.from("kandidaten").update(update).eq("id", id);
   if (error) return NextResponse.json({ fout: error.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true, voorstel: { naam: profiel.naam, woonplaats: profiel.woonplaats, ...vp }, rol: profile.rol });
+  const volledigeNaam = [profiel.voornaam, profiel.achternaam].filter(Boolean).join(" ").trim();
+  return NextResponse.json({ ok: true, voorstel: { naam: volledigeNaam, woonplaats: profiel.woonplaats, ...vp }, rol: profile.rol });
 }
