@@ -4,7 +4,15 @@ import { KanbanBoard } from "./KanbanBoard";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_KANBAN } from "@/utils/pagina-tours";
 import { getViewerRol } from "@/utils/view-as";
+import { isSuperAdminEmail } from "@/utils/auth";
 import { logPerf } from "@/utils/perf";
+
+// Deze mensen zien álle kandidaten op de kanban; iedereen anders ziet alleen
+// de eigen kandidaten.
+const ZIET_ALLE_KANDIDATEN = new Set([
+  "pepijn@noah-recruitment.nl",
+  "wouter@noah-recruitment.nl",
+]);
 
 export default async function KanbanPage() {
   const t0 = performance.now();
@@ -22,7 +30,9 @@ export default async function KanbanPage() {
     .order("created_at", { ascending: false })
     .limit(500); // Kanban toont max 500 — anders DOM te zwaar bij grote boards
 
-  if ((isSetter || isRecruiter) && user?.id) {
+  const email = (user?.email ?? "").toLowerCase();
+  const magAlles = !(isSetter || isRecruiter) || isSuperAdminEmail(email) || ZIET_ALLE_KANDIDATEN.has(email);
+  if (!magAlles && user?.id) {
     q = q.eq("eigenaar_id", user.id);
   }
 
@@ -42,9 +52,13 @@ export default async function KanbanPage() {
       <PaginaTour pad="/kanban" naam="Kanban" stappen={TOUR_KANBAN} />
 
       <div className="p-6">
+        <div className="gold-hr mb-5 rounded-full" />
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">Kanban</h1>
-          <p className="text-gray-500 text-sm">Sleep kandidaten tussen kolommen om de status te wijzigen</p>
+          <span className="gold-chip inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]">
+            Noah<span className="text-gold">.</span>&nbsp;recruitment
+          </span>
+          <h1 className="mt-3 text-2xl font-bold text-gray-800">Kanban</h1>
+          <p className="text-gray-500 text-sm">Sleep kandidaten tussen kolommen om de status te wijzigen.</p>
         </div>
 
         <KanbanBoard initialKandidaten={kandidaten ?? []} isSetter={isSetter} />

@@ -407,13 +407,13 @@ export default async function VacatureAanmakenLijst() {
                       {lijst.vondsten.map((vd) => (
                         <tr key={vd.id} className="border-t border-gray-100">
                           <td className="px-4 py-2 text-gray-800">
-                            {vd.jobdigger_url ? (
-                              <a href={vd.jobdigger_url} target="_blank" rel="noopener noreferrer" className="hover:text-[#333399] hover:underline" title="Bekijk de gevonden vacature">
-                                {vd.titel ?? "Onbekende functie"}
-                              </a>
-                            ) : (
-                              vd.titel ?? "Onbekende functie"
-                            )}
+                            <Link
+                              href={`/vacature-aanmaken/nieuw?vondst=${vd.id}`}
+                              className="font-medium hover:text-[#333399] hover:underline"
+                              title="Bekijk en plaats deze vacature"
+                            >
+                              {vd.titel ?? "Onbekende functie"}
+                            </Link>
                           </td>
                           <td className="px-4 py-2 text-gray-600">{vd.bedrijf ?? "-"}</td>
                           <td className="px-4 py-2 text-gray-600">{vd.plaats ?? "-"}</td>

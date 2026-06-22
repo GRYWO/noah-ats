@@ -62,10 +62,14 @@ export default async function OpdrachtgeversPage({
       <TopBar active="opdrachtgevers" />
       <PaginaTour pad="/opdrachtgevers" naam="CRM" stappen={TOUR_OPDRACHTGEVERS} />
 
-      <div className="p-8 max-w-7xl mx-auto">
+      <div className="p-8">
+        <div className="gold-hr mb-5 rounded-full" />
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Relaties</h1>
+            <span className="gold-chip inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]">
+              Noah<span className="text-gold">.</span>&nbsp;recruitment
+            </span>
+            <h1 className="mt-3 text-3xl font-bold text-gray-800">Relaties</h1>
             <p className="text-gray-500 text-sm mt-1">{totaal} {status ? `(${STATUS_LABELS[status]})` : "totaal"}</p>
           </div>
         </div>

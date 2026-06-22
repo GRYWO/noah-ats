@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { maakVoorstelprofiel } from "@/utils/voorstelprofiel-ai";
 import { TopBar } from "@/components/TopBar";
 import { updateKandidaat } from "./actions";
 import { IntakeBot } from "./IntakeBot";
@@ -171,16 +173,54 @@ export default async function KandidaatDetail({
   // weergave is bewust niet meer de standaard.
   if (isSetter || isRecruiterOrAdmin) {
     const cvg = (k.cv_geparseerd ?? {}) as Record<string, unknown>;
-    const profielRijen: Array<[string, string | null | undefined]> = [
-      ["Profielschets", k.profielschets],
-      ["Werkervaring", (cvg.werkervaring as string) ?? null],
-      ["Opleidingen", (cvg.diplomas as string) ?? k.opleiding],
-      ["Talen", (cvg.talen as string) ?? null],
-      ["Vaardigheden", (cvg.vaardigheden as string) ?? null],
-      ["Rijbewijs", k.rijbewijs],
-      ["Eigen vervoer", k.eigen_vervoer ? "Ja" : null],
-    ];
     const naam = `${k.voornaam ?? ""}${k.tussenvoegsel ? " " + k.tussenvoegsel : ""} ${k.achternaam ?? ""}`.trim();
+
+    // Profielvelden. Ontbreekt een net profiel maar is er wel ruwe (gescrapte)
+    // tekst? Dan maakt de AI er eenmalig een net profiel van en bewaren we dat
+    // (cachen), zodat het de volgende keer meteen klaarstaat.
+    let profielschets = (k.profielschets as string | null) ?? "";
+    let werkervaring = (cvg.werkervaring as string | null) ?? "";
+    let opleidingen = (cvg.diplomas as string | null) ?? ((k.opleiding as string | null) ?? "");
+    let talen = (cvg.talen as string | null) ?? "";
+    let vaardigheden = (cvg.vaardigheden as string | null) ?? "";
+    let rijbewijzen = (k.rijbewijs as string | null) ?? "";
+    let vervoer = k.eigen_vervoer ? "Ja" : "";
+
+    const heeftProfiel = [profielschets, werkervaring, opleidingen, talen, vaardigheden].some((x) => x && x.trim());
+    const ruweTekst = ((k.notitie as string | null) ?? "").trim();
+    if (!heeftProfiel && ruweTekst) {
+      try {
+        const gen = await maakVoorstelprofiel(ruweTekst, naam, (k.woonplaats as string | null) ?? "");
+        profielschets = gen.profielschets || profielschets;
+        werkervaring = gen.werkervaring || werkervaring;
+        opleidingen = gen.opleidingen || opleidingen;
+        talen = gen.talen || talen;
+        vaardigheden = gen.vaardigheden || vaardigheden;
+        rijbewijzen = gen.rijbewijzen || rijbewijzen;
+        vervoer = gen.vervoer || vervoer;
+        const admin = createAdminClient();
+        await admin
+          .from("kandidaten")
+          .update({
+            profielschets,
+            cv_geparseerd: { werkervaring, diplomas: opleidingen, talen, vaardigheden },
+            rijbewijs: rijbewijzen || k.rijbewijs,
+          })
+          .eq("id", k.id);
+      } catch {
+        // AI niet beschikbaar; we tonen dan de ruwe tekst als fallback
+      }
+    }
+
+    const profielRijen: Array<[string, string | null | undefined]> = [
+      ["Profielschets", profielschets],
+      ["Werkervaring", werkervaring],
+      ["Opleidingen", opleidingen],
+      ["Talen", talen],
+      ["Vaardigheden", vaardigheden],
+      ["Rijbewijs", rijbewijzen],
+      ["Eigen vervoer", vervoer],
+    ];
     return (
       <main className="min-h-screen bg-[#f4f4f7] pl-16">
         <TopBar active="kandidaten" />
