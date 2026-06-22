@@ -572,7 +572,7 @@ function KandidatenPaneel({
   const ik = setterVoornaam || "een recruiter";
   const bericht =
     `Hoi! Ik ben ${ik} van Noah Recruitment. Ik kwam je profiel tegen en deze functie past volgens mij echt goed bij je: ${vacatureTitel}. ` +
-    `Bekijk 'm hier: https://noah-recruitment.nl/vacatures/${vacatureId} — lijkt het je wat? Ik hoor graag van je!`;
+    `Bekijk 'm hier: https://noah-recruitment.nl/vacatures/${vacatureId}. Lijkt het je wat? Ik hoor graag van je!`;
   const waBericht = encodeURIComponent(bericht);
   const linkedinUrl = (k: Kandidaat) =>
     k.website && /linkedin\.com/i.test(k.website)
@@ -622,9 +622,9 @@ function KandidatenPaneel({
                     <td className="px-3 py-2 font-medium text-gray-800">{k.naam ?? "—"}</td>
                     <td className="px-3 py-2 text-gray-600">{k.plaats ?? "—"}</td>
                     <td className="px-3 py-2 align-top text-gray-600">
-                      <div className="flex flex-col gap-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
                         {k.telefoon ? (
-                          <span className="flex flex-wrap items-center gap-2">
+                          <>
                             <a href={`tel:${k.telefoon}`} className="font-medium text-gray-800 hover:text-[#333399]">
                               {k.telefoon}
                             </a>
@@ -636,14 +636,14 @@ function KandidatenPaneel({
                             >
                               WhatsApp
                             </a>
-                          </span>
+                          </>
                         ) : k.bezig ? (
                           <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
                             <span className="h-3 w-3 animate-spin rounded-full border-2 border-amber-300 border-t-amber-700" />
                             Bezig met onthullen…
                           </span>
                         ) : k.telefoon_status === "niet_beschikbaar" ? (
-                          <span className="flex flex-wrap items-center gap-2">
+                          <>
                             <span className="text-xs text-gray-400">Niet beschikbaar</span>
                             <form action={onthulTelefoon}>
                               <input type="hidden" name="itemId" value={k.id} />
@@ -651,7 +651,7 @@ function KandidatenPaneel({
                                 Opnieuw
                               </SubmitKnop>
                             </form>
-                          </span>
+                          </>
                         ) : (
                           <form action={onthulTelefoon}>
                             <input type="hidden" name="itemId" value={k.id} />
@@ -660,17 +660,15 @@ function KandidatenPaneel({
                             </SubmitKnop>
                           </form>
                         )}
-                        <span className="flex flex-wrap items-center gap-2">
-                          <LinkedInKnop url={linkedinUrl(k)} bericht={bericht} />
-                          {k.email ? (
-                            <a
-                              href={`mailto:${k.email}?subject=${encodeURIComponent("Een functie die bij je past")}&body=${waBericht}`}
-                              className="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-[#333399] hover:bg-gray-50"
-                            >
-                              E-mail
-                            </a>
-                          ) : null}
-                        </span>
+                        <LinkedInKnop url={linkedinUrl(k)} bericht={bericht} />
+                        {k.email ? (
+                          <a
+                            href={`mailto:${k.email}?subject=${encodeURIComponent("Een functie die bij je past")}&body=${waBericht}`}
+                            className="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-[#333399] hover:bg-gray-50"
+                          >
+                            E-mail
+                          </a>
+                        ) : null}
                       </div>
                     </td>
                     <td className="px-3 py-2 align-top">
