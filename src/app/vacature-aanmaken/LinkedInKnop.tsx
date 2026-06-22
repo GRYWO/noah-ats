@@ -22,7 +22,7 @@ export function LinkedInKnop({ url, bericht }: { url: string; bericht: string })
           setMelding("Bericht gekopieerd — plak het in LinkedIn");
           setTimeout(() => setMelding(""), 4000);
         }}
-        className="text-xs font-semibold text-[#0a66c2] hover:underline active:scale-95 transition"
+        className="inline-flex items-center rounded-full border border-[#0a66c2]/30 px-2.5 py-1 text-xs font-semibold text-[#0a66c2] hover:bg-[#0a66c2]/10 active:scale-95 transition"
       >
         LinkedIn + bericht
       </button>
