@@ -620,18 +620,18 @@ function KandidatenPaneel({
                     </td>
                     <td className="px-3 py-2 font-medium text-gray-800">{k.naam ?? "—"}</td>
                     <td className="px-3 py-2 text-gray-600">{k.plaats ?? "—"}</td>
-                    <td className="px-3 py-2 text-gray-600">
-                      <div className="flex flex-col gap-1">
+                    <td className="px-3 py-2 align-top text-gray-600">
+                      <div className="flex flex-col gap-1.5">
                         {k.telefoon ? (
-                          <span className="flex items-center gap-2">
-                            <a href={`tel:${k.telefoon}`} className="text-[#333399] hover:underline">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <a href={`tel:${k.telefoon}`} className="font-medium text-gray-800 hover:text-[#333399]">
                               {k.telefoon}
                             </a>
                             <a
                               href={`https://wa.me/${k.telefoon.replace(/[^0-9]/g, "").replace(/^0/, "31")}?text=${waBericht}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs font-semibold text-emerald-600 hover:underline"
+                              className="inline-flex items-center rounded-full border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
                             >
                               WhatsApp
                             </a>
@@ -642,11 +642,11 @@ function KandidatenPaneel({
                             Bezig met onthullen…
                           </span>
                         ) : k.telefoon_status === "niet_beschikbaar" ? (
-                          <span className="flex items-center gap-2">
+                          <span className="flex flex-wrap items-center gap-2">
                             <span className="text-xs text-gray-400">Niet beschikbaar</span>
                             <form action={onthulTelefoon}>
                               <input type="hidden" name="itemId" value={k.id} />
-                              <SubmitKnop bezigTekst="Onthullen…" className="text-xs font-semibold text-[#333399] hover:underline">
+                              <SubmitKnop bezigTekst="Onthullen…" className="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-[#333399] hover:bg-gray-50">
                                 Opnieuw
                               </SubmitKnop>
                             </form>
@@ -654,17 +654,17 @@ function KandidatenPaneel({
                         ) : (
                           <form action={onthulTelefoon}>
                             <input type="hidden" name="itemId" value={k.id} />
-                            <SubmitKnop bezigTekst="Onthullen…" className="text-xs font-semibold text-[#333399] hover:underline">
+                            <SubmitKnop bezigTekst="Onthullen…" className="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-[#333399] hover:bg-gray-50">
                               Onthul telefoon
                             </SubmitKnop>
                           </form>
                         )}
-                        <span className="flex items-center gap-2">
+                        <span className="flex flex-wrap items-center gap-2">
                           <LinkedInKnop url={linkedinUrl(k)} bericht={bericht} />
                           {k.email ? (
                             <a
                               href={`mailto:${k.email}?subject=${encodeURIComponent("Een functie die bij je past")}&body=${waBericht}`}
-                              className="text-xs font-semibold text-[#333399] hover:underline"
+                              className="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-[#333399] hover:bg-gray-50"
                             >
                               E-mail
                             </a>
@@ -672,37 +672,39 @@ function KandidatenPaneel({
                         </span>
                       </div>
                     </td>
-                    <td className="px-3 py-2">
-                      <div className="flex flex-col gap-1">
+                    <td className="px-3 py-2 align-top">
+                      <div className="flex flex-col items-start gap-1.5">
                         {k.voorstelprofiel_token ? (
                           <a
                             href={`https://noah-recruitment.nl/voorstelprofiel/${k.voorstelprofiel_token}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs font-semibold text-emerald-700 hover:underline"
+                            className="inline-flex items-center rounded-full border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
                           >
                             Voorstelprofiel
                           </a>
                         ) : (
                           <form action={maakVoorstelprofielVanKandidaat}>
                             <input type="hidden" name="itemId" value={k.id} />
-                            <SubmitKnop bezigTekst="Bezig…" className="text-xs font-semibold text-[#333399] hover:underline">
+                            <SubmitKnop bezigTekst="Bezig…" className="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-[#333399] hover:bg-gray-50">
                               Maak voorstelprofiel
                             </SubmitKnop>
                           </form>
                         )}
                         {k.voorgesteld_at ? (
-                          <span className="text-xs font-semibold text-emerald-700">Voorgesteld ✓</span>
+                          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                            Voorgesteld ✓
+                          </span>
                         ) : (
                           <form action={stelKandidaatVoor}>
                             <input type="hidden" name="itemId" value={k.id} />
-                            <SubmitKnop bezigTekst="Versturen…" className="rounded-md bg-[#333399] px-2 py-1 text-xs font-semibold text-white hover:bg-[#27277a]">
+                            <SubmitKnop bezigTekst="Versturen…" className="inline-flex items-center rounded-full bg-[#333399] px-3 py-1 text-xs font-semibold text-white hover:bg-[#27277a]">
                               Stel voor
                             </SubmitKnop>
                           </form>
                         )}
                         {k.website ? (
-                          <a href={k.website} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:underline">
+                          <a href={k.website} target="_blank" rel="noopener noreferrer" className="text-[11px] text-gray-400 hover:underline">
                             Robin
                           </a>
                         ) : null}
