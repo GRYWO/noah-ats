@@ -7,7 +7,7 @@ import { TopBar } from "@/components/TopBar";
 import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, maakVoorstelprofielVanKandidaat, onthulTelefoon } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
-import { KopieerBericht } from "./KopieerBericht";
+import { LinkedInKnop } from "./LinkedInKnop";
 
 // Herkenning van uitzend-/bemiddelingsbureaus, zodat die onderaan komen: we
 // willen liefst direct de werkgever bellen, niet een ander bureau.
@@ -655,14 +655,7 @@ function KandidatenPaneel({
                           </form>
                         )}
                         <span className="flex items-center gap-2">
-                          <a
-                            href={linkedinUrl(k)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-semibold text-[#0a66c2] hover:underline"
-                          >
-                            LinkedIn
-                          </a>
+                          <LinkedInKnop url={linkedinUrl(k)} bericht={bericht} />
                           {k.email ? (
                             <a
                               href={`mailto:${k.email}?subject=${encodeURIComponent("Een functie die bij je past")}&body=${waBericht}`}
@@ -671,7 +664,6 @@ function KandidatenPaneel({
                               E-mail
                             </a>
                           ) : null}
-                          <KopieerBericht tekst={bericht} />
                         </span>
                       </div>
                     </td>
