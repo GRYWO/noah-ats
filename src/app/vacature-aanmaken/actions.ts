@@ -479,12 +479,12 @@ export async function updateVacatureNoahAts(formData: FormData) {
   const admin = createAdminClient();
   const { data: bestaand } = await admin
     .from("rec_vacatures")
-    .select("eigenaar")
+    .select("eigenaar, titel, locatie, status")
     .eq("id", id)
     .maybeSingle();
   if (!bestaand) redirect("/vacature-aanmaken");
 
-  const { data: profiel } = await supabase.from("profiles").select("rol").eq("id", user.id).single();
+  const { data: profiel } = await supabase.from("profiles").select("rol, tenant_id").eq("id", user.id).single();
   const rol = (profiel?.rol ?? "").toString().toLowerCase();
   const isAdmin = rol === "admin" || rol === "super-admin" || rol === "super_admin";
   if (bestaand.eigenaar !== user.id && !isAdmin) redirect("/vacature-aanmaken");
@@ -535,6 +535,23 @@ export async function updateVacatureNoahAts(formData: FormData) {
 
   if (error) {
     redirect(`/vacature-aanmaken/${id}/bewerken?fout=` + encodeURIComponent("Opslaan mislukt: " + error.message));
+  }
+
+  // Veranderde de functietitel of locatie? Dan automatisch opnieuw kandidaten
+  // zoeken (Robin, 40 km) — zonder knop. Alleen voor open vacatures.
+  const titelGewijzigd = (input.titel || "").trim() !== ((bestaand.titel as string | null) ?? "").trim();
+  const locatieGewijzigd = (input.locatie || "").trim() !== ((bestaand.locatie as string | null) ?? "").trim();
+  if ((titelGewijzigd || locatieGewijzigd) && (bestaand.status as string | null) === "open") {
+    const tenantId = (profiel as { tenant_id?: string } | null)?.tenant_id ?? null;
+    await maakRobinJobVoorVacature(admin, {
+      tenantId,
+      vacatureId: id,
+      functie: input.titel,
+      plaats: input.locatie || null,
+      lat: coord?.lat ?? null,
+      lon: coord?.lon ?? null,
+      setterId: (bestaand.eigenaar as string | null) || user.id,
+    });
   }
 
   revalidatePath("/vacature-aanmaken");
