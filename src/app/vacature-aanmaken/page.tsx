@@ -600,10 +600,9 @@ function VacatureKaart({
           </div>
         </details>
 
-        {/* Pijplijn (kanban) */}
-        {pijplijnKandidaten.length > 0 && (
-          <PijplijnBord vacatureId={v.id} kandidaten={pijplijnKandidaten} afspraakType={v.afspraak_tarief_type} />
-        )}
+        {/* Pijplijn (kanban) — altijd tonen, ook leeg, zodat je kandidaten
+            kan slepen/plaatsen en een net gestarte zoekopdracht meteen een bord heeft. */}
+        <PijplijnBord vacatureId={v.id} kandidaten={pijplijnKandidaten} afspraakType={v.afspraak_tarief_type} />
 
         {/* Gevonden kandidaten */}
         {(kandidaten.length > 0 || robinLoopt) && (
