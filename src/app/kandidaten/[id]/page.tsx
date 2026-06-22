@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { updateKandidaat } from "./actions";
 import { IntakeBot } from "./IntakeBot";
+import { zetKandidaatInPool } from "@/app/vacature-aanmaken/actions";
 import { stuurVoorstel } from "./voorstel-actions";
 import { DeleteButton } from "./DeleteButton";
 import { VerwijderAanvraagKnop } from "./VerwijderAanvraagKnop";
@@ -424,6 +425,27 @@ export default async function KandidaatDetail({
         {!isSetter && (
           <div className="mb-6">
             <IntakeBot kandidaatId={k.id} cvContext={botCvContext} autoStart={intakeQuery === "1" && !intakeAlAfgerond} />
+          </div>
+        )}
+
+        {/* Pool: na de intake kan de kandidaat in de pool van zijn vacature. */}
+        {!isSetter && k.intake_voltooid && k.vacature_id && (
+          <div className="mb-6">
+            {k.kanban_stap === "kandidatenpool" ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-800">
+                In pool ✓ — klaar om voor te stellen vanaf de vacature.
+              </div>
+            ) : (
+              <form action={zetKandidaatInPool}>
+                <input type="hidden" name="kandidaatId" value={k.id} />
+                <button
+                  type="submit"
+                  className="rounded-lg bg-[#333399] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#27277a] active:scale-95 transition"
+                >
+                  Zet in pool voor deze vacature
+                </button>
+              </form>
+            )}
           </div>
         )}
 
