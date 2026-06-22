@@ -557,7 +557,7 @@ export default async function VacatureAanmakenLijst() {
                     {pijplijnKandidaten.length > 0 && (
                       <tr className="bg-gray-50/60">
                         <td colSpan={kolommen} className="px-4 pb-4">
-                          <PijplijnBord vacatureId={v.id} kandidaten={pijplijnKandidaten} />
+                          <PijplijnBord vacatureId={v.id} kandidaten={pijplijnKandidaten} afspraakType={v.afspraak_tarief_type} />
                         </td>
                       </tr>
                     )}

@@ -26,11 +26,18 @@ const KOLOMMEN: { key: string; kleur: string }[] = [
 ];
 
 // Fases waar een verplaatsing automatisch een mail verstuurt — daar vragen we
-// eerst om bevestiging.
-const MAIL_FASEN: Record<string, string> = {
-  Voorgesteld: "Er gaat automatisch een mail met het voorstelprofiel naar de opdrachtgever.",
-  Geplaatst: "Er gaat automatisch een mail naar de backoffice en — bij W&S — een contract-verzoek naar de opdrachtgever.",
-};
+// eerst om bevestiging. De Geplaatst-melding beweegt mee met de afspraak.
+function mailWaarschuwing(naar: string, isUitzend: boolean): string | null {
+  if (naar === "Voorgesteld") {
+    return "Er gaat automatisch een mail met het voorstelprofiel naar de opdrachtgever.";
+  }
+  if (naar === "Geplaatst") {
+    return isUitzend
+      ? "Er gaat automatisch een mail naar de backoffice met de afspraken en gegevens."
+      : "Er gaat automatisch een mail naar de backoffice én een contract-verzoek naar de opdrachtgever.";
+  }
+  return null;
+}
 
 function naamVan(k: PijplijnKandidaat): string {
   return [k.voornaam, k.achternaam].filter(Boolean).join(" ") || "Kandidaat";
@@ -68,10 +75,13 @@ function faseLabelVan(k: PijplijnKandidaat): string {
 export function PijplijnBord({
   vacatureId,
   kandidaten,
+  afspraakType,
 }: {
   vacatureId: string;
   kandidaten: PijplijnKandidaat[];
+  afspraakType: string | null;
 }) {
+  const isUitzend = afspraakType === "uitzend";
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [sleeptId, setSleeptId] = useState<string | null>(null);
@@ -87,7 +97,7 @@ export function PijplijnBord({
 
   function verplaatsNaar(k: PijplijnKandidaat, naar: string) {
     if (faseLabelVan(k) === naar) return;
-    const waarschuwing = MAIL_FASEN[naar];
+    const waarschuwing = mailWaarschuwing(naar, isUitzend);
     if (waarschuwing && !window.confirm(`${naamVan(k)} verplaatsen naar "${naar}"?\n\n${waarschuwing}`)) {
       return;
     }
@@ -168,7 +178,7 @@ export function PijplijnBord({
                       </a>
                     )}
                     {kol.key !== "Geplaatst" && kol.key !== "Afgewezen" && (
-                      <PlaatsKnop vacatureId={vacatureId} kandidaatId={k.id} naam={naamVan(k)} />
+                      <PlaatsKnop vacatureId={vacatureId} kandidaatId={k.id} naam={naamVan(k)} isUitzend={isUitzend} />
                     )}
                   </div>
                 ))}
