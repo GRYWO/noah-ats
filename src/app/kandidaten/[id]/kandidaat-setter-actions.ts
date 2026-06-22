@@ -23,7 +23,7 @@ export async function slaIntakeNotitieOp(formData: FormData) {
   const { data: k } = await admin.from("kandidaten").select("id, tenant_id").eq("id", kandidaatId).maybeSingle();
   if (!k || k.tenant_id !== profile.tenant_id) redirect("/kandidaten");
 
-  await admin.from("kandidaten").update({ notitie }).eq("id", kandidaatId);
+  await admin.from("kandidaten").update({ intake_notitie: notitie }).eq("id", kandidaatId);
 
   revalidatePath(`/kandidaten/${kandidaatId}`);
   redirect(`/kandidaten/${kandidaatId}?ok=intake_opgeslagen`);
