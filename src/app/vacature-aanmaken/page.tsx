@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat, stelPoolVoor } from "./actions";
-import { PlaatsKnop } from "./PlaatsKnop";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat } from "./actions";
+import { PijplijnBord, type PijplijnKandidaat } from "./PijplijnBord";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 import { LinkedInKnop } from "./LinkedInKnop";
@@ -63,44 +63,6 @@ type Kandidaat = {
   kandidaat_id: string | null;
   bezig?: boolean;
 };
-
-type PoolKandidaat = {
-  id: string;
-  voornaam: string | null;
-  achternaam: string | null;
-  woonplaats: string | null;
-};
-
-type PijplijnKandidaat = PoolKandidaat & { kanban_stap: string | null; voorstel_status: string | null };
-
-// Korte, leesbare fase-labels voor het pijplijn-overzicht onder de vacature.
-// De voorstel-status (voorgesteld/gezien/op_gesprek/afgewezen) gaat vóór op de
-// kanban-fase.
-function faseLabel(k: PijplijnKandidaat): { label: string; kleur: string } {
-  const eff = k.voorstel_status || k.kanban_stap;
-  switch (eff) {
-    case "nieuwe_sollicitatie":
-    case "interne_intake":
-    case "in_afwachting_cv":
-      return { label: "Intake", kleur: "bg-amber-100 text-amber-800" };
-    case "in_wachtrij":
-    case "bij_setter":
-      return { label: "Wachtrij", kleur: "bg-sky-100 text-sky-800" };
-    case "voorgesteld":
-    case "in_proces":
-      return { label: "Voorgesteld", kleur: "bg-[#333399]/10 text-[#333399]" };
-    case "gezien":
-      return { label: "Gezien", kleur: "bg-indigo-100 text-indigo-800" };
-    case "op_gesprek":
-      return { label: "Op gesprek", kleur: "bg-emerald-100 text-emerald-800" };
-    case "afgewezen":
-      return { label: "Afgewezen", kleur: "bg-red-100 text-red-700" };
-    case "geplaatst":
-      return { label: "Geplaatst", kleur: "bg-emerald-600 text-white" };
-    default:
-      return { label: eff || "Onbekend", kleur: "bg-gray-100 text-gray-600" };
-  }
-}
 
 type Vacature = {
   id: string;
@@ -313,9 +275,8 @@ export default async function VacatureAanmakenLijst() {
     }
   }
 
-  // Alle aan de vacature gekoppelde kandidaten: 'pool' (klaar om voor te stellen)
-  // apart, de rest als pijplijn-overzicht (intake, voorgesteld, geplaatst, ...).
-  const poolPerVac = new Map<string, PoolKandidaat[]>();
+  // Alle aan de vacature gekoppelde kandidaten als één lijst per vacature; het
+  // pijplijnbord groepeert ze zelf per fase (incl. de pool).
   const pijplijnPerVac = new Map<string, PijplijnKandidaat[]>();
   if (tenantId && lijst.length > 0) {
     const vacIds = lijst.map((v) => v.id);
@@ -325,16 +286,9 @@ export default async function VacatureAanmakenLijst() {
       .in("vacature_id", vacIds);
     for (const p of kand ?? []) {
       const vid = (p as { vacature_id: string }).vacature_id;
-      const stap = (p as { kanban_stap: string | null }).kanban_stap ?? "";
-      if (stap === "kandidatenpool") {
-        const arr = poolPerVac.get(vid) ?? [];
-        arr.push(p as unknown as PoolKandidaat);
-        poolPerVac.set(vid, arr);
-      } else {
-        const arr = pijplijnPerVac.get(vid) ?? [];
-        arr.push(p as unknown as PijplijnKandidaat);
-        pijplijnPerVac.set(vid, arr);
-      }
+      const arr = pijplijnPerVac.get(vid) ?? [];
+      arr.push(p as unknown as PijplijnKandidaat);
+      pijplijnPerVac.set(vid, arr);
     }
   }
 
@@ -502,7 +456,6 @@ export default async function VacatureAanmakenLijst() {
                 {lijst.map((v) => {
                   const eigenaar = v.eigenaar ? eigenaarNamen.get(v.eigenaar) : undefined;
                   const kandidaten = kandidatenPerVac.get(v.id) ?? [];
-                  const poolKandidaten = poolPerVac.get(v.id) ?? [];
                   const pijplijnKandidaten = pijplijnPerVac.get(v.id) ?? [];
                   const kolommen = isAdmin ? 8 : 7;
                   return (
@@ -601,10 +554,10 @@ export default async function VacatureAanmakenLijst() {
                         </div>
                       </td>
                     </tr>
-                    {(poolKandidaten.length > 0 || pijplijnKandidaten.length > 0) && (
+                    {pijplijnKandidaten.length > 0 && (
                       <tr className="bg-gray-50/60">
                         <td colSpan={kolommen} className="px-4 pb-4">
-                          <PijplijnBord vacatureId={v.id} pool={poolKandidaten} pijplijn={pijplijnKandidaten} />
+                          <PijplijnBord vacatureId={v.id} kandidaten={pijplijnKandidaten} />
                         </td>
                       </tr>
                     )}
@@ -627,116 +580,6 @@ export default async function VacatureAanmakenLijst() {
   );
 }
 
-function naamVan(k: { voornaam: string | null; achternaam: string | null }): string {
-  return [k.voornaam, k.achternaam].filter(Boolean).join(" ") || "Kandidaat";
-}
-
-// Pijplijn als kanban-bord: kolommen (vakjes) naast elkaar per fase, met de
-// kandidaatnamen erin. De Pool-kolom is actief (aanvinken + in één keer voorstellen).
-function PijplijnBord({
-  vacatureId,
-  pool,
-  pijplijn,
-}: {
-  vacatureId: string;
-  pool: PoolKandidaat[];
-  pijplijn: PijplijnKandidaat[];
-}) {
-  const perLabel = new Map<string, PijplijnKandidaat[]>();
-  for (const k of pijplijn) {
-    const l = faseLabel(k).label;
-    const arr = perLabel.get(l) ?? [];
-    arr.push(k);
-    perLabel.set(l, arr);
-  }
-
-  const kolommen: { key: string; kleur: string }[] = [
-    { key: "Intake", kleur: "bg-amber-100 text-amber-800" },
-    { key: "Pool", kleur: "bg-[#333399]/10 text-[#333399]" },
-    { key: "Voorgesteld", kleur: "bg-[#333399]/10 text-[#333399]" },
-    { key: "Gezien", kleur: "bg-indigo-100 text-indigo-800" },
-    { key: "Op gesprek", kleur: "bg-emerald-100 text-emerald-800" },
-    { key: "Afgewezen", kleur: "bg-red-100 text-red-700" },
-    { key: "Geplaatst", kleur: "bg-emerald-600 text-white" },
-  ];
-
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3">
-      <div className="mb-2 px-1 text-sm font-semibold text-gray-800">Pijplijn</div>
-      <div className="flex gap-3 overflow-x-auto pb-1">
-        {kolommen.map((kol) => {
-          const isPool = kol.key === "Pool";
-          const items: Array<PoolKandidaat | PijplijnKandidaat> = isPool ? pool : perLabel.get(kol.key) ?? [];
-          return (
-            <div key={kol.key} className="w-44 shrink-0 rounded-lg bg-gray-50 p-2">
-              <div className="mb-2 flex items-center justify-between">
-                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${kol.kleur}`}>{kol.key}</span>
-                <span className="text-xs text-gray-400">{items.length}</span>
-              </div>
-              {isPool ? (
-                // De vinkjes en de "Stel voor"-knop horen bij dezelfde
-                // pool-form (via het form-attribuut), zodat we per kandidaat
-                // óók een losse Plaats-form kunnen tonen zonder geneste forms.
-                <div className="space-y-1.5">
-                  {items.map((k) => (
-                    <div
-                      key={k.id}
-                      className="rounded-md bg-white px-2 py-1.5 text-xs text-gray-800 shadow-sm"
-                    >
-                      <label className="flex items-start gap-1.5">
-                        <input
-                          form={`pool-${vacatureId}`}
-                          type="checkbox"
-                          name="ids"
-                          value={k.id}
-                          defaultChecked
-                          className="mt-0.5 h-3.5 w-3.5 accent-[#333399]"
-                        />
-                        <span>
-                          <span className="font-medium">{naamVan(k)}</span>
-                          {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
-                        </span>
-                      </label>
-                      <PlaatsKnop vacatureId={vacatureId} kandidaatId={k.id} naam={naamVan(k)} />
-                    </div>
-                  ))}
-                  {items.length > 0 && (
-                    <form id={`pool-${vacatureId}`} action={stelPoolVoor}>
-                      <input type="hidden" name="vacature" value={vacatureId} />
-                      <SubmitKnop
-                        bezigTekst="Versturen…"
-                        className="mt-1 w-full justify-center rounded-md bg-[#333399] px-2 py-1.5 text-xs font-semibold text-white hover:bg-[#27277a]"
-                      >
-                        Stel voor ({items.length})
-                      </SubmitKnop>
-                    </form>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  {items.map((k) => (
-                    <div
-                      key={k.id}
-                      className="rounded-md bg-white px-2 py-1.5 text-xs text-gray-800 shadow-sm"
-                    >
-                      <a href={`/kandidaten/${k.id}`} className="block hover:underline">
-                        <span className="font-medium">{naamVan(k)}</span>
-                        {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
-                      </a>
-                      {kol.key !== "Geplaatst" && (
-                        <PlaatsKnop vacatureId={vacatureId} kandidaatId={k.id} naam={naamVan(k)} />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function KandidatenPaneel({
   kandidaten,
