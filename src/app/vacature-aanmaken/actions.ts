@@ -610,8 +610,8 @@ export async function stelPoolVoor(formData: FormData) {
       .eq("id", k.bron_bellijst_item_id as string);
     urls.push(`https://noah-recruitment.nl/voorstelprofiel/${token}`);
 
-    // Uit de pool, de pijplijn in.
-    await admin.from("kandidaten").update({ kanban_stap: "in_proces" }).eq("id", kandidaatId);
+    // Uit de pool, de pijplijn in (status: voorgesteld).
+    await admin.from("kandidaten").update({ kanban_stap: "in_proces", voorstel_status: "voorgesteld" }).eq("id", kandidaatId);
   }
 
   if (urls.length === 0) return;
