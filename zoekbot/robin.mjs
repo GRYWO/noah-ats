@@ -108,33 +108,33 @@ export async function runRobinZoek(zoekterm, opties = {}) {
     await page.waitForTimeout(7000); // wachten tot de resultaten geladen zijn
     await page.screenshot({ path: "debug-robin-resultaten.png", fullPage: true }).catch(() => {});
 
-    // Diagnose: tel kandidaat-achtige elementen en schrijf voorbeelden weg,
-    // zodat de selectors getuned kunnen worden tegen de echte Robin-DOM.
+    // Diagnose: tel elementen, dump body-tekst + brede DOM-samples zodat we
+    // precies zien wat er na het zoeken op de pagina staat.
     try {
       const diag = await page.evaluate(() => {
-        const sels = [
-          '[data-testid*="candidate" i]',
-          '[class*="candidate" i]',
-          '[class*="result" i]',
-          '[class*="profile" i]',
-          '[role="row"]',
-          "article",
-          "li",
-          "table tr",
-        ];
-        const counts = {};
-        for (const s of sels) counts[s] = document.querySelectorAll(s).length;
+        const t = (s) => document.querySelectorAll(s).length;
+        const counts = {
+          div: t("div"), a: t("a"), img: t("img"), button: t("button"),
+          li: t("li"), article: t("article"), tr: t("tr"),
+          iframe: t("iframe"), cssClass: t("[class^='css-']"),
+        };
+        const bodyText = (document.body.innerText || "").replace(/\s+/g, " ").trim();
+        // Kandidaat-achtige blokken: bevatten een link of afbeelding + wat tekst.
         const samples = [];
-        for (const s of sels) {
-          const el = document.querySelector(s);
-          if (el) samples.push(s + " => " + el.outerHTML.replace(/\s+/g, " ").slice(0, 1800));
-          if (samples.length >= 4) break;
-        }
-        return { counts, samples };
+        const blokken = [...document.querySelectorAll("div")].filter((d) => {
+          const tx = (d.textContent || "").replace(/\s+/g, " ").trim();
+          return d.querySelector("a, img") && tx.length > 20 && tx.length < 400 && d.children.length <= 10;
+        });
+        for (const el of blokken.slice(0, 6)) samples.push(el.outerHTML.replace(/\s+/g, " ").slice(0, 1500));
+        return { counts, bodyLen: bodyText.length, bodySample: bodyText.slice(0, 1200), samples };
       });
-      console.log("[robin] resultaat-diagnose:", JSON.stringify(diag.counts));
-      writeFileSync("debug-robin-rijen.txt", diag.samples.join("\n\n========\n\n"));
-      console.log("[robin] rij-structuur opgeslagen: debug-robin-rijen.txt");
+      console.log("[robin] diagnose:", JSON.stringify(diag.counts), "bodyLen:", diag.bodyLen);
+      console.log("[robin] body-sample:", diag.bodySample);
+      writeFileSync(
+        "debug-robin-rijen.txt",
+        "COUNTS: " + JSON.stringify(diag.counts) + "\n\nBODY:\n" + diag.bodySample + "\n\nSAMPLES:\n" + diag.samples.join("\n\n====\n\n"),
+      );
+      console.log("[robin] diagnose opgeslagen: debug-robin-rijen.txt");
     } catch {}
 
     // Kandidaten scrapen — heuristisch, finetune na de eerste zichtbare test.
