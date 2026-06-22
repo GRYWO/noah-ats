@@ -1,7 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
 import { login } from "./actions";
-import { ShieldCheck, MapPin, BadgeCheck } from "lucide-react";
 
 export default async function LoginPage({
   searchParams,
@@ -10,154 +8,71 @@ export default async function LoginPage({
 }) {
   const { error, setter_abonnement, bureau_abonnement, reden } = await searchParams;
 
-  const setterMelding = setter_abonnement === "actief"
-    ? { kleur: "emerald", tekst: "✅ Je abonnement is actief! Check je mail voor je inloggegevens." }
+  const melding = setter_abonnement === "actief"
+    ? { kleur: "emerald", tekst: "Je abonnement is actief. Check je mail voor je inloggegevens." }
     : setter_abonnement === "geannuleerd"
-    ? { kleur: "amber", tekst: "⚠ Betaling geannuleerd. Je kan pas inloggen na een actief abonnement — check je mail voor de betaallink." }
-    : setter_abonnement === "wachtend_betaling"
-    ? { kleur: "amber", tekst: "⚠ Je proefperiode is afgelopen. Check je mail voor de Stripe-betaallink om weer toegang te krijgen." }
-    : setter_abonnement === "proefperiode"
-    ? { kleur: "amber", tekst: "⚠ Je proefperiode is afgelopen. Wacht op de Stripe-betaallink in je mail." }
+    ? { kleur: "amber", tekst: "Betaling geannuleerd. Je kunt pas inloggen na een actief abonnement — check je mail voor de betaallink." }
+    : setter_abonnement === "wachtend_betaling" || setter_abonnement === "proefperiode"
+    ? { kleur: "amber", tekst: "Je proefperiode is afgelopen. Check je mail voor de betaallink om weer toegang te krijgen." }
     : setter_abonnement === "achterstallig"
-    ? { kleur: "red", tekst: "⚠ Je abonnement heeft een achterstallige betaling. Werk je betaalmethode bij via Stripe." }
+    ? { kleur: "red", tekst: "Je abonnement heeft een achterstallige betaling. Werk je betaalmethode bij." }
     : setter_abonnement === "opgezegd"
-    ? { kleur: "red", tekst: "Je abonnement is opgezegd. Neem contact op met info@noah-recruitment.nl om opnieuw te starten." }
-    : bureau_abonnement === "geen"
-    ? { kleur: "amber", tekst: "⚠ Je bureau heeft nog geen actief abonnement. Check de mail van het contactpersoon voor de Stripe-betaallink." }
-    : bureau_abonnement === "wachtend_betaling"
-    ? { kleur: "amber", tekst: "⚠ Het bureau-abonnement is nog niet betaald. De inloggegevens worden pas verstuurd na betaling — check je mail voor de Stripe-betaallink." }
-    : bureau_abonnement === "achterstallig"
-    ? { kleur: "red", tekst: "⚠ Het bureau-abonnement heeft een achterstallige betaling. De toegang is geblokkeerd tot de betaling rond is." }
-    : bureau_abonnement === "opgezegd"
-    ? { kleur: "red", tekst: "Het bureau-abonnement is opgezegd. Neem contact op met info@noah-recruitment.nl om opnieuw te starten." }
+    ? { kleur: "red", tekst: "Je abonnement is opgezegd. Mail info@noah-recruitment.nl om opnieuw te starten." }
     : bureau_abonnement === "geblokkeerd"
-    ? { kleur: "red", tekst: "🔒 Het bureau-abonnement is geblokkeerd. Neem contact op met info@noah-recruitment.nl." }
+    ? { kleur: "red", tekst: "Het bureau-abonnement is geblokkeerd. Neem contact op met info@noah-recruitment.nl." }
     : reden === "ander_apparaat"
-    ? { kleur: "amber", tekst: "🔐 Je bent uitgelogd omdat er op een ander apparaat is ingelogd met dit account." }
+    ? { kleur: "amber", tekst: "Je bent uitgelogd omdat er op een ander apparaat is ingelogd met dit account." }
     : reden === "inactiviteit"
-    ? { kleur: "amber", tekst: "⏱ Je bent automatisch uitgelogd na 60 minuten inactiviteit." }
+    ? { kleur: "amber", tekst: "Je bent automatisch uitgelogd na 60 minuten inactiviteit." }
     : null;
 
+  const meldKleur =
+    melding?.kleur === "emerald"
+      ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
+      : melding?.kleur === "red"
+      ? "border-red-400/30 bg-red-400/10 text-red-200"
+      : "border-amber-400/30 bg-amber-400/10 text-amber-200";
+
   return (
-    <main className="min-h-screen relative overflow-hidden bg-[#0f0f23] text-white flex flex-col">
-      {/* Gradient achtergrond — paars → donker */}
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-gradient-to-br from-[#333399] via-[#1f1f5c] to-[#0f0f23]"
-      />
-      {/* Subtiele radial highlight bovenin */}
-      <div
-        aria-hidden
-        className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full opacity-30 blur-3xl"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(255,216,77,0.25) 0%, rgba(51,51,153,0) 60%)",
-        }}
-      />
-
-      {/* Header — Powered by Noah launch */}
-      <header className="relative z-10 flex items-center justify-between px-8 py-6">
-        <a
-          href="https://noah-launch.vercel.app"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-baseline gap-2 text-xs text-white/70 hover:text-white transition"
-        >
-          <span>Powered by</span>
-          <span className="text-base font-extrabold tracking-tight text-white">
-            Noah<span style={{ color: "#ffd84d" }}>.</span>
-            <span className="ml-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-white/70">launch</span>
+    <main className="night-gold flex min-h-screen flex-col items-center justify-center px-5 py-12 text-white">
+      {/* Logo */}
+      <div className="mb-8 text-center">
+        <span className="inline-flex items-baseline gap-2">
+          <span className="text-3xl font-extrabold tracking-tight text-white">
+            Noah<span className="text-gold">.</span>
           </span>
-        </a>
-        <div className="flex items-center gap-2 text-xs text-white/50">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          Noah is online
-        </div>
-      </header>
+          <span className="text-xs font-semibold uppercase tracking-[0.25em] text-white/70">ATS</span>
+        </span>
+      </div>
 
-      {/* Login card */}
-      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 -mt-8">
-        {/* Noah ATS logo block */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl px-10 py-8 mb-8 flex items-baseline gap-3">
-          <span className="text-white text-5xl md:text-6xl font-black tracking-tighter">
-            Noah<span className="text-[#ffd84d]">.</span>
-          </span>
-          <span className="text-white/80 text-xs md:text-sm font-semibold uppercase tracking-[0.35em]">
-            ATS
-          </span>
-        </div>
-
-        {/* Aankondiging: welkomstblok Noah recruitment */}
-        <div className="w-full max-w-md mb-4 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/10 border-l-2 border-l-[#ffd84d] rounded-xl p-5">
-          <p className="text-white text-base font-semibold mb-1.5">
-            Welkom bij Noah recruitment
-          </p>
-          <p className="text-white/70 text-sm leading-relaxed mb-3">
-            Vanaf vandaag heten we Noah recruitment. Zelfde mensen, zelfde
-            aanpak, een naam die past bij hoe we verder willen groeien.
-          </p>
-          <p className="text-white/80 text-[11px] font-semibold uppercase tracking-wider mb-2">
-            Wat verandert er voor jou
-          </p>
-          <ul className="text-white/70 text-sm space-y-1.5 list-disc pl-5 marker:text-[#ffd84d]">
-            <li>
-              Je nieuwe e-mailadres heeft het patroon{" "}
-              <code className="bg-white/10 px-1.5 py-0.5 rounded text-[#ffd84d] font-mono text-xs">
-                voornaam@noah-recruitment.nl
-              </code>
-              . Inloggen doe je hiermee.
-            </li>
-            <li>
-              De hele tool, mails en voorstelpagina&apos;s dragen de
-              Noah-huisstijl.
-            </li>
-            <li>
-              In het menu staat nu &apos;Vacature aanmaken&apos;. Zet een
-              vacature op noah-recruitment.nl en haal er extra plaatsingen uit,
-              automatisch op jouw naam.
-            </li>
-          </ul>
-        </div>
-
-        {/* Form card */}
-        <div className="w-full max-w-md bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-8">
-          <h1 className="text-2xl font-bold text-white mb-1">Welkom terug</h1>
-          <p className="text-white/60 text-sm mb-6">Log in met je e-mailadres</p>
+      <div className="w-full max-w-md">
+        <div className="gold-edge rounded-3xl bg-white/[0.04] p-8 sm:p-10">
+          <h1 className="text-2xl font-extrabold tracking-tight text-white">Inloggen</h1>
+          <p className="mt-2 text-sm text-white/60">Welkom terug. Log in om je Noah-omgeving te beheren.</p>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-400/40 text-red-200 text-sm rounded-lg p-3 mb-4">
+            <div className="mt-5 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200">
               {error}
             </div>
           )}
-
-          {setterMelding && (
-            <div className={`text-sm rounded-lg p-3 mb-4 border ${
-              setterMelding.kleur === "emerald" ? "bg-emerald-500/10 border-emerald-400/40 text-emerald-200" :
-              setterMelding.kleur === "amber" ? "bg-amber-500/10 border-amber-400/40 text-amber-200" :
-              "bg-red-500/10 border-red-400/40 text-red-200"
-            }`}>
-              {setterMelding.tekst}
-            </div>
+          {melding && (
+            <div className={`mt-5 rounded-xl border px-4 py-3 text-sm ${meldKleur}`}>{melding.tekst}</div>
           )}
 
-          <form action={login} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-white/70 mb-1.5 uppercase tracking-wide">
-                E-mailadres
-              </label>
+          <form action={login} className="mt-6 space-y-4">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-white/75">E-mailadres</span>
               <input
                 type="email"
                 name="email"
                 required
                 autoComplete="off"
-                placeholder="voorbeeld@noah-recruitment.nl"
-                className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white placeholder-white/30 rounded-lg focus:outline-none focus:border-[#ffd84d] focus:bg-white/10 transition"
+                placeholder="voornaam@noah-recruitment.nl"
+                className="w-full rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-gold/60"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-white/70 mb-1.5 uppercase tracking-wide">
-                Wachtwoord
-              </label>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-white/75">Wachtwoord</span>
               <input
                 type="password"
                 name="password"
@@ -165,48 +80,25 @@ export default async function LoginPage({
                 autoComplete="off"
                 defaultValue=""
                 placeholder="••••••••"
-                className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white placeholder-white/30 rounded-lg focus:outline-none focus:border-[#ffd84d] focus:bg-white/10 transition"
+                className="w-full rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-gold/60"
               />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-white hover:bg-white/90 text-[#333399] font-bold py-3 rounded-lg shadow-lg transition-all hover:shadow-2xl hover:-translate-y-0.5"
-            >
-              Inloggen →
+            </label>
+            <button type="submit" className="btn-gold w-full px-6 py-3.5 text-base">
+              Inloggen
             </button>
           </form>
 
-          <div className="mt-5 text-center">
-            <Link
-              href="/wachtwoord-vergeten"
-              className="text-xs text-white/50 hover:text-white/80 transition"
-            >
+          <p className="mt-6 text-center text-sm">
+            <Link href="/wachtwoord-vergeten" className="text-white/55 transition hover:text-white">
               Wachtwoord vergeten?
             </Link>
-          </div>
+          </p>
         </div>
 
-        {/* Trust badges */}
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-2 md:gap-3">
-          <TrustBadge icon={<ShieldCheck size={12} />} label="AVG-proof" />
-          <TrustBadge icon={<MapPin size={12} />} label="Made in NL" />
-          <TrustBadge icon={<BadgeCheck size={12} />} label="ISO-ready" />
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="relative z-10 px-8 py-6 text-center text-[11px] text-white/40">
-        © {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782
-      </footer>
+        <p className="mt-6 text-center text-[11px] text-white/40">
+          © {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782
+        </p>
+      </div>
     </main>
-  );
-}
-
-function TrustBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm text-[11px] text-white/80">
-      <span className="text-[#ffd84d]">{icon}</span>
-      {label}
-    </div>
   );
 }
