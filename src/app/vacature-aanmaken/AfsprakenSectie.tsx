@@ -4,13 +4,22 @@ import { useState } from "react";
 
 type TariefType = "" | "ws_10" | "ws_15" | "ws_anders" | "uitzend";
 
-export function AfsprakenSectie() {
-  const [tarief, setTarief] = useState<TariefType>("");
-  const [wsPercentage, setWsPercentage] = useState<string>("");
-  const [wsToelichting, setWsToelichting] = useState<string>("");
-  const [uitzendFactor, setUitzendFactor] = useState<string>("2.4");
-  const [uitzendUren, setUitzendUren] = useState<string>("");
-  const [overnameUren, setOvernameUren] = useState<string>("1040");
+type AfsprakenDefaults = {
+  tarief?: string;
+  wsPercentage?: string;
+  wsToelichting?: string;
+  uitzendFactor?: string;
+  uitzendUren?: string;
+  overnameUren?: string;
+};
+
+export function AfsprakenSectie({ defaults }: { defaults?: AfsprakenDefaults } = {}) {
+  const [tarief, setTarief] = useState<TariefType>((defaults?.tarief as TariefType) || "");
+  const [wsPercentage, setWsPercentage] = useState<string>(defaults?.wsPercentage ?? "");
+  const [wsToelichting, setWsToelichting] = useState<string>(defaults?.wsToelichting ?? "");
+  const [uitzendFactor, setUitzendFactor] = useState<string>(defaults?.uitzendFactor || "2.4");
+  const [uitzendUren, setUitzendUren] = useState<string>(defaults?.uitzendUren ?? "");
+  const [overnameUren, setOvernameUren] = useState<string>(defaults?.overnameUren || "1040");
 
   // Voor ws_10 en ws_15 wordt het percentage automatisch vastgezet.
   const effectiefWsPercentage =

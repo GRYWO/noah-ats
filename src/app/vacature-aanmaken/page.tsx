@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst } from "./actions";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 
@@ -398,7 +398,7 @@ export default async function VacatureAanmakenLijst() {
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">{formatDatum(v.aangemaakt)}</td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-wrap justify-end gap-2">
                           {v.status === "open" && (
                             <form action={maakRobinZoekJob}>
                               <input type="hidden" name="vacature" value={v.id} />
@@ -411,6 +411,12 @@ export default async function VacatureAanmakenLijst() {
                               </SubmitKnop>
                             </form>
                           )}
+                          <Link
+                            href={`/vacature-aanmaken/${v.id}/bewerken`}
+                            className="text-xs font-semibold text-[#333399] hover:underline"
+                          >
+                            Bewerken
+                          </Link>
                           <a
                             href={`https://noah-recruitment.nl/vacatures/${v.id}`}
                             target="_blank"
@@ -425,12 +431,23 @@ export default async function VacatureAanmakenLijst() {
                               <input type="hidden" name="status" value="gesloten" />
                               <SubmitKnop
                                 bezigTekst="Sluiten…"
-                                className="text-xs text-red-600 hover:underline"
+                                className="text-xs text-gray-500 hover:underline"
                               >
                                 Sluiten
                               </SubmitKnop>
                             </form>
                           )}
+                          <form
+                            action={verwijderVacature}
+                          >
+                            <input type="hidden" name="id" value={v.id} />
+                            <SubmitKnop
+                              bezigTekst="Verwijderen…"
+                              className="text-xs font-semibold text-red-600 hover:underline"
+                            >
+                              Verwijderen
+                            </SubmitKnop>
+                          </form>
                         </div>
                       </td>
                     </tr>
