@@ -42,12 +42,12 @@ export default async function JobdiggerPage({
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <TopBar active="jobdigger" />
-      <PaginaTour pad="/jobdigger" naam="Jobdigger" stappen={TOUR_JOBDIGGER} />
+      <PaginaTour pad="/jobdigger" naam="Vacatures zoeken" stappen={TOUR_JOBDIGGER} />
 
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-xl font-bold text-gray-800">Jobdigger</h1>
+            <h1 className="text-xl font-bold text-gray-800">Vacatures zoeken</h1>
             <p className="text-xs text-gray-500">Werkt met de Noah-extensie. Wit scherm? Herlaad de extensie in Chrome.</p>
           </div>
           <a

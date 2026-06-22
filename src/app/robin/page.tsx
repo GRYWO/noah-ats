@@ -45,7 +45,7 @@ export default async function RobinPage({
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-xl font-bold text-gray-800">Robin</h1>
+            <h1 className="text-xl font-bold text-gray-800">Kandidaten zoeken</h1>
             {functie ? (
               <p className="text-xs font-semibold text-emerald-700">
                 Zoekt kandidaten voor: {functie}
