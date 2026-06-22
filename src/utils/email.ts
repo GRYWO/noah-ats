@@ -1,7 +1,36 @@
 import { Resend } from "resend";
 import { renderMailTemplate } from "@/utils/mail-templates";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const echteResend = new Resend(process.env.RESEND_API_KEY);
+
+// Dry-run-modus voor de E2E-testpagina. Staat globalThis.__NOAH_MAIL_DRYRUN aan,
+// dan worden e-mails NIET echt verstuurd; ze worden alleen vastgelegd (ontvanger +
+// onderwerp) in globalThis.__NOAH_MAIL_CAPTURED, zodat de test kan tonen "zou
+// verstuurd naar X" zonder dat er ook maar één echte mail uitgaat. In normale
+// werking (vlag uit) gaat alles gewoon via Resend.
+type ResendSendArg = Parameters<typeof echteResend.emails.send>[0];
+type ResendSendRet = ReturnType<typeof echteResend.emails.send>;
+type MailGlobals = {
+  __NOAH_MAIL_DRYRUN?: boolean;
+  __NOAH_MAIL_CAPTURED?: Array<{ to: string; subject: string }>;
+};
+const resend = {
+  emails: {
+    send(payload: ResendSendArg): ResendSendRet {
+      const g = globalThis as unknown as MailGlobals;
+      if (g.__NOAH_MAIL_DRYRUN === true) {
+        const p = payload as { to?: unknown; subject?: unknown };
+        const lijst = (g.__NOAH_MAIL_CAPTURED ??= []);
+        lijst.push({
+          to: Array.isArray(p.to) ? p.to.join(", ") : String(p.to ?? ""),
+          subject: String(p.subject ?? ""),
+        });
+        return Promise.resolve({ data: { id: "dryrun" }, error: null }) as unknown as ResendSendRet;
+      }
+      return echteResend.emails.send(payload);
+    },
+  },
+};
 // Default afzender. Vereist dat noah-recruitment.nl in Resend geverifieerd is
 // (Resend → Domains → noah-recruitment.nl → status 'Verified').
 // Harde guard: alleen een noah-recruitment.nl-adres is toegestaan, anders forceer
