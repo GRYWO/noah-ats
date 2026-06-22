@@ -27,9 +27,9 @@ type VacatureUitvoer = {
   tags: string[];
   secties: {
     intro: string;
-    taken: string[];
-    eisen: string[];
-    bieden: string[];
+    taken: string;
+    eisen: string;
+    bieden: string;
   };
 };
 
@@ -67,9 +67,9 @@ async function genereerVacature(v: VacatureInput): Promise<VacatureUitvoer> {
           "\"tags\": string[] (5-10 trefwoorden: functie, vaardigheden, sector, regio), " +
           "\"secties\": { " +
           "\"intro\": string (1-2 wervende zinnen over de functie en de regio, anoniem), " +
-          "\"taken\": string[] (3-7 korte bulletpunten: wat ga je doen), " +
-          "\"eisen\": string[] (3-7 korte bulletpunten: wat vragen we — opleiding, ervaring, vaardigheden), " +
-          "\"bieden\": string[] (3-6 korte bulletpunten: wat bieden we — denk aan salaris, uren, contracttype, ontwikkeling; verzin niets onrealistisch) } }",
+          "\"taken\": string (een vlotte alinea van 2-4 zinnen: wat ga je doen), " +
+          "\"eisen\": string (een vlotte alinea van 2-3 zinnen: wat vragen we — opleiding, ervaring, vaardigheden), " +
+          "\"bieden\": string (een vlotte alinea van 2-3 zinnen: wat bieden we — salaris, uren, contracttype, ontwikkeling; verzin niets onrealistisch) } }",
       },
     ],
   });
@@ -185,12 +185,15 @@ async function maakPubliekeContent(input: VacatureInput): Promise<{
   tags: string[];
   publiek_secties: VacatureUitvoer["secties"];
 }> {
-  const naarBullets = (s?: string) =>
-    (s || "").split(/[\n•·]|(?<=[.;])\s+/).map((r) => r.trim()).filter((r) => r.length > 2).slice(0, 7);
   try {
     const ai = await genereerVacature(input);
     return { publiek_tekst: ai.publiek_tekst, samenvatting: ai.samenvatting, tags: ai.tags, publiek_secties: ai.secties };
   } catch {
+    const bieden = [
+      input.salaris ? `Je verdient ${input.salaris}` : "",
+      input.uren ? `op basis van ${input.uren}` : "",
+      input.dienstverband ? `(${input.dienstverband})` : "",
+    ].filter(Boolean).join(" ");
     return {
       publiek_tekst:
         `Voor een opdrachtgever in de regio ${input.locatie || "Nederland"} zoeken wij een ${input.titel}.\n\n` +
@@ -201,13 +204,9 @@ async function maakPubliekeContent(input: VacatureInput): Promise<{
       tags: [input.titel, input.sector, input.locatie].filter(Boolean) as string[],
       publiek_secties: {
         intro: `Voor een opdrachtgever in de regio ${input.locatie || "Nederland"} zoeken wij een ${input.titel}.`,
-        taken: naarBullets(input.taken),
-        eisen: naarBullets(input.eisen),
-        bieden: [
-          input.salaris ? `Salaris: ${input.salaris}` : "",
-          input.uren ? `Uren: ${input.uren}` : "",
-          input.dienstverband || "",
-        ].filter(Boolean),
+        taken: input.taken || "",
+        eisen: input.eisen || "",
+        bieden: bieden ? `${bieden}.` : "",
       },
     };
   }
