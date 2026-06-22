@@ -11,13 +11,14 @@
 }
 
 .dark {
-  --background: #1f2026;
-  --foreground: #e8e8ec;
-  --panel: #2a2b33;
-  --panel-2: #34353f;
-  --border: #3d3e48;
-  --text-muted: #9ca3af;
-  --hover: #3a3b44;
+  /* Night-gold (Noah launch): diep indigo i.p.v. neutraal grijs */
+  --background: #0c0b1f;
+  --foreground: #ececf5;
+  --panel: #16152e;
+  --panel-2: #1e1c3c;
+  --border: #2c2950;
+  --text-muted: #9d9cc4;
+  --hover: #232049;
 }
 
 @theme inline {
