@@ -600,17 +600,10 @@ export default async function VacatureAanmakenLijst() {
                         </div>
                       </td>
                     </tr>
-                    {poolKandidaten.length > 0 && (
-                      <tr className="bg-[#333399]/5">
-                        <td colSpan={kolommen} className="px-4 pb-4">
-                          <PoolPaneel vacatureId={v.id} kandidaten={poolKandidaten} />
-                        </td>
-                      </tr>
-                    )}
-                    {pijplijnKandidaten.length > 0 && (
+                    {(poolKandidaten.length > 0 || pijplijnKandidaten.length > 0) && (
                       <tr className="bg-gray-50/60">
                         <td colSpan={kolommen} className="px-4 pb-4">
-                          <PijplijnPaneel kandidaten={pijplijnKandidaten} />
+                          <PijplijnBord vacatureId={v.id} pool={poolKandidaten} pijplijn={pijplijnKandidaten} />
                         </td>
                       </tr>
                     )}
@@ -633,63 +626,95 @@ export default async function VacatureAanmakenLijst() {
   );
 }
 
-function PijplijnPaneel({ kandidaten }: { kandidaten: PijplijnKandidaat[] }) {
-  return (
-    <details open className="rounded-lg border border-gray-200 bg-white">
-      <summary className="cursor-pointer select-none px-4 py-2.5 text-sm font-semibold text-gray-800">
-        Pijplijn <span className="font-normal text-gray-400">· {kandidaten.length}</span>
-      </summary>
-      <div className="border-t border-gray-100 p-3">
-        <div className="flex flex-col gap-1.5">
-          {kandidaten.map((k) => {
-            const fase = faseLabel(k);
-            return (
-              <a
-                key={k.id}
-                href={`/kandidaten/${k.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50"
-              >
-                <span className="text-sm text-gray-800">
-                  <span className="font-medium">{[k.voornaam, k.achternaam].filter(Boolean).join(" ") || "Kandidaat"}</span>
-                  {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
-                </span>
-                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${fase.kleur}`}>{fase.label}</span>
-              </a>
-            );
-          })}
-        </div>
-      </div>
-    </details>
-  );
+function naamVan(k: { voornaam: string | null; achternaam: string | null }): string {
+  return [k.voornaam, k.achternaam].filter(Boolean).join(" ") || "Kandidaat";
 }
 
-function PoolPaneel({ vacatureId, kandidaten }: { vacatureId: string; kandidaten: PoolKandidaat[] }) {
+// Pijplijn als kanban-bord: kolommen (vakjes) naast elkaar per fase, met de
+// kandidaatnamen erin. De Pool-kolom is actief (aanvinken + in één keer voorstellen).
+function PijplijnBord({
+  vacatureId,
+  pool,
+  pijplijn,
+}: {
+  vacatureId: string;
+  pool: PoolKandidaat[];
+  pijplijn: PijplijnKandidaat[];
+}) {
+  const perLabel = new Map<string, PijplijnKandidaat[]>();
+  for (const k of pijplijn) {
+    const l = faseLabel(k).label;
+    const arr = perLabel.get(l) ?? [];
+    arr.push(k);
+    perLabel.set(l, arr);
+  }
+
+  const kolommen: { key: string; kleur: string }[] = [
+    { key: "Intake", kleur: "bg-amber-100 text-amber-800" },
+    { key: "Pool", kleur: "bg-[#333399]/10 text-[#333399]" },
+    { key: "Voorgesteld", kleur: "bg-[#333399]/10 text-[#333399]" },
+    { key: "Gezien", kleur: "bg-indigo-100 text-indigo-800" },
+    { key: "Op gesprek", kleur: "bg-emerald-100 text-emerald-800" },
+    { key: "Afgewezen", kleur: "bg-red-100 text-red-700" },
+    { key: "Geplaatst", kleur: "bg-emerald-600 text-white" },
+  ];
+
   return (
-    <details open className="rounded-lg border border-[#333399]/20 bg-white">
-      <summary className="cursor-pointer select-none px-4 py-2.5 text-sm font-semibold text-[#333399]">
-        Pool — klaar om voor te stellen <span className="font-normal text-gray-400">· {kandidaten.length}</span>
-      </summary>
-      <form action={stelPoolVoor} className="border-t border-gray-100 p-3">
-        <input type="hidden" name="vacature" value={vacatureId} />
-        <div className="space-y-1.5">
-          {kandidaten.map((k) => (
-            <label key={k.id} className="flex items-center gap-2 text-sm text-gray-800">
-              <input type="checkbox" name="ids" value={k.id} defaultChecked className="h-4 w-4 accent-[#333399]" />
-              <span className="font-medium">{[k.voornaam, k.achternaam].filter(Boolean).join(" ") || "Kandidaat"}</span>
-              {k.woonplaats && <span className="text-gray-400">· {k.woonplaats}</span>}
-            </label>
-          ))}
-        </div>
-        <div className="mt-3">
-          <SubmitKnop
-            bezigTekst="Versturen…"
-            className="rounded-lg bg-[#333399] px-4 py-2 text-sm font-semibold text-white hover:bg-[#27277a]"
-          >
-            Stel geselecteerde voor ({kandidaten.length})
-          </SubmitKnop>
-        </div>
-      </form>
-    </details>
+    <div className="rounded-lg border border-gray-200 bg-white p-3">
+      <div className="mb-2 px-1 text-sm font-semibold text-gray-800">Pijplijn</div>
+      <div className="flex gap-3 overflow-x-auto pb-1">
+        {kolommen.map((kol) => {
+          const isPool = kol.key === "Pool";
+          const items: Array<PoolKandidaat | PijplijnKandidaat> = isPool ? pool : perLabel.get(kol.key) ?? [];
+          return (
+            <div key={kol.key} className="w-44 shrink-0 rounded-lg bg-gray-50 p-2">
+              <div className="mb-2 flex items-center justify-between">
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${kol.kleur}`}>{kol.key}</span>
+                <span className="text-xs text-gray-400">{items.length}</span>
+              </div>
+              {isPool ? (
+                <form action={stelPoolVoor} className="space-y-1.5">
+                  <input type="hidden" name="vacature" value={vacatureId} />
+                  {items.map((k) => (
+                    <label
+                      key={k.id}
+                      className="flex items-start gap-1.5 rounded-md bg-white px-2 py-1.5 text-xs text-gray-800 shadow-sm"
+                    >
+                      <input type="checkbox" name="ids" value={k.id} defaultChecked className="mt-0.5 h-3.5 w-3.5 accent-[#333399]" />
+                      <span>
+                        <span className="font-medium">{naamVan(k)}</span>
+                        {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
+                      </span>
+                    </label>
+                  ))}
+                  {items.length > 0 && (
+                    <SubmitKnop
+                      bezigTekst="Versturen…"
+                      className="mt-1 w-full justify-center rounded-md bg-[#333399] px-2 py-1.5 text-xs font-semibold text-white hover:bg-[#27277a]"
+                    >
+                      Stel voor ({items.length})
+                    </SubmitKnop>
+                  )}
+                </form>
+              ) : (
+                <div className="space-y-1.5">
+                  {items.map((k) => (
+                    <a
+                      key={k.id}
+                      href={`/kandidaten/${k.id}`}
+                      className="block rounded-md bg-white px-2 py-1.5 text-xs text-gray-800 shadow-sm hover:bg-gray-50"
+                    >
+                      <span className="font-medium">{naamVan(k)}</span>
+                      {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
