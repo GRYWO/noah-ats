@@ -121,7 +121,7 @@ export default async function NieuweVacaturePage({
           </Sectie>
 
           <Sectie titel="Contactgegevens — alleen voor ons (niet op de website)">
-            {vBedrijf && <input type="hidden" name="intern_bedrijf" value={vBedrijf} />}
+            <Rij label="Bedrijf (intern)" name="intern_bedrijf" placeholder="Naam van het bedrijf" required defaultValue={vBedrijf} />
             <div className="grid gap-4 sm:grid-cols-2">
               <Rij label="Contactpersoon" name="contactpersoon" placeholder="Naam contactpersoon" required />
               <Rij label="Telefoonnummer" name="contact_telefoon" placeholder="bv. 06-12345678" required defaultValue={vTelefoon} />

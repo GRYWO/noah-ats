@@ -127,7 +127,7 @@ export default async function VacatureBewerkenPage({
           </Sectie>
 
           <Sectie titel="Contactgegevens — alleen voor ons (niet op de website)">
-            <Rij label="Bedrijf (intern)" name="intern_bedrijf" defaultValue={v.intern_bedrijf ?? ""} />
+            <Rij label="Bedrijf (intern)" name="intern_bedrijf" required defaultValue={v.intern_bedrijf ?? ""} />
             <div className="grid gap-4 sm:grid-cols-2">
               <Rij label="Contactpersoon" name="contactpersoon" required defaultValue={v.intern_contactpersoon ?? ""} />
               <Rij label="Telefoonnummer" name="contact_telefoon" required defaultValue={v.intern_telefoon ?? ""} />

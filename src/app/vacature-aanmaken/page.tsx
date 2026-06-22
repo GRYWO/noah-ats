@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat, stelPoolVoor, plaatsKandidaatVanuitVacature } from "./actions";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat, stelPoolVoor } from "./actions";
+import { PlaatsKnop } from "./PlaatsKnop";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 import { LinkedInKnop } from "./LinkedInKnop";
@@ -673,29 +674,44 @@ function PijplijnBord({
                 <span className="text-xs text-gray-400">{items.length}</span>
               </div>
               {isPool ? (
-                <form action={stelPoolVoor} className="space-y-1.5">
-                  <input type="hidden" name="vacature" value={vacatureId} />
+                // De vinkjes en de "Stel voor"-knop horen bij dezelfde
+                // pool-form (via het form-attribuut), zodat we per kandidaat
+                // óók een losse Plaats-form kunnen tonen zonder geneste forms.
+                <div className="space-y-1.5">
                   {items.map((k) => (
-                    <label
+                    <div
                       key={k.id}
-                      className="flex items-start gap-1.5 rounded-md bg-white px-2 py-1.5 text-xs text-gray-800 shadow-sm"
+                      className="rounded-md bg-white px-2 py-1.5 text-xs text-gray-800 shadow-sm"
                     >
-                      <input type="checkbox" name="ids" value={k.id} defaultChecked className="mt-0.5 h-3.5 w-3.5 accent-[#333399]" />
-                      <span>
-                        <span className="font-medium">{naamVan(k)}</span>
-                        {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
-                      </span>
-                    </label>
+                      <label className="flex items-start gap-1.5">
+                        <input
+                          form={`pool-${vacatureId}`}
+                          type="checkbox"
+                          name="ids"
+                          value={k.id}
+                          defaultChecked
+                          className="mt-0.5 h-3.5 w-3.5 accent-[#333399]"
+                        />
+                        <span>
+                          <span className="font-medium">{naamVan(k)}</span>
+                          {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
+                        </span>
+                      </label>
+                      <PlaatsKnop vacatureId={vacatureId} kandidaatId={k.id} naam={naamVan(k)} />
+                    </div>
                   ))}
                   {items.length > 0 && (
-                    <SubmitKnop
-                      bezigTekst="Versturen…"
-                      className="mt-1 w-full justify-center rounded-md bg-[#333399] px-2 py-1.5 text-xs font-semibold text-white hover:bg-[#27277a]"
-                    >
-                      Stel voor ({items.length})
-                    </SubmitKnop>
+                    <form id={`pool-${vacatureId}`} action={stelPoolVoor}>
+                      <input type="hidden" name="vacature" value={vacatureId} />
+                      <SubmitKnop
+                        bezigTekst="Versturen…"
+                        className="mt-1 w-full justify-center rounded-md bg-[#333399] px-2 py-1.5 text-xs font-semibold text-white hover:bg-[#27277a]"
+                      >
+                        Stel voor ({items.length})
+                      </SubmitKnop>
+                    </form>
                   )}
-                </form>
+                </div>
               ) : (
                 <div className="space-y-1.5">
                   {items.map((k) => (
@@ -707,17 +723,8 @@ function PijplijnBord({
                         <span className="font-medium">{naamVan(k)}</span>
                         {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
                       </a>
-                      {kol.key === "Op gesprek" && (
-                        <form action={plaatsKandidaatVanuitVacature} className="mt-1.5">
-                          <input type="hidden" name="vacature" value={vacatureId} />
-                          <input type="hidden" name="kandidaatId" value={k.id} />
-                          <SubmitKnop
-                            bezigTekst="Plaatsen…"
-                            className="w-full justify-center rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700"
-                          >
-                            Plaats
-                          </SubmitKnop>
-                        </form>
+                      {kol.key !== "Geplaatst" && (
+                        <PlaatsKnop vacatureId={vacatureId} kandidaatId={k.id} naam={naamVan(k)} />
                       )}
                     </div>
                   ))}

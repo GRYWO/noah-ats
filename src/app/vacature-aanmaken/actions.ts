@@ -188,6 +188,25 @@ function leesInternEnAfspraken(formData: FormData) {
   };
 }
 
+// Controleer de verplichte interne velden. Geeft een foutmelding terug als er
+// iets ontbreekt, anders null. Zo gaat een plaatsing later altijd goed: bedrijf,
+// contactpersoon, telefoon en mailadres zijn nodig voor de backoffice-mail én de
+// W&S contract-uitnodiging; de afspraak bepaalt W&S vs uitzend.
+function ontbrekendeInterneVelden(intern: {
+  intern_bedrijf: string | null;
+  intern_contactpersoon: string | null;
+  intern_telefoon: string | null;
+  intern_mailadres: string | null;
+  afspraak_tarief_type: string | null;
+}): string | null {
+  if (!intern.intern_bedrijf) return "Bedrijf (intern) is verplicht.";
+  if (!intern.intern_contactpersoon) return "Contactpersoon is verplicht.";
+  if (!intern.intern_telefoon) return "Telefoonnummer is verplicht.";
+  if (!intern.intern_mailadres) return "E-mailadres van de contactpersoon is verplicht.";
+  if (!intern.afspraak_tarief_type) return "Kies een soort tarief (de afspraak).";
+  return null;
+}
+
 async function maakPubliekeContent(input: VacatureInput): Promise<{
   publiek_tekst: string;
   samenvatting: string;
@@ -343,6 +362,18 @@ export async function maakVacatureNoahAts(formData: FormData) {
   if (!input.titel) {
     redirect("/vacature-aanmaken/nieuw?fout=" + encodeURIComponent("Functietitel is verplicht."));
   }
+  // Verplichte interne velden: zonder deze kan de plaatsing later niet goed
+  // afgerond worden (backoffice-mail + W&S contract-uitnodiging).
+  const ontbreekt = ontbrekendeInterneVelden({
+    intern_bedrijf,
+    intern_contactpersoon,
+    intern_telefoon,
+    intern_mailadres,
+    afspraak_tarief_type,
+  });
+  if (ontbreekt) {
+    redirect("/vacature-aanmaken/nieuw?fout=" + encodeURIComponent(ontbreekt));
+  }
 
   const { publiek_tekst, samenvatting, tags, publiek_secties } = await maakPubliekeContent(input);
   const coord = input.locatie ? await geocode(input.locatie) : null;
@@ -462,6 +493,10 @@ export async function updateVacatureNoahAts(formData: FormData) {
   const intern = leesInternEnAfspraken(formData);
   if (!input.titel) {
     redirect(`/vacature-aanmaken/${id}/bewerken?fout=` + encodeURIComponent("Functietitel is verplicht."));
+  }
+  const ontbreekt = ontbrekendeInterneVelden(intern);
+  if (ontbreekt) {
+    redirect(`/vacature-aanmaken/${id}/bewerken?fout=` + encodeURIComponent(ontbreekt));
   }
 
   const { publiek_tekst, samenvatting, tags, publiek_secties } = await maakPubliekeContent(input);
