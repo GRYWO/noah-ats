@@ -495,7 +495,19 @@ export async function claimVacature(formData: FormData) {
     return;
   }
 
-  await admin.from("rec_vacatures").update({ setter_id: user.id }).eq("id", vacatureId).is("setter_id", null);
+  // Atomair claimen: alleen als setter_id nog NULL is. Zo wint bij twee setters
+  // die tegelijk klikken er maar één, en zoeken we ook maar één keer.
+  const { data: geclaimd } = await admin
+    .from("rec_vacatures")
+    .update({ setter_id: user.id })
+    .eq("id", vacatureId)
+    .is("setter_id", null)
+    .select("id");
+  if (!geclaimd || geclaimd.length === 0) {
+    // Iemand anders was net sneller.
+    revalidatePath("/vacature-aanmaken");
+    return;
+  }
 
   // Automatisch kandidaten zoeken zodra de setter de vacature heeft geclaimd.
   await maakRobinJobVoorVacature(admin, {
@@ -705,6 +717,17 @@ async function voerPlaatsingUit(opts: {
   vac: PlaatsVacature;
 }) {
   const { admin, tenantId, userId, userEmail, aanmelder, k, vac } = opts;
+
+  // Dubbele plaatsing voorkomen (dubbelklik of twee personen tegelijk): bestaat
+  // er al een niet-afgekeurde plaatsing voor deze kandidaat? Dan stoppen — geen
+  // tweede plaatsings-record, contract-verzoek of backoffice-mail.
+  const { data: bestaandePlaatsing } = await admin
+    .from("plaatsingen")
+    .select("id")
+    .eq("kandidaat_id", k.id)
+    .is("afgekeurd_op", null)
+    .limit(1);
+  if (bestaandePlaatsing && bestaandePlaatsing.length > 0) return;
 
   const tariefType = vac.afspraak_tarief_type ?? "";
   const isUitzend = tariefType === "uitzend";
