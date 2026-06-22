@@ -514,7 +514,7 @@ export default async function VacatureAanmakenLijst() {
                     {(kandidaten.length > 0 || robinLoopt) && (
                       <tr className="bg-gray-50/40">
                         <td colSpan={kolommen} className="px-4 pb-4">
-                          <KandidatenPaneel kandidaten={kandidaten} loopt={robinLoopt} />
+                          <KandidatenPaneel kandidaten={kandidaten} loopt={robinLoopt} vacatureId={v.id} vacatureTitel={v.titel} />
                         </td>
                       </tr>
                     )}
@@ -530,7 +530,22 @@ export default async function VacatureAanmakenLijst() {
   );
 }
 
-function KandidatenPaneel({ kandidaten, loopt }: { kandidaten: Kandidaat[]; loopt: boolean }) {
+function KandidatenPaneel({
+  kandidaten,
+  loopt,
+  vacatureId,
+  vacatureTitel,
+}: {
+  kandidaten: Kandidaat[];
+  loopt: boolean;
+  vacatureId: string;
+  vacatureTitel: string;
+}) {
+  // Vooraf ingevuld WhatsApp-bericht met een vriendelijk zinnetje + de vacaturelink.
+  const waBericht = encodeURIComponent(
+    `Hoi! Ik kwam je profiel tegen en denk dat deze functie goed bij je past: ${vacatureTitel}. ` +
+      `Bekijk 'm hier: https://noah-recruitment.nl/vacatures/${vacatureId} — heb je interesse? Groet, Noah Recruitment`,
+  );
   return (
     <details open className="rounded-lg border border-gray-200 bg-white">
       <summary className="cursor-pointer select-none px-4 py-2.5 text-sm font-semibold text-gray-800">
@@ -581,7 +596,7 @@ function KandidatenPaneel({ kandidaten, loopt }: { kandidaten: Kandidaat[]; loop
                             {k.telefoon}
                           </a>
                           <a
-                            href={`https://wa.me/${k.telefoon.replace(/[^0-9]/g, "").replace(/^0/, "31")}`}
+                            href={`https://wa.me/${k.telefoon.replace(/[^0-9]/g, "").replace(/^0/, "31")}?text=${waBericht}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs font-semibold text-emerald-600 hover:underline"
