@@ -198,9 +198,13 @@ export default async function AgendaPage({
       <PaginaTour pad="/agenda" naam="Agenda" stappen={TOUR_AGENDA} />
 
       <div className="p-8 max-w-5xl mx-auto">
+        <div className="gold-hr mb-5 rounded-full" />
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 inline-flex items-center gap-2">
+            <span className="gold-chip inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]">
+              Noah<span className="text-gold">.</span>&nbsp;recruitment
+            </span>
+            <h1 className="mt-3 text-2xl font-bold text-gray-800 inline-flex items-center gap-2">
               <Calendar size={20} /> Agenda
             </h1>
             <p className="text-sm text-gray-500 mt-1">
