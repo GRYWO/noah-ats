@@ -58,6 +58,7 @@ type Kandidaat = {
   voorstelprofiel_token: string | null;
   telefoon_status: string | null;
   email: string | null;
+  bezig?: boolean;
 };
 
 type Vacature = {
@@ -212,6 +213,8 @@ export default async function VacatureAanmakenLijst() {
   // Kandidaten (Robin): de meest recente bellijst per vacature + items (gerangschikt).
   const kandidatenPerVac = new Map<string, Kandidaat[]>();
   let robinLoopt = false;
+  let telefoonLoopt = false;
+  const bezigItems = new Set<string>();
   if (tenantId && lijst.length > 0) {
     const vacIds = lijst.map((v) => v.id);
     const { data: rl } = await admin
@@ -222,6 +225,19 @@ export default async function VacatureAanmakenLijst() {
       .in("status", ["open", "bezig"])
       .limit(1);
     robinLoopt = (rl ?? []).length > 0;
+
+    // Lopende telefoon-onthul-opdrachten: welke kandidaten zijn 'bezig'.
+    const { data: telJobs } = await admin
+      .from("zoek_jobs")
+      .select("doel_item_id")
+      .eq("tenant_id", tenantId)
+      .eq("type", "robin_telefoon")
+      .in("status", ["open", "bezig"]);
+    for (const j of telJobs ?? []) {
+      const id = (j as { doel_item_id: string | null }).doel_item_id;
+      if (id) bezigItems.add(id);
+    }
+    telefoonLoopt = bezigItems.size > 0;
 
     const { data: bl } = await admin
       .from("bellijsten")
@@ -247,7 +263,9 @@ export default async function VacatureAanmakenLijst() {
         const vid = blToVac.get((it as { bellijst_id: string }).bellijst_id);
         if (!vid) continue;
         const arr = kandidatenPerVac.get(vid) ?? [];
-        arr.push(it as unknown as Kandidaat);
+        const kand = it as unknown as Kandidaat;
+        kand.bezig = bezigItems.has(kand.id);
+        arr.push(kand);
         kandidatenPerVac.set(vid, arr);
       }
     }
@@ -255,7 +273,7 @@ export default async function VacatureAanmakenLijst() {
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
-      <AutoVernieuw snel={jobdiggerLoopt || robinLoopt} />
+      <AutoVernieuw snel={jobdiggerLoopt || robinLoopt || telefoonLoopt} />
       <TopBar active="vacature-aanmaken" />
       <div className="p-8 max-w-6xl mx-auto">
         <div className="flex justify-between items-start mb-6">
@@ -613,8 +631,21 @@ function KandidatenPaneel({
                               WhatsApp
                             </a>
                           </span>
+                        ) : k.bezig ? (
+                          <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
+                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-amber-300 border-t-amber-700" />
+                            Bezig met onthullen…
+                          </span>
                         ) : k.telefoon_status === "niet_beschikbaar" ? (
-                          <span className="text-xs text-gray-400">Niet beschikbaar</span>
+                          <span className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400">Niet beschikbaar</span>
+                            <form action={onthulTelefoon}>
+                              <input type="hidden" name="itemId" value={k.id} />
+                              <SubmitKnop bezigTekst="Onthullen…" className="text-xs font-semibold text-[#333399] hover:underline">
+                                Opnieuw
+                              </SubmitKnop>
+                            </form>
+                          </span>
                         ) : (
                           <form action={onthulTelefoon}>
                             <input type="hidden" name="itemId" value={k.id} />
