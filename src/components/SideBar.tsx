@@ -8,7 +8,6 @@ import { HelpKnop } from "./HelpKnop";
 import {
   LayoutDashboard,
   Users,
-  UserPlus,
   KanbanSquare,
   Contact,
   Mail,
@@ -18,16 +17,11 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Sparkles,
-  PhoneCall,
-  Send,
   Calendar,
   CalendarClock,
   FileSignature,
   Archive,
-  CreditCard,
-  AtSign,
   Megaphone,
-  Briefcase,
 } from "lucide-react";
 
 type Item = {
@@ -91,35 +85,27 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
   }, [open, modus]);
 
   const alleItems: Item[] = [
-    // Sectie 1: Overzicht
-    { key: "dashboard",    href: "/dashboard",    label: "Dashboard",   Icon: LayoutDashboard, sectie: 1 },
+    // Sectie 1: Dashboard (de vacatures-/setterpagina is nu het dashboard)
+    ...(!isBureauAdmin ? [{ key: "vacature-aanmaken", href: "/vacature-aanmaken", label: "Dashboard", Icon: LayoutDashboard, sectie: 1 } as Item] : []),
 
     // Sectie 2: Werkstroom , recruitment
     ...(!isBureauAdmin ? [{ key: "kandidaten", href: "/kandidaten", label: "Kandidaten", Icon: Users, sectie: 2 } as Item] : []),
     ...(!isBureauAdmin ? [{ key: "kandidatenpool", href: "/kandidatenpool", label: "Talentenpool", Icon: Users, sectie: 2 } as Item] : []),
-    ...(!isBureauAdmin && !isSetter ? [{ key: "intaken", href: "/kandidaten/intaken", label: "Intake starten", Icon: UserPlus, sectie: 2 } as Item] : []),
     { key: "kanban",         href: "/kanban",         label: "Kanban",       Icon: KanbanSquare,  sectie: 2 },
-    { key: "voorstellen",    href: "/voorstellen",    label: "Voorstellen",  Icon: Send,          sectie: 2 } as Item,
     { key: "agenda",         href: "/agenda",         label: "Agenda",       Icon: Calendar,      sectie: 2 },
     { key: "herinneringen",  href: "/herinneringen",  label: "Herinneringen", Icon: CalendarClock, sectie: 2 },
 
     // Sectie 3: Relaties & tools
     { key: "opdrachtgevers", href: "/opdrachtgevers", label: "CRM",          Icon: Contact,       sectie: 3 },
-    // Vacatures: setter + super-admin (niet bureau-admin)
-    ...(!isBureauAdmin && (isSetter || isSuperAdmin) ? [{ key: "vacature-aanmaken", href: "/vacature-aanmaken", label: "Vacatures", Icon: Briefcase, sectie: 3 } as Item] : []),
-    // Jobdigger: setter + admin (echt, niet bureau-admin) + super-admin
-    ...(!isRecruiter && !isBureauAdmin ? [{ key: "jobdigger", href: "/jobdigger", label: "Jobdigger", Icon: PhoneCall, sectie: 3 } as Item] : []),
 
     // Sectie 4: Communicatie
     { key: "inbox",          href: "/inbox",          label: "E-mail",       Icon: Mail,          sectie: 4 },
-    { key: "mail-setup",     href: "/mail-setup",     label: "Mail-instellen", Icon: AtSign,      sectie: 4 },
 
     // Sectie 5: Team & beheer
     ...(!isRecruiter && !isBureauAdmin ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: Sparkles, sectie: 5 } as Item] : []),
     ...(!isSetter && !isRecruiter ? [{ key: "setters", href: "/users", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "documenten", href: "/documenten", label: "Documenten", Icon: FileSignature, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "archief", href: "/archief", label: "Archief", Icon: Archive, sectie: 5 } as Item] : []),
-    ...(isSuperAdmin ? [{ key: "abonnementen-beheer", href: "/abonnementen-beheer", label: "Abonnementen", Icon: CreditCard, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "systeem-meldingen", href: "/systeem-meldingen", label: "Meldingen", Icon: Megaphone, sectie: 5 } as Item] : []),
     { key: "instellingen",   href: "/instellingen",   label: "Instellingen", Icon: Settings,      sectie: 5 },
   ];
