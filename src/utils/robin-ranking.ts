@@ -44,21 +44,28 @@ export async function rangschikKandidaten(
             `VACATURE:\nFunctie: ${vacature.titel}\nPlaats: ${vacature.plaats ?? ""}\n` +
             `Taken: ${(vacature.taken ?? "").slice(0, 1200)}\nEisen: ${(vacature.eisen ?? "").slice(0, 800)}\n\n` +
             `KANDIDATEN (JSON):\n${JSON.stringify(lijst)}\n\n` +
-            'Lever JSON: { "scores": [ { "i": number, "score": number (0-100), "reden": string } ] } ' +
+            'Lever JSON: { "scores": [ { "i": number, "score": number (0-100), "reden": string, "plaats": string (woonplaats uit het profiel, of "") } ] } ' +
             "voor ELKE kandidaat (gebruik exact de meegegeven index i).",
         },
       ],
     });
     const tekst = res.content.find((b) => b.type === "text")?.text ?? "{}";
-    const data = leesJson<{ scores?: { i: number; score: number; reden: string }[] }>(tekst);
-    const perIndex = new Map<number, { score: number; reden: string }>();
+    const data = leesJson<{ scores?: { i: number; score: number; reden: string; plaats?: string }[] }>(tekst);
+    const perIndex = new Map<number, { score: number; reden: string; plaats: string }>();
     for (const s of data.scores ?? []) {
-      if (typeof s.i === "number") perIndex.set(s.i, { score: Number(s.score) || 0, reden: (s.reden ?? "").toString() });
+      if (typeof s.i === "number") {
+        perIndex.set(s.i, { score: Number(s.score) || 0, reden: (s.reden ?? "").toString(), plaats: (s.plaats ?? "").toString().trim() });
+      }
     }
 
     const verrijkt = kandidaten.map((k, i) => {
       const m = perIndex.get(i);
-      return { ...k, match_score: m ? m.score : 0, match_reden: m ? m.reden : "" };
+      return {
+        ...k,
+        match_score: m ? m.score : 0,
+        match_reden: m ? m.reden : "",
+        plaats: (k.plaats && k.plaats.trim()) || (m ? m.plaats : "") || k.plaats,
+      };
     });
     verrijkt.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
     return verrijkt;
