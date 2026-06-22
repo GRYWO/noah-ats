@@ -51,10 +51,10 @@ export default async function KandidaatDetail({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; error?: string; plaatsing?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string; plaatsing?: string; intake?: string }>;
 }) {
   const { id } = await params;
-  const { ok, error, plaatsing: plaatsingQuery } = await searchParams;
+  const { ok, error, plaatsing: plaatsingQuery, intake: intakeQuery } = await searchParams;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -423,7 +423,7 @@ export default async function KandidaatDetail({
         {/* Intake via de bot — stelt de vragen, toont profiel, keuze wachtrij/wachten. */}
         {!isSetter && (
           <div className="mb-6">
-            <IntakeBot kandidaatId={k.id} cvContext={botCvContext} />
+            <IntakeBot kandidaatId={k.id} cvContext={botCvContext} autoStart={intakeQuery === "1" && !intakeAlAfgerond} />
           </div>
         )}
 
