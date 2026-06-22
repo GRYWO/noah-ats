@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat, stelPoolVoor } from "./actions";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat, stelPoolVoor, plaatsKandidaatVanuitVacature } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 import { LinkedInKnop } from "./LinkedInKnop";
@@ -699,14 +699,27 @@ function PijplijnBord({
               ) : (
                 <div className="space-y-1.5">
                   {items.map((k) => (
-                    <a
+                    <div
                       key={k.id}
-                      href={`/kandidaten/${k.id}`}
-                      className="block rounded-md bg-white px-2 py-1.5 text-xs text-gray-800 shadow-sm hover:bg-gray-50"
+                      className="rounded-md bg-white px-2 py-1.5 text-xs text-gray-800 shadow-sm"
                     >
-                      <span className="font-medium">{naamVan(k)}</span>
-                      {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
-                    </a>
+                      <a href={`/kandidaten/${k.id}`} className="block hover:underline">
+                        <span className="font-medium">{naamVan(k)}</span>
+                        {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
+                      </a>
+                      {kol.key === "Op gesprek" && (
+                        <form action={plaatsKandidaatVanuitVacature} className="mt-1.5">
+                          <input type="hidden" name="vacature" value={vacatureId} />
+                          <input type="hidden" name="kandidaatId" value={k.id} />
+                          <SubmitKnop
+                            bezigTekst="Plaatsen…"
+                            className="w-full justify-center rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700"
+                          >
+                            Plaats
+                          </SubmitKnop>
+                        </form>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}

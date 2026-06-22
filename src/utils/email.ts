@@ -1435,16 +1435,19 @@ export async function sendContractControleUitnodiging({
   contactNaam,
   kandidaatNaam,
   token,
+  feePercentage,
 }: {
   naar: string;
   contactNaam: string;
   kandidaatNaam: string;
   token: string;
+  feePercentage?: number | null;
 }) {
   const url = `${APP_URL}/contract-controle/${token}`;
+  const feeLabel = feePercentage != null && Number.isFinite(feePercentage) ? `${feePercentage}%` : "het afgesproken percentage";
   const body = `
 <p>Hallo ${contactNaam || ""},</p>
-<p>Bedankt voor de plaatsing van <b>${kandidaatNaam}</b>! Voor het opmaken van de factuur (15% van het bruto jaarsalaris) hebben we een kopie van het arbeidscontract nodig ter verificatie van het overeengekomen salaris.</p>
+<p>Bedankt voor de plaatsing van <b>${kandidaatNaam}</b>! Voor het opmaken van de factuur (${feeLabel} van het bruto jaarsalaris) hebben we een kopie van het arbeidscontract nodig ter verificatie van het overeengekomen salaris.</p>
 
 <div style="background:#f4f4f7;border-left:4px solid ${NOAH_PAARS};padding:14px 16px;margin:18px 0;font-size:13px;color:#333;">
   <b style="color:${NOAH_PAARS};">⚖ Strenge AVG-regels</b><br>
