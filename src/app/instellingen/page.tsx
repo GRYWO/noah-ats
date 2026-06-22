@@ -75,7 +75,11 @@ export default async function InstellingenPage({
       <TopBar active="instellingen" />
 
       <div className="p-8 max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Mijn instellingen</h1>
+        <div className="gold-hr mb-5 rounded-full" />
+        <span className="gold-chip inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]">
+          Noah<span className="text-gold">.</span>&nbsp;recruitment
+        </span>
+        <h1 className="mt-3 text-3xl font-bold text-gray-800 mb-6">Mijn instellingen</h1>
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">

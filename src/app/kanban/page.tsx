@@ -26,7 +26,7 @@ export default async function KanbanPage() {
 
   let q = supabase
     .from("kandidaten")
-    .select("id, voornaam, tussenvoegsel, achternaam, kanban_stap, score, open_voor")
+    .select("id, voornaam, tussenvoegsel, achternaam, kanban_stap, voorstel_status, score, open_voor")
     .order("created_at", { ascending: false })
     .limit(500); // Kanban toont max 500 — anders DOM te zwaar bij grote boards
 
