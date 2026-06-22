@@ -7,6 +7,7 @@ import { TopBar } from "@/components/TopBar";
 import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, maakVoorstelprofielVanKandidaat, onthulTelefoon } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
+import { KopieerBericht } from "./KopieerBericht";
 
 // Herkenning van uitzend-/bemiddelingsbureaus, zodat die onderaan komen: we
 // willen liefst direct de werkgever bellen, niet een ander bureau.
@@ -55,6 +56,8 @@ type Kandidaat = {
   match_score: number | null;
   match_reden: string | null;
   voorstelprofiel_token: string | null;
+  telefoon_status: string | null;
+  email: string | null;
 };
 
 type Vacature = {
@@ -237,7 +240,7 @@ export default async function VacatureAanmakenLijst() {
     if (blIds.length) {
       const { data: items } = await admin
         .from("bellijst_items")
-        .select("id, bellijst_id, naam, plaats, telefoon, website, cv_url, match_score, match_reden, volgorde, voorstelprofiel_token")
+        .select("id, bellijst_id, naam, plaats, telefoon, website, cv_url, match_score, match_reden, volgorde, voorstelprofiel_token, telefoon_status, email")
         .in("bellijst_id", blIds)
         .order("volgorde", { ascending: true });
       for (const it of items ?? []) {
@@ -541,11 +544,16 @@ function KandidatenPaneel({
   vacatureId: string;
   vacatureTitel: string;
 }) {
-  // Vooraf ingevuld WhatsApp-bericht met een vriendelijk zinnetje + de vacaturelink.
-  const waBericht = encodeURIComponent(
+  // Vriendelijk bericht met vacaturelink: voor WhatsApp (url-encoded) en om te
+  // kopiëren (LinkedIn ondersteunt geen vooraf ingevuld bericht via een link).
+  const bericht =
     `Hoi! Ik kwam je profiel tegen en denk dat deze functie goed bij je past: ${vacatureTitel}. ` +
-      `Bekijk 'm hier: https://noah-recruitment.nl/vacatures/${vacatureId} — heb je interesse? Groet, Noah Recruitment`,
-  );
+    `Bekijk 'm hier: https://noah-recruitment.nl/vacatures/${vacatureId} — heb je interesse? Groet, Noah Recruitment`;
+  const waBericht = encodeURIComponent(bericht);
+  const linkedinUrl = (k: Kandidaat) =>
+    k.website && /linkedin\.com/i.test(k.website)
+      ? k.website
+      : `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${k.naam ?? ""} ${k.plaats ?? ""}`.trim())}`;
   return (
     <details open className="rounded-lg border border-gray-200 bg-white">
       <summary className="cursor-pointer select-none px-4 py-2.5 text-sm font-semibold text-gray-800">
@@ -590,28 +598,51 @@ function KandidatenPaneel({
                     <td className="px-3 py-2 font-medium text-gray-800">{k.naam ?? "—"}</td>
                     <td className="px-3 py-2 text-gray-600">{k.plaats ?? "—"}</td>
                     <td className="px-3 py-2 text-gray-600">
-                      {k.telefoon ? (
+                      <div className="flex flex-col gap-1">
+                        {k.telefoon ? (
+                          <span className="flex items-center gap-2">
+                            <a href={`tel:${k.telefoon}`} className="text-[#333399] hover:underline">
+                              {k.telefoon}
+                            </a>
+                            <a
+                              href={`https://wa.me/${k.telefoon.replace(/[^0-9]/g, "").replace(/^0/, "31")}?text=${waBericht}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-semibold text-emerald-600 hover:underline"
+                            >
+                              WhatsApp
+                            </a>
+                          </span>
+                        ) : k.telefoon_status === "niet_beschikbaar" ? (
+                          <span className="text-xs text-gray-400">Niet beschikbaar</span>
+                        ) : (
+                          <form action={onthulTelefoon}>
+                            <input type="hidden" name="itemId" value={k.id} />
+                            <SubmitKnop bezigTekst="Onthullen…" className="text-xs font-semibold text-[#333399] hover:underline">
+                              Onthul telefoon
+                            </SubmitKnop>
+                          </form>
+                        )}
                         <span className="flex items-center gap-2">
-                          <a href={`tel:${k.telefoon}`} className="text-[#333399] hover:underline">
-                            {k.telefoon}
-                          </a>
                           <a
-                            href={`https://wa.me/${k.telefoon.replace(/[^0-9]/g, "").replace(/^0/, "31")}?text=${waBericht}`}
+                            href={linkedinUrl(k)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs font-semibold text-emerald-600 hover:underline"
+                            className="text-xs font-semibold text-[#0a66c2] hover:underline"
                           >
-                            WhatsApp
+                            LinkedIn
                           </a>
+                          {k.email ? (
+                            <a
+                              href={`mailto:${k.email}?subject=${encodeURIComponent("Een functie die bij je past")}&body=${waBericht}`}
+                              className="text-xs font-semibold text-[#333399] hover:underline"
+                            >
+                              E-mail
+                            </a>
+                          ) : null}
+                          <KopieerBericht tekst={bericht} />
                         </span>
-                      ) : (
-                        <form action={onthulTelefoon}>
-                          <input type="hidden" name="itemId" value={k.id} />
-                          <SubmitKnop bezigTekst="Onthullen…" className="text-xs font-semibold text-[#333399] hover:underline">
-                            Onthul telefoon
-                          </SubmitKnop>
-                        </form>
-                      )}
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       {k.voorstelprofiel_token ? (

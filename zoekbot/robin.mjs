@@ -268,13 +268,20 @@ export async function runRobinTelefoon(zoekterm, opties = {}) {
     const res = await page.evaluate(() => {
       const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
       const TEL = /(?:\+31[\s-]?|0)(?:6[\s-]?\d{8}|\d{2,3}[\s-]?\d{6,7})/;
+      const MAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
       const bron = (document.body.innerText || "") + " " + (document.body.innerHTML || "");
       const tel = (bron.match(TEL) || [null])[0];
+      const mail = (bron.match(MAIL) || [null])[0];
       const knoppen = [...document.querySelectorAll("button")]
         .map((b) => clean(b.getAttribute("aria-label") || b.textContent || b.title || ""))
         .filter(Boolean)
         .slice(0, 50);
-      return { telefoon: tel ? clean(tel) : "", body: clean(document.body.innerText || "").slice(0, 4000), knoppen };
+      return {
+        telefoon: tel ? clean(tel) : "",
+        email: mail ? clean(mail) : "",
+        body: clean(document.body.innerText || "").slice(0, 4000),
+        knoppen,
+      };
     });
 
     try {
@@ -283,8 +290,8 @@ export async function runRobinTelefoon(zoekterm, opties = {}) {
         `GEKLIKT: ${geklikt}\nNAAM: ${naam}\nTEL: ${res.telefoon}\n\nKNOPPEN:\n${JSON.stringify(res.knoppen)}\n\nBODY:\n${res.body}`,
       );
     } catch {}
-    console.log(`[robin-telefoon] ${naam}: geklikt=${geklikt} telefoon=${res.telefoon || "(geen)"}`);
-    return { telefoon: res.telefoon };
+    console.log(`[robin-telefoon] ${naam}: geklikt=${geklikt} telefoon=${res.telefoon || "(geen)"} email=${res.email || "(geen)"}`);
+    return { telefoon: res.telefoon, email: res.email };
   } finally {
     await context.close();
   }

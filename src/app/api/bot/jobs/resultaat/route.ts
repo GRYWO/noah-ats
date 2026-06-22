@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     kandidaten?: RobinKandidaat[];
     vondsten?: { titel?: string; bedrijf?: string; plaats?: string; url?: string; telefoon?: string; datum?: string; jobdigger_url?: string; detail_tekst?: string }[];
     telefoon?: string;
+    email?: string;
     fout?: string;
   };
   try {
@@ -55,8 +56,16 @@ export async function POST(request: Request) {
   // Telefoon onthuld voor één kandidaat: het nummer bij de bellijst-kandidaat zetten.
   if (job.type === "robin_telefoon") {
     const telefoon = (body.telefoon ?? "").toString().trim().slice(0, 60);
-    if (job.doel_item_id && telefoon) {
-      await admin.from("bellijst_items").update({ telefoon }).eq("id", job.doel_item_id);
+    const email = (body.email ?? "").toString().trim().slice(0, 200);
+    if (job.doel_item_id) {
+      await admin
+        .from("bellijst_items")
+        .update({
+          telefoon: telefoon || null,
+          email: email || null,
+          telefoon_status: telefoon ? "gevonden" : "niet_beschikbaar",
+        })
+        .eq("id", job.doel_item_id);
     }
     await admin
       .from("zoek_jobs")

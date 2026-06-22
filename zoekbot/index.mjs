@@ -47,9 +47,9 @@ async function verwerk(job) {
       console.log(`  → ${kandidaten.length} kandidaten gevonden`);
       await meldResultaat(job.id, { kandidaten });
     } else if (job.type === "robin_telefoon") {
-      const { telefoon } = await runRobinTelefoon(job.zoekterm, { plaats: job.plaats || "", naam: job.doel_naam || "" });
-      console.log(`  → telefoon: ${telefoon || "(geen)"}`);
-      await meldResultaat(job.id, { telefoon });
+      const { telefoon, email } = await runRobinTelefoon(job.zoekterm, { plaats: job.plaats || "", naam: job.doel_naam || "" });
+      console.log(`  → telefoon: ${telefoon || "(geen)"} email: ${email || "(geen)"}`);
+      await meldResultaat(job.id, { telefoon, email });
     } else if (job.type === "jobdigger") {
       const vondsten = await runJobdiggerZoek(job.zoekterm, job.limiet || 50);
       console.log(`  → ${vondsten.length} vacatures gevonden`);
