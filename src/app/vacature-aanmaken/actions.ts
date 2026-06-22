@@ -310,8 +310,47 @@ export async function maakJobdiggerZoekJob(formData: FormData) {
     tenant_id: profile.tenant_id,
     type: "jobdigger",
     zoekterm: beroep,
+    limiet: 50,
     aangemaakt_door: user.id,
   });
+
+  revalidatePath("/vacature-aanmaken");
+}
+
+// "Zoek 50 meer": vergroot een bestaande Jobdigger-lijst met 50 extra. Het
+// limiet wordt opgehoogd en de zoekopdracht opnieuw in de wachtrij gezet; de
+// bot scrapet opnieuw (nu meer) en vervangt de lijst netjes.
+export async function vergrootJobdiggerLijst(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const jobId = String(formData.get("jobId") || "").trim();
+  if (!jobId) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  const { data: job } = await admin
+    .from("zoek_jobs")
+    .select("limiet")
+    .eq("id", jobId)
+    .eq("tenant_id", profile.tenant_id)
+    .maybeSingle();
+  if (!job) return;
+
+  const nieuwLimiet = (Number((job as { limiet?: number }).limiet) || 50) + 50;
+  const nu = new Date().toISOString();
+  await admin
+    .from("zoek_jobs")
+    .update({ limiet: nieuwLimiet, status: "open", gestart_at: null, klaar_at: null, fout: null, updated_at: nu })
+    .eq("id", jobId)
+    .eq("tenant_id", profile.tenant_id);
 
   revalidatePath("/vacature-aanmaken");
 }

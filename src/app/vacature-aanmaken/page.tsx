@@ -3,9 +3,26 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst } from "./actions";
+import { zetVacatureStatus, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
+
+// Herkenning van uitzend-/bemiddelingsbureaus, zodat die onderaan komen: we
+// willen liefst direct de werkgever bellen, niet een ander bureau.
+const BUREAU = /uitzend|flex|payroll|detacher|detach|secondment|personeel|staffing|recruit|werving|selectie|bemiddel|talent|vacature|\bbanen\b|\bjobs\b|workforce|randstad|tempo[\s-]?team|adecco|manpower|\byacht\b|olympia|\bluba\b|\btiming\b|start ?people|young ?capital|\bunique\b|driessen|continu|maandag|\busg\b|covebo|jobbird|actief|tence|\botto\b|abu\b/i;
+
+// Vacatures met telefoonnummer bovenaan, uitzendbureaus onderaan.
+function sorteerVondsten(vondsten: JobdiggerVondst[]): JobdiggerVondst[] {
+  return [...vondsten].sort((a, b) => {
+    const aBureau = BUREAU.test(a.bedrijf ?? "") ? 1 : 0;
+    const bBureau = BUREAU.test(b.bedrijf ?? "") ? 1 : 0;
+    if (aBureau !== bBureau) return aBureau - bBureau; // bureaus onderaan
+    const aTel = a.telefoon ? 0 : 1;
+    const bTel = b.telefoon ? 0 : 1;
+    if (aTel !== bTel) return aTel - bTel; // mét telefoon bovenaan
+    return 0;
+  });
+}
 
 export const metadata = { title: "Vacature aanmaken" };
 
@@ -23,6 +40,7 @@ type JobdiggerVondst = {
 type JobdiggerLijst = {
   id: string;
   naam: string;
+  limiet: number;
   vondsten: JobdiggerVondst[];
 };
 
@@ -140,10 +158,10 @@ export default async function VacatureAanmakenLijst() {
 
     const { data: jobs } = await admin
       .from("zoek_jobs")
-      .select("id, lijst_naam, zoekterm, created_at")
+      .select("id, lijst_naam, zoekterm, created_at, limiet")
       .eq("tenant_id", tenantId)
       .eq("type", "jobdigger")
-      .eq("status", "klaar")
+      .in("status", ["klaar", "bezig", "open"])
       .order("created_at", { ascending: false })
       .limit(20);
 
@@ -169,7 +187,8 @@ export default async function VacatureAanmakenLijst() {
       .map((j) => ({
         id: j.id as string,
         naam: ((j.lijst_naam as string | null) ?? (j.zoekterm as string)) || "Zoeklijst",
-        vondsten: perJob.get(j.id as string) ?? [],
+        limiet: Number((j as { limiet?: number }).limiet) || 50,
+        vondsten: sorteerVondsten(perJob.get(j.id as string) ?? []),
       }))
       .filter((l) => l.vondsten.length > 0);
   }
@@ -241,6 +260,12 @@ export default async function VacatureAanmakenLijst() {
                     />
                     <SubmitKnop bezigTekst="Opslaan…" className="text-xs font-semibold text-[#333399] hover:underline">
                       Naam opslaan
+                    </SubmitKnop>
+                  </form>
+                  <form action={vergrootJobdiggerLijst}>
+                    <input type="hidden" name="jobId" value={lijst.id} />
+                    <SubmitKnop bezigTekst="Zoeken…" className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
+                      Zoek 50 meer
                     </SubmitKnop>
                   </form>
                   <form action={verwijderJobdiggerLijst}>
