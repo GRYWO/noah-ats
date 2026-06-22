@@ -145,6 +145,23 @@ input[type="week"] {
 .dark .border-red-200,     .dark .border-red-300     { border-color: rgba(239, 68, 68, 0.4) !important; }
 .dark .border-blue-200,    .dark .border-blue-300    { border-color: rgba(59, 130, 246, 0.4) !important; }
 
+/* Gekleurde badges met -100/-200 achtergrond hielden in dark mode hun lichte
+   achtergrond, terwijl de tekst licht werd -> licht-op-licht (onleesbaar).
+   Maak die achtergronden donker-transparant zodat de lichte tekst contrasteert. */
+.dark .bg-emerald-100, .dark .bg-emerald-200 { background-color: rgba(16, 185, 129, 0.18) !important; }
+.dark .bg-amber-100,   .dark .bg-amber-200   { background-color: rgba(245, 158, 11, 0.18) !important; }
+.dark .bg-red-100,     .dark .bg-red-200     { background-color: rgba(239, 68, 68, 0.18) !important; }
+.dark .bg-blue-100,    .dark .bg-blue-200    { background-color: rgba(59, 130, 246, 0.18) !important; }
+.dark .bg-indigo-100,  .dark .bg-indigo-200  { background-color: rgba(129, 140, 248, 0.20) !important; }
+.dark .bg-sky-100,     .dark .bg-sky-200     { background-color: rgba(56, 189, 248, 0.18) !important; }
+.dark .bg-purple-100,  .dark .bg-purple-200  { background-color: rgba(192, 132, 252, 0.20) !important; }
+.dark .bg-gray-200     { background-color: var(--panel-2) !important; }
+/* Bijbehorende tekstkleuren lichter zodat ze goed leesbaar zijn op donker. */
+.dark .text-emerald-700, .dark .text-emerald-800, .dark .text-emerald-900 { color: #6ee7b7 !important; }
+.dark .text-indigo-700,  .dark .text-indigo-800  { color: #c7d2fe !important; }
+.dark .text-sky-700,     .dark .text-sky-800     { color: #bae6fd !important; }
+.dark .text-gray-600, .dark .text-gray-700 { color: #c7c8d6 !important; }
+
 /* Rich-text editor placeholder. De editor is contentEditable; we tonen de
    placeholder via data-empty attribuut dat de RichTextEditor zet als de
    visuele inhoud leeg is (puur lege <div><br></div>-blokken tellen ook). */

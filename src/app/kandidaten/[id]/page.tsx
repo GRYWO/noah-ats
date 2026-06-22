@@ -165,11 +165,11 @@ export default async function KandidaatDetail({
     _cvg.vaardigheden && `Vaardigheden: ${_cvg.vaardigheden}`,
   ].filter(Boolean).join("\n");
 
-  // ── Setter-weergave: bewust simpel ─────────────────────────────────────────
+  // ── Schone kandidaatweergave (voor iedereen) ───────────────────────────────
   // Alleen contactgegevens, een aanpasbaar intake-veld (hoe de intake is/wordt
-  // gedaan) en het profiel om te bekijken. De rest (recruiter/admin-tools) is
-  // hier niet relevant.
-  if (isSetter) {
+  // gedaan) en het profiel om te bekijken. De oude, volle recruiter/admin-
+  // weergave is bewust niet meer de standaard.
+  if (isSetter || isRecruiterOrAdmin) {
     const cvg = (k.cv_geparseerd ?? {}) as Record<string, unknown>;
     const profielRijen: Array<[string, string | null | undefined]> = [
       ["Profielschets", k.profielschets],
