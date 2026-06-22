@@ -108,31 +108,36 @@ export async function runRobinZoek(zoekterm, opties = {}) {
     await page.waitForTimeout(7000); // wachten tot de resultaten geladen zijn
     await page.screenshot({ path: "debug-robin-resultaten.png", fullPage: true }).catch(() => {});
 
-    // Diagnose: tel elementen, dump body-tekst + brede DOM-samples zodat we
-    // precies zien wat er na het zoeken op de pagina staat.
+    // Diagnose: vind automatisch de resultatenlijst (de container met de meeste
+    // gelijke kind-divs met tekst) en dump een paar kaart-HTML's + body-tekst.
     try {
       const diag = await page.evaluate(() => {
-        const t = (s) => document.querySelectorAll(s).length;
-        const counts = {
-          div: t("div"), a: t("a"), img: t("img"), button: t("button"),
-          li: t("li"), article: t("article"), tr: t("tr"),
-          iframe: t("iframe"), cssClass: t("[class^='css-']"),
+        let beste = null;
+        let besteN = 0;
+        for (const el of document.querySelectorAll("div, ul, ol")) {
+          const kinderen = [...el.children].filter((c) => c.tagName === "DIV" || c.tagName === "LI");
+          const metTekst = kinderen.filter((c) => (c.textContent || "").trim().length > 15);
+          if (metTekst.length >= 5 && metTekst.length > besteN) {
+            beste = el;
+            besteN = metTekst.length;
+          }
+        }
+        const kaarten = [];
+        if (beste) {
+          const kids = [...beste.children].filter((c) => (c.textContent || "").trim().length > 15);
+          for (const k of kids.slice(0, 3)) kaarten.push(k.outerHTML.replace(/\s+/g, " ").slice(0, 2500));
+        }
+        return {
+          aantalKaarten: besteN,
+          containerClass: beste ? beste.className : "",
+          kaarten,
+          body: (document.body.innerText || "").replace(/\s+/g, " ").slice(0, 6000),
         };
-        const bodyText = (document.body.innerText || "").replace(/\s+/g, " ").trim();
-        // Kandidaat-achtige blokken: bevatten een link of afbeelding + wat tekst.
-        const samples = [];
-        const blokken = [...document.querySelectorAll("div")].filter((d) => {
-          const tx = (d.textContent || "").replace(/\s+/g, " ").trim();
-          return d.querySelector("a, img") && tx.length > 20 && tx.length < 400 && d.children.length <= 10;
-        });
-        for (const el of blokken.slice(0, 6)) samples.push(el.outerHTML.replace(/\s+/g, " ").slice(0, 1500));
-        return { counts, bodyLen: bodyText.length, bodySample: bodyText.slice(0, 1200), samples };
       });
-      console.log("[robin] diagnose:", JSON.stringify(diag.counts), "bodyLen:", diag.bodyLen);
-      console.log("[robin] body-sample:", diag.bodySample);
+      console.log(`[robin] lijst gevonden met ~${diag.aantalKaarten} kaarten (container: ${diag.containerClass})`);
       writeFileSync(
         "debug-robin-rijen.txt",
-        "COUNTS: " + JSON.stringify(diag.counts) + "\n\nBODY:\n" + diag.bodySample + "\n\nSAMPLES:\n" + diag.samples.join("\n\n====\n\n"),
+        `AANTAL: ${diag.aantalKaarten}\nCONTAINER: ${diag.containerClass}\n\nKAARTEN:\n${diag.kaarten.join("\n\n==== KAART ====\n\n")}\n\nBODY:\n${diag.body}`,
       );
       console.log("[robin] diagnose opgeslagen: debug-robin-rijen.txt");
     } catch {}
