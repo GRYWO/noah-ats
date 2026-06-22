@@ -221,15 +221,15 @@ export default async function KandidaatDetail({
             </div>
           </div>
 
-          {/* Intake-informatie (aanpasbaar) */}
+          {/* Intake-notitie (eigen tekst van de setter) */}
           <form action={slaIntakeNotitieOp} className="bg-white rounded-xl shadow-sm p-6 mb-5">
             <input type="hidden" name="kandidaatId" value={k.id} />
             <h2 className="font-bold text-gray-800">Intake</h2>
-            <p className="mt-0.5 text-xs text-gray-500">Hoe is of wordt de intake gedaan? Pas deze tekst gerust aan.</p>
+            <p className="mt-0.5 text-xs text-gray-500">Jouw eigen notitie: hoe is of wordt de intake gedaan?</p>
             <textarea
               name="notitie"
-              defaultValue={k.notitie ?? ""}
-              rows={6}
+              defaultValue={(k.intake_notitie as string | null) ?? ""}
+              rows={5}
               placeholder="Bijv. intake telefonisch afgerond op …, of: nog bellen om te controleren."
               className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 outline-none focus:border-[#333399]"
             />
@@ -238,17 +238,25 @@ export default async function KandidaatDetail({
             </button>
           </form>
 
-          {/* Profiel bekijken */}
-          <details className="bg-white rounded-xl shadow-sm p-6">
-            <summary className="cursor-pointer select-none font-bold text-gray-800">Profiel bekijken</summary>
-            <div className="mt-4 space-y-3">
-              {profielRijen.filter(([, v]) => v && String(v).trim()).map(([label, v]) => (
-                <div key={label}>
-                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
-                  <div className="mt-0.5 whitespace-pre-wrap text-sm text-gray-800">{v}</div>
+          {/* Profiel — standaard open zodat je de info meteen ziet */}
+          <details open className="bg-white rounded-xl shadow-sm p-6">
+            <summary className="cursor-pointer select-none font-bold text-gray-800">Profiel</summary>
+            <div className="mt-4 space-y-4">
+              {profielRijen.filter(([, v]) => v && String(v).trim()).length > 0 ? (
+                profielRijen
+                  .filter(([, v]) => v && String(v).trim())
+                  .map(([label, v]) => (
+                    <div key={label}>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
+                      <div className="mt-0.5 whitespace-pre-wrap text-sm text-gray-800">{v}</div>
+                    </div>
+                  ))
+              ) : (k.notitie as string | null)?.trim() ? (
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Automatisch gevonden</div>
+                  <div className="mt-0.5 whitespace-pre-wrap text-sm text-gray-700">{k.notitie as string}</div>
                 </div>
-              ))}
-              {profielRijen.every(([, v]) => !v || !String(v).trim()) && (
+              ) : (
                 <p className="text-sm text-gray-500">Nog geen profielgegevens beschikbaar.</p>
               )}
             </div>
