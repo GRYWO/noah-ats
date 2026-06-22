@@ -57,10 +57,10 @@ export default async function NieuweVacaturePage({
   const vTelefoon = vondst?.telefoon ?? sp.telefoon ?? "";
   const vBedrijf = vondst?.bedrijf ?? sp.bedrijf ?? "";
 
-  // De ruwe, geschraapte tekst door de AI laten opschonen en verdelen over
-  // taken/eisen/uren/ervaring/salaris. Lukt het niet, dan valt 'taken' terug op
-  // de ruwe tekst zodat er altijd iets staat.
-  let vTaken = vondst?.detail_tekst ?? "";
+  // De AI schrijft een overtuigend verhaal voor taken én eisen op basis van de
+  // (rommelige) geschraapte tekst. We zetten NOOIT de ruwe tekst in het formulier
+  // — die bevat bedrijfsnaam/adres/contactgegevens en is niet wervend.
+  let vTaken = "";
   let vEisen = "";
   let vUren = "";
   let vErvaring = "";
@@ -68,13 +68,13 @@ export default async function NieuweVacaturePage({
   if (vondst?.detail_tekst) {
     try {
       const s = await structureerVacatureTekst(vondst.detail_tekst, vTitel, vLocatie);
-      if (s.taken) vTaken = s.taken;
+      vTaken = s.taken;
       vEisen = s.eisen;
       vUren = s.uren;
       vErvaring = s.ervaring;
       vSalaris = s.salaris;
     } catch {
-      // AI niet beschikbaar: ruwe tekst blijft in 'taken' staan.
+      // AI niet beschikbaar: velden blijven leeg, setter vult zelf aan.
     }
   }
 
