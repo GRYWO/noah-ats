@@ -704,7 +704,7 @@ export async function startIntakeVanKandidaat(formData: FormData) {
   await admin.from("bellijst_items").update({ kandidaat_id: nieuw.id }).eq("id", itemId);
 
   revalidatePath("/vacature-aanmaken");
-  redirect(`/kandidaten/${nieuw.id}?intake=1`);
+  redirect(`/kandidaten/${nieuw.id}/intake-bot`);
 }
 
 // "Onthul telefoon": zet een opdracht in de wachtrij om het telefoonnummer van
