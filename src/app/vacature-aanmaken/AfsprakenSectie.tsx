@@ -43,6 +43,7 @@ export function AfsprakenSectie({ defaults }: { defaults?: AfsprakenDefaults } =
           checked={tarief === "ws_10"}
           onChange={() => setTarief("ws_10")}
           label="Werving en selectie 10 procent (speciaal tarief uitzendbureaus)"
+          required
         />
         <Radio
           name="afspraak_tarief_type_keuze"
@@ -50,6 +51,7 @@ export function AfsprakenSectie({ defaults }: { defaults?: AfsprakenDefaults } =
           checked={tarief === "ws_15"}
           onChange={() => setTarief("ws_15")}
           label="Werving en selectie 15 procent (normaal tarief)"
+          required
         />
         <Radio
           name="afspraak_tarief_type_keuze"
@@ -57,6 +59,7 @@ export function AfsprakenSectie({ defaults }: { defaults?: AfsprakenDefaults } =
           checked={tarief === "ws_anders"}
           onChange={() => setTarief("ws_anders")}
           label="Uitgezonderd (afwijkend percentage)"
+          required
         />
         <Radio
           name="afspraak_tarief_type_keuze"
@@ -64,6 +67,7 @@ export function AfsprakenSectie({ defaults }: { defaults?: AfsprakenDefaults } =
           checked={tarief === "uitzend"}
           onChange={() => setTarief("uitzend")}
           label="Uitzendbasis"
+          required
         />
       </fieldset>
 
@@ -180,12 +184,14 @@ function Radio({
   checked,
   onChange,
   label,
+  required,
 }: {
   name: string;
   value: string;
   checked: boolean;
   onChange: () => void;
   label: string;
+  required?: boolean;
 }) {
   return (
     <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 transition hover:border-[#333399]">
@@ -195,6 +201,7 @@ function Radio({
         value={value}
         checked={checked}
         onChange={onChange}
+        required={required}
         className="mt-0.5 h-4 w-4 accent-[#333399]"
       />
       <span>{label}</span>
