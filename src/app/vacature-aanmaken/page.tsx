@@ -139,15 +139,14 @@ export default async function VacatureAanmakenLijst() {
     "afspraak_tarief_type, afspraak_ws_percentage, afspraak_ws_toelichting, " +
     "afspraak_uitzend_factor, afspraak_uitzend_uren_per_week, afspraak_overname_na_uren";
 
-  // Mijn vacatures: door mij geclaimd/aangemaakt (setter_id = ik). Admin ziet alle.
-  const query = admin
+  // Mijn vacatures: altijd persoonlijk — door mij geclaimd/aangemaakt
+  // (setter_id = ik). Ook admins (Pepijn/Wouter) zien hier alleen hun eigen;
+  // het overzicht-over-alles loopt via de Kanban.
+  const { data: vacatures } = await admin
     .from("rec_vacatures")
     .select(baseSelect)
+    .eq("setter_id", user.id)
     .order("aangemaakt", { ascending: false });
-
-  const { data: vacatures } = isAdmin
-    ? await query
-    : await query.eq("setter_id", user.id);
 
   const lijst = ((vacatures ?? []) as unknown) as Vacature[];
 
