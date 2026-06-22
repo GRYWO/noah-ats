@@ -393,6 +393,7 @@ export async function maakVacatureNoahAts(formData: FormData) {
     .from("rec_vacatures")
     .insert({
       eigenaar,
+      setter_id: eigenaar,
       titel: input.titel,
       sector: input.sector || null,
       locatie: input.locatie || null,
@@ -461,7 +462,51 @@ export async function zetVacatureStatus(formData: FormData) {
     .from("rec_vacatures")
     .update({ status })
     .eq("id", id)
-    .eq("eigenaar", user.id);
+    .eq("setter_id", user.id);
+
+  revalidatePath("/vacature-aanmaken");
+}
+
+// "Claim vacature": een setter pakt een nog onbeheerde vacature op (bv. via Noah
+// launch door een bedrijf geplaatst, zonder setter). De vacature komt op naam
+// van deze setter (setter_id) en er wordt meteen automatisch naar kandidaten
+// gezocht (Robin, 40 km) — net als bij een nieuw aangemaakte vacature.
+export async function claimVacature(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const vacatureId = String(formData.get("vacatureId") || "").trim();
+  if (!vacatureId) return;
+
+  const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  const { data: vac } = await admin
+    .from("rec_vacatures")
+    .select("id, setter_id, titel, locatie, lat, lon, status")
+    .eq("id", vacatureId)
+    .maybeSingle();
+  if (!vac) return;
+  // Al geclaimd door iemand anders? Niets doen (voorkomt dubbel claimen).
+  if (vac.setter_id) {
+    revalidatePath("/vacature-aanmaken");
+    return;
+  }
+
+  await admin.from("rec_vacatures").update({ setter_id: user.id }).eq("id", vacatureId).is("setter_id", null);
+
+  // Automatisch kandidaten zoeken zodra de setter de vacature heeft geclaimd.
+  await maakRobinJobVoorVacature(admin, {
+    tenantId: profile.tenant_id,
+    vacatureId,
+    functie: (vac.titel as string | null) ?? "",
+    plaats: (vac.locatie as string | null) ?? null,
+    lat: (vac.lat as number | null) ?? null,
+    lon: (vac.lon as number | null) ?? null,
+    setterId: user.id,
+  });
 
   revalidatePath("/vacature-aanmaken");
 }
@@ -479,7 +524,7 @@ export async function updateVacatureNoahAts(formData: FormData) {
   const admin = createAdminClient();
   const { data: bestaand } = await admin
     .from("rec_vacatures")
-    .select("eigenaar, titel, locatie, status")
+    .select("eigenaar, setter_id, titel, locatie, status")
     .eq("id", id)
     .maybeSingle();
   if (!bestaand) redirect("/vacature-aanmaken");
@@ -487,7 +532,9 @@ export async function updateVacatureNoahAts(formData: FormData) {
   const { data: profiel } = await supabase.from("profiles").select("rol, tenant_id").eq("id", user.id).single();
   const rol = (profiel?.rol ?? "").toString().toLowerCase();
   const isAdmin = rol === "admin" || rol === "super-admin" || rol === "super_admin";
-  if (bestaand.eigenaar !== user.id && !isAdmin) redirect("/vacature-aanmaken");
+  // De verantwoordelijke setter = setter_id (val terug op eigenaar voor oudere ATS-vacatures).
+  const verantwoordelijke = (bestaand.setter_id as string | null) || (bestaand.eigenaar as string | null);
+  if (verantwoordelijke !== user.id && !isAdmin) redirect("/vacature-aanmaken");
 
   const input = leesVacatureInput(formData);
   const intern = leesInternEnAfspraken(formData);
@@ -550,7 +597,7 @@ export async function updateVacatureNoahAts(formData: FormData) {
       plaats: input.locatie || null,
       lat: coord?.lat ?? null,
       lon: coord?.lon ?? null,
-      setterId: (bestaand.eigenaar as string | null) || user.id,
+      setterId: verantwoordelijke || user.id,
     });
   }
 
@@ -571,7 +618,7 @@ export async function verwijderVacature(formData: FormData) {
   const admin = createAdminClient();
   const { data: bestaand } = await admin
     .from("rec_vacatures")
-    .select("eigenaar")
+    .select("eigenaar, setter_id")
     .eq("id", id)
     .maybeSingle();
   if (!bestaand) return;
@@ -579,7 +626,8 @@ export async function verwijderVacature(formData: FormData) {
   const { data: profiel } = await supabase.from("profiles").select("rol").eq("id", user.id).single();
   const rol = (profiel?.rol ?? "").toString().toLowerCase();
   const isAdmin = rol === "admin" || rol === "super-admin" || rol === "super_admin";
-  if (bestaand.eigenaar !== user.id && !isAdmin) return;
+  const verantwoordelijke = (bestaand.setter_id as string | null) || (bestaand.eigenaar as string | null);
+  if (verantwoordelijke !== user.id && !isAdmin) return;
 
   await admin.from("rec_sollicitaties").delete().eq("vacature_id", id);
   await admin.from("rec_vacatures").delete().eq("id", id);
@@ -634,6 +682,7 @@ type PlaatsKandidaat = {
 type PlaatsVacature = {
   titel: string | null;
   eigenaar: string | null;
+  setter_id: string | null;
   intern_bedrijf: string | null;
   intern_contactpersoon: string | null;
   intern_mailadres: string | null;
@@ -717,8 +766,8 @@ async function voerPlaatsingUit(opts: {
   // 2) Kandidaat naar 'geplaatst' in de pijplijn
   await admin.from("kandidaten").update({ kanban_stap: "geplaatst", voorstel_status: "geplaatst" }).eq("id", k.id);
 
-  // Mail vanaf het adres van de eigenaar/setter zodat het from-domein klopt.
-  const setterFrom = await getSetterFrom(vac.eigenaar || userId);
+  // Mail vanaf het adres van de verantwoordelijke setter zodat het from-domein klopt.
+  const setterFrom = await getSetterFrom(vac.setter_id || vac.eigenaar || userId);
 
   // 3) Mail naar backoffice@noah-recruitment.nl (altijd, met zoveel mogelijk data)
   try {
@@ -772,7 +821,7 @@ async function voerPlaatsingUit(opts: {
 }
 
 const PLAATS_VAC_SELECT =
-  "titel, eigenaar, intern_bedrijf, intern_contactpersoon, intern_mailadres, intern_telefoon, afspraak_tarief_type, afspraak_ws_percentage, afspraak_ws_toelichting, afspraak_uitzend_factor, afspraak_uitzend_uren_per_week, afspraak_overname_na_uren";
+  "titel, eigenaar, setter_id, intern_bedrijf, intern_contactpersoon, intern_mailadres, intern_telefoon, afspraak_tarief_type, afspraak_ws_percentage, afspraak_ws_toelichting, afspraak_uitzend_factor, afspraak_uitzend_uren_per_week, afspraak_overname_na_uren";
 
 // "Plaats": rond de plaatsing af vanuit de pijplijn met één klik. Alle gegevens
 // komen automatisch uit de vacature (bedrijf, contactpersoon, afspraken).
@@ -884,7 +933,7 @@ export async function verplaatsKandidaat(kandidaatId: string, vacatureId: string
   if (naar === "Voorgesteld" && vacId) {
     const { data: vac } = await admin
       .from("rec_vacatures")
-      .select("titel, intern_mailadres, intern_contactpersoon, eigenaar")
+      .select("titel, intern_mailadres, intern_contactpersoon, eigenaar, setter_id")
       .eq("id", vacId)
       .maybeSingle();
     if (vac?.intern_mailadres && k.bron_bellijst_item_id) {
@@ -909,8 +958,9 @@ export async function verplaatsKandidaat(kandidaatId: string, vacatureId: string
         .update({ voorstelprofiel: vp, voorstelprofiel_token: token })
         .eq("id", k.bron_bellijst_item_id as string);
 
-      const setterNaam = vac.eigenaar
-        ? await contactNaamVoor(admin, vac.eigenaar as string, "Noah Recruitment")
+      const setterRef = (vac.setter_id as string | null) || (vac.eigenaar as string | null);
+      const setterNaam = setterRef
+        ? await contactNaamVoor(admin, setterRef, "Noah Recruitment")
         : "Noah Recruitment";
       try {
         await sendVoorstelprofielNaarContact({
@@ -953,7 +1003,7 @@ export async function stelPoolVoor(formData: FormData) {
   const admin = createAdminClient();
   const { data: vac } = await admin
     .from("rec_vacatures")
-    .select("titel, intern_mailadres, intern_contactpersoon, eigenaar")
+    .select("titel, intern_mailadres, intern_contactpersoon, eigenaar, setter_id")
     .eq("id", vacatureId)
     .maybeSingle();
   if (!vac?.intern_mailadres) return;
@@ -996,8 +1046,9 @@ export async function stelPoolVoor(formData: FormData) {
 
   if (urls.length === 0) return;
 
-  const setterNaam = vac.eigenaar
-    ? await contactNaamVoor(admin, vac.eigenaar as string, "Noah Recruitment")
+  const setterRef = (vac.setter_id as string | null) || (vac.eigenaar as string | null);
+  const setterNaam = setterRef
+    ? await contactNaamVoor(admin, setterRef, "Noah Recruitment")
     : "Noah Recruitment";
   try {
     await sendPoolVoorstelNaarContact({
@@ -1085,7 +1136,7 @@ export async function stelKandidaatVoor(formData: FormData) {
 
   const { data: vac } = await admin
     .from("rec_vacatures")
-    .select("titel, intern_mailadres, intern_contactpersoon, eigenaar")
+    .select("titel, intern_mailadres, intern_contactpersoon, eigenaar, setter_id")
     .eq("id", bel.vacature_id as string)
     .maybeSingle();
   if (!vac?.intern_mailadres) return; // geen contactpersoon-mail: niets te versturen
@@ -1106,8 +1157,9 @@ export async function stelKandidaatVoor(formData: FormData) {
     }
   }
 
-  const setterNaam = vac.eigenaar
-    ? await contactNaamVoor(admin, vac.eigenaar as string, "Noah Recruitment")
+  const setterRef = (vac.setter_id as string | null) || (vac.eigenaar as string | null);
+  const setterNaam = setterRef
+    ? await contactNaamVoor(admin, setterRef, "Noah Recruitment")
     : "Noah Recruitment";
 
   try {
@@ -1159,8 +1211,9 @@ export async function startIntakeVanKandidaat(formData: FormData) {
     .maybeSingle();
   let eigenaarId: string = user.id;
   if (bel?.vacature_id) {
-    const { data: vac } = await admin.from("rec_vacatures").select("eigenaar").eq("id", bel.vacature_id as string).maybeSingle();
-    if (vac?.eigenaar) eigenaarId = vac.eigenaar as string;
+    const { data: vac } = await admin.from("rec_vacatures").select("eigenaar, setter_id").eq("id", bel.vacature_id as string).maybeSingle();
+    const setterRef = (vac?.setter_id as string | null) || (vac?.eigenaar as string | null);
+    if (setterRef) eigenaarId = setterRef;
   }
 
   const naam = ((item.naam as string | null) ?? "").trim();

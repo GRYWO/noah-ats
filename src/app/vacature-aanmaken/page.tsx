@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat } from "./actions";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat, claimVacature } from "./actions";
 import { PijplijnBord, type PijplijnKandidaat } from "./PijplijnBord";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
@@ -72,6 +72,8 @@ type Vacature = {
   status: string;
   aangemaakt: string;
   eigenaar: string | null;
+  setter_id: string | null;
+  bedrijfsnaam: string | null;
   afspraak_tarief_type: string | null;
   afspraak_ws_percentage: number | null;
   afspraak_ws_toelichting: string | null;
@@ -134,10 +136,11 @@ export default async function VacatureAanmakenLijst() {
   const admin = createAdminClient();
 
   const baseSelect =
-    "id, titel, locatie, dienstverband, status, aangemaakt, eigenaar, " +
+    "id, titel, locatie, dienstverband, status, aangemaakt, eigenaar, setter_id, bedrijfsnaam, " +
     "afspraak_tarief_type, afspraak_ws_percentage, afspraak_ws_toelichting, " +
     "afspraak_uitzend_factor, afspraak_uitzend_uren_per_week, afspraak_overname_na_uren";
 
+  // Mijn vacatures: door mij geclaimd/aangemaakt (setter_id = ik). Admin ziet alle.
   const query = admin
     .from("rec_vacatures")
     .select(baseSelect)
@@ -145,9 +148,19 @@ export default async function VacatureAanmakenLijst() {
 
   const { data: vacatures } = isAdmin
     ? await query
-    : await query.eq("eigenaar", user.id);
+    : await query.eq("setter_id", user.id);
 
   const lijst = ((vacatures ?? []) as unknown) as Vacature[];
+
+  // Te claimen: vacatures zonder setter (o.a. via Noah launch geplaatst door
+  // bedrijven die nog geen klant zijn). Elke setter kan ze claimen.
+  const { data: claimbaarRaw } = await admin
+    .from("rec_vacatures")
+    .select(baseSelect)
+    .is("setter_id", null)
+    .eq("status", "open")
+    .order("aangemaakt", { ascending: false });
+  const claimbaar = ((claimbaarRaw ?? []) as unknown) as Vacature[];
 
   // Eigenaar-namen ophalen (alleen voor admin-view).
   const eigenaarNamen = new Map<string, Profiel>();
@@ -431,6 +444,48 @@ export default async function VacatureAanmakenLijst() {
             </details>
           ))}
         </div>
+
+        {/* Te claimen: openstaande aanvragen (o.a. via Noah launch) zonder setter. */}
+        {claimbaar.length > 0 && (
+          <div className="mb-6 rounded-xl border border-[#f5c84d]/50 bg-[#fffdf5] p-5">
+            <h2 className="text-sm font-bold text-gray-800">
+              Openstaande aanvragen <span className="font-normal text-gray-400">· {claimbaar.length} te claimen</span>
+            </h2>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Nieuwe vacatures die nog geen setter hebben. Claim er een — daarna staat hij op jouw naam en zoeken we
+              automatisch kandidaten.
+            </p>
+            <div className="mt-3 overflow-x-auto rounded-lg border border-gray-100">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                  <tr>
+                    <th className="px-4 py-2 text-left">Functie</th>
+                    <th className="px-4 py-2 text-left">Bedrijf</th>
+                    <th className="px-4 py-2 text-left">Locatie</th>
+                    <th className="px-4 py-2 text-right">Actie</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {claimbaar.map((v) => (
+                    <tr key={v.id} className="border-t border-gray-100">
+                      <td className="px-4 py-2 font-medium text-gray-800">{v.titel}</td>
+                      <td className="px-4 py-2 text-gray-600">{v.bedrijfsnaam ?? "—"}</td>
+                      <td className="px-4 py-2 text-gray-600">{v.locatie ?? "—"}</td>
+                      <td className="px-4 py-2 text-right">
+                        <form action={claimVacature}>
+                          <input type="hidden" name="vacatureId" value={v.id} />
+                          <SubmitKnop bezigTekst="Claimen…" className="btn-gold px-4 py-1.5 text-xs">
+                            Claim vacature
+                          </SubmitKnop>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           {lijst.length === 0 ? (
