@@ -6,6 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { maakVoorstelprofiel } from "@/utils/voorstelprofiel-ai";
+import { sendVoorstelprofielNaarContact } from "@/utils/email";
 
 // ---------------------------------------------------------------
 // AI: anonieme vacaturetekst genereren (kopie van noah-recruitment)
@@ -565,6 +566,77 @@ export async function maakVoorstelprofielVanKandidaat(formData: FormData) {
     .update({ voorstelprofiel: data, voorstelprofiel_token: token })
     .eq("id", itemId);
 
+  revalidatePath("/vacature-aanmaken");
+}
+
+// "Stel voor": mail het (anonieme) voorstelprofiel met één klik naar de
+// contactpersoon van het bedrijf (het interne mailadres bij de vacature).
+export async function stelKandidaatVoor(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const itemId = String(formData.get("itemId") || "").trim();
+  if (!itemId) return;
+
+  const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  const { data: item } = await admin
+    .from("bellijst_items")
+    .select("id, naam, plaats, profiel_tekst, voorstelprofiel, voorstelprofiel_token, bellijst_id, tenant_id")
+    .eq("id", itemId)
+    .maybeSingle();
+  if (!item || item.tenant_id !== profile.tenant_id) return;
+
+  const { data: bel } = await admin
+    .from("bellijsten")
+    .select("vacature_id")
+    .eq("id", item.bellijst_id as string)
+    .maybeSingle();
+  if (!bel?.vacature_id) return;
+
+  const { data: vac } = await admin
+    .from("rec_vacatures")
+    .select("titel, intern_mailadres, intern_contactpersoon, eigenaar")
+    .eq("id", bel.vacature_id as string)
+    .maybeSingle();
+  if (!vac?.intern_mailadres) return; // geen contactpersoon-mail: niets te versturen
+
+  // Zorg dat er een voorstelprofiel + token is (maak 'm aan als die ontbreekt).
+  let token = (item.voorstelprofiel_token as string | null) ?? null;
+  if (!token) {
+    try {
+      const data = await maakVoorstelprofiel(
+        (item.profiel_tekst as string | null) ?? "",
+        (item.naam as string | null) ?? "",
+        (item.plaats as string | null) ?? "",
+      );
+      token = crypto.randomUUID().replace(/-/g, "");
+      await admin.from("bellijst_items").update({ voorstelprofiel: data, voorstelprofiel_token: token }).eq("id", itemId);
+    } catch {
+      return; // AI niet beschikbaar
+    }
+  }
+
+  const setterNaam = vac.eigenaar
+    ? await contactNaamVoor(admin, vac.eigenaar as string, "Noah Recruitment")
+    : "Noah Recruitment";
+
+  try {
+    await sendVoorstelprofielNaarContact({
+      naar: vac.intern_mailadres as string,
+      contactpersoon: (vac.intern_contactpersoon as string | null) ?? null,
+      functie: (vac.titel as string | null) ?? "de functie",
+      profielUrl: `https://noah-recruitment.nl/voorstelprofiel/${token}`,
+      setterNaam,
+    });
+  } catch {
+    return; // mail mislukt; setter kan opnieuw proberen
+  }
+
+  await admin.from("bellijst_items").update({ voorgesteld_at: new Date().toISOString() }).eq("id", itemId);
   revalidatePath("/vacature-aanmaken");
 }
 

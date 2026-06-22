@@ -361,6 +361,41 @@ export async function sendKandidaatVoorgesteld({
 }
 
 /**
+ * Voorstelprofiel (anoniem, Noah-stijl) naar de contactpersoon van het bedrijf.
+ * Bevat een knop naar het online kandidaatprofiel.
+ */
+export async function sendVoorstelprofielNaarContact({
+  naar,
+  contactpersoon,
+  functie,
+  profielUrl,
+  setterNaam,
+}: {
+  naar: string;
+  contactpersoon?: string | null;
+  functie: string;
+  profielUrl: string;
+  setterNaam?: string | null;
+}) {
+  const begroeting = contactpersoon ? `Beste ${contactpersoon},` : "Beste,";
+  const body =
+    `<p>${begroeting}</p>` +
+    `<p>Voor de functie <strong>${functie}</strong> heb ik een kandidaat die goed lijkt te passen. ` +
+    `Hieronder vind je het (anonieme) kandidaatprofiel:</p>` +
+    `<p style="text-align:center;margin:28px 0;">` +
+    `<a href="${profielUrl}" style="background:${NOAH_PAARS};color:#ffffff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block;">Bekijk het kandidaatprofiel</a>` +
+    `</p>` +
+    `<p>Interesse of vragen? Reageer gerust op deze mail, dan plan ik een kennismaking.</p>` +
+    `<p>Met vriendelijke groet,<br>${setterNaam || "Noah Recruitment"}</p>`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `Kandidaat voor ${functie}`,
+    html: brandedLayout({ titel: "Een kandidaat voor je openstaande functie", body, afzenderNaam: setterNaam ?? undefined }),
+  });
+}
+
+/**
  * Bericht aan kandidaat dat het voorstel is afgewezen.
  * Bewust géén opdrachtgever-naam erin.
  */

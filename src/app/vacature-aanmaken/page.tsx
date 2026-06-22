@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, maakVoorstelprofielVanKandidaat, onthulTelefoon } from "./actions";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, maakVoorstelprofielVanKandidaat, onthulTelefoon, stelKandidaatVoor } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 import { LinkedInKnop } from "./LinkedInKnop";
@@ -58,6 +58,7 @@ type Kandidaat = {
   voorstelprofiel_token: string | null;
   telefoon_status: string | null;
   email: string | null;
+  voorgesteld_at: string | null;
   bezig?: boolean;
 };
 
@@ -119,9 +120,10 @@ export default async function VacatureAanmakenLijst() {
 
   const { data: ownProfiel } = await supabase
     .from("profiles")
-    .select("rol, tenant_id")
+    .select("rol, tenant_id, voornaam")
     .eq("id", user.id)
     .single();
+  const setterVoornaam = ((ownProfiel as { voornaam?: string } | null)?.voornaam ?? "").toString().trim();
 
   const rol = (ownProfiel?.rol ?? "").toString().toLowerCase();
   const isAdmin = rol === "admin" || rol === "super-admin" || rol === "super_admin";
@@ -256,7 +258,7 @@ export default async function VacatureAanmakenLijst() {
     if (blIds.length) {
       const { data: items } = await admin
         .from("bellijst_items")
-        .select("id, bellijst_id, naam, plaats, telefoon, website, cv_url, match_score, match_reden, volgorde, voorstelprofiel_token, telefoon_status, email")
+        .select("id, bellijst_id, naam, plaats, telefoon, website, cv_url, match_score, match_reden, volgorde, voorstelprofiel_token, telefoon_status, email, voorgesteld_at")
         .in("bellijst_id", blIds)
         .order("volgorde", { ascending: true });
       for (const it of items ?? []) {
@@ -535,7 +537,7 @@ export default async function VacatureAanmakenLijst() {
                     {(kandidaten.length > 0 || robinLoopt) && (
                       <tr className="bg-gray-50/40">
                         <td colSpan={kolommen} className="px-4 pb-4">
-                          <KandidatenPaneel kandidaten={kandidaten} loopt={robinLoopt} vacatureId={v.id} vacatureTitel={v.titel} />
+                          <KandidatenPaneel kandidaten={kandidaten} loopt={robinLoopt} vacatureId={v.id} vacatureTitel={v.titel} setterVoornaam={setterVoornaam} />
                         </td>
                       </tr>
                     )}
@@ -556,17 +558,20 @@ function KandidatenPaneel({
   loopt,
   vacatureId,
   vacatureTitel,
+  setterVoornaam,
 }: {
   kandidaten: Kandidaat[];
   loopt: boolean;
   vacatureId: string;
   vacatureTitel: string;
+  setterVoornaam: string;
 }) {
-  // Vriendelijk bericht met vacaturelink: voor WhatsApp (url-encoded) en om te
+  // Persoonlijk bericht met vacaturelink: voor WhatsApp (url-encoded) en om te
   // kopiëren (LinkedIn ondersteunt geen vooraf ingevuld bericht via een link).
+  const ik = setterVoornaam || "een recruiter";
   const bericht =
-    `Hoi! Ik kwam je profiel tegen en denk dat deze functie goed bij je past: ${vacatureTitel}. ` +
-    `Bekijk 'm hier: https://noah-recruitment.nl/vacatures/${vacatureId} — heb je interesse? Groet, Noah Recruitment`;
+    `Hoi! Ik ben ${ik} van Noah Recruitment. Ik kwam je profiel tegen en deze functie past volgens mij echt goed bij je: ${vacatureTitel}. ` +
+    `Bekijk 'm hier: https://noah-recruitment.nl/vacatures/${vacatureId} — lijkt het je wat? Ik hoor graag van je!`;
   const waBericht = encodeURIComponent(bericht);
   const linkedinUrl = (k: Kandidaat) =>
     k.website && /linkedin\.com/i.test(k.website)
@@ -668,28 +673,40 @@ function KandidatenPaneel({
                       </div>
                     </td>
                     <td className="px-3 py-2">
-                      {k.voorstelprofiel_token ? (
-                        <a
-                          href={`https://noah-recruitment.nl/voorstelprofiel/${k.voorstelprofiel_token}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-semibold text-emerald-700 hover:underline"
-                        >
-                          Voorstelprofiel
-                        </a>
-                      ) : (
-                        <form action={maakVoorstelprofielVanKandidaat}>
-                          <input type="hidden" name="itemId" value={k.id} />
-                          <SubmitKnop bezigTekst="Bezig…" className="text-xs font-semibold text-[#333399] hover:underline">
-                            Maak voorstelprofiel
-                          </SubmitKnop>
-                        </form>
-                      )}
-                      {k.website ? (
-                        <a href={k.website} target="_blank" rel="noopener noreferrer" className="ml-2 text-xs text-gray-400 hover:underline">
-                          Robin
-                        </a>
-                      ) : null}
+                      <div className="flex flex-col gap-1">
+                        {k.voorstelprofiel_token ? (
+                          <a
+                            href={`https://noah-recruitment.nl/voorstelprofiel/${k.voorstelprofiel_token}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold text-emerald-700 hover:underline"
+                          >
+                            Voorstelprofiel
+                          </a>
+                        ) : (
+                          <form action={maakVoorstelprofielVanKandidaat}>
+                            <input type="hidden" name="itemId" value={k.id} />
+                            <SubmitKnop bezigTekst="Bezig…" className="text-xs font-semibold text-[#333399] hover:underline">
+                              Maak voorstelprofiel
+                            </SubmitKnop>
+                          </form>
+                        )}
+                        {k.voorgesteld_at ? (
+                          <span className="text-xs font-semibold text-emerald-700">Voorgesteld ✓</span>
+                        ) : (
+                          <form action={stelKandidaatVoor}>
+                            <input type="hidden" name="itemId" value={k.id} />
+                            <SubmitKnop bezigTekst="Versturen…" className="rounded-md bg-[#333399] px-2 py-1 text-xs font-semibold text-white hover:bg-[#27277a]">
+                              Stel voor
+                            </SubmitKnop>
+                          </form>
+                        )}
+                        {k.website ? (
+                          <a href={k.website} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:underline">
+                            Robin
+                          </a>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-gray-500">{k.match_reden ?? ""}</td>
                   </tr>
