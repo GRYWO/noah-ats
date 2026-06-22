@@ -142,53 +142,70 @@ export async function runRobinZoek(zoekterm, opties = {}) {
       console.log("[robin] diagnose opgeslagen: debug-robin-rijen.txt");
     } catch {}
 
-    // Kandidaten scrapen — heuristisch, finetune na de eerste zichtbare test.
+    // Kandidaten scrapen uit de resultatenlijst. Robin gebruikt emotion-classes
+    // (css-...). De naam staat in '.css-1qia2qg'; de kaart eromheen bevat
+    // woonplaats, afstand en de volledige ervaring/opleiding/voorkeuren.
     const kandidaten = await page.evaluate(() => {
       const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
-      function norm(el) {
-        try {
-          return clean(el.getAttribute("aria-label") || el.textContent || "");
-        } catch {
-          return "";
-        }
-      }
       const TEL = /(?:\+31[\s-]?|0)(?:6[\s-]?\d{8}|\d{2,3}[\s-]?\d{6,7})/;
-      const kaarten = [
-        ...document.querySelectorAll('[data-testid*="candidate" i], [class*="candidate" i], article, li'),
-      ];
-      const gezien = new Set();
+
+      // Naam-elementen; val terug op een bredere selector als de class wijzigt.
+      let naamEls = [...document.querySelectorAll(".css-1qia2qg")];
+      if (naamEls.length === 0) {
+        // Terugval: zoek divs die direct gevolgd worden door 'X KM ... GELEDEN'.
+        naamEls = [...document.querySelectorAll("div")].filter((d) =>
+          d.children.length === 0 && /KM\b/.test(clean(d.parentElement?.textContent || "")),
+        );
+      }
+
       const out = [];
-      for (const k of kaarten) {
-        const naam = norm(k.querySelector('h1,h2,h3,h4,[class*="name" i]') || k).slice(0, 80);
-        const link = k.querySelector('a[href*="/candidate"], a[href*="/profile"], a[href]');
-        const href = link ? link.href : "";
-        if (!naam) continue;
-        if (href && gezien.has(href)) continue;
-        if (href) gezien.add(href);
-        const tekst = clean(k.textContent);
-        const tel = (tekst.match(TEL) || [null])[0];
-        out.push({ naam, url: href, telefoon: tel || "", profiel_tekst: tekst.slice(0, 1200) });
+      const gezien = new Set();
+      for (const ne of naamEls) {
+        const naam = clean(ne.textContent).slice(0, 100);
+        if (!naam || naam.length < 2) continue;
+
+        // Kaart = voorouder met flink wat meer tekst dan alleen de naam.
+        let card = ne;
+        for (let i = 0; i < 6 && card.parentElement; i++) {
+          card = card.parentElement;
+          if (clean(card.textContent).length > naam.length + 40) break;
+        }
+        const txt = clean(card.textContent);
+        const key = naam + "|" + txt.slice(0, 50);
+        if (gezien.has(key)) continue;
+        gezien.add(key);
+
+        // Woonplaats + afstand: alles tussen de naam en het eerste 'X KM'.
+        let rest = txt.startsWith(naam) ? txt.slice(naam.length).trim() : txt;
+        rest = rest.replace(/^GECHECKT\s*/i, "").trim();
+        const m = rest.match(/^(.*?)\s+(\d+)\s*KM\b/i);
+        let plaats = "";
+        let afstand = null;
+        if (m) {
+          plaats = clean(m[1]).split(",")[0].replace(/\s+(NL|Nederland|Netherlands)$/i, "").trim();
+          afstand = Number(m[2]);
+        }
+
+        // Externe link (LinkedIn e.d.), niet de '#'-iconen.
+        const a = [...card.querySelectorAll('a[href^="http"]')].find((x) => !/^#/.test(x.getAttribute("href") || ""));
+        const url = a ? a.href : "";
+
+        const tel = (txt.match(TEL) || [null])[0];
+
+        out.push({
+          naam,
+          url,
+          plaats,
+          telefoon: tel || "",
+          profiel_tekst: txt.slice(0, 4000),
+          afstand_km: afstand,
+        });
         if (out.length >= 50) break;
       }
       return out;
     });
 
-    // Detailpagina's uitlezen (telefoon/woonplaats/CV/profiel) in kleine batches.
-    const MAX_DETAIL = 20;
-    const BATCH = 4;
-    const teLezen = kandidaten.slice(0, MAX_DETAIL).filter((k) => k.url);
-    for (let i = 0; i < teLezen.length; i += BATCH) {
-      const groep = teLezen.slice(i, i + BATCH);
-      const res = await Promise.all(groep.map((k) => leesKandidaatDetail(context, k.url)));
-      groep.forEach((k, j) => {
-        const d = res[j];
-        if (!k.telefoon && d.telefoon) k.telefoon = d.telefoon;
-        if (d.plaats) k.plaats = d.plaats;
-        if (d.cv_url) k.cv_url = d.cv_url;
-        if (d.profiel_tekst && d.profiel_tekst.length > (k.profiel_tekst || "").length) k.profiel_tekst = d.profiel_tekst;
-      });
-    }
-
+    console.log(`[robin] ${kandidaten.length} kandidaten gescrapet`);
     return kandidaten;
   } finally {
     await context.close();
