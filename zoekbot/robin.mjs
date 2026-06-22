@@ -267,17 +267,22 @@ export async function runRobinTelefoon(zoekterm, opties = {}) {
 
     const res = await page.evaluate(() => {
       const clean = (s) => (s || "").replace(/\s+/g, " ").trim();
-      const TEL = /(?:\+31[\s-]?|0)(?:6[\s-]?\d{8}|\d{2,3}[\s-]?\d{6,7})/;
+      const TEL = /(?:\+31[\s-]?|0)(?:6[\s-]?\d{8}|\d{2,3}[\s-]?\d{6,7})/g;
       const MAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
+      // Voorbeeldnummers uit de Robin-zoekbalk-placeholder uitsluiten.
+      const PLACEHOLDERS = new Set(["0612345678", "31612345678", "612345678"]);
       const bron = (document.body.innerText || "") + " " + (document.body.innerHTML || "");
-      const tel = (bron.match(TEL) || [null])[0];
+      const alleTel = [...bron.matchAll(TEL)]
+        .map((m) => clean(m[0]))
+        .filter((t) => !PLACEHOLDERS.has(t.replace(/[^0-9]/g, "")));
+      const tel = alleTel[0] || "";
       const mail = (bron.match(MAIL) || [null])[0];
       const knoppen = [...document.querySelectorAll("button")]
         .map((b) => clean(b.getAttribute("aria-label") || b.textContent || b.title || ""))
         .filter(Boolean)
         .slice(0, 50);
       return {
-        telefoon: tel ? clean(tel) : "",
+        telefoon: tel,
         email: mail ? clean(mail) : "",
         body: clean(document.body.innerText || "").slice(0, 4000),
         knoppen,
