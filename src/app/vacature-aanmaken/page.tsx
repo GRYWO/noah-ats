@@ -311,21 +311,27 @@ export default async function VacatureAanmakenLijst() {
       <TopBar active="vacature-aanmaken" />
       <div className="p-8 max-w-6xl mx-auto">
         <div className="gold-hr mb-6 rounded-full" />
-        <div className="flex justify-between items-start mb-6">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="gold-chip inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]">
               Noah<span className="text-gold">.</span>&nbsp;recruitment
             </span>
-            <h1 className="mt-3 text-3xl font-bold text-gray-800">Dashboard</h1>
-            <p className="text-gray-500 text-sm mt-1">
-              {isAdmin
-                ? "Je ziet alle vacatures van alle setters, inclusief de interne afspraken."
-                : "Vacatures die jij als setter publiceert op noah-recruitment.nl. Kandidaten zien jouw naam als contactpersoon."}
-            </p>
+            <h1 className="mt-3 text-3xl font-bold text-gray-800">
+              Hoi {setterVoornaam || "daar"} <span className="align-middle">👋</span>
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">Welkom op je dashboard — beheer je vacatures en kandidaten.</p>
           </div>
           <Link href="/vacature-aanmaken/nieuw" className="btn-gold px-5 py-2.5 text-sm">
-            Nieuwe vacature
+            + Nieuwe vacature
           </Link>
+        </div>
+
+        {/* Stat-tegels */}
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTegel label="Mijn vacatures" waarde={lijst.length} />
+          <StatTegel label="Open" waarde={lijst.filter((v) => v.status === "open").length} />
+          <StatTegel label="Te claimen" waarde={claimbaar.length} highlight />
+          <StatTegel label="Gevonden" waarde={lijsten.reduce((a, l) => a + l.vondsten.length, 0)} />
         </div>
 
         {/* Stap 2/3: Jobdigger-zoekbalk + gevonden vacatures */}
@@ -427,12 +433,12 @@ export default async function VacatureAanmakenLijst() {
                             ) : "-"}
                           </td>
                           <td className="px-4 py-2 text-gray-500">{vd.datum ?? "-"}</td>
-                          <td className="px-4 py-2 text-right">
+                          <td className="px-4 py-2 text-right whitespace-nowrap">
                             <Link
                               href={`/vacature-aanmaken/nieuw?vondst=${vd.id}`}
-                              className="text-xs font-semibold text-emerald-700 hover:underline"
+                              className="btn-gold inline-block px-3 py-1.5 text-xs"
                             >
-                              Controleer en plaats
+                              Plaats →
                             </Link>
                           </td>
                         </tr>
@@ -631,6 +637,16 @@ export default async function VacatureAanmakenLijst() {
         </div>
       </div>
     </main>
+  );
+}
+
+// Vrolijke stat-tegel met goud-gradient cijfer. Werkt in licht én donker.
+function StatTegel({ label, waarde, highlight }: { label: string; waarde: number; highlight?: boolean }) {
+  return (
+    <div className={`rounded-2xl border bg-white p-4 shadow-sm ${highlight ? "border-[#f5c84d]/60" : "border-gray-200"}`}>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="mt-1 text-3xl font-extrabold text-goldgrad">{waarde}</div>
+    </div>
   );
 }
 
