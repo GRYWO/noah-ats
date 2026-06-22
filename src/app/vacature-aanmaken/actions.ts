@@ -2,11 +2,18 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { randomBytes } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { maakVoorstelprofiel } from "@/utils/voorstelprofiel-ai";
-import { sendVoorstelprofielNaarContact, sendPoolVoorstelNaarContact } from "@/utils/email";
+import {
+  sendVoorstelprofielNaarContact,
+  sendPoolVoorstelNaarContact,
+  sendPlaatsingNaarBackoffice,
+  sendContractControleUitnodiging,
+} from "@/utils/email";
+import { getSetterFrom } from "@/utils/email-helpers";
 
 // ---------------------------------------------------------------
 // AI: anonieme vacaturetekst genereren (kopie van noah-recruitment)
@@ -551,6 +558,171 @@ export async function zetKandidaatInPool(formData: FormData) {
   if (!k.intake_voltooid) return; // alleen ná de intake
 
   await admin.from("kandidaten").update({ kanban_stap: "kandidatenpool" }).eq("id", kandidaatId);
+  revalidatePath("/vacature-aanmaken");
+  revalidatePath(`/kandidaten/${kandidaatId}`);
+}
+
+// "Plaats": rond de plaatsing af vanuit de pijplijn met één klik. Alle gegevens
+// komen automatisch uit de vacature (bedrijf, contactpersoon, afspraken). Er
+// wordt vertakt op de afspraak van de vacature:
+//   • W&S (ws_10 / ws_15 / ws_anders): mail naar backoffice + automatisch een
+//     contract-controle-uitnodiging (AVG) naar de opdrachtgever, zodat die het
+//     arbeidscontract veilig kan aanleveren. Na aanlevering gaat er — via de
+//     bestaande contract-parser — automatisch een mail naar de backoffice.
+//   • Uitzendbasis: alleen een mail naar backoffice met de afspraken + klant- en
+//     kandidaatgegevens (bij uitzend factureren we per uur, geen contract nodig).
+export async function plaatsKandidaatVanuitVacature(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const kandidaatId = String(formData.get("kandidaatId") || "").trim();
+  const vacatureIdIn = String(formData.get("vacature") || "").trim();
+  if (!kandidaatId) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id, voornaam, achternaam")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  const { data: k } = await admin
+    .from("kandidaten")
+    .select("id, tenant_id, voornaam, tussenvoegsel, achternaam, email, telefoon, woonplaats, vacature_id")
+    .eq("id", kandidaatId)
+    .maybeSingle();
+  if (!k || k.tenant_id !== profile.tenant_id) return;
+
+  const vacId = vacatureIdIn || ((k.vacature_id as string | null) ?? "");
+  if (!vacId) return;
+
+  const { data: vac } = await admin
+    .from("rec_vacatures")
+    .select(
+      "titel, eigenaar, intern_bedrijf, intern_contactpersoon, intern_mailadres, intern_telefoon, afspraak_tarief_type, afspraak_ws_percentage, afspraak_ws_toelichting, afspraak_uitzend_factor, afspraak_uitzend_uren_per_week, afspraak_overname_na_uren",
+    )
+    .eq("id", vacId)
+    .maybeSingle();
+  if (!vac) return;
+
+  const tariefType = (vac.afspraak_tarief_type as string | null) ?? "";
+  const isUitzend = tariefType === "uitzend";
+  const basis: "uitzend" | "werving_selectie" = isUitzend ? "uitzend" : "werving_selectie";
+
+  const wsPct: number | null = isUitzend
+    ? null
+    : tariefType === "ws_10"
+      ? 10
+      : tariefType === "ws_15"
+        ? 15
+        : (vac.afspraak_ws_percentage as number | null) ?? null;
+  const uitzendFactor: number | null = isUitzend ? ((vac.afspraak_uitzend_factor as number | null) ?? null) : null;
+
+  const voornaam = (k.voornaam as string | null) ?? "";
+  const tussenvoegsel = (k.tussenvoegsel as string | null) ?? null;
+  const achternaam = (k.achternaam as string | null) ?? "";
+  const kandidaatNaam = [voornaam, tussenvoegsel, achternaam].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() || "de kandidaat";
+
+  const bedrijf = (vac.intern_bedrijf as string | null) || "Onbekend bedrijf";
+  const contactpersoon = (vac.intern_contactpersoon as string | null) || null;
+  const contactEmail = (vac.intern_mailadres as string | null) || null;
+  const contactTelefoon = (vac.intern_telefoon as string | null) || null;
+  const startdatum = new Date().toISOString().slice(0, 10);
+
+  // Rijke opmerking zodat de backoffice álle afspraken in de mail ziet staan.
+  const opmerking = [
+    `Functie: ${(vac.titel as string | null) ?? "—"}`,
+    isUitzend ? `Uitzendfactor: ${uitzendFactor ?? "—"}` : `W&S-fee: ${wsPct != null ? wsPct + "%" : "—"}`,
+    isUitzend && vac.afspraak_uitzend_uren_per_week ? `Uren/week: ${vac.afspraak_uitzend_uren_per_week}` : "",
+    isUitzend && vac.afspraak_overname_na_uren != null ? `Overname na ${vac.afspraak_overname_na_uren} uur` : "",
+    !isUitzend && vac.afspraak_ws_toelichting ? `Toelichting afspraak: ${vac.afspraak_ws_toelichting}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  // 1) Plaatsing opslaan
+  const { data: plaatsing, error: plErr } = await admin
+    .from("plaatsingen")
+    .insert({
+      tenant_id: profile.tenant_id,
+      kandidaat_id: kandidaatId,
+      basis,
+      tarief_factor: uitzendFactor,
+      tarief_pct: wsPct,
+      betaling: "1x_7d",
+      bedrijf,
+      contactpersoon,
+      contact_email: contactEmail,
+      contact_telefoon: contactTelefoon,
+      opmerking,
+      startdatum,
+      aangemeld_door: user.id,
+    })
+    .select("id")
+    .single();
+  if (plErr || !plaatsing) return;
+
+  // 2) Kandidaat naar 'geplaatst' in de pijplijn
+  await admin
+    .from("kandidaten")
+    .update({ kanban_stap: "geplaatst", voorstel_status: "geplaatst" })
+    .eq("id", kandidaatId);
+
+  // Mail vanaf het adres van de eigenaar/setter zodat het from-domein klopt.
+  const setterFrom = await getSetterFrom((vac.eigenaar as string | null) || user.id);
+
+  // 3) Mail naar backoffice@noah-recruitment.nl (altijd, met zoveel mogelijk data)
+  try {
+    await sendPlaatsingNaarBackoffice({
+      kandidaat: {
+        voornaam,
+        tussenvoegsel,
+        achternaam,
+        email: (k.email as string | null) ?? null,
+        telefoon: (k.telefoon as string | null) ?? null,
+        woonplaats: (k.woonplaats as string | null) ?? null,
+      },
+      klant: { bedrijf, contactpersoon, contact_email: contactEmail, contact_telefoon: contactTelefoon },
+      deal: { basis, tarief_factor: uitzendFactor, tarief_pct: wsPct, tarief_bedrag: null, betaling: "1x_7d", startdatum, opmerking },
+      aangemeldDoor: {
+        voornaam: (profile.voornaam as string | null) ?? "",
+        achternaam: (profile.achternaam as string | null) ?? "",
+        email: user.email ?? "",
+      },
+      from: setterFrom,
+    });
+    await admin.from("plaatsingen").update({ backoffice_mail_sent: new Date().toISOString() }).eq("id", plaatsing.id);
+  } catch (e) {
+    console.error("[plaats-vacature] backoffice-mail mislukt:", e);
+  }
+
+  // 4) Alleen bij W&S: contract-controle-uitnodiging (AVG) naar de opdrachtgever.
+  if (!isUitzend && contactEmail) {
+    try {
+      const token = randomBytes(24).toString("hex");
+      await admin.from("contract_verzoeken").insert({
+        plaatsing_id: plaatsing.id,
+        tenant_id: profile.tenant_id,
+        token,
+        status: "verzonden",
+        opdrachtgever_naam: contactpersoon || bedrijf,
+        opdrachtgever_email: contactEmail,
+        kandidaat_naam: kandidaatNaam,
+      });
+      await sendContractControleUitnodiging({
+        naar: contactEmail,
+        contactNaam: contactpersoon || "",
+        kandidaatNaam,
+        token,
+        feePercentage: wsPct,
+      });
+    } catch (e) {
+      console.error("[plaats-vacature] contract-controle mail mislukt:", e);
+    }
+  }
+
   revalidatePath("/vacature-aanmaken");
   revalidatePath(`/kandidaten/${kandidaatId}`);
 }
