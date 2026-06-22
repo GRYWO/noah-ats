@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst } from "./actions";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, maakVoorstelprofielVanKandidaat } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 
@@ -54,6 +54,7 @@ type Kandidaat = {
   cv_url: string | null;
   match_score: number | null;
   match_reden: string | null;
+  voorstelprofiel_token: string | null;
 };
 
 type Vacature = {
@@ -236,7 +237,7 @@ export default async function VacatureAanmakenLijst() {
     if (blIds.length) {
       const { data: items } = await admin
         .from("bellijst_items")
-        .select("id, bellijst_id, naam, plaats, telefoon, website, cv_url, match_score, match_reden, volgorde")
+        .select("id, bellijst_id, naam, plaats, telefoon, website, cv_url, match_score, match_reden, volgorde, voorstelprofiel_token")
         .in("bellijst_id", blIds)
         .order("volgorde", { ascending: true });
       for (const it of items ?? []) {
@@ -583,17 +584,28 @@ function KandidatenPaneel({ kandidaten, loopt }: { kandidaten: Kandidaat[]; loop
                       )}
                     </td>
                     <td className="px-3 py-2">
-                      {k.cv_url ? (
-                        <a href={k.cv_url} target="_blank" rel="noopener noreferrer" className="text-[#333399] hover:underline">
-                          CV
+                      {k.voorstelprofiel_token ? (
+                        <a
+                          href={`https://noah-recruitment.nl/voorstelprofiel/${k.voorstelprofiel_token}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-emerald-700 hover:underline"
+                        >
+                          Voorstelprofiel
                         </a>
-                      ) : null}
+                      ) : (
+                        <form action={maakVoorstelprofielVanKandidaat}>
+                          <input type="hidden" name="itemId" value={k.id} />
+                          <SubmitKnop bezigTekst="Bezig…" className="text-xs font-semibold text-[#333399] hover:underline">
+                            Maak voorstelprofiel
+                          </SubmitKnop>
+                        </form>
+                      )}
                       {k.website ? (
-                        <a href={k.website} target="_blank" rel="noopener noreferrer" className="ml-2 text-[#333399] hover:underline">
+                        <a href={k.website} target="_blank" rel="noopener noreferrer" className="ml-2 text-xs text-gray-400 hover:underline">
                           Robin
                         </a>
                       ) : null}
-                      {!k.cv_url && !k.website ? "—" : null}
                     </td>
                     <td className="px-3 py-2 text-gray-500">{k.match_reden ?? ""}</td>
                   </tr>

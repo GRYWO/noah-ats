@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { maakVoorstelprofiel } from "@/utils/voorstelprofiel-ai";
 
 // ---------------------------------------------------------------
 // AI: anonieme vacaturetekst genereren (kopie van noah-recruitment)
@@ -522,6 +523,47 @@ export async function verwijderVacature(formData: FormData) {
 
   await admin.from("rec_sollicitaties").delete().eq("vacature_id", id);
   await admin.from("rec_vacatures").delete().eq("id", id);
+
+  revalidatePath("/vacature-aanmaken");
+}
+
+// "Maak voorstelprofiel": zet de geschraapte profieltekst van een kandidaat om
+// in een net Noah-voorstelprofiel (anoniem) met een deelbare link.
+export async function maakVoorstelprofielVanKandidaat(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const itemId = String(formData.get("itemId") || "").trim();
+  if (!itemId) return;
+
+  const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  const { data: item } = await admin
+    .from("bellijst_items")
+    .select("id, naam, plaats, profiel_tekst, voorstelprofiel_token, tenant_id")
+    .eq("id", itemId)
+    .maybeSingle();
+  if (!item || item.tenant_id !== profile.tenant_id) return;
+
+  let data;
+  try {
+    data = await maakVoorstelprofiel(
+      (item.profiel_tekst as string | null) ?? "",
+      (item.naam as string | null) ?? "",
+      (item.plaats as string | null) ?? "",
+    );
+  } catch {
+    return; // AI niet beschikbaar; stil falen, setter kan opnieuw proberen
+  }
+
+  const token = (item.voorstelprofiel_token as string | null) || crypto.randomUUID().replace(/-/g, "");
+  await admin
+    .from("bellijst_items")
+    .update({ voorstelprofiel: data, voorstelprofiel_token: token })
+    .eq("id", itemId);
 
   revalidatePath("/vacature-aanmaken");
 }
