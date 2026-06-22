@@ -640,6 +640,73 @@ export async function stelKandidaatVoor(formData: FormData) {
   revalidatePath("/vacature-aanmaken");
 }
 
+// "Intake": maak van een Robin-kandidaat een volledige kandidaat (met de
+// gevonden gegevens al ingevuld) en ga naar de kandidaatpagina, waar de
+// bestaande intake-bot de rest uitvraagt. Bestond er al een kandidaat voor dit
+// item, dan openen we die.
+export async function startIntakeVanKandidaat(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const itemId = String(formData.get("itemId") || "").trim();
+  if (!itemId) return;
+
+  const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  const { data: item } = await admin
+    .from("bellijst_items")
+    .select("id, naam, telefoon, plaats, email, profiel_tekst, bellijst_id, tenant_id, kandidaat_id")
+    .eq("id", itemId)
+    .maybeSingle();
+  if (!item || item.tenant_id !== profile.tenant_id) return;
+
+  // Bestaat er al een kandidaat? Dan die openen.
+  if (item.kandidaat_id) redirect(`/kandidaten/${item.kandidaat_id}`);
+
+  const { data: bel } = await admin
+    .from("bellijsten")
+    .select("vacature_id")
+    .eq("id", item.bellijst_id as string)
+    .maybeSingle();
+  let eigenaarId: string = user.id;
+  if (bel?.vacature_id) {
+    const { data: vac } = await admin.from("rec_vacatures").select("eigenaar").eq("id", bel.vacature_id as string).maybeSingle();
+    if (vac?.eigenaar) eigenaarId = vac.eigenaar as string;
+  }
+
+  const naam = ((item.naam as string | null) ?? "").trim();
+  const delen = naam.split(/\s+/).filter(Boolean);
+  const voornaam = delen[0] || "Kandidaat";
+  const achternaam = delen.slice(1).join(" ") || "—";
+
+  const { data: nieuw, error } = await admin
+    .from("kandidaten")
+    .insert({
+      tenant_id: profile.tenant_id,
+      eigenaar_id: eigenaarId,
+      voornaam,
+      achternaam,
+      telefoon: (item.telefoon as string | null) || null,
+      email: (item.email as string | null) || null,
+      woonplaats: (item.plaats as string | null) || null,
+      notitie: (item.profiel_tekst as string | null) || null,
+      kanban_stap: "interne_intake",
+      vacature_id: bel?.vacature_id ?? null,
+      bron_bellijst_item_id: itemId,
+    })
+    .select("id")
+    .single();
+  if (error || !nieuw) return;
+
+  await admin.from("bellijst_items").update({ kandidaat_id: nieuw.id }).eq("id", itemId);
+
+  revalidatePath("/vacature-aanmaken");
+  redirect(`/kandidaten/${nieuw.id}`);
+}
+
 // "Onthul telefoon": zet een opdracht in de wachtrij om het telefoonnummer van
 // één kandidaat uit Robin te onthullen (de bot opent het profiel + klikt onthul).
 export async function onthulTelefoon(formData: FormData) {
