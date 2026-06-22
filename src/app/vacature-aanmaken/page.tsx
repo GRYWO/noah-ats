@@ -70,6 +70,29 @@ type PoolKandidaat = {
   woonplaats: string | null;
 };
 
+type PijplijnKandidaat = PoolKandidaat & { kanban_stap: string | null };
+
+// Korte, leesbare fase-labels voor het pijplijn-overzicht onder de vacature.
+function faseLabel(stap: string | null): { label: string; kleur: string } {
+  switch (stap) {
+    case "nieuwe_sollicitatie":
+    case "interne_intake":
+    case "in_afwachting_cv":
+      return { label: "Intake", kleur: "bg-amber-100 text-amber-800" };
+    case "in_wachtrij":
+    case "bij_setter":
+      return { label: "Wachtrij", kleur: "bg-sky-100 text-sky-800" };
+    case "in_proces":
+      return { label: "Voorgesteld", kleur: "bg-[#333399]/10 text-[#333399]" };
+    case "geplaatst":
+      return { label: "Geplaatst", kleur: "bg-emerald-100 text-emerald-800" };
+    case "afgewezen":
+      return { label: "Afgewezen", kleur: "bg-gray-100 text-gray-500" };
+    default:
+      return { label: stap || "Onbekend", kleur: "bg-gray-100 text-gray-600" };
+  }
+}
+
 type Vacature = {
   id: string;
   titel: string;
@@ -281,20 +304,28 @@ export default async function VacatureAanmakenLijst() {
     }
   }
 
-  // Pool per vacature: kandidaten met afgeronde intake, klaar om voor te stellen.
+  // Alle aan de vacature gekoppelde kandidaten: 'pool' (klaar om voor te stellen)
+  // apart, de rest als pijplijn-overzicht (intake, voorgesteld, geplaatst, ...).
   const poolPerVac = new Map<string, PoolKandidaat[]>();
+  const pijplijnPerVac = new Map<string, PijplijnKandidaat[]>();
   if (tenantId && lijst.length > 0) {
     const vacIds = lijst.map((v) => v.id);
-    const { data: pool } = await admin
+    const { data: kand } = await admin
       .from("kandidaten")
-      .select("id, voornaam, achternaam, woonplaats, vacature_id")
-      .in("vacature_id", vacIds)
-      .eq("kanban_stap", "kandidatenpool");
-    for (const p of pool ?? []) {
+      .select("id, voornaam, achternaam, woonplaats, vacature_id, kanban_stap")
+      .in("vacature_id", vacIds);
+    for (const p of kand ?? []) {
       const vid = (p as { vacature_id: string }).vacature_id;
-      const arr = poolPerVac.get(vid) ?? [];
-      arr.push(p as unknown as PoolKandidaat);
-      poolPerVac.set(vid, arr);
+      const stap = (p as { kanban_stap: string | null }).kanban_stap ?? "";
+      if (stap === "kandidatenpool") {
+        const arr = poolPerVac.get(vid) ?? [];
+        arr.push(p as unknown as PoolKandidaat);
+        poolPerVac.set(vid, arr);
+      } else {
+        const arr = pijplijnPerVac.get(vid) ?? [];
+        arr.push(p as unknown as PijplijnKandidaat);
+        pijplijnPerVac.set(vid, arr);
+      }
     }
   }
 
@@ -463,6 +494,7 @@ export default async function VacatureAanmakenLijst() {
                   const eigenaar = v.eigenaar ? eigenaarNamen.get(v.eigenaar) : undefined;
                   const kandidaten = kandidatenPerVac.get(v.id) ?? [];
                   const poolKandidaten = poolPerVac.get(v.id) ?? [];
+                  const pijplijnKandidaten = pijplijnPerVac.get(v.id) ?? [];
                   const kolommen = isAdmin ? 8 : 7;
                   return (
                     <Fragment key={v.id}>
@@ -567,6 +599,13 @@ export default async function VacatureAanmakenLijst() {
                         </td>
                       </tr>
                     )}
+                    {pijplijnKandidaten.length > 0 && (
+                      <tr className="bg-gray-50/60">
+                        <td colSpan={kolommen} className="px-4 pb-4">
+                          <PijplijnPaneel kandidaten={pijplijnKandidaten} />
+                        </td>
+                      </tr>
+                    )}
                     {(kandidaten.length > 0 || robinLoopt) && (
                       <tr className="bg-gray-50/40">
                         <td colSpan={kolommen} className="px-4 pb-4">
@@ -583,6 +622,36 @@ export default async function VacatureAanmakenLijst() {
         </div>
       </div>
     </main>
+  );
+}
+
+function PijplijnPaneel({ kandidaten }: { kandidaten: PijplijnKandidaat[] }) {
+  return (
+    <details open className="rounded-lg border border-gray-200 bg-white">
+      <summary className="cursor-pointer select-none px-4 py-2.5 text-sm font-semibold text-gray-800">
+        Pijplijn <span className="font-normal text-gray-400">· {kandidaten.length}</span>
+      </summary>
+      <div className="border-t border-gray-100 p-3">
+        <div className="flex flex-col gap-1.5">
+          {kandidaten.map((k) => {
+            const fase = faseLabel(k.kanban_stap);
+            return (
+              <a
+                key={k.id}
+                href={`/kandidaten/${k.id}`}
+                className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-800">
+                  <span className="font-medium">{[k.voornaam, k.achternaam].filter(Boolean).join(" ") || "Kandidaat"}</span>
+                  {k.woonplaats && <span className="text-gray-400"> · {k.woonplaats}</span>}
+                </span>
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${fase.kleur}`}>{fase.label}</span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </details>
   );
 }
 
