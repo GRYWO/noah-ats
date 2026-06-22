@@ -65,14 +65,16 @@ export default async function NieuweVacaturePage({
   let vUren = "";
   let vErvaring = "";
   let vSalaris = "";
+  let vSector = "";
   if (vondst?.detail_tekst) {
     try {
-      const s = await structureerVacatureTekst(vondst.detail_tekst, vTitel, vLocatie);
+      const s = await structureerVacatureTekst(vondst.detail_tekst, vTitel, vLocatie, SECTOREN);
       vTaken = s.taken;
       vEisen = s.eisen;
       vUren = s.uren;
       vErvaring = s.ervaring;
       vSalaris = s.salaris;
+      vSector = s.sector;
     } catch {
       // AI niet beschikbaar: velden blijven leeg, setter vult zelf aan.
     }
@@ -103,7 +105,7 @@ export default async function NieuweVacaturePage({
           <Sectie titel="De functie">
             <Rij label="Functietitel" name="titel" placeholder="bv. Allround timmerman" required defaultValue={vTitel} />
             <div className="grid gap-4 sm:grid-cols-2">
-              <Select label="Sector" name="sector" opties={SECTOREN} />
+              <Select label="Sector" name="sector" opties={SECTOREN} defaultValue={vSector} />
               <Rij label="Locatie / regio" name="locatie" placeholder="bv. regio Tilburg" defaultValue={vLocatie} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -201,12 +203,13 @@ function Tekst({ label, name, placeholder, defaultValue }: { label: string; name
   );
 }
 
-function Select({ label, name, opties }: { label: string; name: string; opties: string[] }) {
+function Select({ label, name, opties, defaultValue }: { label: string; name: string; opties: string[]; defaultValue?: string }) {
   return (
     <label className="block">
       <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</span>
       <select
         name={name}
+        defaultValue={defaultValue}
         className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#333399]"
       >
         <option value="">Kies een optie</option>
