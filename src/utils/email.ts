@@ -396,6 +396,45 @@ export async function sendVoorstelprofielNaarContact({
 }
 
 /**
+ * Meerdere kandidaten (pool) in één mail naar de contactpersoon van het bedrijf.
+ */
+export async function sendPoolVoorstelNaarContact({
+  naar,
+  contactpersoon,
+  functie,
+  profielUrls,
+  setterNaam,
+}: {
+  naar: string;
+  contactpersoon?: string | null;
+  functie: string;
+  profielUrls: string[];
+  setterNaam?: string | null;
+}) {
+  const begroeting = contactpersoon ? `Beste ${contactpersoon},` : "Beste,";
+  const n = profielUrls.length;
+  const lijst = profielUrls
+    .map(
+      (u, i) =>
+        `<p style="margin:8px 0;"><a href="${u}" style="color:${NOAH_PAARS};font-weight:600;">Kandidaat ${i + 1} bekijken</a></p>`,
+    )
+    .join("");
+  const body =
+    `<p>${begroeting}</p>` +
+    `<p>Voor de functie <strong>${functie}</strong> heb ik ${n} kandidaat${n === 1 ? "" : "en"} geselecteerd die goed lijken te passen. ` +
+    `Hieronder de (anonieme) profielen:</p>` +
+    lijst +
+    `<p>Interesse of vragen? Reageer gerust op deze mail, dan plan ik een kennismaking.</p>` +
+    `<p>Met vriendelijke groet,<br>${setterNaam || "Noah Recruitment"}</p>`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `${n} kandidaat${n === 1 ? "" : "en"} voor ${functie}`,
+    html: brandedLayout({ titel: "Kandidaten voor je openstaande functie", body, afzenderNaam: setterNaam ?? undefined }),
+  });
+}
+
+/**
  * Bericht aan kandidaat dat het voorstel is afgewezen.
  * Bewust géén opdrachtgever-naam erin.
  */

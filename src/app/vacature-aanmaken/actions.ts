@@ -6,7 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { maakVoorstelprofiel } from "@/utils/voorstelprofiel-ai";
-import { sendVoorstelprofielNaarContact } from "@/utils/email";
+import { sendVoorstelprofielNaarContact, sendPoolVoorstelNaarContact } from "@/utils/email";
 
 // ---------------------------------------------------------------
 // AI: anonieme vacaturetekst genereren (kopie van noah-recruitment)
@@ -524,6 +524,112 @@ export async function verwijderVacature(formData: FormData) {
 
   await admin.from("rec_sollicitaties").delete().eq("vacature_id", id);
   await admin.from("rec_vacatures").delete().eq("id", id);
+
+  revalidatePath("/vacature-aanmaken");
+}
+
+// "Zet in pool": plaats een (intake-afgeronde) kandidaat in de pool van zijn
+// vacature, zodat je 'm samen met anderen in één keer kunt voorstellen.
+export async function zetKandidaatInPool(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const kandidaatId = String(formData.get("kandidaatId") || "").trim();
+  if (!kandidaatId) return;
+
+  const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  const { data: k } = await admin
+    .from("kandidaten")
+    .select("id, tenant_id, intake_voltooid")
+    .eq("id", kandidaatId)
+    .maybeSingle();
+  if (!k || k.tenant_id !== profile.tenant_id) return;
+  if (!k.intake_voltooid) return; // alleen ná de intake
+
+  await admin.from("kandidaten").update({ kanban_stap: "kandidatenpool" }).eq("id", kandidaatId);
+  revalidatePath("/vacature-aanmaken");
+  revalidatePath(`/kandidaten/${kandidaatId}`);
+}
+
+// "Stel pool voor": stel meerdere gepoolde kandidaten in één keer voor aan de
+// contactpersoon van de vacature. Per kandidaat wordt een (anoniem) profiel-link
+// klaargezet; daarna gaat er één mail met alle links uit.
+export async function stelPoolVoor(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const vacatureId = String(formData.get("vacature") || "").trim();
+  const ids = formData.getAll("ids").map((v) => String(v)).filter(Boolean);
+  if (!vacatureId || ids.length === 0) return;
+
+  const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  const { data: vac } = await admin
+    .from("rec_vacatures")
+    .select("titel, intern_mailadres, intern_contactpersoon, eigenaar")
+    .eq("id", vacatureId)
+    .maybeSingle();
+  if (!vac?.intern_mailadres) return;
+
+  const urls: string[] = [];
+  for (const kandidaatId of ids) {
+    const { data: k } = await admin
+      .from("kandidaten")
+      .select("id, tenant_id, profielschets, cv_geparseerd, rijbewijs, eigen_vervoer, bron_bellijst_item_id")
+      .eq("id", kandidaatId)
+      .maybeSingle();
+    if (!k || k.tenant_id !== profile.tenant_id || !k.bron_bellijst_item_id) continue;
+
+    const cvg = (k.cv_geparseerd ?? {}) as Record<string, unknown>;
+    const vp = {
+      profielschets: (k.profielschets as string | null) ?? "",
+      werkervaring: (cvg.werkervaring as string | null) ?? "",
+      opleidingen: (cvg.diplomas as string | null) ?? "",
+      talen: (cvg.talen as string | null) ?? "",
+      vaardigheden: (cvg.vaardigheden as string | null) ?? "",
+      rijbewijzen: (k.rijbewijs as string | null) ?? "",
+      vervoer: k.eigen_vervoer ? "Ja" : "Nee",
+    };
+
+    const { data: bi } = await admin
+      .from("bellijst_items")
+      .select("voorstelprofiel_token")
+      .eq("id", k.bron_bellijst_item_id as string)
+      .maybeSingle();
+    const token = (bi?.voorstelprofiel_token as string | null) || crypto.randomUUID().replace(/-/g, "");
+    await admin
+      .from("bellijst_items")
+      .update({ voorstelprofiel: vp, voorstelprofiel_token: token })
+      .eq("id", k.bron_bellijst_item_id as string);
+    urls.push(`https://noah-recruitment.nl/voorstelprofiel/${token}`);
+
+    // Uit de pool, de pijplijn in.
+    await admin.from("kandidaten").update({ kanban_stap: "in_proces" }).eq("id", kandidaatId);
+  }
+
+  if (urls.length === 0) return;
+
+  const setterNaam = vac.eigenaar
+    ? await contactNaamVoor(admin, vac.eigenaar as string, "Noah Recruitment")
+    : "Noah Recruitment";
+  try {
+    await sendPoolVoorstelNaarContact({
+      naar: vac.intern_mailadres as string,
+      contactpersoon: (vac.intern_contactpersoon as string | null) ?? null,
+      functie: (vac.titel as string | null) ?? "de functie",
+      profielUrls: urls,
+      setterNaam,
+    });
+  } catch {
+    // mail mislukt; kandidaten staan al in proces
+  }
 
   revalidatePath("/vacature-aanmaken");
 }

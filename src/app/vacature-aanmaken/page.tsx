@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat } from "./actions";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat, stelPoolVoor } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 import { LinkedInKnop } from "./LinkedInKnop";
@@ -61,6 +61,13 @@ type Kandidaat = {
   voorgesteld_at: string | null;
   kandidaat_id: string | null;
   bezig?: boolean;
+};
+
+type PoolKandidaat = {
+  id: string;
+  voornaam: string | null;
+  achternaam: string | null;
+  woonplaats: string | null;
 };
 
 type Vacature = {
@@ -274,6 +281,23 @@ export default async function VacatureAanmakenLijst() {
     }
   }
 
+  // Pool per vacature: kandidaten met afgeronde intake, klaar om voor te stellen.
+  const poolPerVac = new Map<string, PoolKandidaat[]>();
+  if (tenantId && lijst.length > 0) {
+    const vacIds = lijst.map((v) => v.id);
+    const { data: pool } = await admin
+      .from("kandidaten")
+      .select("id, voornaam, achternaam, woonplaats, vacature_id")
+      .in("vacature_id", vacIds)
+      .eq("kanban_stap", "kandidatenpool");
+    for (const p of pool ?? []) {
+      const vid = (p as { vacature_id: string }).vacature_id;
+      const arr = poolPerVac.get(vid) ?? [];
+      arr.push(p as unknown as PoolKandidaat);
+      poolPerVac.set(vid, arr);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
       <AutoVernieuw snel={jobdiggerLoopt || robinLoopt || telefoonLoopt} />
@@ -438,6 +462,7 @@ export default async function VacatureAanmakenLijst() {
                 {lijst.map((v) => {
                   const eigenaar = v.eigenaar ? eigenaarNamen.get(v.eigenaar) : undefined;
                   const kandidaten = kandidatenPerVac.get(v.id) ?? [];
+                  const poolKandidaten = poolPerVac.get(v.id) ?? [];
                   const kolommen = isAdmin ? 8 : 7;
                   return (
                     <Fragment key={v.id}>
@@ -535,6 +560,13 @@ export default async function VacatureAanmakenLijst() {
                         </div>
                       </td>
                     </tr>
+                    {poolKandidaten.length > 0 && (
+                      <tr className="bg-[#333399]/5">
+                        <td colSpan={kolommen} className="px-4 pb-4">
+                          <PoolPaneel vacatureId={v.id} kandidaten={poolKandidaten} />
+                        </td>
+                      </tr>
+                    )}
                     {(kandidaten.length > 0 || robinLoopt) && (
                       <tr className="bg-gray-50/40">
                         <td colSpan={kolommen} className="px-4 pb-4">
@@ -551,6 +583,36 @@ export default async function VacatureAanmakenLijst() {
         </div>
       </div>
     </main>
+  );
+}
+
+function PoolPaneel({ vacatureId, kandidaten }: { vacatureId: string; kandidaten: PoolKandidaat[] }) {
+  return (
+    <details open className="rounded-lg border border-[#333399]/20 bg-white">
+      <summary className="cursor-pointer select-none px-4 py-2.5 text-sm font-semibold text-[#333399]">
+        Pool — klaar om voor te stellen <span className="font-normal text-gray-400">· {kandidaten.length}</span>
+      </summary>
+      <form action={stelPoolVoor} className="border-t border-gray-100 p-3">
+        <input type="hidden" name="vacature" value={vacatureId} />
+        <div className="space-y-1.5">
+          {kandidaten.map((k) => (
+            <label key={k.id} className="flex items-center gap-2 text-sm text-gray-800">
+              <input type="checkbox" name="ids" value={k.id} defaultChecked className="h-4 w-4 accent-[#333399]" />
+              <span className="font-medium">{[k.voornaam, k.achternaam].filter(Boolean).join(" ") || "Kandidaat"}</span>
+              {k.woonplaats && <span className="text-gray-400">· {k.woonplaats}</span>}
+            </label>
+          ))}
+        </div>
+        <div className="mt-3">
+          <SubmitKnop
+            bezigTekst="Versturen…"
+            className="rounded-lg bg-[#333399] px-4 py-2 text-sm font-semibold text-white hover:bg-[#27277a]"
+          >
+            Stel geselecteerde voor ({kandidaten.length})
+          </SubmitKnop>
+        </div>
+      </form>
+    </details>
   );
 }
 
