@@ -185,6 +185,7 @@ export default async function KandidaatDetail({
       <main className="min-h-screen bg-[#f4f4f7] pl-16">
         <TopBar active="kandidaten" />
         <div className="p-8 max-w-2xl mx-auto">
+          <div className="gold-hr mb-4 rounded-full" />
           <Link href="/vacature-aanmaken" className="text-sm text-gray-600 hover:text-[#333399] mb-3 inline-block">
             ← Terug naar dashboard
           </Link>
@@ -201,7 +202,7 @@ export default async function KandidaatDetail({
             {k.woonplaats && <p className="text-sm text-gray-500 mt-0.5">{k.woonplaats}</p>}
             <div className="mt-4 flex flex-wrap gap-2">
               {k.telefoon ? (
-                <a href={`tel:${k.telefoon}`} className="rounded-lg bg-[#333399] px-4 py-2 text-sm font-semibold text-white hover:bg-[#27277a]">
+                <a href={`tel:${k.telefoon}`} className="btn-gold px-4 py-2 text-sm">
                   Bellen · {k.telefoon}
                 </a>
               ) : (
