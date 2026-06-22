@@ -18,7 +18,7 @@ export async function rangschikKandidaten(
 ): Promise<RobinKandidaat[]> {
   if (kandidaten.length === 0) return kandidaten;
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return kandidaten;
+  if (!apiKey) return kandidaten.map((k) => ({ ...k, match_reden: "AI-sleutel ontbreekt" }));
 
   const lijst = kandidaten.slice(0, 60).map((k, i) => ({
     i,
@@ -31,7 +31,7 @@ export async function rangschikKandidaten(
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
       model: AI_MODEL,
-      max_tokens: 1500,
+      max_tokens: 3000,
       system:
         "Je bent een ervaren recruiter. Je beoordeelt hoe goed kandidaten passen bij een vacature. " +
         "Let op functie-aansluiting, relevante ervaring/vaardigheden en (indien bekend) reisafstand. " +
@@ -62,7 +62,8 @@ export async function rangschikKandidaten(
     });
     verrijkt.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
     return verrijkt;
-  } catch {
-    return kandidaten;
+  } catch (e) {
+    const msg = (e as Error).message?.slice(0, 120) || "onbekend";
+    return kandidaten.map((k) => ({ ...k, match_reden: "ranking-fout: " + msg }));
   }
 }
