@@ -190,7 +190,13 @@ export default async function KandidaatDetail({
     const ruweTekst = ((k.notitie as string | null) ?? "").trim();
     if (!heeftProfiel && ruweTekst) {
       try {
-        const gen = await maakVoorstelprofiel(ruweTekst, naam, (k.woonplaats as string | null) ?? "");
+        // Met timeout: de AI mag de kandidaatpagina nooit laten hangen. Lukt het
+        // niet binnen 8s, dan tonen we de ruwe tekst als terugval.
+        const gen = await Promise.race([
+          maakVoorstelprofiel(ruweTekst, naam, (k.woonplaats as string | null) ?? ""),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+        ]);
+        if (!gen) throw new Error("AI-timeout");
         profielschets = gen.profielschets || profielschets;
         werkervaring = gen.werkervaring || werkervaring;
         opleidingen = gen.opleidingen || opleidingen;
