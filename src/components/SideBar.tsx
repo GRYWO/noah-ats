@@ -89,7 +89,6 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
     ...(!isBureauAdmin ? [{ key: "vacature-aanmaken", href: "/vacature-aanmaken", label: "Dashboard", Icon: LayoutDashboard, sectie: 1 } as Item] : []),
 
     // Sectie 2: Werkstroom , recruitment
-    ...(!isBureauAdmin ? [{ key: "kandidaten", href: "/kandidaten", label: "Kandidaten", Icon: Users, sectie: 2 } as Item] : []),
     ...(!isBureauAdmin ? [{ key: "kandidatenpool", href: "/kandidatenpool", label: "Talentenpool", Icon: Users, sectie: 2 } as Item] : []),
     { key: "kanban",         href: "/kanban",         label: "Kanban",       Icon: KanbanSquare,  sectie: 2 },
     { key: "agenda",         href: "/agenda",         label: "Agenda",       Icon: Calendar,      sectie: 2 },
