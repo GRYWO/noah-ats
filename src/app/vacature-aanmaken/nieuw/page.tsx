@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { structureerVacatureTekst } from "@/utils/jobdigger-ai";
 import { TopBar } from "@/components/TopBar";
 import { maakVacatureNoahAts } from "../actions";
 import { AfsprakenSectie } from "../AfsprakenSectie";
@@ -55,7 +56,27 @@ export default async function NieuweVacaturePage({
   const vLocatie = vondst?.plaats ?? sp.locatie ?? "";
   const vTelefoon = vondst?.telefoon ?? sp.telefoon ?? "";
   const vBedrijf = vondst?.bedrijf ?? sp.bedrijf ?? "";
-  const vTaken = vondst?.detail_tekst ?? "";
+
+  // De ruwe, geschraapte tekst door de AI laten opschonen en verdelen over
+  // taken/eisen/uren/ervaring/salaris. Lukt het niet, dan valt 'taken' terug op
+  // de ruwe tekst zodat er altijd iets staat.
+  let vTaken = vondst?.detail_tekst ?? "";
+  let vEisen = "";
+  let vUren = "";
+  let vErvaring = "";
+  let vSalaris = "";
+  if (vondst?.detail_tekst) {
+    try {
+      const s = await structureerVacatureTekst(vondst.detail_tekst, vTitel, vLocatie);
+      if (s.taken) vTaken = s.taken;
+      vEisen = s.eisen;
+      vUren = s.uren;
+      vErvaring = s.ervaring;
+      vSalaris = s.salaris;
+    } catch {
+      // AI niet beschikbaar: ruwe tekst blijft in 'taken' staan.
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
@@ -87,14 +108,14 @@ export default async function NieuweVacaturePage({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Select label="Dienstverband" name="dienstverband" opties={DIENSTVERBANDEN} />
-              <Rij label="Uren per week" name="uren" placeholder="bv. 32-40 uur" />
+              <Rij label="Uren per week" name="uren" placeholder="bv. 32-40 uur" defaultValue={vUren} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Rij label="Gevraagde ervaring" name="ervaring" placeholder="bv. 2 tot 5 jaar" />
-              <Rij label="Salarisindicatie" name="salaris" placeholder="bv. 2800 tot 3400 euro" />
+              <Rij label="Gevraagde ervaring" name="ervaring" placeholder="bv. 2 tot 5 jaar" defaultValue={vErvaring} />
+              <Rij label="Salarisindicatie" name="salaris" placeholder="bv. 2800 tot 3400 euro" defaultValue={vSalaris} />
             </div>
             <Tekst label="Wat ga je doen? (taken)" name="taken" placeholder="Beschrijf de belangrijkste taken." defaultValue={vTaken} />
-            <Tekst label="Wat vraag je? (eisen)" name="eisen" placeholder="Diploma's, vaardigheden, rijbewijs, enzovoort." />
+            <Tekst label="Wat vraag je? (eisen)" name="eisen" placeholder="Diploma's, vaardigheden, rijbewijs, enzovoort." defaultValue={vEisen} />
           </Sectie>
 
           <Sectie titel="Contactgegevens — alleen voor ons (niet op de website)">
