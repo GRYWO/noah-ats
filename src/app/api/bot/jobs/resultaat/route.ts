@@ -109,6 +109,10 @@ export async function POST(request: Request) {
 
   const vondsten = Array.isArray(body.vondsten) ? body.vondsten : [];
   if (vondsten.length > 0) {
+    // Bestaande vondsten van deze lijst eerst weg, zodat een (her)zoek of een
+    // "50 meer" de lijst netjes vervangt i.p.v. dubbele rijen te maken.
+    await admin.from("jobdigger_vondsten").delete().eq("job_id", jobId);
+
     const rows = vondsten.slice(0, 200).map((v) => ({
       job_id: jobId,
       tenant_id: job.tenant_id,

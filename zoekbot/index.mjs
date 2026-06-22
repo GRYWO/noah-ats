@@ -47,7 +47,7 @@ async function verwerk(job) {
       console.log(`  → ${kandidaten.length} kandidaten gevonden`);
       await meldResultaat(job.id, { kandidaten });
     } else if (job.type === "jobdigger") {
-      const vondsten = await runJobdiggerZoek(job.zoekterm);
+      const vondsten = await runJobdiggerZoek(job.zoekterm, job.limiet || 50);
       console.log(`  → ${vondsten.length} vacatures gevonden`);
       await meldResultaat(job.id, { vondsten });
     } else {

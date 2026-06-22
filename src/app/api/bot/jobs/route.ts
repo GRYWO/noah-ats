@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   const { data: job } = await admin
     .from("zoek_jobs")
-    .select("id, type, zoekterm, vacature_id, tenant_id")
+    .select("id, type, zoekterm, vacature_id, tenant_id, limiet")
     .eq("status", "open")
     .order("created_at", { ascending: true })
     .limit(1)
