@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     jobId?: string;
     kandidaten?: RobinKandidaat[];
     vondsten?: { titel?: string; bedrijf?: string; plaats?: string; url?: string; telefoon?: string; datum?: string; jobdigger_url?: string; detail_tekst?: string }[];
+    telefoon?: string;
     fout?: string;
   };
   try {
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
 
   const { data: job } = await admin
     .from("zoek_jobs")
-    .select("id, type, zoekterm, vacature_id, tenant_id, aangemaakt_door")
+    .select("id, type, zoekterm, vacature_id, tenant_id, aangemaakt_door, doel_item_id")
     .eq("id", jobId)
     .maybeSingle();
   if (!job) {
@@ -49,6 +50,19 @@ export async function POST(request: Request) {
       .update({ status: "fout", fout: String(body.fout).slice(0, 500), klaar_at: nu, updated_at: nu })
       .eq("id", jobId);
     return NextResponse.json({ ok: true });
+  }
+
+  // Telefoon onthuld voor één kandidaat: het nummer bij de bellijst-kandidaat zetten.
+  if (job.type === "robin_telefoon") {
+    const telefoon = (body.telefoon ?? "").toString().trim().slice(0, 60);
+    if (job.doel_item_id && telefoon) {
+      await admin.from("bellijst_items").update({ telefoon }).eq("id", job.doel_item_id);
+    }
+    await admin
+      .from("zoek_jobs")
+      .update({ status: "klaar", resultaat: { telefoon: telefoon || null }, klaar_at: nu, updated_at: nu })
+      .eq("id", jobId);
+    return NextResponse.json({ ok: true, telefoon: telefoon || null });
   }
 
   const kandidaten = Array.isArray(body.kandidaten) ? body.kandidaten : [];

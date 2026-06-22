@@ -568,6 +568,59 @@ export async function maakVoorstelprofielVanKandidaat(formData: FormData) {
   revalidatePath("/vacature-aanmaken");
 }
 
+// "Onthul telefoon": zet een opdracht in de wachtrij om het telefoonnummer van
+// één kandidaat uit Robin te onthullen (de bot opent het profiel + klikt onthul).
+export async function onthulTelefoon(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const itemId = String(formData.get("itemId") || "").trim();
+  if (!itemId) return;
+
+  const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
+  if (!profile?.tenant_id) return;
+
+  const admin = createAdminClient();
+  const { data: item } = await admin
+    .from("bellijst_items")
+    .select("id, naam, bellijst_id, tenant_id")
+    .eq("id", itemId)
+    .maybeSingle();
+  if (!item || item.tenant_id !== profile.tenant_id) return;
+
+  // Functie + plaats van de bijbehorende vacature ophalen om opnieuw te zoeken.
+  const { data: bel } = await admin
+    .from("bellijsten")
+    .select("vacature_id")
+    .eq("id", item.bellijst_id as string)
+    .maybeSingle();
+  let functie = "";
+  let plaats = "";
+  if (bel?.vacature_id) {
+    const { data: vac } = await admin
+      .from("rec_vacatures")
+      .select("titel, locatie")
+      .eq("id", bel.vacature_id as string)
+      .maybeSingle();
+    functie = (vac?.titel as string | null) ?? "";
+    plaats = (vac?.locatie as string | null) ?? "";
+  }
+
+  await admin.from("zoek_jobs").insert({
+    tenant_id: profile.tenant_id,
+    type: "robin_telefoon",
+    zoekterm: functie,
+    plaats: plaats || null,
+    vacature_id: bel?.vacature_id ?? null,
+    doel_item_id: itemId,
+    doel_naam: (item.naam as string | null) ?? null,
+    aangemaakt_door: user.id,
+  });
+
+  revalidatePath("/vacature-aanmaken");
+}
+
 // "Zoek kandidaten": zet een Robin-zoekopdracht in de wachtrij. De altijd-aan
 // machine (bot) pakt 'm op, draait de zoekopdracht en meldt de bellijst terug.
 export async function maakRobinZoekJob(formData: FormData) {

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
-import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, maakVoorstelprofielVanKandidaat } from "./actions";
+import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, maakVoorstelprofielVanKandidaat, onthulTelefoon } from "./actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 
@@ -576,11 +576,26 @@ function KandidatenPaneel({ kandidaten, loopt }: { kandidaten: Kandidaat[]; loop
                     <td className="px-3 py-2 text-gray-600">{k.plaats ?? "—"}</td>
                     <td className="px-3 py-2 text-gray-600">
                       {k.telefoon ? (
-                        <a href={`tel:${k.telefoon}`} className="text-[#333399] hover:underline">
-                          {k.telefoon}
-                        </a>
+                        <span className="flex items-center gap-2">
+                          <a href={`tel:${k.telefoon}`} className="text-[#333399] hover:underline">
+                            {k.telefoon}
+                          </a>
+                          <a
+                            href={`https://wa.me/${k.telefoon.replace(/[^0-9]/g, "").replace(/^0/, "31")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold text-emerald-600 hover:underline"
+                          >
+                            WhatsApp
+                          </a>
+                        </span>
                       ) : (
-                        "—"
+                        <form action={onthulTelefoon}>
+                          <input type="hidden" name="itemId" value={k.id} />
+                          <SubmitKnop bezigTekst="Onthullen…" className="text-xs font-semibold text-[#333399] hover:underline">
+                            Onthul telefoon
+                          </SubmitKnop>
+                        </form>
                       )}
                     </td>
                     <td className="px-3 py-2">
