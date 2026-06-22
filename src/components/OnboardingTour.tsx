@@ -76,18 +76,6 @@ const STAPPEN_VOORSTELLEN: Step[] = [
 
 const STAPPEN_TOOLS: Step[] = [
   {
-    target: 'a[href="/robin"]',
-    title: "Robin (Recruit Robin)",
-    content:
-      "Direct vanuit Noah toegang tot Recruit Robin via de Noah-extensie. Geen wisselen meer tussen tabs.",
-  },
-  {
-    target: 'a[href="/jobdigger"]',
-    title: "Jobdigger",
-    content:
-      "Bellijsten maken in Jobdigger. Downloads worden automatisch in Noah geïmporteerd voor de actieve kandidaat.",
-  },
-  {
     target: 'a[href="/inbox"]',
     title: "E-mail (inbox)",
     content:

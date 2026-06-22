@@ -198,7 +198,7 @@ export default function WordSetter() {
               <ul className="space-y-3 text-gray-700 text-[15px]">
                 <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Zakelijk e-mailadres <b>voornaam@noah-recruitment.nl</b></li>
                 <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Eigen omgeving in Noah-ATS</li>
-                <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Volledige toegang tot Jobdigger + Robin AI</li>
+                <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Volledige toegang tot alle Noah-tools en automatisering</li>
                 <li className="flex items-start gap-2"><Check size={18} className="text-[#333399] flex-shrink-0 mt-0.5" /> Coaching van Pepijn vanaf dag 1</li>
               </ul>
             </div>
@@ -236,7 +236,7 @@ export default function WordSetter() {
             <Voordeel
               icoon={<Sparkles />}
               titel="AI-gestuurd recruitment"
-              tekst="Noah met Robin AI en Jobdigger. Schrijft voorstellen voor je, vult bellijsten automatisch."
+              tekst="Noah zoekt automatisch kandidaten en vacatures, schrijft voorstellen voor je en vult lijsten aan."
             />
             <Voordeel
               icoon={<Phone />}

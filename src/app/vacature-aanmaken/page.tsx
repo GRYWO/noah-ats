@@ -297,26 +297,27 @@ export default async function VacatureAanmakenLijst() {
       <AutoVernieuw snel={jobdiggerLoopt || robinLoopt || telefoonLoopt} />
       <TopBar active="vacature-aanmaken" />
       <div className="p-8 max-w-6xl mx-auto">
+        <div className="gold-hr mb-6 rounded-full" />
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+            <span className="gold-chip inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]">
+              Noah<span className="text-gold">.</span>&nbsp;recruitment
+            </span>
+            <h1 className="mt-3 text-3xl font-bold text-gray-800">Dashboard</h1>
             <p className="text-gray-500 text-sm mt-1">
               {isAdmin
                 ? "Je ziet alle vacatures van alle setters, inclusief de interne afspraken."
                 : "Vacatures die jij als setter publiceert op noah-recruitment.nl. Kandidaten zien jouw naam als contactpersoon."}
             </p>
           </div>
-          <Link
-            href="/vacature-aanmaken/nieuw"
-            className="rounded-lg bg-[#333399] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#27277a] transition"
-          >
+          <Link href="/vacature-aanmaken/nieuw" className="btn-gold px-5 py-2.5 text-sm">
             Nieuwe vacature
           </Link>
         </div>
 
         {/* Stap 2/3: Jobdigger-zoekbalk + gevonden vacatures */}
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5">
-          <h2 className="text-sm font-bold text-gray-800">Vacatures zoeken via Jobdigger</h2>
+          <h2 className="text-sm font-bold text-gray-800">Vacatures zoeken</h2>
           <p className="text-xs text-gray-500 mt-0.5">
             Zoek op beroep. De machine draait de zoekopdracht op de achtergrond en levert hier de gevonden vacatures aan.
           </p>
@@ -391,7 +392,7 @@ export default async function VacatureAanmakenLijst() {
                         <tr key={vd.id} className="border-t border-gray-100">
                           <td className="px-4 py-2 text-gray-800">
                             {vd.jobdigger_url ? (
-                              <a href={vd.jobdigger_url} target="_blank" rel="noopener noreferrer" className="hover:text-[#333399] hover:underline" title="Bekijk de vacature op Jobdigger">
+                              <a href={vd.jobdigger_url} target="_blank" rel="noopener noreferrer" className="hover:text-[#333399] hover:underline" title="Bekijk de gevonden vacature">
                                 {vd.titel ?? "Onbekende functie"}
                               </a>
                             ) : (
@@ -606,7 +607,7 @@ function KandidatenPaneel({
   return (
     <details open className="rounded-lg border border-gray-200 bg-white">
       <summary className="cursor-pointer select-none px-4 py-2.5 text-sm font-semibold text-gray-800">
-        Kandidaten (Robin){" "}
+        Kandidaten{" "}
         <span className="font-normal text-gray-400">
           · {kandidaten.length}
           {loopt ? " · zoekt…" : ""}
@@ -713,11 +714,6 @@ function KandidatenPaneel({
                             </SubmitKnop>
                           </form>
                         )}
-                        {k.website ? (
-                          <a href={k.website} target="_blank" rel="noopener noreferrer" className="text-[11px] text-gray-400 hover:underline">
-                            Robin
-                          </a>
-                        ) : null}
                       </div>
                     </td>
                     <td className="px-3 py-2 text-gray-500">{k.match_reden ?? ""}</td>
