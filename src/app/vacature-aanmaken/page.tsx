@@ -183,6 +183,7 @@ export default async function VacatureAanmakenLijst() {
       .from("zoek_jobs")
       .select("status")
       .eq("tenant_id", tenantId)
+      .eq("aangemaakt_door", user.id)
       .eq("type", "jobdigger")
       .in("status", ["open", "bezig"])
       .limit(1);
@@ -192,6 +193,7 @@ export default async function VacatureAanmakenLijst() {
       .from("zoek_jobs")
       .select("id, lijst_naam, zoekterm, created_at, limiet")
       .eq("tenant_id", tenantId)
+      .eq("aangemaakt_door", user.id)
       .eq("type", "jobdigger")
       .in("status", ["klaar", "bezig", "open"])
       .order("created_at", { ascending: false })
@@ -236,6 +238,7 @@ export default async function VacatureAanmakenLijst() {
       .from("zoek_jobs")
       .select("id")
       .eq("tenant_id", tenantId)
+      .eq("aangemaakt_door", user.id)
       .eq("type", "robin")
       .in("status", ["open", "bezig"])
       .limit(1);
@@ -246,6 +249,7 @@ export default async function VacatureAanmakenLijst() {
       .from("zoek_jobs")
       .select("doel_item_id")
       .eq("tenant_id", tenantId)
+      .eq("aangemaakt_door", user.id)
       .eq("type", "robin_telefoon")
       .in("status", ["open", "bezig"]);
     for (const j of telJobs ?? []) {
