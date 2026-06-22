@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { botGeautoriseerd } from "@/utils/bot-auth";
 import { maakRobinBellijst, type RobinKandidaat } from "@/utils/robin-bellijst";
+import { rangschikKandidaten } from "@/utils/robin-ranking";
 
 export const dynamic = "force-dynamic";
 
@@ -64,9 +65,20 @@ export async function POST(request: Request) {
     try {
       const { data: vac } = await admin
         .from("rec_vacatures")
-        .select("titel")
+        .select("titel, taken, eisen, locatie")
         .eq("id", job.vacature_id)
         .maybeSingle();
+
+      // AI zet de best passende kandidaten bovenaan.
+      const gerangschikt = await rangschikKandidaten(
+        {
+          titel: vac?.titel ?? job.zoekterm,
+          taken: vac?.taken ?? null,
+          eisen: vac?.eisen ?? null,
+          plaats: vac?.locatie ?? null,
+        },
+        kandidaten,
+      );
 
       const res = await maakRobinBellijst(admin, {
         tenantId: job.tenant_id,
@@ -74,7 +86,7 @@ export async function POST(request: Request) {
         functie: job.zoekterm,
         vacatureTitel: vac?.titel,
         setterId: job.aangemaakt_door ?? null,
-        kandidaten,
+        kandidaten: gerangschikt,
       });
 
       await admin

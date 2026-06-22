@@ -2,11 +2,20 @@ import { createAdminClient } from "@/utils/supabase/admin";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-export type RobinKandidaat = { naam?: string; url?: string; telefoon?: string };
+export type RobinKandidaat = {
+  naam?: string;
+  url?: string;
+  telefoon?: string;
+  plaats?: string;
+  profiel_tekst?: string;
+  cv_url?: string;
+  // Door de AI toegevoegd:
+  match_score?: number;
+  match_reden?: string;
+};
 
 // Slaat de door Robin gevonden kandidaten op als bellijst die aan de vacature
-// gekoppeld is. Gebruikt de service-role (admin) client; de aanroeper bepaalt
-// tenant/vacature/eigenaar.
+// gekoppeld is. De volgorde volgt de (door AI bepaalde) ranking: beste bovenaan.
 export async function maakRobinBellijst(
   admin: Admin,
   opts: {
@@ -41,7 +50,12 @@ export async function maakRobinBellijst(
     tenant_id: tenantId,
     naam: (k.naam ?? "").toString().trim().slice(0, 200) || null,
     telefoon: (k.telefoon ?? "").toString().trim().slice(0, 60) || null,
+    plaats: (k.plaats ?? "").toString().trim().slice(0, 200) || null,
     website: (k.url ?? "").toString().trim().slice(0, 500) || null,
+    cv_url: (k.cv_url ?? "").toString().trim().slice(0, 500) || null,
+    profiel_tekst: (k.profiel_tekst ?? "").toString().trim().slice(0, 6000) || null,
+    match_score: typeof k.match_score === "number" ? Math.round(k.match_score) : null,
+    match_reden: (k.match_reden ?? "").toString().trim().slice(0, 500) || null,
     raw_data: k,
     volgorde: idx,
   }));

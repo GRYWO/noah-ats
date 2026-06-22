@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -42,6 +43,17 @@ type JobdiggerLijst = {
   naam: string;
   limiet: number;
   vondsten: JobdiggerVondst[];
+};
+
+type Kandidaat = {
+  id: string;
+  naam: string | null;
+  plaats: string | null;
+  telefoon: string | null;
+  website: string | null;
+  cv_url: string | null;
+  match_score: number | null;
+  match_reden: string | null;
 };
 
 type Vacature = {
@@ -193,9 +205,53 @@ export default async function VacatureAanmakenLijst() {
       .filter((l) => l.vondsten.length > 0);
   }
 
+  // Kandidaten (Robin): de meest recente bellijst per vacature + items (gerangschikt).
+  const kandidatenPerVac = new Map<string, Kandidaat[]>();
+  let robinLoopt = false;
+  if (tenantId && lijst.length > 0) {
+    const vacIds = lijst.map((v) => v.id);
+    const { data: rl } = await admin
+      .from("zoek_jobs")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("type", "robin")
+      .in("status", ["open", "bezig"])
+      .limit(1);
+    robinLoopt = (rl ?? []).length > 0;
+
+    const { data: bl } = await admin
+      .from("bellijsten")
+      .select("id, vacature_id, created_at")
+      .in("vacature_id", vacIds)
+      .eq("bron", "robin")
+      .order("created_at", { ascending: false });
+
+    const nieuwsteBlPerVac = new Map<string, string>();
+    for (const b of bl ?? []) {
+      const vid = b.vacature_id as string;
+      if (vid && !nieuwsteBlPerVac.has(vid)) nieuwsteBlPerVac.set(vid, b.id as string);
+    }
+    const blToVac = new Map(Array.from(nieuwsteBlPerVac.entries()).map(([vid, bid]) => [bid, vid]));
+    const blIds = Array.from(nieuwsteBlPerVac.values());
+    if (blIds.length) {
+      const { data: items } = await admin
+        .from("bellijst_items")
+        .select("id, bellijst_id, naam, plaats, telefoon, website, cv_url, match_score, match_reden, volgorde")
+        .in("bellijst_id", blIds)
+        .order("volgorde", { ascending: true });
+      for (const it of items ?? []) {
+        const vid = blToVac.get((it as { bellijst_id: string }).bellijst_id);
+        if (!vid) continue;
+        const arr = kandidatenPerVac.get(vid) ?? [];
+        arr.push(it as unknown as Kandidaat);
+        kandidatenPerVac.set(vid, arr);
+      }
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f4f7] pl-16">
-      <AutoVernieuw snel={jobdiggerLoopt} />
+      <AutoVernieuw snel={jobdiggerLoopt || robinLoopt} />
       <TopBar active="vacature-aanmaken" />
       <div className="p-8 max-w-6xl mx-auto">
         <div className="flex justify-between items-start mb-6">
@@ -356,8 +412,11 @@ export default async function VacatureAanmakenLijst() {
               <tbody>
                 {lijst.map((v) => {
                   const eigenaar = v.eigenaar ? eigenaarNamen.get(v.eigenaar) : undefined;
+                  const kandidaten = kandidatenPerVac.get(v.id) ?? [];
+                  const kolommen = isAdmin ? 8 : 7;
                   return (
-                    <tr key={v.id} className="border-t border-gray-100 align-top">
+                    <Fragment key={v.id}>
+                    <tr className="border-t border-gray-100 align-top">
                       <td className="px-4 py-3 font-semibold text-gray-800">
                         <a
                           href={`https://noah-recruitment.nl/vacatures/${v.id}`}
@@ -451,6 +510,14 @@ export default async function VacatureAanmakenLijst() {
                         </div>
                       </td>
                     </tr>
+                    {(kandidaten.length > 0 || robinLoopt) && (
+                      <tr className="bg-gray-50/40">
+                        <td colSpan={kolommen} className="px-4 pb-4">
+                          <KandidatenPaneel kandidaten={kandidaten} loopt={robinLoopt} />
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -459,6 +526,84 @@ export default async function VacatureAanmakenLijst() {
         </div>
       </div>
     </main>
+  );
+}
+
+function KandidatenPaneel({ kandidaten, loopt }: { kandidaten: Kandidaat[]; loopt: boolean }) {
+  return (
+    <details open className="rounded-lg border border-gray-200 bg-white">
+      <summary className="cursor-pointer select-none px-4 py-2.5 text-sm font-semibold text-gray-800">
+        Kandidaten (Robin){" "}
+        <span className="font-normal text-gray-400">
+          · {kandidaten.length}
+          {loopt ? " · zoekt…" : ""}
+        </span>
+      </summary>
+      <div className="border-t border-gray-100 p-3">
+        {kandidaten.length === 0 ? (
+          <p className="text-xs font-semibold text-amber-700">
+            Zoekopdracht loopt… de kandidaten verschijnen hier vanzelf zodra de machine klaar is.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-gray-100">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                <tr>
+                  <th className="px-3 py-2 text-left">#</th>
+                  <th className="px-3 py-2 text-left">Match</th>
+                  <th className="px-3 py-2 text-left">Naam</th>
+                  <th className="px-3 py-2 text-left">Plaats</th>
+                  <th className="px-3 py-2 text-left">Telefoon</th>
+                  <th className="px-3 py-2 text-left">CV / profiel</th>
+                  <th className="px-3 py-2 text-left">Waarom</th>
+                </tr>
+              </thead>
+              <tbody>
+                {kandidaten.map((k, i) => (
+                  <tr key={k.id} className="border-t border-gray-100">
+                    <td className="px-3 py-2 text-gray-400">{i + 1}</td>
+                    <td className="px-3 py-2">
+                      {k.match_score != null ? (
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">
+                          {k.match_score}%
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-3 py-2 font-medium text-gray-800">{k.naam ?? "—"}</td>
+                    <td className="px-3 py-2 text-gray-600">{k.plaats ?? "—"}</td>
+                    <td className="px-3 py-2 text-gray-600">
+                      {k.telefoon ? (
+                        <a href={`tel:${k.telefoon}`} className="text-[#333399] hover:underline">
+                          {k.telefoon}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      {k.cv_url ? (
+                        <a href={k.cv_url} target="_blank" rel="noopener noreferrer" className="text-[#333399] hover:underline">
+                          CV
+                        </a>
+                      ) : null}
+                      {k.website ? (
+                        <a href={k.website} target="_blank" rel="noopener noreferrer" className="ml-2 text-[#333399] hover:underline">
+                          Robin
+                        </a>
+                      ) : null}
+                      {!k.cv_url && !k.website ? "—" : null}
+                    </td>
+                    <td className="px-3 py-2 text-gray-500">{k.match_reden ?? ""}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </details>
   );
 }
 

@@ -43,7 +43,7 @@ async function verwerk(job) {
   console.log(`Opdracht ${job.id}: ${job.type} "${job.zoekterm}"`);
   try {
     if (job.type === "robin") {
-      const kandidaten = await runRobinZoek(job.zoekterm);
+      const kandidaten = await runRobinZoek(job.zoekterm, { straal: job.straal_km || 40, plaats: job.plaats || "" });
       console.log(`  → ${kandidaten.length} kandidaten gevonden`);
       await meldResultaat(job.id, { kandidaten });
     } else if (job.type === "jobdigger") {

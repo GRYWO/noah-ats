@@ -273,6 +273,34 @@ async function contactNaamVoor(admin: AdminClient, setterId: string, terugval: s
   return naam || terugval;
 }
 
+// Zet een Robin-zoekopdracht (40 km rond de vacaturelocatie) in de wachtrij.
+// De altijd-aan bot pakt 'm op, scrapet kandidaten en de AI rangschikt ze.
+async function maakRobinJobVoorVacature(
+  admin: AdminClient,
+  opts: {
+    tenantId: string | null;
+    vacatureId: string;
+    functie: string;
+    plaats: string | null;
+    lat: number | null;
+    lon: number | null;
+    setterId: string;
+  },
+) {
+  if (!opts.tenantId || !opts.functie) return;
+  await admin.from("zoek_jobs").insert({
+    tenant_id: opts.tenantId,
+    type: "robin",
+    zoekterm: opts.functie,
+    vacature_id: opts.vacatureId,
+    straal_km: 40,
+    plaats: opts.plaats,
+    lat: opts.lat,
+    lon: opts.lon,
+    aangemaakt_door: opts.setterId,
+  });
+}
+
 // ---------------------------------------------------------------
 // Server actions
 // ---------------------------------------------------------------
@@ -321,7 +349,7 @@ export async function maakVacatureNoahAts(formData: FormData) {
       ? eigenMaker || "Noah recruitment"
       : await contactNaamVoor(admin, eigenaar, "Noah recruitment");
 
-  const { error } = await admin
+  const { data: nieuwVac, error } = await admin
     .from("rec_vacatures")
     .insert({
       eigenaar,
@@ -354,10 +382,25 @@ export async function maakVacatureNoahAts(formData: FormData) {
       afspraak_uitzend_factor,
       afspraak_uitzend_uren_per_week,
       afspraak_overname_na_uren,
-    });
+    })
+    .select("id")
+    .single();
 
   if (error) {
     redirect("/vacature-aanmaken/nieuw?fout=" + encodeURIComponent("Opslaan mislukt: " + error.message));
+  }
+
+  // Automatisch kandidaten zoeken (Robin, 40 km) zodra de vacature online staat.
+  if (nieuwVac?.id) {
+    await maakRobinJobVoorVacature(admin, {
+      tenantId,
+      vacatureId: nieuwVac.id as string,
+      functie: input.titel,
+      plaats: input.locatie || null,
+      lat: coord?.lat ?? null,
+      lon: coord?.lon ?? null,
+      setterId: eigenaar,
+    });
   }
 
   revalidatePath("/vacature-aanmaken");
@@ -502,12 +545,21 @@ export async function maakRobinZoekJob(formData: FormData) {
   if (!profile?.tenant_id) return;
 
   const admin = createAdminClient();
-  await admin.from("zoek_jobs").insert({
-    tenant_id: profile.tenant_id,
-    type: "robin",
-    zoekterm: functie,
-    vacature_id: vacatureId,
-    aangemaakt_door: user.id,
+  // Locatie van de vacature ophalen voor het 40km-zoeken.
+  const { data: vac } = await admin
+    .from("rec_vacatures")
+    .select("locatie, lat, lon")
+    .eq("id", vacatureId)
+    .maybeSingle();
+
+  await maakRobinJobVoorVacature(admin, {
+    tenantId: profile.tenant_id,
+    vacatureId,
+    functie,
+    plaats: (vac?.locatie as string | null) ?? null,
+    lat: (vac?.lat as number | null) ?? null,
+    lon: (vac?.lon as number | null) ?? null,
+    setterId: user.id,
   });
 
   revalidatePath("/vacature-aanmaken");
