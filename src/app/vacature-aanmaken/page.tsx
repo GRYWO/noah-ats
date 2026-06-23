@@ -14,7 +14,7 @@ import { LinkedInKnop } from "./LinkedInKnop";
 
 // Herkenning van uitzend-/bemiddelingsbureaus, zodat die onderaan komen: we
 // willen liefst direct de werkgever bellen, niet een ander bureau.
-const BUREAU = /uitzend|flex|payroll|detacher|detach|secondment|personeel|staffing|recruit|werving|selectie|bemiddel|talent|vacature|\bbanen\b|\bjobs\b|workforce|randstad|tempo[\s-]?team|adecco|manpower|\byacht\b|olympia|\bluba\b|\btiming\b|start ?people|young ?capital|\bunique\b|driessen|continu|maandag|\busg\b|covebo|jobbird|actief|tence|\botto\b|abu\b/i;
+const BUREAU = /uitzend|flex|payroll|detacher|detach|secondment|interim|intermediair|arbeidsbemiddel|banenmarkt|vacaturebank|jobboard|personeel|staffing|recruit|werving|selectie|bemiddel|talent|vacature|\bbanen\b|\bjobs\b|\bjob\b|workforce|randstad|tempo[\s-]?team|adecco|manpower|\byacht\b|olympia|\bluba\b|\btiming\b|start ?people|young ?capital|\bunique\b|driessen|continu|maandag|\busg\b|covebo|jobbird|jobned|actief|tence|\botto\b|abu\b|brunel|\bhays\b|michael ?page|robert ?walters|experis|page ?personnel|doorzaam|projob|flexkracht|flexwerk|flexwork|talentus|\bhr\b|human ?resource|werkgever ?services|personeels?dienst|carriere|carrière/i;
 
 // Vacatures met telefoonnummer bovenaan, uitzendbureaus onderaan.
 function sorteerVondsten(vondsten: JobdiggerVondst[]): JobdiggerVondst[] {
