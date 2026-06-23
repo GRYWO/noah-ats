@@ -5,6 +5,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { TopBar } from "@/components/TopBar";
 import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat, claimVacature } from "./actions";
 import { PijplijnBord, type PijplijnKandidaat } from "./PijplijnBord";
+import { JobdiggerResultaten } from "./JobdiggerResultaten";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 import { LinkedInKnop } from "./LinkedInKnop";
@@ -43,7 +44,7 @@ type JobdiggerLijst = {
   id: string;
   naam: string;
   limiet: number;
-  vondsten: JobdiggerVondst[];
+  vondsten: (JobdiggerVondst & { isBureau: boolean })[];
 };
 
 type Kandidaat = {
@@ -222,7 +223,10 @@ export default async function VacatureAanmakenLijst() {
         id: j.id as string,
         naam: ((j.lijst_naam as string | null) ?? (j.zoekterm as string)) || "Zoeklijst",
         limiet: Number((j as { limiet?: number }).limiet) || 50,
-        vondsten: sorteerVondsten(perJob.get(j.id as string) ?? []),
+        vondsten: sorteerVondsten(perJob.get(j.id as string) ?? []).map((v) => ({
+          ...v,
+          isBureau: BUREAU.test(v.bedrijf ?? ""),
+        })),
       }))
       .filter((l) => l.vondsten.length > 0);
   }
@@ -393,59 +397,7 @@ export default async function VacatureAanmakenLijst() {
                   </form>
                 </div>
 
-                <div className="overflow-x-auto rounded-lg border border-gray-100">
-                  <table className="w-full min-w-[820px] text-sm">
-                    <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-                      <tr>
-                        <th className="px-4 py-2 text-left">Functie</th>
-                        <th className="px-4 py-2 text-left">Bedrijf</th>
-                        <th className="px-4 py-2 text-left">Plaats</th>
-                        <th className="px-4 py-2 text-left">Telefoon</th>
-                        <th className="px-4 py-2 text-left">Website</th>
-                        <th className="px-4 py-2 text-left">Datum</th>
-                        <th className="px-4 py-2 text-right">Actie</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lijst.vondsten.map((vd) => (
-                        <tr key={vd.id} className="border-t border-gray-100">
-                          <td className="px-4 py-2 text-gray-800">
-                            <Link
-                              href={`/vacature-aanmaken/nieuw?vondst=${vd.id}`}
-                              className="font-medium hover:text-[#333399] hover:underline"
-                              title="Bekijk en plaats deze vacature"
-                            >
-                              {vd.titel ?? "Onbekende functie"}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2 text-gray-600">{vd.bedrijf ?? "-"}</td>
-                          <td className="px-4 py-2 text-gray-600">{vd.plaats ?? "-"}</td>
-                          <td className="px-4 py-2 text-gray-600">
-                            {vd.telefoon ? (
-                              <a href={`tel:${vd.telefoon}`} className="text-[#333399] hover:underline">{vd.telefoon}</a>
-                            ) : "-"}
-                          </td>
-                          <td className="px-4 py-2 text-gray-600">
-                            {vd.url ? (
-                              <a href={vd.url.startsWith("http") ? vd.url : `https://${vd.url}`} target="_blank" rel="noopener noreferrer" className="text-[#333399] hover:underline">
-                                {vd.url.replace(/^https?:\/\//, "")}
-                              </a>
-                            ) : "-"}
-                          </td>
-                          <td className="px-4 py-2 text-gray-500">{vd.datum ?? "-"}</td>
-                          <td className="px-4 py-2 text-right whitespace-nowrap">
-                            <Link
-                              href={`/vacature-aanmaken/nieuw?vondst=${vd.id}`}
-                              className="btn-gold inline-block px-3 py-1.5 text-xs"
-                            >
-                              Plaats →
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <JobdiggerResultaten vondsten={lijst.vondsten} />
               </div>
             </details>
           ))}
