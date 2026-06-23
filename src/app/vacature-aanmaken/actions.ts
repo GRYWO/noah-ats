@@ -6,6 +6,7 @@ import { randomBytes } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { klantKey, claimKlant } from "@/lib/klant-eigenaar";
 import { maakVoorstelprofiel } from "@/utils/voorstelprofiel-ai";
 import {
   sendVoorstelprofielNaarContact,
@@ -485,7 +486,7 @@ export async function claimVacature(formData: FormData) {
   const admin = createAdminClient();
   const { data: vac } = await admin
     .from("rec_vacatures")
-    .select("id, setter_id, titel, locatie, lat, lon, status")
+    .select("id, setter_id, titel, locatie, lat, lon, status, eigenaar, bedrijfsnaam")
     .eq("id", vacatureId)
     .maybeSingle();
   if (!vac) return;
@@ -507,6 +508,19 @@ export async function claimVacature(formData: FormData) {
     // Iemand anders was net sneller.
     revalidatePath("/vacature-aanmaken");
     return;
+  }
+
+  // De hele klant op naam van deze setter zetten: alle open vacatures van
+  // dezelfde klant komen mee, en nieuwe vacatures van die klant volgen
+  // automatisch (Launch wijst ze direct aan deze setter toe).
+  try {
+    const key = await klantKey(admin, {
+      eigenaar: (vac.eigenaar as string | null) ?? null,
+      bedrijfsnaam: (vac.bedrijfsnaam as string | null) ?? null,
+    });
+    if (key) await claimKlant(admin, key, user.id, profile.tenant_id);
+  } catch (e) {
+    console.error("[claimVacature] klant-eigenaarschap zetten mislukt:", e);
   }
 
   // Automatisch kandidaten zoeken zodra de setter de vacature heeft geclaimd.

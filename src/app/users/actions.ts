@@ -416,6 +416,12 @@ export async function verwijderSetter(formData: FormData) {
     })();
   }
 
+  // Klanten van deze setter vrijgeven: open vacatures terug naar "Te claimen"
+  // en het klant-eigenaarschap weghalen, zodat de klant weer claimbaar is.
+  await admin.from("rec_vacatures").update({ setter_id: null }).eq("setter_id", id).eq("status", "open");
+  await admin.from("rec_klant_eigenaar").delete().eq("setter_id", id);
+  await admin.from("bedrijf_setter").delete().eq("setter_id", id);
+
   await admin.from("profiles").delete().eq("id", id);
   await admin.auth.admin.deleteUser(id);
 
