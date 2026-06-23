@@ -139,7 +139,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
       {/* Logo */}
       <div className={`h-16 flex items-center border-b border-gray-100 ${open ? "px-4" : "justify-center"}`}>
         <Link href="/vacature-aanmaken" className="flex items-baseline gap-1.5">
-          <span className="text-[#333399] text-2xl font-black tracking-tighter">
+          <span className="text-gray-900 text-2xl font-black tracking-tighter">
             {open ? "Noah" : "N"}<span className="text-gold">.</span>
           </span>
           {open && (

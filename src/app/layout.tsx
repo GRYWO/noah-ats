@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#333399",
+  themeColor: "#0c0b1f",
 };
 
 export default function RootLayout({
@@ -56,7 +56,7 @@ export default function RootLayout({
         {/* Pas vóór de body de saved theme toe om flicker te voorkomen */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('noah-theme');if(t==='dark'){document.documentElement.classList.add('dark')}else if(t==='system'){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark')}}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('noah-theme');if(t==='light'){}else if(t==='system'){if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark')}}else{document.documentElement.classList.add('dark')}}catch(e){}})()`,
           }}
         />
       </head>
