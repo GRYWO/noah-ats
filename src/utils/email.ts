@@ -952,8 +952,8 @@ function extensieBlok(): string {
 <div style="background-color:#eef0ff;border:1px solid #d4d7f5;border-radius:8px;padding:18px 20px;margin:20px 0;">
   <div style="font-size:14px;font-weight:700;color:${NOAH_PAARS};margin-bottom:6px;">📥 Installeer de Chrome-extensie</div>
   <p style="margin:0 0 12px 0;font-size:13px;color:#444;line-height:1.5;">
-    Maakt <b>Robin</b> en <b>Jobdigger</b> direct bruikbaar binnen Noah ATS.
-    Vacature-exports uit Jobdigger worden automatisch toegevoegd aan je bellijst in Noah.
+    Maakt het zoeken naar vacatures en kandidaten direct bruikbaar binnen Noah ATS.
+    Gevonden vacatures worden automatisch toegevoegd aan je bellijst in Noah.
   </p>
   <a href="${CHROME_EXTENSIE_URL}" style="display:inline-block;background-color:${NOAH_PAARS};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:bold;font-size:13px;">
     Installeer in Chrome
@@ -984,7 +984,8 @@ export async function sendWelkomstmailUser({
 }) {
   const intro = await renderMailTemplate("welkom_user", { voornaam, rol_label: rolLabel, bedrijf });
   const loginBlok = inlogBlok(email, wachtwoord);
-  const body = `${intro}\n${loginBlok}\n${extensieBlok()}`;
+  // Geen extensie-download-blok meer: een setter heeft dat niet nodig.
+  const body = `${intro}\n${loginBlok}`;
   return resend.emails.send({
     from: FROM,
     to: naar,
@@ -1188,7 +1189,7 @@ export async function sendAkkoordTerOndertekening({
     ? "Samenwerkingsovereenkomst — Setter"
     : "Gebruiksvoorwaarden Noah ATS";
   const uitleg = type === "nda_setter"
-    ? "Als Noah recruitment-setter krijg je toegang tot kandidaten van meerdere bureaus. Onze geheimhoudingsverklaring legt vast hoe je met deze data omgaat — verplicht onder AVG art. 32 lid 4."
+    ? "Als Noah recruitment-setter krijg je toegang tot kandidaten en opdrachtgevers van Noah recruitment. Onze geheimhoudingsverklaring legt vast hoe je met deze data omgaat — verplicht onder AVG art. 32 lid 4."
     : type === "setter_contract"
     ? "Hierbij ontvang je de samenwerkingsovereenkomst voor je setter-positie bij Noah recruitment. Hierin staan vergoeding, werkzaamheden, geheimhouding en duur. Onderteken aub digitaal."
     : "Voordat je live gaat met Noah ATS vragen we eenmalig akkoord op onze gebruiksvoorwaarden. Beschermt jou én de kandidaten die je beheert.";
@@ -1333,7 +1334,7 @@ Wat krijg je voor je abonnement?
 <ul style="font-size:13px;color:#555;padding-left:20px;">
   <li>Volledige toegang tot Noah ATS</li>
   <li>Eigen kandidaten + voorstellen</li>
-  <li>Robin AI + Jobdigger</li>
+  <li>Zoeken naar vacatures en kandidaten</li>
   <li>Inbox-koppeling (Hostnet)</li>
   <li>Coaching dashboard</li>
 </ul>

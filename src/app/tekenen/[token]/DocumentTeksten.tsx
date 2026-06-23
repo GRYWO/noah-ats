@@ -34,9 +34,8 @@ export function NdaSetterTekst({ naam, bureau, datum }: { naam: string; bureau: 
 
       <H2>1. Waarom deze verklaring?</H2>
       <p className="text-sm text-gray-700">
-        Als Noah recruitment-setter werk je in Noah ATS centraal voor <b>meerdere recruitment-bureaus</b>. Daardoor zie je kandidaten,
-        opdrachtgevers en interne data van verschillende klanten door elkaar. Deze verklaring beschermt al die data en is
-        verplicht onder AVG art. 32 lid 4.
+        Als Noah recruitment-setter werk je in Noah ATS met kandidaten, opdrachtgevers en interne gegevens
+        van <b>Noah recruitment</b>. Deze verklaring beschermt al die data en is verplicht onder AVG art. 32 lid 4.
       </p>
 
       <H2>2. Wat versta je onder &ldquo;vertrouwelijke informatie&rdquo;?</H2>
@@ -46,7 +45,7 @@ export function NdaSetterTekst({ naam, bureau, datum }: { naam: string; bureau: 
         <li>Voorstellen, plaatsings-tarieven, interne marges, betalingsstatus</li>
         <li>Bellijsten, EOD-rapporten, coaching-aanvragen, doelen, statistieken van collega&apos;s</li>
         <li>Login-gegevens, mailbox-credentials, IT-architectuur, source-code, screenshots van Noah ATS</li>
-        <li>Strategie, business-modellen en alle niet-publieke informatie van Noah recruitment en aangesloten bureaus</li>
+        <li>Strategie, business-modellen en alle niet-publieke informatie van Noah recruitment</li>
       </ul>
 
       <H2>3. Je verplichtingen</H2>
@@ -59,26 +58,20 @@ export function NdaSetterTekst({ naam, bureau, datum }: { naam: string; bureau: 
         <li>Verdachte activiteit of een vermoed datalek meld je <b>direct</b> aan Yorith Hulzebosch (085-4016082)</li>
       </ul>
 
-      <H2>4. Cross-tenant — extra regel</H2>
-      <p className="text-sm text-gray-700">
-        Als je tijdens een gesprek voor bureau A toevallig info ziet van bureau B (door cross-tenant zichtbaarheid in Noah),
-        is dat <b>geen toestemming</b> om die info te gebruiken. Gegevens van bureau B blijven van bureau B.
-      </p>
-
-      <H2>5. Duur en na beëindiging</H2>
+      <H2>4. Duur en na beëindiging</H2>
       <p className="text-sm text-gray-700">
         Deze verklaring geldt tijdens je dienstverband bij Noah recruitment én <b>5 jaar daarna</b>. Bij beëindiging:
         je toegang tot Noah ATS wordt direct ingetrokken, je vernietigt alle lokale kopieën (downloads, screenshots, notities)
         en je geeft alle Noah recruitment-apparatuur retour.
       </p>
 
-      <H2>6. Boete bij overtreding</H2>
+      <H2>5. Boete bij overtreding</H2>
       <p className="text-sm text-gray-700">
         Bij aantoonbare overtreding ben je een <b>direct opeisbare boete</b> van € 5.000 per overtreding verschuldigd,
         plus € 500 voor elke dag dat de overtreding voortduurt — onverminderd het recht van Noah recruitment op volledige schadevergoeding.
       </p>
 
-      <H2>7. Toepasselijk recht</H2>
+      <H2>6. Toepasselijk recht</H2>
       <p className="text-sm text-gray-700">
         Nederlands recht. Geschillen voor rechtbank Midden-Nederland, locatie Utrecht.
       </p>
@@ -117,22 +110,14 @@ export function SetterContractTekst({ naam, datum }: { naam: string; datum: stri
         deugdelijke factuur van Setter aan Noah recruitment.
       </p>
 
-      <h2 className="text-base font-bold mt-4 mb-2">3. Tools &amp; toegang</h2>
-      <p className="text-sm leading-relaxed">
-        Noah recruitment stelt aan Setter ter beschikking: een persoonlijk Noah-account, een
-        <b> voornaam@noah-recruitment.nl</b>-mailadres, toegang tot Jobdigger en de Robin AI-assistent.
-        Setter respecteert de Acceptable Use-bepalingen zoals beschreven in de
-        Gebruiksvoorwaarden Noah ATS.
-      </p>
-
-      <h2 className="text-base font-bold mt-4 mb-2">4. Eigendom en data</h2>
+      <h2 className="text-base font-bold mt-4 mb-2">3. Eigendom en data</h2>
       <p className="text-sm leading-relaxed">
         Alle kandidaten, leads en opdrachtgever-gegevens die binnen Noah worden verzameld
         of bewerkt zijn eigendom van Noah recruitment. Bij beëindiging van deze samenwerking blijven
         gegevens bij Noah recruitment en wordt de toegang van Setter onmiddellijk gerevoceerd.
       </p>
 
-      <h2 className="text-base font-bold mt-4 mb-2">5. Geheimhouding</h2>
+      <h2 className="text-base font-bold mt-4 mb-2">4. Geheimhouding</h2>
       <p className="text-sm leading-relaxed">
         Aanvullend op de afzonderlijke Geheimhoudingsverklaring (NDA) verbindt Setter zich
         alle informatie over opdrachtgevers, kandidaten, tarieven, marges en interne werkwijzen
@@ -140,7 +125,7 @@ export function SetterContractTekst({ naam, datum }: { naam: string; datum: stri
         directe beëindiging van de samenwerking en mogelijke aansprakelijkheid.
       </p>
 
-      <h2 className="text-base font-bold mt-4 mb-2">6. Concurrentie &amp; relatiebeding</h2>
+      <h2 className="text-base font-bold mt-4 mb-2">5. Concurrentie &amp; relatiebeding</h2>
       <p className="text-sm leading-relaxed">
         Tijdens de samenwerking en gedurende <b>12 maanden na beëindiging</b> verricht Setter
         geen vergelijkbare werkzaamheden voor opdrachtgevers van Noah recruitment waarmee hij/zij
@@ -148,14 +133,14 @@ export function SetterContractTekst({ naam, datum }: { naam: string; datum: stri
         schriftelijke toestemming van Noah recruitment.
       </p>
 
-      <h2 className="text-base font-bold mt-4 mb-2">7. Duur en beëindiging</h2>
+      <h2 className="text-base font-bold mt-4 mb-2">6. Duur en beëindiging</h2>
       <p className="text-sm leading-relaxed">
         Deze samenwerking gaat in vanaf de datum van ondertekening en is voor onbepaalde
         tijd. Beide partijen kunnen schriftelijk opzeggen met een opzegtermijn van één maand.
         Noah recruitment mag bij ernstige tekortkomingen of geheimhouding-schendingen per direct beëindigen.
       </p>
 
-      <h2 className="text-base font-bold mt-4 mb-2">8. Toepasselijk recht</h2>
+      <h2 className="text-base font-bold mt-4 mb-2">7. Toepasselijk recht</h2>
       <p className="text-sm leading-relaxed">
         Op deze overeenkomst is uitsluitend Nederlands recht van toepassing. Geschillen worden
         voorgelegd aan de bevoegde rechter in het arrondissement van vestiging van Noah recruitment.
