@@ -703,6 +703,36 @@ export async function sendCvReminderAanWachtende({
 }
 
 /**
+ * Een nieuwe vacature van een al-geclaimde klant is automatisch op naam van de
+ * setter gekomen (geplaatst door de klant via Noah Launch). De kandidaten
+ * worden er automatisch bij gezocht.
+ */
+export async function sendNieuweVacatureOpNaam({
+  naar,
+  voornaam,
+  klant,
+  vacatureTitel,
+}: {
+  naar: string;
+  voornaam: string;
+  klant: string;
+  vacatureTitel: string;
+}) {
+  const url = `${APP_URL}/vacature-aanmaken`;
+  const body = `
+<p>Hoi ${voornaam},</p>
+<p>Er is een nieuwe vacature op jouw naam gekomen: <strong>${vacatureTitel}</strong>, geplaatst door <strong>${klant}</strong>.</p>
+<p>De kandidaten worden er automatisch bij gezocht — je hoeft niks te doen. Je vindt de vacature terug onder "Mijn vacatures".</p>
+<p style="margin:24px 0;"><a href="${url}" style="display:inline-block;background-color:${NOAH_PAARS};color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;font-size:14px;">Open vacature</a></p>`;
+  return resend.emails.send({
+    from: FROM,
+    to: naar,
+    subject: `Nieuwe vacature op je naam: ${vacatureTitel}`,
+    html: brandedLayout({ titel: "Nieuwe vacature op je naam", body, merk: "ats" }),
+  });
+}
+
+/**
  * Plaatsing afgekeurd door admin — meld dit ook aan backoffice.
  */
 export async function sendPlaatsingAfgekeurdNaarBackoffice({
