@@ -32,7 +32,7 @@ export default async function SettersPage({ searchParams }: { searchParams: Prom
   const mag = isSuperAdminEmail(user.email) || (await isSalesAdmin(user));
   if (!mag) redirect("/vacature-aanmaken");
 
-  const { data: myProfile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).single();
+  const { data: myProfile } = await supabase.from("profiles").select("tenant_id").eq("id", user.id).maybeSingle();
   const tenantId = (myProfile as { tenant_id?: string } | null)?.tenant_id ?? null;
 
   const admin = createAdminClient();
