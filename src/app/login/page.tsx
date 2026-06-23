@@ -94,10 +94,6 @@ export default async function LoginPage({
             </Link>
           </p>
         </div>
-
-        <p className="mt-6 text-center text-[11px] text-white/40">
-          © {new Date().getFullYear()} OneTwoStart NL B.V. — KvK 96738782
-        </p>
       </div>
     </main>
   );
