@@ -6,6 +6,8 @@ import { TopBar } from "@/components/TopBar";
 import { zetVacatureStatus, verwijderVacature, maakRobinZoekJob, maakJobdiggerZoekJob, hernoemJobdiggerLijst, verwijderJobdiggerLijst, vergrootJobdiggerLijst, onthulTelefoon, startIntakeVanKandidaat, claimVacature } from "./actions";
 import { PijplijnBord, type PijplijnKandidaat } from "./PijplijnBord";
 import { JobdiggerResultaten } from "./JobdiggerResultaten";
+import { LeadBulkBalk } from "./LeadBulkBalk";
+import type { LeadLabel } from "./lead-actions";
 import { SubmitKnop } from "./SubmitKnop";
 import { AutoVernieuw } from "./AutoVernieuw";
 import { LinkedInKnop } from "./LinkedInKnop";
@@ -179,6 +181,9 @@ export default async function VacatureAanmakenLijst() {
   // Jobdigger: lopende opdracht + de gevonden vacatures gegroepeerd per zoeklijst.
   let jobdiggerLoopt = false;
   let lijsten: JobdiggerLijst[] = [];
+  let alleLeadLabels: LeadLabel[] = [];
+  const leadLabelLinks: Record<string, string[]> = {};
+  const leadLabelCounts: Record<string, number> = {};
   if (tenantId) {
     const { data: lopend } = await admin
       .from("zoek_jobs")
@@ -229,6 +234,34 @@ export default async function VacatureAanmakenLijst() {
         })),
       }))
       .filter((l) => l.vondsten.length > 0);
+
+    // Leads: labels (gedeeld per tenant) + koppelingen + tellingen voor bulk.
+    const { data: labelsData } = await admin
+      .from("lead_labels")
+      .select("id, naam, kleur, is_systeem")
+      .eq("tenant_id", tenantId)
+      .order("is_systeem", { ascending: false })
+      .order("naam", { ascending: true });
+    alleLeadLabels = (labelsData ?? []) as LeadLabel[];
+
+    const alleVondstIds = lijsten.flatMap((l) => l.vondsten.map((v) => v.id));
+    if (alleVondstIds.length) {
+      const { data: links } = await admin
+        .from("lead_label_links")
+        .select("lead_id, label_id")
+        .eq("lead_type", "vondst")
+        .in("lead_id", alleVondstIds);
+      for (const lk of (links ?? []) as Array<{ lead_id: string; label_id: string }>) {
+        (leadLabelLinks[lk.lead_id] ??= []).push(lk.label_id);
+      }
+    }
+    const { data: alleLinks } = await admin
+      .from("lead_label_links")
+      .select("label_id")
+      .eq("tenant_id", tenantId);
+    for (const lk of (alleLinks ?? []) as Array<{ label_id: string }>) {
+      leadLabelCounts[lk.label_id] = (leadLabelCounts[lk.label_id] ?? 0) + 1;
+    }
   }
 
   // Kandidaten (Robin): de meest recente bellijst per vacature + items (gerangschikt).
@@ -365,6 +398,8 @@ export default async function VacatureAanmakenLijst() {
             </p>
           )}
 
+          {lijsten.length > 0 && <LeadBulkBalk labels={alleLeadLabels} counts={leadLabelCounts} />}
+
           {lijsten.map((lijst) => (
             <details key={lijst.id} open className="mt-4 rounded-lg border border-gray-200">
               <summary className="cursor-pointer select-none px-4 py-3 font-semibold text-gray-800">
@@ -397,7 +432,7 @@ export default async function VacatureAanmakenLijst() {
                   </form>
                 </div>
 
-                <JobdiggerResultaten vondsten={lijst.vondsten} />
+                <JobdiggerResultaten vondsten={lijst.vondsten} alleLabels={alleLeadLabels} labelLinks={leadLabelLinks} />
               </div>
             </details>
           ))}
