@@ -146,9 +146,8 @@ export default function ContractPagina() {
 
           <Sectie nummer="3" titel="Tools & toegang">
             <p>
-              Binqie stellen aan Setter ter beschikking: een persoonlijk
-              Noah-account, een eigen <b>@noah-recruitment.nl</b>-mailadres en toegang tot
-              Jobdigger.
+              Wij stellen aan Setter ter beschikking: een persoonlijk
+              Noah-account en een eigen <b>@noah-recruitment.nl</b>-mailadres.
             </p>
             <p>
               Na de 7-daagse trial ontvangt Setter een eigen{" "}

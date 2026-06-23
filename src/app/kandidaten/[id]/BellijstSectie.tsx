@@ -65,7 +65,7 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
       <div className="flex items-center justify-between mb-4 pb-2 border-b">
-        <h2 className="font-bold text-gray-800">Bellijsten (Jobdigger)</h2>
+        <h2 className="font-bold text-gray-800">Bellijsten</h2>
         <button
           type="button"
           onClick={() => setShowUpload(!showUpload)}
@@ -75,7 +75,7 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
         </button>
       </div>
 
-      {/* Prominente 1-klik knop: open Jobdigger met filters van deze kandidaat */}
+      {/* Prominente 1-klik knop: start zoekopdracht met filters van deze kandidaat */}
       <Link
         href={`/jobdigger?kandidaat=${kandidaatId}`}
         className="block bg-gradient-to-r from-[#333399] to-[#4a4ab8] hover:from-[#2a2a80] hover:to-[#3d3da0] text-white rounded-lg p-4 mb-4 transition-all shadow-sm hover:shadow-md"
@@ -86,9 +86,9 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
               <Search size={20} className="text-white" />
             </div>
             <div>
-              <div className="font-bold text-base">Maak Jobdigger-zoekopdracht</div>
+              <div className="font-bold text-base">Maak zoekopdracht</div>
               <div className="text-xs text-white/80">
-                Open Jobdigger met de zoekfilters van deze kandidaat al ingevuld
+                Met de zoekfilters van deze kandidaat al ingevuld
               </div>
             </div>
           </div>
@@ -104,7 +104,7 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
             <input name="naam" placeholder="bv. Installatiemonteur Oisterwijk" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Excel-bestand uit Jobdigger</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Excel-bestand met vacatures</label>
             <input name="file" type="file" accept=".xlsx,.xls" required className="w-full text-sm" />
             <small className="text-gray-400 text-xs">Sleutel-kolommen worden automatisch herkend (bedrijf, telefoon, plaats, website, branche).</small>
           </div>
@@ -120,7 +120,7 @@ export function BellijstSectie({ kandidaatId, bellijsten }: { kandidaatId: strin
       )}
 
       {bellijsten.length === 0 ? (
-        <p className="text-sm text-gray-500">Nog geen bellijsten. Maak er een via Jobdigger en upload de Excel hier.</p>
+        <p className="text-sm text-gray-500">Nog geen bellijsten. Maak een zoekopdracht en upload de Excel hier.</p>
       ) : (
         <div className="space-y-3">
           {bellijsten.map((b) => {
