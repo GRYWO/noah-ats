@@ -17,6 +17,9 @@ export async function nieuweSetter(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Pagina om naar terug te keren (bv. /setters of /users).
+  const next = (formData.get("next") as string)?.trim() || "/users";
+
   // Check of huidige user admin is + haal tenant_id op
   const { data: myProfile } = await supabase
     .from("profiles")
@@ -25,7 +28,7 @@ export async function nieuweSetter(formData: FormData) {
     .single();
 
   if (!myProfile || myProfile.rol !== "admin") {
-    redirect("/users?error=Alleen+admins+kunnen+users+toevoegen");
+    redirect(`${next}?error=${encodeURIComponent("Alleen admins kunnen users toevoegen")}`);
   }
 
   const email           = (formData.get("email") as string)?.trim().toLowerCase();
@@ -49,7 +52,7 @@ export async function nieuweSetter(formData: FormData) {
   }
 
   if (!email) {
-    redirect(`/users?error=${encodeURIComponent("E-mail verplicht")}`);
+    redirect(`${next}?error=${encodeURIComponent("E-mail verplicht")}`);
   }
 
   const admin = createAdminClient();
@@ -64,7 +67,7 @@ export async function nieuweSetter(formData: FormData) {
       if (plan?.max_users != null) {
         const { count } = await admin.from("profiles").select("id", { count: "exact", head: true }).eq("tenant_id", myProfile.tenant_id);
         if ((count ?? 0) >= plan.max_users) {
-          redirect(`/users?error=${encodeURIComponent("Maximum aantal gebruikers voor je abonnement bereikt. Upgrade je plan om meer toe te voegen.")}`);
+          redirect(`${next}?error=${encodeURIComponent("Maximum aantal gebruikers voor je abonnement bereikt. Upgrade je plan om meer toe te voegen.")}`);
         }
       }
     }
@@ -87,7 +90,7 @@ export async function nieuweSetter(formData: FormData) {
       : raw.includes("Unable to validate email address")
       ? "Ongeldig e-mailadres."
       : raw;
-    redirect(`/users?error=${encodeURIComponent(nl)}`);
+    redirect(`${next}?error=${encodeURIComponent(nl)}`);
   }
 
   // Auto handtekening bouwen via centrale helper
@@ -209,31 +212,35 @@ export async function nieuweSetter(formData: FormData) {
       .single();
     const bedrijf = tenant?.handelsnaam ?? tenant?.naam ?? null;
 
-    const type = rol === "setter" ? "nda_setter" : "gebruiksvoorwaarden";
-    const token = randomBytes(16).toString("hex");
-
-    await admin.from("user_agreements").insert({
-      user_id: created.user.id,
-      tenant_id: myProfile.tenant_id,
-      token,
-      type,
-      status: "wachtend",
-      verzonden_aan_email: mailAdres,
-      verzonden_aan_naam: `${voornaam} ${achternaam}`.trim(),
-      verzonden_door: user.id,
-      user_voornaam: voornaam,
-      user_achternaam: achternaam,
-      user_rol: rol,
-      bureau_naam: bedrijf,
-      verloopt_op: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    });
-
-    await sendAkkoordTerOndertekening({
-      naar: mailAdres,
-      naam: `${voornaam} ${achternaam}`.trim(),
-      type,
-      token,
-    });
+    // Setter tekent 2 documenten: NDA + samenwerkingsovereenkomst.
+    // Recruiter/admin: alleen gebruiksvoorwaarden.
+    const types = rol === "setter"
+      ? (["nda_setter", "setter_contract"] as const)
+      : (["gebruiksvoorwaarden"] as const);
+    for (const type of types) {
+      const token = randomBytes(16).toString("hex");
+      await admin.from("user_agreements").insert({
+        user_id: created.user.id,
+        tenant_id: myProfile.tenant_id,
+        token,
+        type,
+        status: "wachtend",
+        verzonden_aan_email: mailAdres,
+        verzonden_aan_naam: `${voornaam} ${achternaam}`.trim(),
+        verzonden_door: user.id,
+        user_voornaam: voornaam,
+        user_achternaam: achternaam,
+        user_rol: rol,
+        bureau_naam: bedrijf,
+        verloopt_op: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+      await sendAkkoordTerOndertekening({
+        naar: mailAdres,
+        naam: `${voornaam} ${achternaam}`.trim(),
+        type,
+        token,
+      });
+    }
   } catch (e) {
     console.error("Akkoord-uitnodiging bij aanmaak mislukt:", e);
   }
@@ -243,8 +250,9 @@ export async function nieuweSetter(formData: FormData) {
   void wachtwoord;
 
   revalidatePath("/users");
+  revalidatePath("/setters");
   revalidatePath("/kandidaten");
-  redirect("/users?ok=1");
+  redirect(`${next}?ok=1`);
 }
 
 export async function bewerkUser(formData: FormData) {

@@ -103,6 +103,7 @@ export function SideBar({ active, userEmail, userId, isSuperAdmin, isSalesAdmin,
     // Sectie 5: Team & beheer
     ...(!isRecruiter && !isBureauAdmin ? [{ key: "coaching", href: "/coaching", label: "Coaching", Icon: Sparkles, sectie: 5 } as Item] : []),
     ...(!isSetter && !isRecruiter ? [{ key: "setters", href: "/users", label: "Users", Icon: UserCog, sectie: 5 } as Item] : []),
+    ...((isSuperAdmin || isSalesAdmin) ? [{ key: "setters-beheer", href: "/setters", label: "Setters", Icon: FileSignature, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "documenten", href: "/documenten", label: "Documenten", Icon: FileSignature, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "archief", href: "/archief", label: "Archief", Icon: Archive, sectie: 5 } as Item] : []),
     ...(isSuperAdmin ? [{ key: "systeem-meldingen", href: "/systeem-meldingen", label: "Meldingen", Icon: Megaphone, sectie: 5 } as Item] : []),
