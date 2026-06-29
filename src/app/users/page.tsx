@@ -4,6 +4,7 @@ import { isSuperAdminEmail } from "@/utils/auth";
 import { getViewerRol } from "@/utils/view-as";
 import { TopBar } from "@/components/TopBar";
 import { UserRij } from "./UserRij";
+import { ZetWachtwoordVeld } from "./ZetWachtwoordVeld";
 import { PaginaTour } from "@/components/PaginaTour";
 import { TOUR_SETTERS } from "@/utils/pagina-tours";
 import { isSalesAdmin } from "@/utils/sales-admin";
@@ -102,6 +103,8 @@ export default async function SettersPage({
             {setters?.length ?? 0} {isSuperAdmin ? "users" : "recruiters"} in dit bureau
           </p>
         </div>
+
+        {isSuperAdmin && <ZetWachtwoordVeld />}
 
         {ok && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-3 mb-4">
