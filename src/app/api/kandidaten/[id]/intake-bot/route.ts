@@ -46,13 +46,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .single();
   if (!profile) return NextResponse.json({ klaar: false, bericht: "Geen toegang." }, { status: 403 });
 
-  // Lockdown: setter mag de intake-bot niet meer aanroepen.
-  if (profile.rol === "setter") {
-    return NextResponse.json(
-      { klaar: false, bericht: "Setters kunnen de intake-bot niet gebruiken." },
-      { status: 403 },
-    );
-  }
+  // Setters mogen de intake-bot gebruiken; bij afronden gaat de kandidaat
+  // automatisch naar de wachtrij voor de recruiter (zie finish-route).
 
   // Cross-tenant guard: kandidaat moet bestaan binnen tenant.
   const kandidaatQuery = supabase

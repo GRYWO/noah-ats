@@ -85,10 +85,24 @@ export async function updateSession(request: NextRequest) {
         return res;
       };
 
+      // Abonnement-blokkade staat standaard UIT: iedereen kan inloggen.
+      // Zet env ABONNEMENT_BLOKKADE=aan om de proefperiode-/abonnement-poort
+      // weer te activeren zodra de betaalstatus betrouwbaar klopt.
+      const blokkadeAan = process.env.ABONNEMENT_BLOKKADE === "aan";
+
+      // Intern Noah recruitment-personeel wordt sowieso nooit geblokkeerd.
+      const userEmail = (user.email ?? "").toLowerCase();
+      const internNoah = new Set([
+        "yorith@noah-recruitment.nl",
+        "pepijn@noah-recruitment.nl",
+        "wouter@noah-recruitment.nl",
+      ]);
+      const isSuperUser = internNoah.has(userEmail);
+
       // 1) Setter zonder actief abonnement.
       //    Uitzondering: tijdens proefperiode (5 werkdagen na aanmaak) mag setter
       //    gewoon werken. Cron blokkeert hem zodra proefperiode verlopen is.
-      if (profile?.rol === "setter" && profile.abonnement_status !== "actief") {
+      if (blokkadeAan && profile?.rol === "setter" && profile.abonnement_status !== "actief") {
         const proefLoopt = profile.abonnement_status === "proefperiode"
           && profile.proefperiode_eindigt_op
           && new Date(profile.proefperiode_eindigt_op).getTime() > Date.now();
@@ -98,15 +112,7 @@ export async function updateSession(request: NextRequest) {
       }
 
       // 1b) Bureau-leden (admin/recruiter) zonder actief bureau-abonnement.
-      //     Intern Noah recruitment-personeel (Yorith, Pepijn, Wouter) wordt nooit geblokkeerd.
-      const userEmail = (user.email ?? "").toLowerCase();
-      const internNoah = new Set([
-        "yorith@noah-recruitment.nl",
-        "pepijn@noah-recruitment.nl",
-        "wouter@noah-recruitment.nl",
-      ]);
-      const isSuperUser = internNoah.has(userEmail);
-      if (!isSuperUser && profile?.tenant_id && (profile.rol === "admin" || profile.rol === "recruiter")) {
+      if (blokkadeAan && !isSuperUser && profile?.tenant_id && (profile.rol === "admin" || profile.rol === "recruiter")) {
         const { data: ab } = await supabase
           .from("abonnementen")
           .select("status")

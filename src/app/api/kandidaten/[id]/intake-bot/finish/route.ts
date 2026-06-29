@@ -26,10 +26,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { data: profile } = await supabase.from("profiles").select("rol, tenant_id").eq("id", user.id).single();
   if (!profile) return NextResponse.json({ fout: "Geen toegang." }, { status: 403 });
 
-  // Lockdown: setter mag de intake niet afronden.
-  if (profile.rol === "setter") {
-    return NextResponse.json({ fout: "Setters kunnen de intake niet afronden." }, { status: 403 });
-  }
+  // Setter mag de intake afronden; de kandidaat gaat daarna naar de wachtrij
+  // voor de recruiter (zie kanban_stap-logica verderop).
 
   // Cross-tenant guard: kandidaat moet binnen tenant vallen.
   const kandidaatQuery = supabase
